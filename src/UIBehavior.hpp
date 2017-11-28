@@ -23,8 +23,23 @@ public:
 	bool focusable = true;
 	bool IsScreenPointInBounds( float x, float y, float* localX, float* localY );
 	
-	void Focus();
-	void Blur();
+	/// focus on this ui
+	bool Focus();
+	
+	/// blur this ui
+	void Blur( bool sendEvent=true );
+	
+	/// pick a new focus object
+	void Navigate( float x, float y );
+	
+	// focus overrides
+	UIBehavior* navigationLeft = NULL;
+	UIBehavior* navigationRight = NULL;
+	UIBehavior* navigationUp = NULL;
+	UIBehavior* navigationDown = NULL;
+	
+	/// overridden
+	bool active( bool a );
 	
 	// UI events
 	static void MouseMove( UIBehavior* behavior, Event* event);

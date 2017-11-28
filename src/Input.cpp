@@ -7,7 +7,10 @@
 
 
 Input::Input() {
+	
 	SDL_StartTextInput();
+	this->dispatchEventsToPropertyFunctions = true;
+	
 }
 
 Input::Input( ScriptArguments* ) { script.ReportError( "Input can't be created using 'new'. Only one instance is available as global 'app.input' property." ); }
@@ -79,6 +82,7 @@ void Input::InitClass() {
 	script.SetGlobalConstant( "KEY_9", SDL_SCANCODE_9 );
 	script.SetGlobalConstant( "KEY_0", SDL_SCANCODE_0 );
 	script.SetGlobalConstant( "KEY_RETURN", SDL_SCANCODE_RETURN );
+	script.SetGlobalConstant( "KEY_ENTER", SDL_SCANCODE_RETURN );
 	script.SetGlobalConstant( "KEY_ESCAPE", SDL_SCANCODE_ESCAPE );
 	script.SetGlobalConstant( "KEY_BACKSPACE", SDL_SCANCODE_BACKSPACE );
 	script.SetGlobalConstant( "KEY_TAB", SDL_SCANCODE_TAB );
@@ -227,6 +231,26 @@ void Input::InitClass() {
 		}
 		return ret;
 	}));
+	
+	script.AddProperty<Input>
+	( "navigationHorizontalAxis",
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return ((Input*) inp)->navigationXAxis; }),
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return (((Input*) inp)->navigationXAxis = val ); }));
+	
+	script.AddProperty<Input>
+	( "navigationVerticalAxis",
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return ((Input*) inp)->navigationYAxis; }),
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return (((Input*) inp)->navigationYAxis = val ); }));
+	
+	script.AddProperty<Input>
+	( "navigationAccept",
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return ((Input*) inp)->navigationAccept; }),
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return (((Input*) inp)->navigationAccept = val ); }));
+	
+	script.AddProperty<Input>
+	( "navigationCancel",
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return ((Input*) inp)->navigationCancel; }),
+	 static_cast<ScriptStringCallback>([](void* inp, string val){ return (((Input*) inp)->navigationCancel = val ); }));
 	
 	// functions
 	
@@ -509,7 +533,6 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 	}
 	
-	
 	// pass to controllers
 	for ( JoystickMapIterator it = this->joysticks.begin(), end = this->joysticks.end(); it != end; it++ ) {
 		(it->second)->HandleEvent( e );
@@ -520,6 +543,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 /* MARK:	-				UI dispatchers
  -------------------------------------------------------------------- */
 
+
 void Input::UIEvent( Event &event ) {
 	if ( !app.sceneStack.size() ) return;
 	Scene* scene = app.sceneStack.back();
@@ -527,11 +551,14 @@ void Input::UIEvent( Event &event ) {
 	for( int i = (int) scene->uiElements.size() - 1; i >= 0; i-- ){
 		UIBehavior* behavior = scene->uiElements[ i ];
 		// ensure it's active
-		if ( !behavior->active() ) continue;
+		if ( !behavior->Behavior::active() ) continue;
 		// process event
 		behavior->CallEventCallback( event );
+		// behavior will stop this event if handled 
+		if ( event.stopped ) break;
 	}
 }
+
 
 /* MARK:	-				Get joystick state helpers
  -------------------------------------------------------------------- */

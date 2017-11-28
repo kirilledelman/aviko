@@ -106,6 +106,14 @@ void Scene::InitClass() {
 		return ((Scene*) b)->clearColor->scriptObject;
 	}) );
 	
+	script.AddProperty<Scene>
+	( "currentFocus",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		Scene* scene = (Scene*) b;
+		if ( scene->focusedUI ) return scene->focusedUI->scriptObject;
+		return (void*) NULL;
+	 }));
+	
 	// functions
 	//...
 	
@@ -174,6 +182,11 @@ void Scene::UIAdded( UIBehavior* ui ) {
 }
 
 void Scene::UIRemoved( UIBehavior* ui ) {
+	
+	// clear if focused
+	if ( this->focusedUI == ui ) this->focusedUI = NULL;
+	
+	// remove if in list
 	vector<UIBehavior*>::iterator it = find( uiElements.begin(), uiElements.end(), ui );
 	if ( it != uiElements.end() ) uiElements.erase( it );
 }

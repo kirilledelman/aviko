@@ -25,6 +25,7 @@ UIBehavior::UIBehavior() {
 	AddEventCallback( EVENT_KEYDOWN, (BehaviorEventCallback) &UIBehavior::Key);
 	AddEventCallback( EVENT_KEYUP, (BehaviorEventCallback) &UIBehavior::Key);
 	AddEventCallback( EVENT_KEYPRESS, (BehaviorEventCallback) &UIBehavior::KeyPress);
+	AddEventCallback( EVENT_NAVIGATION, (BehaviorEventCallback) &UIBehavior::Navigation);
 	AddEventCallback( EVENT_ATTACHED, (BehaviorEventCallback) &UIBehavior::Attached );
 	AddEventCallback( EVENT_DETACHED, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &UIBehavior::AddedToScene );
@@ -37,7 +38,13 @@ UIBehavior::UIBehavior() {
 }
 
 // destructor
-UIBehavior::~UIBehavior() {}
+UIBehavior::~UIBehavior() {
+	
+	// make sure we're not in scene's ui list
+	if ( this->scene  ) {
+		this->scene->UIRemoved( this );
+	}
+}
 
 
 
@@ -80,14 +87,69 @@ void UIBehavior::InitClass() {
 		return val;
 	}));
 	
+	script.AddProperty<UIBehavior>
+	( "navigationLeft",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationLeft ? ui->navigationLeft : NULL; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			script.ReportError( ".navigationLeft can only be set to null or instance of UIBehavior" );
+			return (void*) NULL;
+		}
+		ui->navigationLeft = other;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "navigationRight",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationRight ? ui->navigationRight : NULL; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			script.ReportError( ".navigationRight can only be set to null or instance of UIBehavior" );
+			return (void*) NULL;
+		}
+		ui->navigationRight = other;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "navigationUp",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationUp ? ui->navigationUp : NULL; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			script.ReportError( ".navigationUp can only be set to null or instance of UIBehavior" );
+			return (void*) NULL;
+		}
+		ui->navigationUp = other;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "navigationDown",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationDown ? ui->navigationDown : NULL; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			script.ReportError( ".navigationDown can only be set to null or instance of UIBehavior" );
+			return (void*) NULL;
+		}
+		ui->navigationDown = other;
+		return val;
+	}));
+	
 	// functions
 	
 	script.DefineFunction<UIBehavior>
 	("focus",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
 		UIBehavior* self = (UIBehavior*) p;
-		self->Focus();
-		return true;
+		return self->Focus();
 	} ));
 
 	script.DefineFunction<UIBehavior>
@@ -101,34 +163,36 @@ void UIBehavior::InitClass() {
 }
 
 
-/* MARK:	-				Focus
+/* MARK:	-				Focus and navigation
  -------------------------------------------------------------------- */
 
-void UIBehavior::Focus() {
+bool UIBehavior::Focus() {
 	
 	// if can't be focused, return
-	if ( !this->focusable || !this->scene || !this->gameObject || this->gameObject->orphan ) return;
+	if ( !this->focusable || !this->scene || !this->gameObject || this->gameObject->orphan ) return false;
 	
 	// get current focus
 	UIBehavior* current = this->scene->focusedUI;
 	
 	// already focused?
-	if ( current == this ) return;
+	if ( current == this ) return true;
 	
 	// blur previous
-	if ( current ) current->Blur();
+	if ( current ) current->Blur( false );
 	
 	// set focus
 	this->scene->focusedUI = this;
 	
-	// dispatch event
-	Event event( EVENT_FOCUS );
+	// dispatch event on previous and new focus
+	Event event( EVENT_FOCUSCHANGED );
 	event.scriptParams.AddObjectArgument( this->scriptObject );
 	this->CallEvent( event );
-	
+	if ( current ) current->CallEvent( event );
+
+	return true;
 }
 
-void UIBehavior::Blur() {
+void UIBehavior::Blur( bool sendEvent ) {
 	
 	// if can't be focused, return
 	if ( !this->focusable || !this->scene || !this->gameObject ) return;
@@ -143,15 +207,13 @@ void UIBehavior::Blur() {
 	this->scene->focusedUI = NULL;
 	
 	// dispatch event
-	Event event( EVENT_BLUR );
-	event.scriptParams.AddObjectArgument( this->scriptObject );
-	this->CallEvent( event );
+	if ( sendEvent ) {
+		Event event( EVENT_FOCUSCHANGED );
+		event.scriptParams.AddObjectArgument( NULL );
+		this->CallEvent( event );
+	}
 	
 }
-
-
-/* MARK:	-				Control
- -------------------------------------------------------------------- */
 
 
 bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* localY ) {
@@ -163,8 +225,75 @@ bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* 
 }
 
 
+/// change focus to focusable UI that's in the direction x, y from this control
+void UIBehavior::Navigate( float x, float y ) {
+	
+	// normalize direction
+	Uint8 dir = ( y < 0 ? 0 :
+				 ( y > 0 ? 2 :
+				  ( x > 0 ? 1 : 3 ) ) );
+	
+	// check overrides
+	UIBehavior* other = NULL;
+	if ( dir == 0 && this->navigationUp ) other = this->navigationUp;
+	else if ( dir == 1 && this->navigationRight ) other = this->navigationRight;
+	else if ( dir == 2 && this->navigationDown ) other = this->navigationDown;
+	else if ( dir == 3 && this->navigationLeft ) other = this->navigationLeft;
+
+	// not overridden
+	if ( !other ) {
+		
+		// get 0, 0 of this control in global coords
+		float localX, localY;
+		this->gameObject->ConvertPoint( 0, 0, localX, localY, true );
+		
+		// set of control/distance from this control
+		unordered_map<UIBehavior*,float> candidates;
+		
+		// for each UI
+		for ( size_t i = 0, nc = this->scene->uiElements.size(); i < nc; i++ ) {
+			other = this->scene->uiElements[ i ];
+			if ( other == this || !other->focusable || !other->Behavior::active() ) continue;
+			
+			// check if it's in the correct direction
+			float otherX, otherY;
+			other->gameObject->ConvertPoint( 0, 0, otherX, otherY, true );
+			
+			// skip if in wrong dir
+			if ( ( dir == 0 && localY <= otherY ) ||
+				( dir == 1 && localX >= otherX ) ||
+				( dir == 2 && localY >= otherY ) ||
+				( dir == 3 && localX <= otherX ) ) continue;
+			
+			// add to candidates
+			float xx = localX - otherX, yy = localY - otherY;
+			candidates[ other ] = sqrt( xx * xx + yy * yy );
+		}
+		
+		// pick candidate with shortest dist
+		other = NULL;
+		float minDist = 0;
+		unordered_map<UIBehavior*,float>::iterator it = candidates.begin(), end = candidates.end();
+		while( it != end ) {
+			if ( !other || ( other && it->second < minDist ) ) {
+				other = it->first;
+				minDist = it->second;
+			}
+			it++;
+		}
+		
+	}
+	
+	// if candidate is found, focus on it
+	if ( other ) other->Focus();
+	
+}
+
+
+
 /* MARK:	-				Events
  -------------------------------------------------------------------- */
+
 
 void UIBehavior::MouseMove( UIBehavior* behavior, Event* e){
 	float x = e->scriptParams.args[ 0 ].value.floatValue;
@@ -247,7 +376,45 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, Event* e){
 
 }
 
-void UIBehavior::Navigation( UIBehavior* behavior, Event* e){}
+void UIBehavior::Navigation( UIBehavior* behavior, Event* e ){
+	// if focused
+	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
+		
+		// event handled
+		e->stopped = true;
+		
+		// get name and direction
+		string axisName = *e->scriptParams.args[ 0 ].value.stringValue;
+		float direction = 0;
+		e->scriptParams.args[ 1 ].toNumber( direction );
+		float x = axisName.compare( app.input.navigationXAxis ) == 0 ? direction : 0;
+		float y = axisName.compare( app.input.navigationYAxis ) == 0 ? direction : 0;
+		
+		// if this is "up" event, ignore
+		if ( direction == 0 ) return;
+		
+		// dispatch event to this behavior
+		behavior->CallEvent( *e );
+		
+		// if it's a directional event, and focus didn't change
+		if ( behavior->scene->focusedUI == behavior && ( x != 0 || y != 0 ) ) {
+		
+			// determine new focus
+			behavior->Navigate( x, y );
+			
+		// if it's accept
+		} else if ( axisName.compare( app.input.navigationAccept ) ) {
+		
+			// generate 'click' event
+			Event event( EVENT_CLICK );
+			event.scriptParams.AddIntArgument( 0 );
+			event.scriptParams.AddFloatArgument( 0 );
+			event.scriptParams.AddFloatArgument( 0 );
+			behavior->CallEvent( event );
+			
+		}
+	}
+}
 
 void UIBehavior::Key( UIBehavior* behavior, Event* e){
 	// only forward event if this object has focus
@@ -264,16 +431,26 @@ void UIBehavior::KeyPress( UIBehavior* behavior, Event* e){
 }
 
 void UIBehavior::ActiveChanged( UIBehavior* behavior, GameObject* topObject ){
-	
-	// todo - reset state, and blur, if deactivated
-	
-	// focused?
-	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
-		
-		
+	// if now belong to inactivated object hierarchy
+	if ( topObject && !topObject->active() ) {
+		// blur
+		behavior->Blur();
+		// clear mouse flags
+		behavior->mouseOver = false;
+		behavior->mouseDown[ 0 ] = behavior->mouseDown[ 1 ] = behavior->mouseDown[ 2 ] = behavior->mouseDown[ 3 ] = false;
 	}
-	
 }
+
+bool UIBehavior::active( bool a ) {
+	// clear focus and flags
+	if ( !a ) {
+		this->Blur();
+		this->mouseOver = false;
+		this->mouseDown[ 0 ] = this->mouseDown[ 1 ] = this->mouseDown[ 2 ] = this->mouseDown[ 3 ] = false;
+	}
+	// return new active
+	return this->_active = a;
+};
 
 void UIBehavior::AddedToScene( UIBehavior* behavior, GameObject* topObject ){
 	

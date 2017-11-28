@@ -45,7 +45,14 @@ public:
 	
 // ui
 	
+	/// passes event on current scene's UIBehaviors
 	void UIEvent( Event& event );
+	
+	// controllers check these axis names and forward events to UIBehaviors if matched
+	string navigationXAxis = "horizontal";
+	string navigationYAxis = "vertical";
+	string navigationAccept = "accept";
+	string navigationCancel = "cancel";
 	
 	// init, destroy
 	Input();

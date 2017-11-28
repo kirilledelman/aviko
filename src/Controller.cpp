@@ -498,6 +498,19 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 		
 		// dispatch
 		this->CallEvent( event );
+		
+		// check if binding name matches any of UI navigation events
+		if ( b.action.compare( app.input.navigationXAxis ) == 0 ||
+			b.action.compare( app.input.navigationYAxis ) == 0 ||
+			b.action.compare( app.input.navigationAccept ) == 0 ||
+			b.action.compare( app.input.navigationCancel ) == 0 ) {
+			
+			// dispatch as navigation event
+			event.SetName( EVENT_NAVIGATION );
+			app.input.UIEvent( event );
+			
+		}
+		
 	}
 	
 }
@@ -506,57 +519,53 @@ void Controller::HandleEvent( SDL_Event& e ) {
 	
 	// only bother if we have event listeners
 	Uint32 etype = e.type;
-	if ( this->eventListeners.size() > 0 ) {
+	int key = -1;
+	BindMapIterator it;
+	if ( ( etype == SDL_KEYDOWN && e.key.repeat == 0 ) || etype == SDL_KEYUP ) {
 		
-		int key = -1;
-		BindMapIterator it;
-		if ( ( etype == SDL_KEYDOWN && e.key.repeat == 0 ) || etype == SDL_KEYUP ) {
-			
-			key = e.key.keysym.scancode;
-			
-		} else if ( etype == SDL_MOUSEBUTTONDOWN || etype == SDL_MOUSEBUTTONUP ) {
-			
-			key = KEY_MOUSE_BUTTON;
-			
-		} else if ( etype == SDL_JOYBUTTONDOWN || etype == SDL_JOYBUTTONUP ) {
-			
-			key = KEY_JOY_BUTTON;
-			
-		} else if ( etype == SDL_JOYAXISMOTION ) {
-			
-			key = KEY_JOY_AXIS;
-			
-		} else if ( etype == SDL_JOYHATMOTION ) {
-			
-			// do horizontal
-			key = KEY_JOY_HAT_X;
-			
-			// dispatch
-			it = this->bindings.find( key );
-			if ( it != this->bindings.end() ) this->DispatchActions( key, e, it->second );
-			
-			// switch to vertical
-			key = KEY_JOY_HAT_Y;
-
-		} else if ( etype == SDL_MOUSEWHEEL ) {
-			
-			// do standard vertical
-			key = KEY_MOUSE_WHEEL;
-			
-			// dispatch
-			it = this->bindings.find( key );
-			if ( it != this->bindings.end() ) this->DispatchActions( key, e, it->second );
-			
-			// switch to horizontal
-			key = KEY_MOUSE_WHEEL_X;
-			
-		} else return;
+		key = e.key.keysym.scancode;
+		
+	} else if ( etype == SDL_MOUSEBUTTONDOWN || etype == SDL_MOUSEBUTTONUP ) {
+		
+		key = KEY_MOUSE_BUTTON;
+		
+	} else if ( etype == SDL_JOYBUTTONDOWN || etype == SDL_JOYBUTTONUP ) {
+		
+		key = KEY_JOY_BUTTON;
+		
+	} else if ( etype == SDL_JOYAXISMOTION ) {
+		
+		key = KEY_JOY_AXIS;
+		
+	} else if ( etype == SDL_JOYHATMOTION ) {
+		
+		// do horizontal
+		key = KEY_JOY_HAT_X;
 		
 		// dispatch
 		it = this->bindings.find( key );
 		if ( it != this->bindings.end() ) this->DispatchActions( key, e, it->second );
 		
-	}
+		// switch to vertical
+		key = KEY_JOY_HAT_Y;
+
+	} else if ( etype == SDL_MOUSEWHEEL ) {
+		
+		// do standard vertical
+		key = KEY_MOUSE_WHEEL;
+		
+		// dispatch
+		it = this->bindings.find( key );
+		if ( it != this->bindings.end() ) this->DispatchActions( key, e, it->second );
+		
+		// switch to horizontal
+		key = KEY_MOUSE_WHEEL_X;
+		
+	} else return;
+	
+	// dispatch
+	it = this->bindings.find( key );
+	if ( it != this->bindings.end() ) this->DispatchActions( key, e, it->second );
 	
 }
 

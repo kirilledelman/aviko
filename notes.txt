@@ -1,16 +1,11 @@
-
-
+UIBehavior
+	add .evalOnClick property - evals script
 
 Image + autoDraw for scrollable containers
 
-
-RigidBody
-	RigidBodyShape class
-	body.addShape
-	body.getShape
-	body.removeShape
-	Joints etc.
-
+ScriptableObject.async( function, sec ) - use eventListeners style interface/container
+ScriptableObject.debounce( string, function, time )
+ScriptableObject.cancelDebouncer( string )
 
 RenderText - add multiline rendering(alignment)
 	add measurement wo/ render
@@ -21,8 +16,14 @@ Image
 	save( pngpath )in /textures by default
 	.base64 <-> string
 
+RigidBody
+	RigidBodyShape class
+	body.addShape
+	body.getShape
+	body.removeShape
+	Joints etc.
 
-make it necessary to hold Q to quit or use Ctrl+Q
+
 
 =============================================
 
@@ -30,11 +31,35 @@ Nice to have
 
 =============================================
 
-Add logging level - none, normal, verbose
+
+GameObject
+.isChildOf( another ) - check descendency
+$( 'childname,childname,childname' ) -> [] children
+$( 'name/name/name' ) -> great-grandchild
+$( 'child/childname,childname,childname' ) -> [] grandchildren
+$( 'name/name/name' ) -> great-grandchild
+$( '../sibling' ) -> sibling named
+can extend later to filter by properties
+
+TweenBehavior
+GameObject gets .tween var/behavior
+.tween gets created if doesn't exist on access?
+methods:
+.moveTo( x, y, duration, easetype, onCompleteCallback ) - transition x,y together
+.scaleTo
+.rotateTo
+.transition( propname, startval, endval, duration, ease, onComplete )
+.transition( object, propname, startval, endval, duration, ease, onComplete )
+What about world space? Make it .body aware?
 
 RenderSprite
 	displace shader?
 
+Add logging level - none, normal, verbose
+
+Can extend Texture to add masks, blur, etc filters on Texture object
+Can use this class to download images .src = url
+And to save images to disk
 
 
 Network class
@@ -43,43 +68,17 @@ Network class
 	socket communication - ? - https://developers.google.com/talk/libjingle/developer_guide#about-the-libjingle-sdk
 
 
-
-
-
-Can extend Texture to add masks, blur, etc filters on Texture object
-	Can use this class to download images .src = url
-	And to save images to disk
-
-
 Input should be able to read retroarch config
 	https://github.com/RetroPie/RetroPie-Setup/wiki/RetroArch-Configuration
 
-TweenBehavior
-	GameObject gets .tween var/behavior
-	.tween gets created if doesn't exist on access
-	methods:
-		.moveTo( x, y, duration, easetype, onCompleteCallback ) - transition x,y together
-		.scaleTo
-		.rotateTo
-		.transition( propname, startval, endval, duration, ease, onComplete )
-		.transition( object, propname, startval, endval, duration, ease, onComplete )
-	What about world space? Make it .body aware?
 
 Intern all built-in-event strings
 
-Timer, async, debounce
 
 Promise-like interface?
 
 Look up box2d elevators ( distance joint? + fixed rotation )
 
-
-GameObject
-	$( 'childname,childname,childname' ) -> [] children
-	$( 'name/name/name' ) -> great-grandchild
-	can extend later to filter by properties
-
-Modulation + additive color? - check examples for shader
 
 FXPORT.jsfl
 

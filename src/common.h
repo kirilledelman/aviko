@@ -96,8 +96,7 @@ string HexStr( Uint32 w, size_t hex_len );
 #define EVENT_MOUSEOUT "mouseOut"
 #define EVENT_CLICK "click"
 #define EVENT_MOUSEUPOUTSIDE "mouseUpOutside"
-#define EVENT_FOCUS "focus"
-#define EVENT_BLUR "blur"
+#define EVENT_FOCUSCHANGED "focusChanged"
 #define EVENT_NAVIGATION "navigation"
 
 // input key defines

@@ -623,7 +623,7 @@ void Application::GameLoop() {
 			input.HandleEvent( e );
 			
 			// Exit on escape
-			if ( e.type == SDL_QUIT || ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE ) ) { run = false; break; }
+			if ( e.type == SDL_QUIT || ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE && e.key.repeat > 0 ) ) { run = false; break; }
 
 		}
 		

@@ -62,6 +62,9 @@ struct Event {
 	/// if true, it's dispatched in children first, then parent (GameObject uses this)
 	bool bubbles = false;
 	
+	/// for stopping event processing loops
+	bool stopped = false;
+	
 	/// param passed to behaviors
 	void* behaviorParam = NULL;
 	/// parameters passed to script event handlers for this event
