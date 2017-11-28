@@ -1,5 +1,4 @@
-UI behavior
-	gameObject.ui
+
 
 
 Image + autoDraw for scrollable containers

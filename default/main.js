@@ -4,39 +4,24 @@ app.setWindowSize( 800, 480, 2 );
 
 app.scene = new Scene();
 
-var go = new GameObject();
-go.render = new RenderSprite( "mom" );
+var go = app.scene.addChild( new GameObject() );
+go.render = new RenderSprite( "btn/btn" );
+go.render.sliceLeft = go.render.sliceRight = 0.25;
+go.render.width = 100;
+go.ui = new UI();
 go.x = 100; go.y = 100;
 
-var ui = go.ui = new UI();
+go.ui.mouseOver = function(){ go.render.addColor.set( 0x333333 ); };
 
-app.scene.addChild( go );
+go.ui.mouseOut = function(){ go.render.addColor.set( 0x0 ); };
 
-ui.mouseOver = function(){
-	  go.render.addColor.set( 0x333333 );
-};
-
-ui.mouseOut = function(){
-		 go.render.addColor.set( 0x0 );
-};
-
-ui.click = function(){
-	log( "CLICK" );
+go.ui.click = function(){
 	ui.focus();
+	log( "focused on ", go, this );
 };
 
-ui.mouseUpOutside = function(){
-	   log( "up outside" );
-	ui.blur();
-};
-
-ui.mouseWheel = function ( y, x ){
-	go.y += y;
-	go.x += x;
-};
-
-ui.keyDown = ui.keyUp = ui.keyPress = function () {
-	log( Array.prototype.slice.apply( arguments ) );
+go.ui.keyPress = function () {
+	log( go, "keyPress:", Array.prototype.slice.apply( arguments ) );
 };
 
 
