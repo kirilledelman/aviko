@@ -1,0 +1,5 @@
+sudo mkdir /Volumes/pi
+sudo sshfs -o allow_other,defer_permissions pi@192.168.0.11:/home/pi/ /Volumes/pi
+sudo sshfs -o allow_other,defer_permissions pi@192.168.0.11:/ /Volumes/piroot
+
+

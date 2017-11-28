@@ -1,0 +1,212 @@
+UI behavior
+	gameObject.ui
+
+
+Image + autoDraw for scrollable containers
+
+
+RigidBody
+	RigidBodyShape class
+	body.addShape
+	body.getShape
+	body.removeShape
+	Joints etc.
+
+
+RenderText - add multiline rendering(alignment)
+	add measurement wo/ render
+	add outline+color
+	maybe quality switch too
+
+Image
+	save( pngpath )in /textures by default
+	.base64 <-> string
+
+
+make it necessary to hold Q to quit or use Ctrl+Q
+
+=============================================
+
+Nice to have
+
+=============================================
+
+Add logging level - none, normal, verbose
+
+RenderSprite
+	displace shader?
+
+
+
+Network class
+	post/get http communication w forms/fields - https://curl.haxx.se/libcurl/
+	downloading as string (can json-parse)
+	socket communication - ? - https://developers.google.com/talk/libjingle/developer_guide#about-the-libjingle-sdk
+
+
+
+
+
+Can extend Texture to add masks, blur, etc filters on Texture object
+	Can use this class to download images .src = url
+	And to save images to disk
+
+
+Input should be able to read retroarch config
+	https://github.com/RetroPie/RetroPie-Setup/wiki/RetroArch-Configuration
+
+TweenBehavior
+	GameObject gets .tween var/behavior
+	.tween gets created if doesn't exist on access
+	methods:
+		.moveTo( x, y, duration, easetype, onCompleteCallback ) - transition x,y together
+		.scaleTo
+		.rotateTo
+		.transition( propname, startval, endval, duration, ease, onComplete )
+		.transition( object, propname, startval, endval, duration, ease, onComplete )
+	What about world space? Make it .body aware?
+
+Intern all built-in-event strings
+
+Timer, async, debounce
+
+Promise-like interface?
+
+Look up box2d elevators ( distance joint? + fixed rotation )
+
+
+GameObject
+	$( 'childname,childname,childname' ) -> [] children
+	$( 'name/name/name' ) -> great-grandchild
+	can extend later to filter by properties
+
+Modulation + additive color? - check examples for shader
+
+FXPORT.jsfl
+
+=============================================
+
+Installing
+
+=============================================
+
+# Common:
+
+sudo apt update
+sudo apt install libsdl2-2.0-0 libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dev libsdl2-mixer-2.0-0 libsdl2-mixer-dev libsdl2-net-2.0-0 libsdl2-net-dev libsdl2-ttf-2.0-0 libsdl2-ttf-dev libmozjs-24-0 libmozjs-24-dev
+
+
+
+
+=============================================
+
+Building and dependencies
+
+=============================================
+
+SDL_gpu - compile from source:
+	git clone https://github.com/grimfang4/sdl-gpu.git sdl-gpu
+	use cmake to turn off building demos
+
+Pi:
+	CMakeLists.txt - disable all but OpenGL 1 base and OpenGLES 2.x renderer
+	cmake -G "Unix Makefiles"
+	make
+
+Mac:
+SDL_gpu linking:
+	included SDL_gpu.h is from sdl-gpu/lib/include, not from framework, and is linked to static library
+	SDL2_gpu.framework is needed to make "_glXXXX not found" go away.
+
+---------------------------------------------
+
+Spidermonkey javascript engine:
+
+Mac:
+	https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/Build_Documentation
+	To get autoconf-2.13 - brew tap homebrew/versions and then brew install autoconf@2.13
+
+	Download/extract source
+	https://archive.mozilla.org/pub/firefox/releases/24.0esr/source/firefox-24.0esr.source.tar.bz2
+
+	cd js/src; autoconf-2.13
+	mkdir build_DBG.OBJ; cd build_DBG.OBJ
+	../configure --enable-debug --disable-optimize
+	make
+	sudo make install
+	this adds to /usr/local/include/ and /usr/local/lib/ and /usr/local/bin/js-config
+
+---------------------------------------------
+
+XCode settings:
+
+FRAMEWORK_SEARCH_PATHS = $(inherited) /Library/Frameworks/ $(LOCAL_LIBRARY_DIR)/Frameworks $(PROJECT_DIR)/sdl-gpu/lib/Debug/ $(PROJECT_DIR)/** /usr/local/lib/
+HEADER_SEARCH_PATHS = /usr/local/include/mozjs-24.0 /usr/local/opt/nspr/include/nspr $(PROJECT_DIR)/**
+LIBRARY_SEARCH_PATHS = $(inherited) $(PROJECT_DIR) /usr/local/lib
+USER_HEADER_SEARCH_PATHS = $(PROJECT_DIR)/sdl-gpu/lib/include /Library/Frameworks/SDL2.framework/Headers
+
+
+==========================
+
+5" HDMI LCD on Raspberry Pi:
+max_usb_current=1
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt 800 480 60 6 0 0 0
+hdmi_drive=1
+display_rotate=180
+
+arm_freq=1350
+gpu_freq=550
+core_freq=550
+sdram_freq=550
+over_voltage=6
+v3d_freq=550
+
+gpu_mem_1024=512
+
+
+5" HDMI LCD on Orange Pi:
+cd /boot/
+cp /boot/script.bin /boot/bin/script.bin.backup
+
+//convert file
+bin2fex script.bin script.fex
+//edit file
+nano script.fex
+
+//replace the section
+[disp_init] and [hdmi_para]
+
+//by this :
+
+[disp_init]
+disp_init_enable = 1
+disp_mode = 0
+screen0_output_type = 3
+screen0_output_mode = 31
+screen1_output_type = 3
+screen1_output_mode = 31
+fb0_width = 800
+fb0_height = 480
+fb1_width = 800
+fb1_height = 480
+
+[hdmi_para]
+hdmi_used = 1
+hdmi_x = 800
+hdmi_y = 480
+hdmi_power = "vcc-hdmi-18"
+hdmi_cts_compatibility = 1
+
+//after save ctrl+x + yes
+
+//after convert back to bin
+
+fex2bin script.fex script.bin
+
+sudo nano /etc/X11/xorg.conf.d/50-fbturbo.conf
+
+add Option "Rotate" "UD" to flip upside down
+
+

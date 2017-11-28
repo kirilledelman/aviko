@@ -1,0 +1,1575 @@
+#ifndef ScriptHost_hpp
+#define ScriptHost_hpp
+
+#include "common.h"
+#include "ScriptArguments.hpp"
+#include "ScriptResource.hpp"
+
+/* MARK:	-				Get/set callback types
+ 
+ Different types of getter an setter callbacks, based on value types
+ Each receives a pointer to ScriptableClass object who registered this
+ callback, and a value. Getters receive currently stored value, setters
+ receive value that the script is trying to set. Callback must return
+ the final value to return as getter, or set as setter.
+ -------------------------------------------------------------------- */
+
+
+/// getter and setter callbacks with various types
+typedef function<bool (void*, bool)> ScriptBoolCallback;
+typedef function<int32_t (void*, int32_t)> ScriptIntCallback;
+typedef function<float (void*, float)> ScriptFloatCallback;
+typedef function<void* (void*, void*)> ScriptObjectCallback;
+typedef function<string (void*, string&)> ScriptStringCallback;
+typedef function<ArgValueVector* (void*, ArgValueVector*)> ScriptArrayCallback;
+typedef function<ArgValue (void*, ArgValue)> ScriptValueCallback;
+typedef function<ArgValue (void*, uint32_t, ArgValue)> ScriptIndexCallback; // for object[ int ] access
+
+/// function callback with arguments
+typedef function<bool (void*, ScriptArguments&)> ScriptFunctionCallback;
+
+
+/* MARK:	-				Script Class Name
+ 
+ A template, used when registering various class properties and functions,
+ via static calls like AddProperty<MyClass>( prop, getter, setter ), to
+ convert or lookup MyClass to string "MyClass". To make your class scriptable,
+ add SCRIPT_CLASS_NAME( MyClass, "ClassName" ); before class declaration. Also, class must
+ inherit from ScriptableClass.
+ -------------------------------------------------------------------- */
+
+
+/// template for mapping CLASS -> "Class"
+template <class T> struct ScriptClassName { static const string& name(){ static string _name = ""; return _name; } };
+
+/// for each class that needs to be scriptable, use this macro to define class name
+#define SCRIPT_CLASS_NAME(CLASS,CLASSNAME)	template <> struct ScriptClassName<CLASS> { static const string& name(){ static string _name = CLASSNAME; return _name; } };
+
+
+/* MARK:	-				Script Host
+ 
+ Master class wrapping Spidermonkey Javascript engine.
+ A descendent of ScriptableClass can make itself available inside script
+ by using SCRIPT_CLASS_NAME template, and then calling
+ RegisterClass(), AddProperty, DefineFunction, GetProperty, and SetProperty
+ to define class characteristics.
+ 
+ When instances are created from script, a constructor of your class with
+ (ScriptArguments*) as a parameter will be called. You must call
+ script.NewObject<MyClass>( this ) to attach a scriptObject to your instance.
+ 
+ When Javascript garbage collector destroys script object representation of
+ your class, it will also delete your object.
+ 
+ -------------------------------------------------------------------- */
+
+
+class ScriptHost {
+private:
+	
+	/// stores a callback of a specific type
+	struct ScriptCallback {
+		ScriptValueCallback valueCallback;
+		ScriptBoolCallback boolCallback;
+		ScriptIntCallback intCallback;
+		ScriptFloatCallback floatCallback;
+		ScriptObjectCallback objectCallback;
+		ScriptStringCallback stringCallback;
+		ScriptArrayCallback arrayCallback;
+		ScriptIndexCallback indexCallback;
+	};
+
+#define PROP_ENUMERABLE 0x01
+#define PROP_STATIC 	0x02
+#define PROP_SERIALIZED 0x04
+#define PROP_READONLY 	0x10
+#define PROP_NOSTORE 	0x20
+#define PROP_LATE	 	0x40
+
+	/// struct storing a getter and a setter for an class property
+	struct GetterSetter {
+		ScriptType type;
+		ScriptCallback getterSetter[2];
+		unsigned flags = 0;
+	
+		// constructor with type
+		GetterSetter( ScriptType st, unsigned flags ) : type( st ), flags( flags ) {}
+		GetterSetter(){};
+		
+		// initializers for each type
+		void Init( ScriptValueCallback* g, ScriptValueCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].valueCallback = *g; if ( s ) getterSetter[1].valueCallback = *s;
+		}
+		void Init( ScriptBoolCallback* g, ScriptBoolCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].boolCallback = *g; if ( s ) getterSetter[1].boolCallback = *s;
+		}
+		void Init( ScriptIntCallback* g, ScriptIntCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].intCallback = *g; if ( s ) getterSetter[1].intCallback = *s;
+		}
+		void Init( ScriptFloatCallback* g, ScriptFloatCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].floatCallback = *g; if ( s ) getterSetter[1].floatCallback = *s;
+		}
+		void Init( ScriptObjectCallback* g, ScriptObjectCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].objectCallback = *g; if ( s ) getterSetter[1].objectCallback = *s;
+		}
+		void Init( ScriptStringCallback* g, ScriptStringCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].stringCallback = *g; if ( s ) getterSetter[1].stringCallback = *s;
+		}
+		void Init( ScriptArrayCallback* g, ScriptArrayCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].arrayCallback = *g; if ( s ) getterSetter[1].arrayCallback = *s;
+		}
+		void Init( ScriptIndexCallback* g, ScriptIndexCallback *s=NULL ) {
+			flags |= ( s == NULL ? PROP_READONLY : 0 );
+			getterSetter[0].indexCallback = *g; if ( s ) getterSetter[1].indexCallback = *s;
+		}
+		
+	};
+	
+	/// property name -> getter + setter
+	typedef unordered_map<string, GetterSetter> GetterSetterMap;
+	typedef unordered_map<string, GetterSetter>::iterator GetterSetterMapIterator;
+	
+	/// function name -> callback
+	typedef unordered_map<string, ScriptFunctionCallback> FuncMap;
+	typedef unordered_map<string, ScriptFunctionCallback>::iterator FuncMapIterator;
+	
+	/// class definition structure
+	struct ClassDef {
+		
+		/// class name visible in script
+		string className = "[Uninitialized]";
+		
+		/// if true, this class can't be instantiated with 'new' in script
+		bool singleton = false;
+		
+		/// Spidermonkey JSClass structure
+		JSClass jsc = {
+			NULL,
+			JSCLASS_HAS_PRIVATE,
+			JS_PropertyStub,
+			JS_DeletePropertyStub,
+			JS_PropertyStub,
+			JS_StrictPropertyStub,
+			JS_EnumerateStub,
+			JS_ResolveStub,
+			JS_ConvertStub
+		};
+		
+		/// class prototype object
+		JSObject* proto = NULL;
+		
+		/// parent class
+		ClassDef* parent = NULL;
+		
+		/// property name -> getter + setter
+		GetterSetterMap getterSetter;
+		
+		/// funcname -> ScriptFunctionCallback
+		FuncMap funcs;
+
+	};
+
+	/// callback for Javascript errors
+	static void _PrintError ( JSContext *cx, const char *message, JSErrorReport *report ){
+		
+		printf( "%s:%u\n%s\n",
+			   report->filename ? report->filename : "[top]",
+			   (unsigned int) report->lineno,
+			   message);
+		//exit( 1 );
+		
+	}
+	
+	/// class name -> class definition struct
+	typedef unordered_map<string, ClassDef> ClassMap;
+	typedef unordered_map<string, ClassDef>::iterator ClassMapIterator;
+	
+	/// class definitions
+	ClassMap classDefinitions;
+	
+	/// global Javascript class
+	JSClass global_class;
+	
+	/// function callbacks for global class function overrides (i.e. functions added to built-in classes, like String)
+	FuncMap classFuncCallbacks;
+	
+	/// global garbage collector compartment
+	JSAutoCompartment *compartment = NULL;
+	
+	
+/* MARK:	-				Property get/set
+ -------------------------------------------------------------------- */
+	
+	
+	/// helper to look up class definition by class name
+	inline static ClassDef* CDEF( string className ) {
+		ClassMapIterator p = script.classDefinitions.find( className );
+		return p == script.classDefinitions.end() ? NULL : &p->second;
+	}
+	
+	/// generic resolver + getter/setter
+	bool PropGetterSetter( JSContext *cx, int getOrSet, void* self, ClassDef* cdef, string& propName, JS::MutableHandleValue vp, uint32_t index=0 ) {
+		
+		// get callback
+		GetterSetterMapIterator gsi = cdef->getterSetter.find( propName );
+		
+		// if found
+		if ( gsi != cdef->getterSetter.end() ) {
+			GetterSetter *gs = &gsi->second;
+			
+			// if setting a read only prop, fail
+			if ( getOrSet == 1 && ( gs->flags & PROP_READONLY ) ) return false;
+			
+			// based on property type, call callback
+			if ( gs->type == TypeFloat ) {
+				double dval = 0;
+				ToNumber( cx, vp, &dval );
+				vp.setDouble( (double) gs->getterSetter[getOrSet].floatCallback( self, (float) dval ) );
+			} else if ( gs->type == TypeInt ){
+				int32_t ival = 0;
+				ToInt32( cx, vp, &ival );
+				vp.setInt32( gs->getterSetter[getOrSet].intCallback( self, ival ) );
+			} else if ( gs->type == TypeBool ) {
+				bool bval = ToBoolean( vp );
+				vp.setBoolean( gs->getterSetter[getOrSet].boolCallback( self, bval ) );
+			} else if ( gs->type == TypeObject ) {
+				JSObject* oval = vp.isObjectOrNull() ? vp.toObjectOrNull() : NULL;
+				vp.setObjectOrNull( (JSObject*) gs->getterSetter[getOrSet].objectCallback( self, oval ) );
+			} else if ( gs->type == TypeValue ) {
+				vp.set( gs->getterSetter[getOrSet].valueCallback ( self, ArgValue( vp.get() ) ).toValue() );
+			} else if ( gs->type == TypeString ){
+				JSString* str = JS_ValueToString( cx, vp );
+				char* sval = JS_EncodeString( cx, str );
+				string stval = sval;
+				JS_free( cx, sval );
+				stval = gs->getterSetter[getOrSet].stringCallback( self, stval );
+				RootedString str2( cx, JS_NewStringCopyZ( cx, stval.c_str() ) );
+				vp.setString( str2 );
+			} else if ( gs->type == TypeIndex ) {
+				vp.set( gs->getterSetter[getOrSet].indexCallback ( self, index, ArgValue( vp.get() ) ).toValue() );
+			} else if ( gs->type == TypeArray ){
+				ArgValue av( vp.get() );
+				ArgValueVector *in = av.value.arrayValue;
+				ArgValueVector *out = gs->getterSetter[getOrSet].arrayCallback( self, in );
+				if ( out ) {
+					vp.set( ScriptArguments::ArrayToVal( *out ) );
+					if ( out != in ) delete out;
+				} else {
+					vp.setNull();
+				}				
+			}
+			
+			return true;
+			
+		} else if ( cdef->parent ) {
+			
+			// try in parent
+			return script.PropGetterSetter( cx, getOrSet, self, cdef->parent, propName, vp );
+			
+		}
+		
+		// not found
+		return true;
+		
+	}
+	
+	/// generic setter
+	static bool PropSetter( JSContext *cx, HandleObject obj, HandleId id, bool strict, MutableHandleValue vp ){
+		// scoped request
+		JSAutoRequest req( cx );
+		JSAutoCompartment( cx, obj );
+		
+		// find class
+		JSClass* jc = JS_GetClass( obj );
+		ClassDef *cdef = CDEF( string( jc->name ) );
+		
+		// if found, and [id] is string
+		if ( cdef && JSID_IS_STRING( id ) ) {
+			// get property name
+			char *idString = JS_EncodeString( cx, JSID_TO_STRING( id ) );
+			string propName(idString);
+			JS_free( cx, idString );
+			
+			return script.PropGetterSetter( cx, 1, JS_GetPrivate( obj ), cdef, propName, vp );
+		// id is integer
+		} else if( JSID_IS_INT( id ) ) {
+			string numProp("#");
+			return script.PropGetterSetter( cx, 1, JS_GetPrivate( obj ), cdef, numProp, vp, JSID_TO_INT( id ) );
+		}
+		
+		return true;
+	}
+	
+	/// generic getter
+	static bool PropGetter (JSContext *cx, HandleObject obj, HandleId id, MutableHandleValue vp ) {
+		// scoped request
+		JSAutoRequest req( cx );
+		JSAutoCompartment( cx, obj );
+		
+		// find class
+		JSClass* jc = JS_GetClass( obj );
+		ClassDef *cdef = CDEF( string( jc->name ) );
+		
+		// if found, and [id] is string
+		if ( cdef && JSID_IS_STRING( id ) ) {
+			// get property name
+			char *idString = JS_EncodeString( cx, JSID_TO_STRING( id ) );
+			string propName(idString);
+			JS_free( cx, idString );
+			
+			return script.PropGetterSetter( cx, 0, JS_GetPrivate( obj ), cdef, propName, vp );
+			
+		// id is integer
+		} else if( JSID_IS_INT( id ) ){
+			string numProp("#");
+			return script.PropGetterSetter( cx, 0, JS_GetPrivate( obj ), cdef, numProp, vp, JSID_TO_INT( id ) );
+		}
+		
+		return true;
+	}
+	// define function
+	
+	
+/* MARK:	-				Function callback
+ -------------------------------------------------------------------- */
+
+	
+	template <class CLASS>
+	static bool FuncCallbackCall ( JSContext *cx, ClassDef* cdef, CLASS* self, string& funcName, ScriptArguments& args ) {
+		// recursive search for func
+		FuncMapIterator fi = cdef->funcs.find( funcName );
+		if ( fi != cdef->funcs.end() ){
+			ScriptFunctionCallback &callback = fi->second;
+			bool ret = callback( self, args );
+			ret = ret && !JS_IsExceptionPending( cx );
+			return ret;
+		} else if ( cdef->parent ){
+			return FuncCallbackCall( cx, cdef->parent, self, funcName, args );
+		}
+		return false;
+	}
+	
+	template <class CLASS>
+	static bool FuncCallback ( JSContext *cx, unsigned argc, Value *vp ) {
+		// scope
+		JSAutoRequest req( cx );
+		
+		// get object and construct arguments
+		CallArgs args = CallArgsFromVp( argc, vp );
+		ScriptArguments sa( &args );
+		JSObject* obj = &args.thisv().toObject();
+		CLASS* self = (CLASS*) JS_GetPrivate( obj );
+		
+		// look up
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		jsval name;
+		JS_GetProperty( cx, &args.callee(), "name", &name );
+		
+		// jsstring to string
+		char *buf = JS_EncodeString( cx, JSVAL_TO_STRING( name ) );
+		string funcName(buf);
+		JS_free( cx, buf );
+		
+		// find and call func
+		return FuncCallbackCall( cx, classDef, self, funcName, sa );
+	}
+	
+	static bool ClassFuncCallback ( JSContext *cx, unsigned argc, Value *vp ) {
+		// scope
+		JSAutoRequest req( cx );
+		
+		// construct arguments
+		CallArgs args = CallArgsFromVp( argc, vp );
+		ScriptArguments sa( &args );
+		JSObject* obj = &args.thisv().toObject();
+		string key;
+		
+		// find function name
+		jsval name;
+		JS_GetProperty( cx, &args.callee(), "name", &name );
+		
+		// jsstring to string
+		char *buf = JS_EncodeString( cx, JSVAL_TO_STRING( name ) );
+		string funcName = buf;
+		JS_free( cx, buf );
+
+		// global function
+		if ( obj == script.global_object ) {
+			
+			// just funcName
+			key = funcName;
+
+		// class function
+		} else {
+			// get classname
+			JSClass* clp = JS_GetClass( obj );
+			
+			// key into table is Class.FunctionName
+			key = clp->name;
+			key.append( "." );
+			key.append( funcName );
+		}
+		
+		// find function
+		FuncMapIterator it = script.classFuncCallbacks.find( key );
+		if ( it == script.classFuncCallbacks.end() ) return false;
+		
+		// call it
+		ScriptFunctionCallback &callback = it->second;
+		bool ret = callback( (void*) obj, sa );
+		ret = ret && !JS_IsExceptionPending( cx );
+		return ret;
+	}
+	
+	static bool GlobalFuncCallback ( JSContext *cx, unsigned argc, Value *vp ) {
+		// scope
+		JSAutoRequest req( cx );
+		
+		// construct arguments
+		CallArgs args = CallArgsFromVp( argc, vp );
+		ScriptArguments sa( &args );
+		
+		// find function name
+		jsval name;
+		JS_GetProperty( cx, &args.callee(), "name", &name );
+		
+		// jsstring to string
+		char *buf = JS_EncodeString( cx, JSVAL_TO_STRING( name ) );
+		string funcName = buf;
+		JS_free( cx, buf );
+		
+		// find function
+		FuncMapIterator it = script.classFuncCallbacks.find( string( funcName ) );
+		if ( it == script.classFuncCallbacks.end() ) return false;
+		
+		// call it
+		ScriptFunctionCallback &callback = it->second;
+		bool ret = callback( NULL, sa );
+		ret = ret && !JS_IsExceptionPending( cx );
+		return ret;
+	}
+	
+	
+/* MARK:	-				Logging
+ -------------------------------------------------------------------- */
+	
+	
+	/// tracing function
+	static bool Log( JSContext *cx, unsigned argc, Value *vp ) {
+		// scope
+		JSAutoRequest req( cx );
+		
+		// print each argument as string, followed by newline
+		CallArgs args = CallArgsFromVp( argc, vp );
+		
+		for ( int i = 0; i < argc; i++ ) {
+			jsval val = args.get( i );
+			RootedString str( cx, JS_ValueToString( cx, val ) );
+			char* buf = JS_EncodeString( cx, str );
+			bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
+			printf( ( isArray ? "[%s]%s" : "%s%s" ), buf, (i == argc - 1 ? "\n" : " ") );
+			JS_free( cx, buf );
+		}
+		return true;
+	}
+
+	
+/* MARK:	-				Object lifecycle callbacks
+ -------------------------------------------------------------------- */
+
+	
+	/// constructor callback
+	template <class CLASS>
+	static void Construct( JSContext *cx, unsigned argc, Value *vp ) {
+		JSAutoCompartment( cx, script.global_object );
+		
+		// params
+		CallArgs args = CallArgsFromVp( argc, vp );
+		const char *className = ScriptClassName<CLASS>::name().c_str();
+		// make sure class can be constructed
+		ClassDef* cdef = CDEF( className );
+		if ( cdef->singleton ) {
+			script.ReportError( "Class %s can't be constructed using 'new'\n", className );
+			args.rval().setUndefined();
+			return;
+		}
+		// construct object
+		ScriptArguments sa( &args );
+		CLASS* obj = new CLASS( &sa );
+		obj->scriptClassName = className;
+		
+		// return its scriptObject
+		args.rval().set( OBJECT_TO_JSVAL( (JSObject*) obj->scriptObject ) );
+	}
+	
+	/// destructor for GameObject JS object
+	template <class CLASS>
+	static void Finalize ( JSFreeOp *fop, JSObject *obj )  {
+		// delete underlying object
+		CLASS* object = (CLASS*) JS_GetPrivate( obj );
+		// printf( "Finalize %s\n", ScriptClassName<CLASS>::name().c_str() );
+		if ( object ) {
+			object->scriptObject = NULL;
+			delete object;
+		}
+	};
+	
+public:
+	
+	// Initializer
+	ScriptHost() {
+		
+		// init JS context
+		this->jsr = JS_NewRuntime(8L * 1024 * 1024, JS_USE_HELPER_THREADS);
+		this->js = this->jsr ? JS_NewContext( this->jsr, 8192 ) : NULL;
+		if ( !this->js || !this->jsr ) {
+			printf( "Can't initialize Javascript runtime or context.\n" );
+			exit( 1 );
+		}
+		
+		// set context option
+		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX );
+		
+		// set error handler
+		JS_SetErrorReporter( this->js, this->_PrintError );
+		
+		// scoped request
+		JSAutoRequest req( this->js );
+		
+		// create global object
+		this->global_class = { "global", JSCLASS_GLOBAL_FLAGS, JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub, JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub };
+		this->global_object = JS_NewGlobalObject( this->js, &this->global_class, NULL );
+		
+		// global GC compartment
+		this->compartment = new JSAutoCompartment( this->js, this->global_object );
+		
+		// add standard classes to global object
+		JS_InitStandardClasses( this->js, this->global_object );
+		
+		// add global functions
+		JS_DefineFunction( this->js, this->global_object, "log", (JSNative) this->Log, 0, JSPROP_READONLY );
+		
+		// add global object as root for GC
+		JS_AddObjectRoot( this->js, &this->global_object );
+		
+		printf ( "Spidermonkey initialized\n" );
+	}
+	
+	// shutdown
+	void Shutdown () {
+		delete this->compartment;
+		JS_DestroyContext( this->js );
+		JS_DestroyRuntime( this->jsr );
+		JS_ShutDown();
+		this->js = NULL;
+		this->jsr = NULL;
+	}
+	
+	// destructor
+	~ScriptHost() {}
+	
+	/// Javascript runtime
+	JSRuntime* jsr;
+	
+	/// Javascript context
+	JSContext* js;
+
+	/// global object
+	JSObject *global_object;
+
+/* MARK:	-				Error reporting
+ -------------------------------------------------------------------- */
+
+	
+	/// print error and exit
+	/// call to print out errors from callback functions
+	void ReportError(const char *fmt, ... ) {
+		
+		va_list myargs;
+		va_start(myargs, fmt);
+		char buf[ 1024 ];
+		vsprintf( buf, fmt, myargs );
+		va_end(myargs);
+		
+		JS_ReportError( script.js, "%s", buf );
+		
+	}
+	
+	
+/* MARK:	-				Class registration
+ -------------------------------------------------------------------- */
+
+	
+	/// register class for scripting
+	template <class CLASS>
+	void RegisterClass( const char *parentClassName=NULL, bool singleton=false ){
+		// scoped request
+		JSAutoRequest req( this->js );
+		
+		// insert
+		pair<ClassMapIterator,bool> ins = classDefinitions.insert( make_pair( ScriptClassName<CLASS>::name(), ClassDef() ) );
+		ClassDef *def = &ins.first->second;
+		
+		// init class
+		def->className = ScriptClassName<CLASS>::name();
+		def->singleton = singleton;
+		def->jsc.name = def->className.c_str(),
+		def->jsc.finalize = (JSFinalizeOp) ScriptHost::Finalize<CLASS>;
+		def->jsc.getProperty = (JSPropertyOp) ScriptHost::PropGetter;
+		def->jsc.setProperty = (JSStrictPropertyOp) ScriptHost::PropSetter;
+		def->parent = ( def->parent = CDEF( string( parentClassName ? parentClassName : "ScriptableClass" ) ) ) == def ? NULL : def->parent;
+		
+		// register JS class
+		def->proto = JS_InitClass( this->js, this->global_object,
+								 ( def->parent ? def->parent->proto : NULL ),
+								 &def->jsc, (JSNative) &ScriptHost::Construct<CLASS>,
+								 0, NULL, NULL, NULL, NULL );
+		
+	}
+
+	
+/* MARK:	-				Define function
+ -------------------------------------------------------------------- */
+
+	
+	template <class CLASS>
+	void DefineFunction( const char *funcName, ScriptFunctionCallback callback ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, JSPROP_PERMANENT );
+		classDef->funcs[ string(funcName) ] = callback;
+	}
+	
+	
+/* MARK:	-				Add property
+ -------------------------------------------------------------------- */
+
+	
+	template <class CLASS>
+	void AddIndexProperty( ScriptIndexCallback getter, ScriptIndexCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string("#") ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string("#") ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptValueCallback getter, ScriptValueCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeValue, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptValueCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ((flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeValue, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptIntCallback getter, ScriptIntCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_ZERO, NULL, NULL, jflags );
+		GetterSetter gs( TypeInt, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptIntCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_ZERO, NULL, NULL, jflags);
+		GetterSetter gs( TypeInt, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptFloatCallback getter, ScriptFloatCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_ZERO, NULL, NULL, jflags );
+		GetterSetter gs( TypeFloat, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_ZERO, NULL, NULL, jflags );
+		GetterSetter gs( TypeFloat, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptBoolCallback getter, ScriptBoolCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_FALSE, NULL, NULL, jflags );
+		GetterSetter gs( TypeBool, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptBoolCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_FALSE, NULL, NULL, jflags );
+		GetterSetter gs( TypeBool, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptStringCallback getter, ScriptStringCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeString, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptStringCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeString, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptObjectCallback getter, ScriptObjectCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeObject, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptObjectCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeObject, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptArrayCallback getter, ScriptArrayCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags );
+		GetterSetter gs( TypeArray, flags ); gs.Init( &getter, &setter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+	template <class CLASS>
+	void AddProperty( const char *propName, ScriptArrayCallback getter, unsigned flags=PROP_ENUMERABLE ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
+						  propName, JSVAL_NULL, NULL, NULL, jflags);
+		GetterSetter gs( TypeArray, flags ); gs.Init( &getter );
+		classDef->getterSetter[ string(propName) ] = gs;
+	}
+	
+/* MARK:	-				Property set
+ -------------------------------------------------------------------- */
+
+	
+	/// sets property on script object
+	void SetProperty( const char *propName, ArgValue value, void* obj ) {
+		JSAutoRequest req( this->js );
+		jsval val = value.toValue();
+		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
+	}
+	
+	/// sets property on script object (pointer version)
+	void SetProperty( const char *propName, ArgValue *value, void* obj ) {
+		JSAutoRequest req( this->js );
+		jsval val = value->toValue();
+		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
+	}
+	
+	
+/* MARK:	-				Property get
+ -------------------------------------------------------------------- */
+
+	
+	/// returns property of script object
+	ArgValue GetProperty( const char *propName, void* obj ) {
+		if ( !obj ) return ArgValue(); // undefined
+		JSAutoRequest req( this->js );
+		jsval val;
+		JS_GetProperty( this->js, (JSObject*) obj, propName, &val );
+		return ArgValue( val );
+	}
+	
+	/// returns property of script object
+	ArgValue GetElement( uint32_t index, void* obj ) {
+		JSAutoRequest req( this->js );
+		jsval val;
+		JS_GetElement( this->js, (JSObject*) obj, index, &val);
+		return ArgValue( val );
+	}
+	
+	/// returns property of a constructor object
+	ArgValue GetClassProperty( const char* className, const char* propName ) {
+		JSAutoRequest req( this->js );
+		JSObject *class_constructor = NULL, *class_prototype = NULL;
+		jsval val;
+		
+		// get constructor from the global object.
+		if (!JS_GetProperty( this->js, this->global_object, className, &val ) || JSVAL_IS_PRIMITIVE( val ) ) {
+			printf( "GetClassProperty: class %s is not found\n", className );
+			return false;
+		}
+		class_constructor = JSVAL_TO_OBJECT(val);
+		
+		// get property
+		if ( !JS_GetProperty( this->js, class_constructor, propName, &val ) ) {
+			printf( "GetClassProperty: %s.%s is not found.\n", className, propName );
+			return ArgValue();
+		}
+		
+		// return
+		return ArgValue( val );
+	}
+	
+/* MARK:	-				Function call
+ -------------------------------------------------------------------- */
+	
+	/// calls function on object with params
+	void CallFunction( void* funcObject, void* thisObject, ScriptArguments &args ){
+		jsval rval;
+		int argc;
+		jsval* params = args.GetFunctionArguments( &argc );
+		JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval );
+	}
+	
+	
+/* MARK:	-				Serialization
+ -------------------------------------------------------------------- */
+
+	
+	/// returns init object
+	ArgValue MakeInitObject( ArgValue& val ) {
+		// this will track of all objects already added
+		unordered_map<unsigned long,JSObject*> alreadySerialized;
+		return _MakeInitObject( val, alreadySerialized );
+	};
+	
+	/// populates property names
+	void GetPropertyNames( void* obj, unordered_set<string>& ret ) {
+		this->_GetPropertyNames( obj, ret );
+	}
+	
+	private:
+	// rrecursively construct init object
+	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized ) {
+		
+		// if value is an array
+		if ( val.type == TypeArray ) {
+			// replace each value with processed value
+			for ( size_t i = 0, ne = val.value.arrayValue->size(); i < ne; i++ ) {
+				(*val.value.arrayValue)[ i ] = _MakeInitObject( (*val.value.arrayValue)[ i ], alreadySerialized );
+			}
+			// return it
+			return val;
+		
+		// otherwise, if value is object
+		} else if ( val.type == TypeObject && val.value.objectValue != NULL ) {
+			
+			// check .serialized property
+			ArgValue serialized = GetProperty( "serialized", val.value.objectValue );
+			if ( serialized.type == TypeBool && serialized.value.boolValue ) return ArgValue();
+
+			// object
+			JSObject* obj = (JSObject*) val.value.objectValue;
+			
+			// if object is already serialized, return an object stub
+			unordered_map<unsigned long,JSObject*>::iterator it = alreadySerialized.find( (unsigned long) obj );
+			if ( it != alreadySerialized.end() ) {
+				// create stub object
+				JSObject* stub = JS_NewObject( this->js, NULL, NULL, NULL );
+				static char buf[16];
+				sprintf( buf, "%p", obj );
+				ArgValue objId( buf );
+				SetProperty( "__stub__", &objId, stub );
+				// make sure original object has id property
+				SetProperty( "__id__", &objId, it->second );
+				return stub;
+			}
+			
+			// get property names
+			unordered_set<string> properties;
+			ClassDef* cdef = this->_GetPropertyNames( obj, properties );
+			
+			// if ScriptableObject
+			if ( cdef ) {
+				// bail if reference to singleton class
+				if ( cdef->singleton ) return ArgValue( (void*) NULL );
+			}
+			
+			// otherwise, create blank object
+			JSObject* init = JS_NewObject( this->js, NULL, NULL, NULL );
+			
+			// add it to alreadySerialized
+			alreadySerialized[ (unsigned long) obj ] = init;
+			
+			// get classname
+			const char* className = NULL;
+			JSClass* clp = NULL;
+			
+			// if it's ScriptableObject
+			if ( cdef ) {
+				className = cdef->className.c_str();
+			// built-in object
+			} else if ( ( clp = JS_GetClass( obj ) ) && strcmp( clp->name, "Object" ) != 0 ) {
+				className = clp->name;
+				// TODO - if need to save built in objects like "Date", or "RegExp", can add props here to re-initialize them upon load
+			}
+
+			// add "__class__" property
+			if ( className ) {
+				SetProperty( "__class__", ArgValue( className ), init );
+			}
+
+			// add all values
+			unordered_set<string>::iterator p = properties.begin(), end = properties.end();
+			ArgValue prop;
+			while ( p != end ) {
+				prop = this->GetProperty( p->c_str(), obj );
+				SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized ), init );
+				p++;
+			}
+			
+			// return this new object
+			return ArgValue( (void*) init );
+			
+		}
+		
+		// otherwise return original value
+		return val;
+	
+	};
+	
+	// places enumerable properties of given object, including all non-readonly props defined for scriptable class into given set. Returns ClassDef, if found.
+	ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL ) {
+		// add object's own properties first
+		JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) obj );
+		jsval propVal;
+		jsid propId;
+		while( JS_NextProperty( this->js, iterator, &propId ) && propId != JSID_VOID ) {
+			// convert each property to string
+			if ( JS_IdToValue( this->js, propId, &propVal ) ) {
+				JSString* str = JS_ValueToString( this->js, propVal );
+				char *buf = JS_EncodeString( this->js, str );
+				unsigned attrs = 0;
+				JSBool found = false;
+				// if property isn't read-only
+				if ( JS_GetPropertyAttributes( this->js, (JSObject*) obj, buf, &attrs, &found) && found && !( attrs & JSPROP_READONLY ) ) {
+					// add it to list
+					ret.emplace( buf );
+				}
+				JS_free( this->js, buf );
+			}
+		}
+
+		// if class def wasn't passed in
+		if ( !cdef ) {
+			// grab object's own class def
+			JSClass* clp = JS_GetClass( (JSObject*)obj );
+			cdef = CDEF( string(clp->name) );
+		}
+		
+		// if class def is found
+		if ( cdef ) {
+			// add properties listed in class def
+			GetterSetterMapIterator iter = cdef->getterSetter.begin(), iterEnd = cdef->getterSetter.end();
+			while( iter != iterEnd ) {
+				GetterSetter& gs = iter->second;
+				// if property is serialized
+				if ( gs.flags & PROP_SERIALIZED & ~PROP_READONLY) {
+					ret.emplace( iter->first.c_str() );
+				}
+				iter++;
+			}
+			
+			// if there's parent class, add that too and return result
+			if ( cdef->parent ) {
+				this->_GetPropertyNames( obj, ret, cdef->parent );
+				return cdef;
+			}
+			
+		}
+		
+		return cdef;
+	}
+	
+	// used to fill out stubs when unserializing
+	struct _StubRef {
+		JSObject* object = NULL;
+		string propName;
+		int index = -1;
+		_StubRef( JSObject* o, string s, int i ) : object( o ), propName( s ), index( i ){};
+	};
+	
+	// used to fill out PROP_LATE properties when unserializing
+	struct _LateProp {
+		JSObject* object = NULL;
+		string propName;
+		jsval value;
+		_LateProp( JSObject* o, string s, jsval val ) : object( o ), propName( s ), value( val ){};
+	};
+	
+	public:
+	
+	/// unserialize obj using initObject
+	void* InitObject( void* initObj ) {
+		JSAutoRequest r( this->js );
+		
+		// populate this object
+		unordered_map<string, void*> map;
+		unordered_map<string, vector<_StubRef>> stubs;
+		vector<_LateProp> lateProps;
+		void* obj = _InitObject( NULL, initObj, &map, &stubs, &lateProps );
+		
+		// process stubs
+		unordered_map<string, vector<_StubRef>>::iterator it = stubs.begin();
+		while( it != stubs.end() ) {
+			// see if value is now available
+			unordered_map<string, void*>::iterator vit = map.find( it->first );
+			
+			// found
+			if ( vit != map.end() ) {
+				jsval objVal;
+				objVal.setObjectOrNull( (JSObject*) vit->second );
+				vector<_StubRef> &stubList = it->second;
+				for ( size_t i = 0, ns = stubList.size(); i < ns; i++ ) {
+					_StubRef &stub = stubList[ i ];
+					if ( stub.index == -1 ) {
+						JS_SetProperty( this->js, stub.object, stub.propName.c_str(), &objVal );
+					} else {
+						JS_SetElement( this->js, stub.object, stub.index, &objVal );
+					}
+				}
+			} else {
+				printf("%s not found during deserialization\n", it->first.c_str() );
+			}
+			it++;
+		}
+		
+		// set late properties in reverse order
+		for( int i = (int) lateProps.size() - 1; i >= 0; i-- ){
+			_LateProp &lp = lateProps[ i ];
+			JS_SetProperty( this->js, (JSObject*) lp.object, lp.propName.c_str(), &lp.value );
+		}
+		return obj;
+		
+	}
+	
+	private:
+	void* _InitObject( void* obj, void* initObj,
+					  unordered_map<string, void*> *alreadyInitialized,
+					  unordered_map<string, vector<_StubRef>> *stubs,
+					  vector<_LateProp> *lateProps ){
+
+		string stubName, className;
+
+		// if obj is null, this function was called from Object.instantiate(), and obj needs to be created first as initObj[__class__]
+		if ( !obj ) {
+			if ( _IsInitObject( initObj, className ) ) {
+				obj = NewObject( className.c_str() );
+			} else {
+				obj = NewObject();
+			}
+		}
+		
+		// add this object to alreadyInitialized ( if it has __id__ property )
+		_AddToAlreadyInitialized( obj, initObj, alreadyInitialized );
+		
+		// check if object is array or regular object
+		bool isArray = JS_IsArrayObject( this->js, (JSObject*) obj );
+		
+		uint32_t length = 0;
+		JSObject* iterator = NULL;
+		
+		// iterate over initObj properties
+		if ( isArray ) {
+			JS_GetArrayLength( this->js, (JSObject*) initObj, &length );
+		} else {
+			iterator = JS_NewPropertyIterator( this->js, (JSObject*) initObj );
+		}
+		
+		jsid propId;
+		jsval propVal;
+		uint32_t propIndex = 0;
+		char *propName = NULL;
+		while( true ) {
+
+			// array
+			if ( isArray ) {
+				
+				// check end condition
+				if ( propIndex + 1 > length ) break;
+				
+			// object
+			} else {
+				
+				// check end condition
+				if ( !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
+				
+				// convert property to string
+				if ( !JS_IdToValue( this->js, propId, &propVal ) ) continue;
+				
+				// convert property name to string
+				JSString* str = JS_ValueToString( this->js, propVal );
+				propName = JS_EncodeString( this->js, str );
+				size_t propLen = strlen( propName );
+				propIndex = 0;
+				// skip __special_properties__
+				if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
+			}
+			
+			// get value
+			ArgValue val = isArray ? GetElement( propIndex, initObj ) : GetProperty( propName, initObj );
+			
+			// check for late property
+			bool isLateProp = false;
+			if ( !isArray ) {
+				ClassDef* cdef = CDEF( className.c_str() );
+				if ( cdef ) {
+					GetterSetterMapIterator it = cdef->getterSetter.find( propName );
+					if ( it != cdef->getterSetter.end() ) {
+						isLateProp = (it->second.flags & PROP_LATE);
+					}
+				}
+			}
+
+			// value is an object
+			if ( val.type == TypeObject ) {
+				
+				// check if it's a stub first
+				if ( _IsStub( val.value.objectValue, stubName ) ){
+					
+					// add to stubs list
+					vector<_StubRef> &stubList = (*stubs)[ stubName ];
+					if ( propName )
+						stubList.emplace_back( (JSObject*) obj, string( propName ), -1 );
+					else
+						stubList.emplace_back( (JSObject*) obj, string(""), propIndex );
+					// set to null
+					propVal.setNull();
+					
+				// otherwise, if it's an init object
+				} else if ( _IsInitObject( val.value.objectValue, className ) ) {
+					
+					JSObject* newObject = (JSObject*) NewObject( className.c_str() );
+					if ( newObject ) _InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, lateProps );
+					propVal.setObjectOrNull( newObject );
+					
+				// regular object
+				} else if ( val.value.objectValue ){
+					
+					// construct a blank object
+					JSObject* newObject = JS_NewObject( this->js, NULL, NULL, NULL);
+					// populate it, recursively
+					_InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, lateProps );
+					// will set this new object
+					propVal.setObjectOrNull( newObject );
+					
+				// null value
+				} else {
+					propVal.setNull();
+				}
+				
+			// value is an array
+			} else if ( val.type == TypeArray ) {
+				
+				// create new array object
+				JSObject* newObject = JS_NewArrayObject( this->js, 0, &propVal );
+				// populate it, recursively
+				_InitObject( newObject, val.arrayObject, alreadyInitialized, stubs, lateProps );
+				uint32_t len = 0;
+				JS_GetArrayLength( this->js, newObject, &len );
+				// will set this new object
+				propVal.setObjectOrNull( newObject );
+				
+			// simple, just copy prop
+			} else {
+				propVal = val.toValue();
+			}
+			
+			// propVal contains our value
+			
+			// late property?
+			if ( isLateProp ){
+				lateProps->emplace_back( (JSObject*) obj, string( propName ), propVal );
+			// assign property
+			} else if ( isArray ) {
+				JS_SetElement( this->js, (JSObject*)obj, propIndex, &propVal );
+				propIndex++;
+			} else if( propName ){
+				JS_SetProperty( this->js, (JSObject*)obj, propName, &propVal );
+			}
+			
+			// release propName
+			if ( !isArray && propName ) JS_free( this->js, propName );
+			
+		}
+		return obj;
+		
+	}
+	
+	bool _IsInitObject( void *obj, string& className ) {
+		jsval hasClass;
+		JS_GetProperty( this->js, (JSObject*) obj, "__class__", &hasClass );
+		if ( JSVAL_IS_STRING( hasClass ) ) {
+			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( hasClass ) );
+			className = buf;
+			JS_free( this->js, (void*) buf );
+			return true;
+		}
+		return false;
+	}
+	
+	bool _IsStub( void *obj, string& stubName ) {
+		jsval stubVal;
+		JS_GetProperty( this->js, (JSObject*) obj, "__stub__", &stubVal );
+		if ( JSVAL_IS_STRING( stubVal ) ) {
+			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( stubVal ) );
+			stubName = buf;
+			JS_free( this->js, (void*) buf );
+			return true;
+		}
+		return false;
+	}
+	
+	void _AddToAlreadyInitialized( void *obj, void* initObj, unordered_map<string, void*> *alreadyInitialized ) {
+		jsval idVal;
+		if ( JS_IsArrayObject( this->js, (JSObject*) obj ) ) return;
+		JS_GetProperty( this->js, (JSObject*) initObj, "__id__", &idVal );
+		if ( JSVAL_IS_STRING( idVal ) ) {
+			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( idVal ) );
+			string idName = buf;
+			JS_free( this->js, (void*) buf );
+			(*alreadyInitialized)[ idName ] = obj;
+			printf( "%s added to map.\n", idName.c_str() );
+		}
+	}
+	public:
+	
+	
+/* MARK:	-				Static properties
+ -------------------------------------------------------------------- */
+
+	
+	/// set static property to a new value (property is set on object constructor)
+	template <class CLASS>
+	void SetStaticProperty( const char *propName, ArgValue value ){
+		JSAutoRequest req( this->js );
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		JSObject* target = JS_GetConstructor( this->js, classDef->proto );
+		jsval val = value.toValue();
+		JS_SetProperty( this->js, target, propName, &val );
+		JSBool f; JS_SetPropertyAttributes( this->js, this->global_object, propName, JSPROP_PERMANENT | JSPROP_READONLY, &f );
+	}
+	
+	
+/* MARK:	-				Global constants, properties, and functions
+ -------------------------------------------------------------------- */
+
+
+	/// create a global const value
+	void SetGlobalConstant( const char *propName, ArgValue value ){
+		JSAutoRequest req( this->js );
+		jsval val = value.toValue();
+		JS_SetProperty( this->js, this->global_object, propName, &val );
+		JSBool f; JS_SetPropertyAttributes( this->js, this->global_object, propName, JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE, &f );
+	}
+	
+	/// adds global property propName referencing obj
+	void AddGlobalNamedObject( const char* propName, void* obj ) { JS_DefineProperty( this->js, this->global_object, propName, OBJECT_TO_JSVAL( (JSObject*) obj ), NULL, NULL, JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT ); }
+	
+	/// adds a function to a global class (i.e. JSON, or Date)
+	bool DefineClassFunction( const char *className, const char *funcName, bool isStatic, ScriptFunctionCallback callback ){
+		JSAutoRequest req( this->js );
+		JSObject *class_constructor = NULL, *class_prototype = NULL;
+		jsval val;
+		
+		// get constructor from the global object.
+		if (!JS_GetProperty( this->js, this->global_object, className, &val ) || JSVAL_IS_PRIMITIVE( val ) ) {
+			printf( "DefineClassFunction: class %s is not found\n", className );
+			return false;
+		}
+		class_constructor = JSVAL_TO_OBJECT(val);
+		
+		// get prototype
+		if ( !isStatic ) {
+			if ( !JS_GetProperty( this->js, class_constructor, "prototype", &val ) || JSVAL_IS_PRIMITIVE( val ) ) {
+				printf( "DefineClassFunction: %s.prototype is not an object.\n", className );
+				return false;
+			}
+			class_prototype = JSVAL_TO_OBJECT(val);
+		}
+		// make key
+		string key( className );
+		key.append( "." ); key.append( funcName );
+		
+		// add function
+		JS_DefineFunction( this->js, isStatic ? class_constructor : class_prototype, funcName, (JSNative) ClassFuncCallback, 0, JSPROP_PERMANENT );
+		this->classFuncCallbacks[ key ] = callback;
+		return true;
+	}
+
+	/// adds a globally visible function
+	void DefineGlobalFunction( const char *funcName, ScriptFunctionCallback callback ){
+		JS_DefineFunction( this->js, this->global_object, funcName, (JSNative) GlobalFuncCallback, 0, JSPROP_PERMANENT );
+		this->classFuncCallbacks[ string( funcName ) ] = callback;
+	}
+	
+	/// calls a built-in class static function
+	ArgValue CallClassFunction( const char* className, const char *funcName, ScriptArguments& args ) {
+		JSAutoRequest req( this->js );
+		JSObject *class_constructor = NULL;
+		JS::Value val;
+		
+		// get constructor from the global object.
+		if (!JS_GetProperty( this->js, this->global_object, className, &val ) || JSVAL_IS_PRIMITIVE( val ) ) {
+			printf( "CallClassFunction: class %s is not found\n", className );
+			return ArgValue();
+		}
+		class_constructor = JSVAL_TO_OBJECT(val);
+		
+		// call
+		jsval rval;
+		int argc;
+		jsval* params = args.GetFunctionArguments( &argc );
+		if ( !JS_CallFunctionName(script.js, class_constructor, funcName, argc, params, &rval ) ) {
+			printf( "CallClassFunction: %s.%s is not a function\n", className, funcName );
+			return ArgValue();
+		}
+		return ArgValue( rval );
+	}
+	
+	/// calls given function using a built-in class as this
+	ArgValue CallClassFunction( const char* className, const void *func, ScriptArguments& args ) {
+		JSAutoRequest req( this->js );
+		JSObject *class_constructor = NULL;
+		JS::Value val;
+		
+		// get constructor from the global object.
+		if (!JS_GetProperty( this->js, this->global_object, className, &val ) || JSVAL_IS_PRIMITIVE( val ) ) {
+			printf( "CallClassFunction: class %s is not found\n", className );
+			return ArgValue();
+		}
+		class_constructor = JSVAL_TO_OBJECT(val);
+		
+		// call
+		jsval rval;
+		int argc;
+		jsval* params = args.GetFunctionArguments( &argc );
+		if ( !JS_CallFunction(script.js, class_constructor, (JSFunction*) func, argc, params, &rval ) ) {
+			printf( "CallClassFunction: %s call failed\n", className );
+			return ArgValue();
+		}
+		return ArgValue( rval );
+	}
+	
+
+/* MARK:	-				Instance and class lookup
+ -------------------------------------------------------------------- */
+
+	
+	template <class CLASS>
+	/// returns instance of class, or NULL if wrong class
+	CLASS* GetInstance( void* scriptObject ){
+		JSObject* obj = (JSObject*) scriptObject;
+		if ( !obj ) return NULL;
+		JSClass* clp = JS_GetClass( obj );
+		if ( !(clp->flags & JSCLASS_HAS_PRIVATE) ) return NULL;
+		void* pdata = JS_GetPrivate( obj );
+		if ( static_cast<CLASS*>( pdata ) != nullptr ) return (CLASS*) pdata;
+		return NULL;
+	}
+	
+	// returns a string matching classname of constructor function (used by GameObject.getBehavior)
+	const char* GetClassNameByConstructor( void* constructorFunc ){
+		JSObject* obj = (JSObject*) constructorFunc;
+		jsval vp;
+		JS_GetProperty( this->js, obj, "prototype", &vp);
+		obj = vp.toObjectOrNull();
+		if ( obj ) {
+			JSClass* c = JS_GetClass( obj );
+			return c->name;
+		}
+		return NULL;
+	}
+	
+	
+/* MARK:	-				New object
+ -------------------------------------------------------------------- */
+
+	
+	/// constructs and attaches a new scripting object to class instance. This must be called from constructor with ScriptArguments* parameter
+	template <class CLASS>
+	bool NewScriptObject( CLASS* instance ) {
+		JSAutoRequest req( this->js );
+		// find classDef
+		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		// add
+		instance->scriptObject = JS_NewObject( this->js, &classDef->jsc, classDef->proto, NULL );
+		JS_SetPrivate( (JSObject*) instance->scriptObject, instance );
+		return true;
+	}
+	
+	/// new blank object
+	void* NewObject( const char* className=NULL ) {
+		
+		// plain object
+		if ( !className ) return JS_NewObject( this->js, NULL, NULL, NULL );
+		
+		// find constructor
+		jsval cval;
+		if ( JS_GetProperty( this->js, this->global_object, className, &cval ) && cval.isObject() ) {
+			JSObject* cons = cval.toObjectOrNull();
+			return JS_New( this->js, cons, 0, NULL );//1, &param );
+			
+		// failed to find constructor
+		} else {
+			printf( "Failed to find construstor for %s\n", className );
+			return JS_NewObject( this->js, NULL, NULL, NULL );
+		}
+		
+	}
+
+	
+/* MARK:	-				Garbage collection
+ -------------------------------------------------------------------- */
+
+	/// protect / release script object from garbage collecton
+	void ProtectObject( void ** obj, bool protect ) {
+		
+		if ( !script.js ) return; // if called after shutdown, ignore
+
+		// protect
+		if ( protect ) {
+			JS_AddObjectRoot( script.js, (JSObject**) obj );
+		} else {
+			JS_RemoveObjectRoot( script.js, (JSObject**) obj );
+		}
+	}
+	
+	/// call garbage collector
+	void GC() {
+		// call garbage collection in Spidermonkey
+		JS_GC( this->jsr );
+	}
+	
+/* MARK:	-				Script execution & JSON
+ -------------------------------------------------------------------- */
+
+	
+	ArgValue Evaluate( const char *code, const char* filename=NULL, void* thisObj=NULL ) {
+		JSAutoRequest req( this->js );
+		RootedValue rval( this->js );
+		int lineno = 1;
+		// printf("> %s\n", code );
+		if ( !JS_EvaluateScript( this->js, thisObj ? ((JSObject*) thisObj ) : this->global_object, code, (int) strlen(code), filename ? filename : "", lineno, rval.address() )) {
+			if ( JS_IsExceptionPending( this->js ) ) JS_ReportPendingException( this->js );
+		}
+		return ArgValue( rval.get() );
+	}
+	
+	/// execute compiled script resource
+	bool Execute( ScriptResource* scriptResource, void* thisObject=NULL, ArgValue *out=NULL ) {
+		
+		// make sure it's valid
+		if ( !scriptResource || scriptResource->error ) {
+			printf( "Failed to execute %s - script isn't compiled.\n", scriptResource->key.c_str() );
+			return false;
+		}
+		
+		// context
+		JSObject* obj = thisObject ? (JSObject*) thisObject : this->global_object;
+		
+		// run
+		RootedValue rval( this->js );
+		RootedObject robj( this->js, obj );
+		JSAutoCompartment( this->js, this->global_object );
+
+		// execute
+		JSBool success = JS_ExecuteScript( this->js, robj, scriptResource->compiledScript, rval.address() );
+		if ( success && out ) *out = ArgValue( *rval.address() );
+		JS_MaybeGC( this->js );
+		return success;
+	}
+	
+	/// returns object containing parsed JSON or NULL on failure
+	void* ParseJSON( const char* jsonString ) {
+		RootedValue val (this->js);
+		JSString* tempString = JS_NewStringCopyZ( script.js, jsonString );
+		size_t slen = 0;
+		const jschar* jbuf = JS_GetStringCharsAndLength( script.js, tempString, &slen );
+		if ( JS_ParseJSON( script.js, jbuf, (uint32_t) slen, &val ) ) {
+			return val.get().toObjectOrNull();
+		}
+		// fail
+		return NULL;
+	}
+	
+};
+
+#endif /* JavascriptHost_hpp */
+
+

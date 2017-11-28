@@ -1,0 +1,175 @@
+#ifndef ScriptArguments_hpp
+#define ScriptArguments_hpp
+
+#include "common.h"
+
+/* MARK:	-				Script arguments
+ 
+ To avoid having to deal with Javascript specific data structures in
+ scriptable classes, script arguments wrappers are used.
+ 
+ ArgValue is a representation of a contents of a Javascript variable or param:
+ numbers, objects, strings, etc. to be converted in and out of scriptable
+ class's callback functions.
+ 
+ ScriptArguments is a class facilitating this conversion. When defining
+ functions for your class via DefineFunction, the callback provided will
+ receive ScriptArguments&, which will contain parameters provided by the
+ script to your callback, as .args vector. Returning values is as simple as
+ calling Return___(val) with desired type.
+ 
+ -------------------------------------------------------------------- */
+
+/// property types
+typedef enum {
+	TypeUndefined,
+	
+	TypeBool,
+	TypeInt,
+	TypeFloat,
+	TypeObject,
+	TypeString,
+	TypeArray,
+	
+	TypeValue,
+	TypeFunction,
+	TypeIndex
+} ScriptType;
+
+struct ArgValue;
+typedef vector<ArgValue> ArgValueVector;
+
+/// a single argument
+struct ArgValue {
+	
+	/// combines all possible value types
+	union ArgValueUnion {
+		bool	boolValue;
+		int		intValue;
+		float 	floatValue;
+		void* 	objectValue;
+		ArgValueVector* arrayValue;
+		string* stringValue;
+	};
+	
+	// type of this value
+	ScriptType type = TypeUndefined;
+	
+	// value holder
+	ArgValueUnion value = { 0 };
+	
+	// if js array, holds pointer to its object ( used during serialization )
+	void* arrayObject = NULL;
+	
+	// constructors
+	ArgValue(){}
+	ArgValue( bool val ){ type = TypeBool; value.boolValue = val; }
+	ArgValue( int val ){ type = TypeInt; value.intValue = val; }
+	ArgValue( float val ){ type = TypeFloat; value.floatValue = val; }
+	ArgValue( const char* val ){ type = TypeString; value.stringValue = new string( val ); }
+	ArgValue( void* val ){ type = TypeObject; value.objectValue = val; }
+	ArgValue( const ArgValue& copyFrom );
+	ArgValue( jsval val );
+	ArgValue& operator=( const ArgValue& copyFrom );
+	
+	// value getters
+	bool toNumber( float& dest );
+	bool toInt( int& dest );
+	bool toInt8( Uint8& dest );
+	bool toBool();
+	bool isNull( bool strict=false );
+	bool get( void* destination, ScriptType desiredType );
+	jsval toValue();
+	
+	// destructor
+	~ArgValue();
+};
+
+/// wrapper class for passing multiple arguments to functions and returning a value
+class ScriptArguments {
+private:
+	
+	/// reference to original callargs, when using from inside a JSNative
+	CallArgs* callArgs = NULL;
+
+	/// arguments constructed with Add___Argument for calling Javascript functions from code
+	AutoValueVector *_funcArgs = NULL;
+
+	/// getter with lazy init
+	AutoValueVector* funcArgs();
+	
+public:
+	
+	/// arguments passed from script to ScriptFunctionCallback
+	ArgValueVector args;
+	
+	// call these methods from to return a specific type of a value
+	void ReturnUndefined();
+	void ReturnNull();
+	void ReturnBool( bool val );
+	void ReturnInt( int val );
+	void ReturnFloat( float val );
+	void ReturnString( string val );
+	void ReturnString( const char* val );
+	void ReturnObject( void* val );
+	void ReturnValue( ArgValue val );
+	void ReturnArray( ArgValueVector &arr );
+	
+	// easily add / clear script params for function callbacks
+	void ResizeArguments( int len );
+	void AddIntArgument( int val );
+	void AddBoolArgument( bool val );
+	void AddFloatArgument( float val );
+	void AddStringArgument( const char* val );
+	void AddObjectArgument( void* val );
+	void AddArgument( ArgValue val );
+	
+	// constructs and returns an array of jsvals for JS function calls
+	jsval* GetFunctionArguments( int* argc );
+
+	// read params into typed values (helper for function calls)
+	bool ReadArguments( int minRequired,
+					   ScriptType type0, void* value0,
+					   ScriptType type1=TypeUndefined, void* value1=NULL,
+					   ScriptType type2=TypeUndefined, void* value2=NULL,
+					   ScriptType type3=TypeUndefined, void* value3=NULL,
+					   ScriptType type4=TypeUndefined, void* value4=NULL,
+					   ScriptType type5=TypeUndefined, void* value5=NULL,
+					   ScriptType type6=TypeUndefined, void* value6=NULL);
+	
+
+	/// converts array to jsval(JSObject)
+	static jsval ArrayToVal( ArgValueVector &arr );
+
+	/// returns "this" if available
+	void* GetThis();
+	
+	/// constructor
+	ScriptArguments();
+	ScriptArguments( CallArgs* args );
+	~ScriptArguments();
+	
+};
+
+/// stores a reference to script function, protecting it from GC, used by event system
+class ScriptFunctionObject {
+public:
+	
+	JSObject *funcObject = NULL;
+	
+	/// used by event dispatcher to remove this function from its list after a single call
+	bool callOnce = false;
+	
+	/// invoke this function with arguments
+	void Invoke( ScriptArguments& args, void* thisObject=NULL );
+	
+	// comparing to a pointer to a JSFunction, used when removing event listeners
+	bool operator==( void* jsfunc ) { return funcObject == jsfunc; };
+	
+	// create / destroy
+	ScriptFunctionObject( void* scriptFunc, bool once=false );
+	~ScriptFunctionObject();
+	
+};
+
+#endif /* ScriptArguments_hpp */

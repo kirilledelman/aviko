@@ -1,0 +1,95 @@
+
+
+Hierarchy
+
+	
+
+Events
+
+	ScriptClass subclasses inherit the following event handling methods:
+	on( String eventName, Function handler[, bool callOnceAndRemove ] )
+	off( String eventName[, Function handler ] )
+	fire( String eventName[, ...arguments ] )
+	on( 'eventname' ) -> should return array of all listeners registered
+
+	GameObjects dipatch the following scene events
+	"update" called after physics update
+	"lateupdate" called after Update
+	"added" called when this game object is added to a new parent
+	"removed" called when this game object is removed from a parent
+	"addedtoscene" called when this object, or its ascendent gets added to scene
+	"removedfromscene" called when this object, or its ascendent is removed from scene
+	"activechanged" called after active property is changed on this object, or its ascendent
+
+Scripting
+
+	Set GameObject .script property to name of a .js file. This immediately executes the script.
+	Script's "this" value will be the gameobject instance
+
+Sound
+
+	load sounds by creating new Sound() instance, and setting .source to filename ( in /sounds/ dir )
+	only one music can play at a time ( voc, mp3, midi, mod, flac ), others can overlap up to 32 channels
+	call .play(numTimes=1), .pause(), .stop() to control
+	.playing, .paused, .volume, .pan
+
+
+Input
+
+	'input' global object provides input support:
+	input.get( Int keyIndex[, Int buttonIndex[, Int joystickIndex ] ] )
+		keyIndex is one of KEY_* constants, as well as MOUSE_BUTTON, JOY_BUTTON, JOY_AXIS
+		if buttonIndex is omitted - returns true if any button is down
+		if joystickIndex is omitted - returns true if any joystick is active
+	input also dispatches a number of input events:
+	"keyDown", "keyUp", "keyPress",
+	"mouseDown", "mouseUp", "mouseMove", "mouseWheel",
+	"joyDown", "joyUp", "joyAxis", "joyHat"
+	"controllerAdded", "controllerRemoved"
+	input.controllers returns an array of connected Controllers
+
+Controller
+
+	Appears as parameter to "controlleradded" event callback.
+	Allows binding keys, buttons, and joystick axis to "actions"
+	actions are events dispatched when button/axis are active.
+	e.g.
+			bind( 'fire', KEY_SPACE )
+			bind( 'fire', MOUSE_BUTTON, 1 )
+			bind( 'fire', JOY_BUTTON, 1 )
+			bindAxis( '-horizontal', KEY_LEFT )
+			bindAxis( '+horizontal', MOUSE_BUTTON, 1 )
+			bindAxis( '+horizontal', JOY_BUTTON, 1 )
+			bindAxis( '-horizontal', JOY_AXIS, 1 ) // reversed axis binding
+			bindAxis( 'horizontal', JOY_AXIS, 1 ) // normal
+			bindAxis( 'scroll', MOUSE_WHEEL )
+			bindAxis( 'scroll_x', MOUSE_WHEEL_X )
+	add event listeners to controller w same event name as "action" to receive updates (params: action, axisOrBtnState )
+	when controller is added (or application start w it already plugged in)
+	controller tries to load ControllerName.json file from /config/ directory with bindings
+	bindings can be .reset(), .loadConfig() and .saveConfig()
+	.deadZone applies to all joystick's axis, default .2
+	On application start a default "Keyboard" controller will be added.
+
+
+Serialization
+
+	JSON.load( filename ) -> load, parse, return object
+	JSON.save( obj, filename ) -> stringify, save to file
+
+	global toInit( obj ) method converts object ( including ScriptableClass ) to "init object"
+	All enumerable (and ScriptableClass PROP_SERIALIZE) properties are stored in init objects.
+	{ "__class__": "ClassName", ... enumerable/serializable properties }
+
+	Init objects have extra properties to let them be re-instantiated later:
+	global init( initObj ) creates a new instance of object using initObj for properties and class descr
+
+	When converting to initObj, multiple property referencing the same object are resolved using placeholders (in initObj)
+
+	Set .serialized = false on any object to disable serialization
+
+	JSON.stringify is overloaded to output init objects as well
+
+	
+
+

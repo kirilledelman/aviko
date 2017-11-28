@@ -1,0 +1,53 @@
+CC=g++ -std=c++1y -O3 -Wno-invalid-offsetof -g \
+	-I./ -I/usr/include/mozjs-24 -I/usr/include/SDL2 -Isdl-gpu/lib/include \
+	-I/usr/local/include -I/usr/include
+
+# Raspberry
+
+LIBS=-Wl,-Bstatic \
+	-Lsdl-gpu/lib -lSDL2_gpu \
+	-Wl,-Bdynamic \
+	-L/usr/lib/arm-linux-gnueabihf \
+	-lSDL2_image -lSDL2_ttf -lSDL2_mixer -lmozjs-24 \
+	-lSDL2 \
+	-L/opt/vc/lib/ -lEGL -lGLESv2
+
+CPP_FILES := $(wildcard src/*.cpp) $(wildcard Box2D/**/*.cpp) $(wildcard Box2D/**/**/*.cpp)
+OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
+
+
+make: $(OBJ_FILES)
+	$(CC) $^ -o ./m $(LIBS)
+
+obj/%.o: src/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Collision/Shapes/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Collision/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Common/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Dynamics/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Dynamics/Contacts/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Dynamics/Joints/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Particle/%.cpp
+	$(CC) -c -o $@ $<
+
+obj/%.o: Box2D/Rope/%.cpp
+	$(CC) -c -o $@ $<
+
+
+clean:
+	rm obj/*.o ./m
+
+
