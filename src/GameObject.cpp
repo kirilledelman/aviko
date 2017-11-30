@@ -50,9 +50,6 @@ GameObject::~GameObject() {
  -------------------------------------------------------------------- */
 
 
-// GameObject -> script class "GameObject"
-SCRIPT_CLASS_NAME( GameObject, "GameObject" );
-
 // init script classes
 void GameObject::InitClass() {
 	
@@ -672,10 +669,16 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		this->CallEvent( event );
 	}
 	
-	// recurse to each child
+	// if event is stopped, skip
+	if ( event.stopped ) return;
+	
+	// for each child
 	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
 		GameObject* obj = (GameObject*) this->children[ i ];
-		if ( obj->active() ) obj->DispatchEvent( event, true, forEachGameObject );
+		// recurse, if event doesn't need to skip this object
+		if ( obj->active() && obj != event.skipObject ) {
+			obj->DispatchEvent( event, true, forEachGameObject );
+		}
 	}
 	
 	// if bubbling, call on self after children
@@ -1520,6 +1523,19 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 	outY = res[ 13 ];
 }
 
+
+// force recalculate matrices on this object + all descendents
+void GameObject::DirtyTransform() {
+	
+	// set dirty
+	this->_transformDirty = this->_inverseWorldDirty = this->_localCoordsAreDirty = this->_worldTransformDirty = true;
+	// recurse
+	for ( size_t i = 0, nc = this->children.size(); i < nc; i++ ){
+		this->children[ i ]->DirtyTransform();
+	}
+	
+}
+
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
 
@@ -1546,6 +1562,7 @@ void GameObject::Render( Event& event ) {
 		// update world matrix
 		GPU_MatrixCopy( this->_worldTransform, GPU_GetCurrentMatrix() );
 		this->_worldTransformDirty = false;
+		this->_inverseWorldDirty = true;
 		
 	}
 	
@@ -1553,14 +1570,20 @@ void GameObject::Render( Event& event ) {
 	if ( this->render != NULL && this->render->active() ) {
 		// find function
 		BehaviorEventCallback func = this->render->GetCallbackForHash( event.hash );
-		if ( func != NULL ) (*func)( this->render, event.behaviorParam );
+		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
 	}
 	
-	// descend into children
-	int numChildren = (int) this->children.size();
-	for( int i = numChildren - 1; i >= 0; i-- ) {
-		GameObject* obj = this->children[ i ];
-		obj->Render( event );
+	// if render isn't cancelled by behavior
+	if ( !event.stopped ) {
+		
+		// descend into children
+		int numChildren = (int) this->children.size();
+		for( int i = numChildren - 1; i >= 0; i-- ) {
+			GameObject* obj = this->children[ i ];
+			// recurse if render behavior didn't ask to skip it
+			if ( obj != event.skipObject ) obj->Render( event );
+		}
+		
 	}
 	
 	// pop matrix

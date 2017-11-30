@@ -1,6 +1,8 @@
 #include "UIBehavior.hpp"
 #include "GameObject.hpp"
 #include "Application.hpp"
+#include "RenderSpriteBehavior.hpp"
+#include "Image.hpp"
 #include "Scene.hpp"
 
 /* MARK:	-				Init / destroy
@@ -26,10 +28,12 @@ UIBehavior::UIBehavior() {
 	AddEventCallback( EVENT_KEYUP, (BehaviorEventCallback) &UIBehavior::Key);
 	AddEventCallback( EVENT_KEYPRESS, (BehaviorEventCallback) &UIBehavior::KeyPress);
 	AddEventCallback( EVENT_NAVIGATION, (BehaviorEventCallback) &UIBehavior::Navigation);
+	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &UIBehavior::Attached );
+	AddEventCallback( EVENT_REMOVED_FROM_SCENE, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ATTACHED, (BehaviorEventCallback) &UIBehavior::Attached );
 	AddEventCallback( EVENT_DETACHED, (BehaviorEventCallback) &UIBehavior::Detached );
-	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &UIBehavior::AddedToScene );
-	AddEventCallback( EVENT_REMOVED_FROM_SCENE, (BehaviorEventCallback) &UIBehavior::RemovedFromScene );
+	AddEventCallback( EVENT_ADDED, (BehaviorEventCallback) &UIBehavior::Attached );
+	AddEventCallback( EVENT_REMOVED, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ACTIVE_CHANGED, (BehaviorEventCallback) &UIBehavior::ActiveChanged );
 	
 	// flag
@@ -40,10 +44,6 @@ UIBehavior::UIBehavior() {
 // destructor
 UIBehavior::~UIBehavior() {
 	
-	// make sure we're not in scene's ui list
-	if ( this->scene  ) {
-		this->scene->UIRemoved( this );
-	}
 }
 
 
@@ -51,9 +51,6 @@ UIBehavior::~UIBehavior() {
 /* MARK:	-				Javascript
  -------------------------------------------------------------------- */
 
-
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( UIBehavior, "UI" );
 
 // init script classes
 void UIBehavior::InitClass() {
@@ -250,9 +247,11 @@ void UIBehavior::Navigate( float x, float y ) {
 		// set of control/distance from this control
 		unordered_map<UIBehavior*,float> candidates;
 		
-		// for each UI
-		for ( size_t i = 0, nc = this->scene->uiElements.size(); i < nc; i++ ) {
-			other = this->scene->uiElements[ i ];
+		// for each UI in scene
+		vector<UIBehavior*> uiElements;
+		this->scene->GetBehaviors( true, uiElements );		
+		for ( size_t i = 0, nc = uiElements.size(); i < nc; i++ ) {
+			other = uiElements[ i ];
 			if ( other == this || !other->focusable || !other->Behavior::active() ) continue;
 			
 			// check if it's in the correct direction
@@ -290,16 +289,50 @@ void UIBehavior::Navigate( float x, float y ) {
 }
 
 
+/* MARK:	-				Events
+ -------------------------------------------------------------------- */
+
+// finds closest RenderSpriteBehavior with image+autoDraw = parent
+void UIBehavior::CheckClipping() {
+
+	// reset
+	this->clippedBy = NULL;
+	if ( !this->gameObject ) return;
+	
+	// go up the tree
+	GameObject* p = this->gameObject->parent;
+	GameObject* c = this->gameObject;
+	while ( p ) {
+		RenderSpriteBehavior* rs = static_cast<RenderSpriteBehavior*>(p->render);
+		if ( rs ) {
+			if ( rs->imageInstance && rs->imageInstance->autoDraw == c ) {
+				this->clippedBy = rs;
+				return;
+			}
+		}
+		// keep climbing
+		c = p;
+		p = p->parent;
+	}
+	
+}
+
 
 /* MARK:	-				Events
  -------------------------------------------------------------------- */
 
 
-void UIBehavior::MouseMove( UIBehavior* behavior, Event* e){
+void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e){
 	float x = e->scriptParams.args[ 0 ].value.floatValue;
 	float y = e->scriptParams.args[ 1 ].value.floatValue;
 	float localX, localY;
 	bool inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
+	
+	// if clipped by RenderSprite/image+autoDraw, check if still in bounds
+	if ( inBounds && behavior->clippedBy ) {
+		float clippedLocalX, clippedLocalY;
+		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+	}
 	
 	// entered bounds
 	if ( inBounds && !behavior->mouseOver ) {
@@ -310,7 +343,7 @@ void UIBehavior::MouseMove( UIBehavior* behavior, Event* e){
 		event.scriptParams.AddFloatArgument( localY );
 		behavior->CallEvent( event );
 		
-		// exited bounds
+	// exited bounds
 	} else if ( !inBounds && behavior->mouseOver ) {
 		
 		// dispatch a rollover event
@@ -321,15 +354,22 @@ void UIBehavior::MouseMove( UIBehavior* behavior, Event* e){
 		
 	}
 	behavior->mouseOver = inBounds;
+	
 }
 
-void UIBehavior::MouseButton( UIBehavior* behavior, Event* e){
+void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 	float x = e->scriptParams.args[ 1 ].value.floatValue;
 	float y = e->scriptParams.args[ 2 ].value.floatValue;
 	int btn = e->scriptParams.args[ 0 ].value.intValue;
 	float localX, localY;
 	bool inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
 	bool down = ( strcmp( e->name, EVENT_MOUSEDOWN ) == 0 );
+	
+	// if clipped by RenderSprite/image+autoDraw, check if still in bounds
+	if ( inBounds && behavior->clippedBy ) {
+		float clippedLocalX, clippedLocalY;
+		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+	}
 	
 	if ( inBounds ) {
 		// dispatch mousedown or mouseup
@@ -367,7 +407,7 @@ void UIBehavior::MouseButton( UIBehavior* behavior, Event* e){
 	
 }
 
-void UIBehavior::MouseWheel( UIBehavior* behavior, Event* e){
+void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 
 	// forward event if mouse is over
 	if ( behavior->mouseOver ) {
@@ -376,7 +416,7 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, Event* e){
 
 }
 
-void UIBehavior::Navigation( UIBehavior* behavior, Event* e ){
+void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 	// if focused
 	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
 		
@@ -403,7 +443,7 @@ void UIBehavior::Navigation( UIBehavior* behavior, Event* e ){
 			behavior->Navigate( x, y );
 			
 		// if it's accept
-		} else if ( axisName.compare( app.input.navigationAccept ) ) {
+		} else if ( axisName.compare( app.input.navigationAccept ) == 0 ) {
 		
 			// generate 'click' event
 			Event event( EVENT_CLICK );
@@ -416,21 +456,21 @@ void UIBehavior::Navigation( UIBehavior* behavior, Event* e ){
 	}
 }
 
-void UIBehavior::Key( UIBehavior* behavior, Event* e){
+void UIBehavior::Key( UIBehavior* behavior, void* param, Event* e){
 	// only forward event if this object has focus
 	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
 		behavior->CallEvent( *e );
 	}
 }
 
-void UIBehavior::KeyPress( UIBehavior* behavior, Event* e){
+void UIBehavior::KeyPress( UIBehavior* behavior, void* param, Event* e){
 	// only forward event if this object has focus
 	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
 		behavior->CallEvent( *e );
 	}
 }
 
-void UIBehavior::ActiveChanged( UIBehavior* behavior, GameObject* topObject ){
+void UIBehavior::ActiveChanged( UIBehavior* behavior, GameObject* topObject, Event* e ){
 	// if now belong to inactivated object hierarchy
 	if ( topObject && !topObject->active() ) {
 		// blur
@@ -452,39 +492,35 @@ bool UIBehavior::active( bool a ) {
 	return this->_active = a;
 };
 
-void UIBehavior::AddedToScene( UIBehavior* behavior, GameObject* topObject ){
+void UIBehavior::Attached( UIBehavior* behavior, GameObject* go, Event* e ){
 	
-	// add behavior to list of UIs on scene
-	behavior->scene = topObject->GetScene();
-	if ( behavior->scene ) behavior->scene->UIAdded( behavior );
-	
-}
-
-void UIBehavior::RemovedFromScene( UIBehavior* behavior, GameObject* topObject ){
-
-	// remove behavior from list of UIs on scene
-	if ( behavior->scene ) behavior->scene->UIRemoved( behavior );
+	// remember scene
+	behavior->scene = go->GetScene();
+	behavior->CheckClipping();
 	
 }
 
-void UIBehavior::Attached( UIBehavior* behavior, GameObject* go ){
+void UIBehavior::Detached( UIBehavior* behavior, GameObject* go, Event* e ){
 	
-	// add behavior to list of UIs on scene
-	if ( !go->orphan ) {
-		behavior->scene = go->GetScene();
-		if ( behavior->scene ) behavior->scene->UIAdded( behavior );
-	}
-	
-}
-
-void UIBehavior::Detached( UIBehavior* behavior, GameObject* go ){
-	
-	// remove behavior from list of UIs on scene
-	if ( behavior->scene ) behavior->scene->UIRemoved( behavior );
+	// clear scene
+	behavior->scene = NULL;
 	
 }
 
 
-
+// prevents mouse event from going to objects clipped by RenderSprite with Image+autoDraw
+//void UIBehavior::MaybeClipMouseEvent( Event *e ) {
+//
+//	// if mouse if out of bounds and our gameObject is RenderSprite
+//	if ( this->gameObject->render && static_cast<RenderSpriteBehavior*>(this->gameObject->render) != nullptr ) {
+//		RenderSpriteBehavior* rsb = (RenderSpriteBehavior*) this->gameObject->render;
+//		// and this RenderSprite is rendering Image with autoDraw / direct child of this behavior
+//		if ( rsb->imageInstance && rsb->imageInstance->autoDraw && rsb->imageInstance->autoDraw->parent == this->gameObject ) {
+//			// clip mouse event
+//			e->skipObject = rsb->imageInstance->autoDraw;
+//		}
+//	}
+//	
+//}
 
 

@@ -55,28 +55,19 @@ string HexStr( Uint32 w, size_t hex_len );
 
 /// built-in event types
 
-/// called after physics update
+// GameObject events
 #define EVENT_UPDATE "update"
-/// called after Update
 #define EVENT_LATE_UPDATE "lateUpdate"
-/// called when this game object is added to a new parent
 #define EVENT_ADDED "added"
-/// called when this game object is removed from a parent
 #define EVENT_REMOVED "removed"
-/// called when this object, or its ascendent gets added to scene
 #define EVENT_ADDED_TO_SCENE "addedToScene"
-/// called when this object, or its ascendent is removed from scene
 #define EVENT_REMOVED_FROM_SCENE "removedFromScene"
-/// called after active property is changed on this object, or its ascendent
 #define EVENT_ACTIVE_CHANGED "activeChanged"
-/// called when this behavior is added to gameobject
 #define EVENT_ATTACHED "attached"
-/// called when this behavior is detached from gameobject
 #define EVENT_DETACHED "detached"
-/// used for rendering
 #define EVENT_RENDER "render"
 
-// input events
+// Input events
 #define EVENT_KEYDOWN "keyDown"
 #define EVENT_KEYUP "keyUp"
 #define EVENT_KEYPRESS "keyPress"
@@ -91,7 +82,7 @@ string HexStr( Uint32 w, size_t hex_len );
 #define EVENT_JOYAXIS "joyAxis"
 #define EVENT_JOYHAT "joyHat"
 
-// additional ui events
+// additional UIBehavior events
 #define EVENT_MOUSEOVER "mouseOver"
 #define EVENT_MOUSEOUT "mouseOut"
 #define EVENT_CLICK "click"
@@ -99,7 +90,7 @@ string HexStr( Uint32 w, size_t hex_len );
 #define EVENT_FOCUSCHANGED "focusChanged"
 #define EVENT_NAVIGATION "navigation"
 
-// input key defines
+// Input extra key defines
 #define KEY_MOUSE_BUTTON (SDL_NUM_SCANCODES + 1)
 #define KEY_JOY_BUTTON (SDL_NUM_SCANCODES + 2)
 #define KEY_JOY_HAT_X (SDL_NUM_SCANCODES + 3)
@@ -108,7 +99,7 @@ string HexStr( Uint32 w, size_t hex_len );
 #define KEY_MOUSE_WHEEL (SDL_NUM_SCANCODES + 6)
 #define KEY_MOUSE_WHEEL_X (SDL_NUM_SCANCODES + 7)
 
-// sound
+// Sound events
 #define EVENT_FINISHED "finished"
 
 // global forward declarations

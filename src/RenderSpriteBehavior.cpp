@@ -63,11 +63,6 @@ RenderSpriteBehavior::~RenderSpriteBehavior() {
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( RenderSpriteBehavior, "RenderSprite" );
-
-
-
 // init script classes
 void RenderSpriteBehavior::InitClass() {
 	
@@ -113,65 +108,68 @@ void RenderSpriteBehavior::InitClass() {
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "texture",
-	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+	 static_cast<ScriptStringCallback>([](void *b, string val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
-		if ( rs->imageResource ) {
-			return ArgValue( rs->imageResource->key.c_str() );
-		} else if ( rs->imageInstance ){
-			return ArgValue( rs->imageInstance->scriptObject );
-		} else {
-			return ArgValue(); // undefined
-		}
+		if ( rs->imageResource ) return rs->imageResource->key;
+		return string("");
 	 } ),
-	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+	 static_cast<ScriptStringCallback>([](void *b, string val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
 		ImageResource* img = NULL;
 		
 		// "texture" - make sure it exists
-		if ( val.type == TypeString ) {
-			img = app.textureManager.Get( val.value.stringValue->c_str() );
-			if ( img->error == ERROR_NONE ) {
-				rs->width = img->frame.actualWidth;
-				rs->height = img->frame.actualHeight;
-				img->AdjustUseCount( 1 );
-			} else {
-				img = NULL;
-			}
-		
-			// clear previous
-			if ( rs->imageResource ) rs->imageResource->AdjustUseCount( -1 );
-			rs->imageInstance = NULL;
-			
-			// set new
-			rs->imageResource = img;
-		
-		// Image instance
-		} else if ( val.type == TypeObject ){
-			
-			// object
-			if ( val.value.objectValue != NULL ) {
-				Image *img = script.GetInstance<Image>( val.value.objectValue );
-				if ( !img ) {
-					script.ReportError( ".texture property can be only set to a String, Image instance, or null" );
-					return val;
-				}
-				// set
-				rs->imageInstance = img;
-				if ( img->image ) {
-					rs->width = img->image->base_w;
-					rs->height = img->image->base_h;
-				}
-				
-			// NULL passed
-			} else {
-				rs->imageInstance = NULL;
-			}
-			
-			// clear imageResource
-			if ( rs->imageResource ) rs->imageResource->AdjustUseCount( -1 );
-			rs->imageResource = NULL;
+		img = app.textureManager.Get( val.c_str() );
+		if ( img->error == ERROR_NONE ) {
+			rs->width = img->frame.actualWidth;
+			rs->height = img->frame.actualHeight;
+			img->AdjustUseCount( 1 );
+		} else {
+			img = NULL;
 		}
+	
+		// clear previous
+		if ( rs->imageResource ) rs->imageResource->AdjustUseCount( -1 );
 		
+		// set new
+		rs->imageResource = img;
+		return val;
+	}));
+	
+	script.AddProperty<RenderSpriteBehavior>
+	( "image",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val) {
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		if ( rs->imageInstance ) return rs->imageInstance->scriptObject;
+		return (void*) NULL;
+	 } ),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val) {
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		// object
+		if ( val != NULL ) {
+			Image *img = script.GetInstance<Image>( val );
+			if ( !img ) {
+				script.ReportError( ".image property can be only set to Image instance, or null" );
+				return val;
+			}
+			// set
+			rs->imageInstance = img;
+			if ( img->image ) {
+				rs->width = img->image->base_w;
+				rs->height = img->image->base_h;
+			}
+			// assigned image's autoDraw is direct child of this gameObject
+			if ( img->autoDraw && img->autoDraw->parent == rs->gameObject ){
+				// update clipping of all descendent UIObjects
+				vector<UIBehavior*> uis;
+				rs->gameObject->GetBehaviors( true, uis );
+				for ( size_t i = 0, nb = uis.size(); i < nb; i++ ){
+					uis[ i ]->CheckClipping();
+				}
+			}
+		// NULL passed
+		} else {
+			rs->imageInstance = NULL;
+		}
 		return val;
 	}));
 	
@@ -258,7 +256,7 @@ bool RenderSpriteBehavior::IsScreenPointInside( float x, float y, float* outLoca
 
 
 /// render callback
-void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* target ) {
+void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* target, Event* event ) {
 	
 	// setup
 	GPU_Image* image = NULL;
@@ -324,6 +322,13 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// get image
 		image = behavior->imageInstance->GetImage();
 		if ( !image ) return;
+		
+		// if autodraw and is direct child of this behavior's gameObject
+		if ( behavior->imageInstance->autoDraw && behavior->imageInstance->autoDraw->parent == behavior->gameObject ){
+			// tell render to not draw it (since we just drew it to texture)
+			event->skipObject = behavior->imageInstance->autoDraw;
+			event->skipObject->DirtyTransform();
+		}
 		
 		// size
 		srcRect.w = image->base_w;

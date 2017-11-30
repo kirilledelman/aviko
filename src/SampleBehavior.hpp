@@ -19,22 +19,23 @@ public:
 // events
 	
 	// placeholder events
-	static void Update( SampleBehavior* behavior, void* );
-	static void LateUpdate( SampleBehavior* behavior, void* );
-	static void Added( SampleBehavior* behavior, GameObject* newParent );
-	static void Removed( SampleBehavior* behavior, GameObject* oldParent );
-	static void AddedToScene( SampleBehavior* behavior, GameObject* topObject );
-	static void RemovedFromScene( SampleBehavior* behavior, GameObject* topObject );
-	static void ActiveChanged( SampleBehavior* behavior, GameObject* object );
-	static void Render( SampleBehavior* behavior, GPU_Target* target );
+	static void Update( SampleBehavior* behavior, void*, Event* event );
+	static void LateUpdate( SampleBehavior* behavior, void*, Event* event );
+	static void Added( SampleBehavior* behavior, GameObject* newParent, Event* event );
+	static void Removed( SampleBehavior* behavior, GameObject* oldParent, Event* event );
+	static void AddedToScene( SampleBehavior* behavior, GameObject* topObject, Event* event );
+	static void RemovedFromScene( SampleBehavior* behavior, GameObject* topObject, Event* event );
+	static void ActiveChanged( SampleBehavior* behavior, GameObject* object, Event* event );
+	static void Render( SampleBehavior* behavior, GPU_Target* target, Event* event );
 	
 // scripting
 	
 	/// registers class for scripting
 	static void InitClass();
-
-
 	
 };
+
+SCRIPT_CLASS_NAME( SampleBehavior, "SampleBehavior" );
+
 
 #endif /* SampleBehavior_hpp */

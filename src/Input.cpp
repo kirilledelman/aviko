@@ -37,8 +37,6 @@ void Input::AddKeyboardController () {
  -------------------------------------------------------------------- */
 
 
-SCRIPT_CLASS_NAME( Input, "Input" );
-
 void Input::InitClass() {
 	
 	// register class
@@ -548,15 +546,7 @@ void Input::UIEvent( Event &event ) {
 	if ( !app.sceneStack.size() ) return;
 	Scene* scene = app.sceneStack.back();
 	event.behaviorParam = &event;
-	for( int i = (int) scene->uiElements.size() - 1; i >= 0; i-- ){
-		UIBehavior* behavior = scene->uiElements[ i ];
-		// ensure it's active
-		if ( !behavior->Behavior::active() ) continue;
-		// process event
-		behavior->CallEventCallback( event );
-		// behavior will stop this event if handled 
-		if ( event.stopped ) break;
-	}
+	scene->DispatchEvent( event );
 }
 
 

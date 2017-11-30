@@ -41,9 +41,6 @@ SampleBehavior::~SampleBehavior() {}
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( SampleBehavior, "SampleBehavior" );
-
 // init script classes
 void SampleBehavior::InitClass() {
 	
@@ -58,21 +55,21 @@ void SampleBehavior::InitClass() {
 
 
 // update
-void SampleBehavior::Update( SampleBehavior* behavior, void* param ) {}
+void SampleBehavior::Update( SampleBehavior* behavior, void* param, Event* e ) {}
 
-void SampleBehavior::LateUpdate( SampleBehavior* behavior, void* go ){}
+void SampleBehavior::LateUpdate( SampleBehavior* behavior, void* go, Event* e ){}
 
-void SampleBehavior::Added( SampleBehavior* behavior, GameObject* newParent ){}
+void SampleBehavior::Added( SampleBehavior* behavior, GameObject* newParent, Event* e ){}
 
-void SampleBehavior::Removed( SampleBehavior* behavior, GameObject* oldParent ){}
+void SampleBehavior::Removed( SampleBehavior* behavior, GameObject* oldParent, Event* e ){}
 
-void SampleBehavior::AddedToScene( SampleBehavior* behavior, GameObject* topObject ){}
+void SampleBehavior::AddedToScene( SampleBehavior* behavior, GameObject* topObject, Event* e ){}
 
-void SampleBehavior::RemovedFromScene( SampleBehavior* behavior, GameObject* topObject ){}
+void SampleBehavior::RemovedFromScene( SampleBehavior* behavior, GameObject* topObject, Event* e ){}
 
-void SampleBehavior::ActiveChanged( SampleBehavior* behavior, GameObject* topObject ){}
+void SampleBehavior::ActiveChanged( SampleBehavior* behavior, GameObject* topObject, Event* e ){}
 
-void SampleBehavior::Render( SampleBehavior* behavior, GPU_Target* target ){}
+void SampleBehavior::Render( SampleBehavior* behavior, GPU_Target* target, Event* e ){}
 
 
 

@@ -1,16 +1,23 @@
-UIBehavior
-	add .evalOnClick property - evals script
 
-Image + autoDraw for scrollable containers
+Implement bounds checks for Rendershape
+
+Image
+	.mask = GameObject can be done by adding a callback parameter to Render - and
+	switch blend mode to one replacing alpha channel
 
 ScriptableObject.async( function, sec ) - use eventListeners style interface/container
 ScriptableObject.debounce( string, function, time )
 ScriptableObject.cancelDebouncer( string )
 
 RenderText - add multiline rendering(alignment)
+	Implement bounds checks for UI
 	add measurement wo/ render
 	add outline+color
 	maybe quality switch too
+
+Layout class + subclasses
+anchors
+min/max width, height
 
 Image
 	save( pngpath )in /textures by default
@@ -33,6 +40,7 @@ Nice to have
 
 
 GameObject
+setParent - need circular check, also, scene shouldn't override its setparent, and disable it
 .isChildOf( another ) - check descendency
 $( 'childname,childname,childname' ) -> [] children
 $( 'name/name/name' ) -> great-grandchild
@@ -74,6 +82,7 @@ Input should be able to read retroarch config
 
 Intern all built-in-event strings
 
+ParticleSystem render behavior
 
 Promise-like interface?
 

@@ -80,9 +80,6 @@ Scene::~Scene() {
  -------------------------------------------------------------------- */
 
 
-// Scene -> script class "Scene"
-SCRIPT_CLASS_NAME( Scene, "Scene" );
-
 // init script classes
 void Scene::InitClass() {
 
@@ -118,11 +115,6 @@ void Scene::InitClass() {
 	//...
 	
 }
-
-
-/* MARK:	-				Serialization
- -------------------------------------------------------------------- */
-
 
 
 /* MARK:	-				Render
@@ -172,21 +164,3 @@ void Scene::SimulatePhysics() {
 	
 }
 
-
-/* MARK:	-				UI
- -------------------------------------------------------------------- */
-
-
-void Scene::UIAdded( UIBehavior* ui ) {
-	uiElements.push_back( ui );
-}
-
-void Scene::UIRemoved( UIBehavior* ui ) {
-	
-	// clear if focused
-	if ( this->focusedUI == ui ) this->focusedUI = NULL;
-	
-	// remove if in list
-	vector<UIBehavior*>::iterator it = find( uiElements.begin(), uiElements.end(), ui );
-	if ( it != uiElements.end() ) uiElements.erase( it );
-}

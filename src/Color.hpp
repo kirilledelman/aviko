@@ -62,4 +62,6 @@ public:
 	
 };
 
+SCRIPT_CLASS_NAME( Color, "Color" );
+
 #endif /* Color_hpp */

@@ -46,4 +46,6 @@ public:
 	
 };
 
+SCRIPT_CLASS_NAME( Sound, "Sound" );
+
 #endif /* Sound_hpp */

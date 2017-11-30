@@ -28,13 +28,8 @@ public:
 
 // UI elements
 	
-	vector<UIBehavior*> uiElements;
-	
+	// current focus
 	UIBehavior* focusedUI = NULL;
-	
-	// notifications by UIBehaviors
-	void UIAdded( UIBehavior* ui );
-	void UIRemoved( UIBehavior* ui );
 	
 // physics
 	
@@ -61,5 +56,7 @@ public:
 	Scene* GetScene() { return this; }
 	
 };
+
+SCRIPT_CLASS_NAME( Scene, "Scene" );
 
 #endif /* Scene_hpp */

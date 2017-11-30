@@ -39,8 +39,6 @@ Controller::~Controller(){}
  -------------------------------------------------------------------- */
 
 
-SCRIPT_CLASS_NAME( Controller, "Controller" );
-
 void Controller::InitClass() {
 	
 	// register class

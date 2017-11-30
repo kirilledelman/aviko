@@ -124,4 +124,7 @@ public:
 	
 };
 
+// Application -> script class "Application"
+SCRIPT_CLASS_NAME( Application, "App" );
+
 #endif

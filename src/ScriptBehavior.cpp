@@ -42,9 +42,6 @@ ScriptBehavior::~ScriptBehavior() {
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( ScriptBehavior, "Script" );
-
 // init script classes
 void ScriptBehavior::InitClass() {
 	

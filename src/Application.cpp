@@ -158,10 +158,6 @@ void Application::UpdateBackscreen() {
 /* MARK:	-				Script
  -------------------------------------------------------------------- */
 
-
-// Application -> script class "Application"
-SCRIPT_CLASS_NAME( Application, "App" );
-
 /// initialize class scripting
 void Application::InitClass() {
 	

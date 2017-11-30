@@ -88,7 +88,7 @@ public:
 // methods
 	
 	/// render callback
-	static void Render( RenderShapeBehavior* behavior, GPU_Target* target );
+	static void Render( RenderShapeBehavior* behavior, GPU_Target* target, Event* event );
 	
 	/// returns .points as new ArgValueVector (delete it after using)
 	ArgValueVector* GetPoints();
@@ -97,5 +97,7 @@ public:
 	void SetPoints( ArgValueVector* );
 	
 };
+
+SCRIPT_CLASS_NAME( RenderShapeBehavior, "RenderShape" );
 
 #endif /* RenderShapeBehavior_hpp */

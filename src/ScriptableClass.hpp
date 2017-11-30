@@ -51,6 +51,8 @@
  
  -------------------------------------------------------------------- */
 
+class GameObject;
+
 /// event structure
 struct Event {
 	
@@ -64,6 +66,9 @@ struct Event {
 	
 	/// for stopping event processing loops
 	bool stopped = false;
+	
+	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
+	GameObject* skipObject = NULL;
 	
 	/// param passed to behaviors
 	void* behaviorParam = NULL;

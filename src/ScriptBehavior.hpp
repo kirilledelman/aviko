@@ -24,4 +24,6 @@ public:
 		
 };
 
+SCRIPT_CLASS_NAME( ScriptBehavior, "Script" );
+
 #endif /* ScriptBehavior_hpp */

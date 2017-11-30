@@ -14,6 +14,8 @@ typedef vector<GameObject*>::iterator GameObjectIterator;
 typedef vector<Behavior*> BehaviorVector;
 typedef vector<Behavior*>::iterator BehaviorIterator;
 
+SCRIPT_CLASS_NAME( GameObject, "GameObject" );
+
 class GameObject : public ScriptableClass {
 protected:
 	
@@ -121,6 +123,9 @@ public:
 	void SetWorldScaleX( float sx );
 	void SetWorldScaleY( float sy );
 	
+	/// reset matrix on this object + descendents
+	void DirtyTransform();
+	
 	// get world transform
 	b2Vec2 GetWorldPosition();
 	b2Vec2 GetWorldScale();
@@ -207,11 +212,28 @@ public:
 	BEHAVIOR* GetBehavior() {
 		for( BehaviorVector::size_type i = 0, nb = this->behaviors.size(); i < nb; i++ ){
 			Behavior *b = this->behaviors[ i ];
-			if ( static_cast<BEHAVIOR*>( b ) != nullptr ) return b;
+			if ( script.GetInstance<BEHAVIOR>( b->scriptObject ) == b ) return b;
 		}
 		return NULL;
 	}
 
+	/// returns first behavior of class
+	template<class BEHAVIOR>
+	void GetBehaviors( bool recurse, vector<BEHAVIOR*> &ret ) {
+		for( BehaviorVector::size_type i = 0, nb = this->behaviors.size(); i < nb; i++ ){
+			Behavior *b = this->behaviors[ i ];
+			if ( script.GetInstance<BEHAVIOR>( b->scriptObject ) == b ) {
+				ret.push_back( (BEHAVIOR*) b );
+			}
+		}
+		// recursive
+		if ( recurse ) {
+			for ( size_t i = 0, nc = this->children.size(); i < nc; i++ ){
+				this->children[ i ]->GetBehaviors( true, ret );
+			}
+		}
+	}
+	
 // events
 	
 	typedef function<void (GameObject*)> GameObjectCallback;

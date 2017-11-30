@@ -3,7 +3,6 @@
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
 
-SCRIPT_CLASS_NAME( Color, "Color" );
 
 Color::Color( ScriptArguments* args ) {
 

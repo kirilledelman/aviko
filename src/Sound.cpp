@@ -43,8 +43,6 @@ Sound::~Sound() {
  -------------------------------------------------------------------- */
 
 
-SCRIPT_CLASS_NAME( Sound, "Sound" );
-
 void Sound::InitClass() {
 	
 	// create class

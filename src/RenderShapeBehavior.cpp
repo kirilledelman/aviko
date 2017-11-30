@@ -141,10 +141,6 @@ RenderShapeBehavior::~RenderShapeBehavior() {
 /* MARK:	-				Javascript
  -------------------------------------------------------------------- */
 
-
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( RenderShapeBehavior, "RenderShape" );
-
 // init script classes
 void RenderShapeBehavior::InitClass() {
 
@@ -314,7 +310,7 @@ void RenderShapeBehavior::SetPoints( ArgValueVector *in ) {
 
 
 /// render callback
-void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* target ) {
+void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* target, Event* event ) {
 	
 	// setup
 	GPU_SetLineThickness( behavior->lineThickness );

@@ -67,4 +67,6 @@ public:
 	
 };
 
+SCRIPT_CLASS_NAME( Controller, "Controller" );
+
 #endif /* Controller_hpp */

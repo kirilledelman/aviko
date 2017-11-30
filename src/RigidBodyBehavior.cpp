@@ -42,9 +42,6 @@ RigidBodyBehavior::~RigidBodyBehavior() {
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( RigidBodyBehavior, "RigidBody" );
-
 // init script classes
 void RigidBodyBehavior::InitClass() {
 	
@@ -142,7 +139,7 @@ bool RigidBodyBehavior::SetGameObject( GameObject* go, int pos ) {
 }
 
 // attached to scene callback
-void RigidBodyBehavior::Attached( RigidBodyBehavior *behavior, GameObject* target ) {
+void RigidBodyBehavior::Attached( RigidBodyBehavior *behavior, GameObject* target, Event* event ) {
 	
 	// add body to world
 	behavior->AddBody( target->GetScene() );
@@ -150,7 +147,7 @@ void RigidBodyBehavior::Attached( RigidBodyBehavior *behavior, GameObject* targe
 }
 
 /// detached from scene callback
-void RigidBodyBehavior::Detached( RigidBodyBehavior *behavior, GameObject* target ) {
+void RigidBodyBehavior::Detached( RigidBodyBehavior *behavior, GameObject* target, Event* event ) {
 	
 	// remove from world
 	behavior->RemoveBody();
@@ -166,7 +163,7 @@ bool RigidBodyBehavior::active( bool a ) {
 }
 
 /// active changed callback
-void RigidBodyBehavior::ActiveChanged( RigidBodyBehavior* behavior, GameObject* target ) {
+void RigidBodyBehavior::ActiveChanged( RigidBodyBehavior* behavior, GameObject* target, Event* event ) {
 	
 	// set its active status to combination of active + on scene
 	if ( behavior->body ) behavior->body->SetActive( behavior->Behavior::active() && behavior->gameObject->active() );

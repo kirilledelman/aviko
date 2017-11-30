@@ -53,9 +53,10 @@ public:
 // methods
 		
 	/// render callback
-	static void Render( RenderSpriteBehavior* behavior, GPU_Target* target );
+	static void Render( RenderSpriteBehavior* behavior, GPU_Target* target, Event* event );
 	
 };
 
+SCRIPT_CLASS_NAME( RenderSpriteBehavior, "RenderSprite" );
 
 #endif /* RenderSpriteBehavior_hpp */

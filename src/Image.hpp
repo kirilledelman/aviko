@@ -52,5 +52,6 @@ public:
 	
 };
 
+SCRIPT_CLASS_NAME( Image, "Image" );
 
 #endif /* Image_hpp */

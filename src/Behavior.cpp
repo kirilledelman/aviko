@@ -24,9 +24,6 @@ Behavior::~Behavior() {}
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( Behavior, "Behavior" );
-
 // init script classes
 void Behavior::InitClass() {
 	
@@ -117,7 +114,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			
 			// call detached event directly on event
 			BehaviorEventCallback func = this->GetCallbackForHash( HashString( EVENT_DETACHED ) );
-			if ( func ) func( this, oldGameObject );
+			if ( func ) func( this, oldGameObject, &event );
 			
 		}
 		
@@ -140,7 +137,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			
 			// call attached event directly on event
 			BehaviorEventCallback func = this->GetCallbackForHash( HashString( EVENT_ATTACHED ) );
-			if ( func ) func( this, gameObject );
+			if ( func ) func( this, gameObject, &event );
 			
 			// gained a parent? protect us from GC
 			if ( !oldGameObject ) script.ProtectObject( &this->scriptObject, true );
@@ -169,7 +166,7 @@ void Behavior::CallEventCallback( Event &event ) {
 	BehaviorEventCallback func = this->GetCallbackForHash( event.hash );
 	
 	// if callback for this event exists, call it
-	if ( func != NULL ) (*func)( this, event.behaviorParam );
+	if ( func != NULL ) (*func)( this, event.behaviorParam, &event );
 	
 }
 

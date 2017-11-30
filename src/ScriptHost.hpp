@@ -40,10 +40,10 @@ typedef function<bool (void*, ScriptArguments&)> ScriptFunctionCallback;
 
 
 /// template for mapping CLASS -> "Class"
-template <class T> struct ScriptClassName { static const string& name(){ static string _name = ""; return _name; } };
+template <class T> struct ScriptClassName { static const string& name(){ static string _name = "?"; return _name; } };
 
 /// for each class that needs to be scriptable, use this macro to define class name
-#define SCRIPT_CLASS_NAME(CLASS,CLASSNAME)	template <> struct ScriptClassName<CLASS> { static const string& name(){ static string _name = CLASSNAME; return _name; } };
+#define SCRIPT_CLASS_NAME(CLASS,CLASSNAME) template <> struct ScriptClassName<CLASS> { static const string& name(){ static string _name = CLASSNAME; return _name; } };
 
 
 /* MARK:	-				Script Host
@@ -1432,14 +1432,21 @@ public:
 
 	
 	template <class CLASS>
-	/// returns instance of class, or NULL if wrong class
+	/// returns instance of class
 	CLASS* GetInstance( void* scriptObject ){
 		JSObject* obj = (JSObject*) scriptObject;
 		if ( !obj ) return NULL;
 		JSClass* clp = JS_GetClass( obj );
 		if ( !(clp->flags & JSCLASS_HAS_PRIVATE) ) return NULL;
 		void* pdata = JS_GetPrivate( obj );
-		if ( static_cast<CLASS*>( pdata ) != nullptr ) return (CLASS*) pdata;
+		if ( static_cast<CLASS*>( pdata ) == nullptr ) return NULL;
+		// verify class
+		string className = ScriptClassName<CLASS>::name();
+		ClassDef* cdef = CDEF( clp->name );
+		while ( cdef ) {
+			if ( cdef->className.compare( className ) == 0 ) return (CLASS*) pdata;
+			cdef = cdef->parent;
+		}
 		return NULL;
 	}
 	

@@ -25,13 +25,13 @@ public:
 // methods
 	
 	/// active callback
-	static void ActiveChanged( RigidBodyBehavior* behavior, GameObject* target );
+	static void ActiveChanged( RigidBodyBehavior* behavior, GameObject* target, Event* event );
 	
 	/// added to scene or attached to gameObject callback
-	static void Attached( RigidBodyBehavior* behavior, GameObject* target );
+	static void Attached( RigidBodyBehavior* behavior, GameObject* target, Event* event );
 	
 	/// removed from scene or detached from gameObject callback
-	static void Detached( RigidBodyBehavior* behavior, GameObject* target );
+	static void Detached( RigidBodyBehavior* behavior, GameObject* target, Event* event );
 	
 	/// override Behavior active setter
 	bool active( bool a );
@@ -64,5 +64,7 @@ public:
 	void RemoveBody();
 	
 };
+
+SCRIPT_CLASS_NAME( RigidBodyBehavior, "RigidBody" );
 
 #endif /* RigidBodyBehavior_hpp */

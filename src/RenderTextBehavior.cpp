@@ -65,9 +65,6 @@ RenderTextBehavior::~RenderTextBehavior() {
  -------------------------------------------------------------------- */
 
 
-// Behavior -> script class "Behavior"
-SCRIPT_CLASS_NAME( RenderTextBehavior, "RenderText" );
-
 // init script classes
 void RenderTextBehavior::InitClass() {
 	
@@ -221,7 +218,7 @@ void RenderTextBehavior::Repaint() {
 
 
 /// render callback
-void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* target ) {
+void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* target, Event* event ) {
 
 	// set color
 	SDL_Color color = behavior->color->rgba;

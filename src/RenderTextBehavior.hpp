@@ -50,10 +50,10 @@ public:
 	void Repaint();
 	
 	/// render callback
-	static void Render( RenderTextBehavior* behavior, GPU_Target* target );
-	
+	static void Render( RenderTextBehavior* behavior, GPU_Target* target, Event* event );
 	
 };
 
+SCRIPT_CLASS_NAME( RenderTextBehavior, "RenderText" );
 
 #endif /* RenderTextBehavior_hpp */

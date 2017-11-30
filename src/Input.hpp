@@ -60,4 +60,6 @@ public:
 	~Input();
 };
 
+SCRIPT_CLASS_NAME( Input, "Input" );
+
 #endif /* Input_hpp */

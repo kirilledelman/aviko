@@ -20,7 +20,7 @@ struct Event;
 class GameObject;
 
 /// Behavior callback method type via a static class function
-typedef void (*BehaviorEventCallback) ( void* behavior, void* param );
+typedef void (*BehaviorEventCallback) ( void* behavior, void* param, Event* event );
 
 /// maps hash(char*) -> BehaviorEventCallback
 typedef unordered_map<size_t, BehaviorEventCallback> BehaviorEventMap;
@@ -82,5 +82,8 @@ public:
 	virtual bool active( bool a ) { return this->_active = a; }; // setter
 		
 };
+
+// Behavior -> script class "Behavior"
+SCRIPT_CLASS_NAME( Behavior, "Behavior" );
 
 #endif /* Behavior_hpp */

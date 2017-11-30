@@ -42,9 +42,6 @@ Image::~Image() {
 /* MARK:	-				Scripting
  -------------------------------------------------------------------- */
 
-
-SCRIPT_CLASS_NAME( Image, "Image" );
-
 void Image::InitClass() {
 	
 	// create class
@@ -76,6 +73,14 @@ void Image::InitClass() {
 		if ( img->autoDraw != go ) {
 			img->autoDraw = go;
 			img->lastRedrawFrame = 0;
+			if ( go ) {
+				// update clipping of all descendent UIObjects
+				vector<UIBehavior*> uis;
+				go->GetBehaviors( true, uis );
+				for ( size_t i = 0, nb = uis.size(); i < nb; i++ ){
+					uis[ i ]->CheckClipping();
+				}
+			}
 		}
 		return val;
 	}));
