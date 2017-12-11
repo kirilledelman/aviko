@@ -15,8 +15,12 @@ class RenderBehavior : public Behavior {
 public:
 	
 	// ui
+	
+	/// (overriden in child classes) returns local-space bounding box
 	virtual GPU_Rect GetBounds(){ return GPU_Rect(); }
-	virtual bool IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY ) { return false; }
+	
+	/// returns true if screen space point is inside this GameObject/RenderBehavior
+	virtual bool IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY );
 	
 	/// color
 	Color *color = NULL;
@@ -29,8 +33,11 @@ public:
 	// stipple transparency
 	float stipple = 0;
 	
+	// apply stipple pattern to alpha channel
+	bool stippleAlpha = false;
+	
 	/// blend mode
-	GPU_BlendPresetEnum blendMode = GPU_BLEND_NORMAL;
+	Uint8 blendMode = GPU_BLEND_NORMAL;
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)
 	typedef struct {
@@ -40,6 +47,7 @@ public:
 		int tileUniform;
 		int texInfoUniform;
 		int stippleUniform;
+		int stippleAlphaUniform;
 	} SpriteShaderVariant;
 	
 	///

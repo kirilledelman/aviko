@@ -54,7 +54,7 @@ GameObject::~GameObject() {
 void GameObject::InitClass() {
 	
 	// register GameObject script class
-	script.RegisterClass<GameObject>();
+	script.RegisterClass<GameObject>( "ScriptableObject" );
 	
 	// properties
 	
@@ -71,10 +71,6 @@ void GameObject::InitClass() {
 	script.AddProperty<GameObject>
 	( "numChildren",
 	 static_cast<ScriptIntCallback>([](void* go, int) { return ((GameObject*) go)->children.size(); }));
-	
-	script.AddProperty<GameObject>
-	( "numBehaviors",
-	 static_cast<ScriptIntCallback>([](void* go, int) { return ((GameObject*) go)->behaviors.size(); }));
 	
 	script.AddProperty<GameObject>
 	( "parent",
@@ -107,7 +103,7 @@ void GameObject::InitClass() {
 			if ( beh ) beh->SetGameObject( self );
 		}
 		return self->body ? self->body->scriptObject : NULL;
-	}), PROP_ENUMERABLE);
+	}));
 
 	
 	script.AddProperty<GameObject>
@@ -128,7 +124,7 @@ void GameObject::InitClass() {
 			if ( beh ) beh->SetGameObject( self );
 		}
 		return self->render ? self->render->scriptObject : NULL;
-	 }), PROP_ENUMERABLE);
+	 }));
 	
 	script.AddProperty<GameObject>
 	( "ui",
@@ -148,7 +144,7 @@ void GameObject::InitClass() {
 			if ( beh ) beh->SetGameObject( self );
 		}
 		return self->ui ? self->ui->scriptObject : NULL;
-	}), PROP_ENUMERABLE);
+	}));
 	
 	script.AddProperty<GameObject>
 	( "opacity",
@@ -174,6 +170,15 @@ void GameObject::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
 		GameObject* go = ((GameObject*) o);
 		go->SetY( val );
+		return val;
+	}));
+	
+	script.AddProperty<GameObject>
+	( "z",
+	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((GameObject*) o)->_z; }),
+	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
+		GameObject* go = ((GameObject*) o);
+		go->SetZ( val );
 		return val;
 	}));
 	
@@ -273,13 +278,6 @@ void GameObject::InitClass() {
 	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ){ return ((GameObject*) go)->SetChildrenVector( in ); }),
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
 	 );
-
-	script.AddProperty<GameObject>
-	( "behaviors",
-	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ) { return ((GameObject*) go)->GetBehaviorsVector(); }),
-	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ){ return ((GameObject*) go)->SetBehaviorsVector( in ); }),
-	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
-	 );
 	
 	script.AddProperty<GameObject>
 	( "script",
@@ -290,18 +288,15 @@ void GameObject::InitClass() {
 	 }),
 	 static_cast<ScriptValueCallback>([](void *go, ArgValue in ){
 		GameObject* self = ((GameObject*) go);
-		
 		// setting to null or empty
 		if ( in.type != TypeString || !in.value.stringValue->size() ) {
 			if ( self->scriptResource ) self->scriptResource->AdjustUseCount( -1 );
 			self->scriptResource = NULL;
 			return in;
 		}
-
 		// find
 		const char *key = in.value.stringValue->c_str();
 		ScriptResource* s = app.scriptManager.Get( key );
-		
 		// script found
 		if ( s->error == ERROR_NONE ) {
 			// is different from previous
@@ -523,120 +518,14 @@ void GameObject::InitClass() {
 	}));
 	
 	script.DefineFunction<GameObject>
-	( "getBehavior", // ( int position | class type ) -> Behavior child | NULL if out of range
-	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
-		
-		// validate params
-		const char* error = "usage: getBehavior( int position | BehaviorClassConstructor )";
-		int pos = -1;
-		void *func = NULL;
-		GameObject* self = (GameObject*) go;
-		int numBehaviors = (int) self->behaviors.size();
-		Behavior* other = NULL;
-		
-		// if number
-		if ( sa.ReadArguments( 1, TypeInt, &pos ) ) {
-			if ( pos < 0 ) pos = numBehaviors + pos;
-			if ( pos >= 0 && pos < numBehaviors ) other = self->behaviors[ pos ];
-		// if function(constructor)
-		} else if ( sa.ReadArguments( 1, TypeFunction, &func ) ) {
-			const char *className = script.GetClassNameByConstructor( func );
-			for ( size_t i = 0; i < numBehaviors; i++ ){
-				Behavior* beh = self->behaviors[ i ];
-				// find matching class name
-				if ( strcmp( beh->scriptClassName, className ) == 0 ) {
-					other = beh; break;
-				}
-			}
-		// if not a valid call report error
-		} else {
-			script.ReportError( error );
-			return false;
-		}
-		
-		// return object
-		sa.ReturnObject( other ? other->scriptObject : NULL );
-		return true;
-	}));
-	
-	script.DefineFunction<GameObject>
-	( "addBehavior", // ( Behavior child [, int position ] ) -> Behavior child
-	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
-		
-		// validate params
-		const char* error = "usage: addBehavior( Behavior obj [,int desiredPosition ] )";
-		int pos = -1;
-		void* obj = NULL;
-		Behavior* other = NULL;
-		
-		// read params
-		if ( sa.ReadArguments( 1, TypeObject, &obj, TypeInt, &pos ) ) {
-			other = script.GetInstance<Behavior>( obj );
-		}
-		
-		// if not a valid call report error
-		if ( !other ) {
-			script.ReportError( error );
-			return false;
-		}
-		
-		// all good
-		GameObject* self = (GameObject*) go;
-		// if added behavior successfully
-		if ( other->SetGameObject( self, pos ) ){
-			// return added object
-			sa.ReturnObject( other->scriptObject );
-			// otherwise return null
-		} else {
-			sa.ReturnObject( NULL );
-		}
-		return true;
-	}));
-	
-	script.DefineFunction<GameObject>
-	( "removeBehavior", // ( Behavior child | int position ) -> Behavior child
-	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
-		
-		// validate params
-		const char* error = "usage: removeBehavior( Behavior obj | int removePosition )";
-		GameObject* self = (GameObject*) go;
-		Behavior* other = NULL;
-		int pos = -1;
-		void* obj = NULL;
-		
-		// argument is object?
-		if ( sa.ReadArguments( 1, TypeObject, &obj ) ) {
-			other = script.GetInstance<Behavior>( obj );
-			if ( !other ) error = "removeChild - parameter object is null";
-		// argument is int?
-		} else if ( sa.ReadArguments( 1, TypeInt, &pos ) ) {
-			int numBehaviors = (int) self->behaviors.size();
-			if ( pos < 0 ) pos = numBehaviors + pos;
-			if ( pos < 0 || pos >= numBehaviors ) error = "Behavior - index out of range";
-			else other = self->behaviors[ pos ];
-		}
-		
-		// if not a valid call report error
-		if ( !other ) {
-			script.ReportError( error );
-			return false;
-		}
-		
-		// return the object
-		sa.ReturnObject( other->scriptObject );
-		
-		// unparent
-		other->SetGameObject( NULL );
-		return true;
-	}));
-	
-	script.DefineFunction<GameObject>
 	( "toString",
 	 static_cast<ScriptFunctionCallback>([]( void* o, ScriptArguments& sa ) {
 		static char buf[512];
 		GameObject* self = (GameObject*) o;
 		
-		if ( self->scriptResource ) {
+		if ( !self ) {
+			sprintf( buf, "[GameObject prototype]" );
+		} else if ( self->scriptResource ) {
 			sprintf( buf, "[GameObject (%s)]", self->scriptResource->key.c_str() );
 		} else if ( self->name.size() ) {
 			sprintf( buf, "[GameObject \"%s\"]", self->name.c_str() );
@@ -647,11 +536,6 @@ void GameObject::InitClass() {
 	}));
 
 }
-
-
-/* MARK:	-				Serialization
- -------------------------------------------------------------------- */
-
 
 
 /* MARK:	-				Behaviors / messaging
@@ -764,7 +648,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			this->parent = NULL;
 			
 			// call event on this object only
-			event.SetName( EVENT_REMOVED );
+			event.name = EVENT_REMOVED;
 			event.behaviorParam = oldParent;
 			event.scriptParams.AddObjectArgument( oldParent->scriptObject );
 			this->CallEvent( event );
@@ -794,7 +678,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			}
 			
 			// call event on this object only
-			event.SetName( EVENT_ADDED );
+			event.name = EVENT_ADDED;
 			event.behaviorParam = newParent;
 			event.scriptParams.ResizeArguments( 1 );
 			event.scriptParams.AddObjectArgument( newParent->scriptObject );
@@ -811,14 +695,14 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 				if ( newParent->orphan ) {
 					
 					// means this object has been removed from scene, dispatch event and make it orphan
-					event.SetName( EVENT_REMOVED_FROM_SCENE );
+					event.name = EVENT_REMOVED_FROM_SCENE;
 					this->DispatchEvent( event, true, &makeOrphan );
 					
 				} else {
 					
 					// means this object has been added to scene, dispatch event and set orphan values on descendents
 					GameObjectCallback moveToScene = [](GameObject *obj) { obj->orphan = false; };
-					event.SetName( EVENT_ADDED_TO_SCENE );
+					event.name = EVENT_ADDED_TO_SCENE;
 					this->DispatchEvent( event, true, &moveToScene );
 					
 				}
@@ -832,7 +716,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 		} else {
 			
 			// means this object has been removed from scene, dispatch event and make it orphan
-			event.SetName( EVENT_REMOVED_FROM_SCENE );
+			event.name = EVENT_REMOVED_FROM_SCENE;
 			event.behaviorParam = this;
 			event.scriptParams.AddObjectArgument( this->scriptObject );
 			this->DispatchEvent( event, true, &makeOrphan );
@@ -893,7 +777,7 @@ float* GameObject::Transform() {
 		b2Vec2 pos; float angle;
 		this->body->GetBodyTransform( pos, angle );
 		GPU_MatrixIdentity( this->_worldTransform );
-		GPU_MatrixTranslate( this->_worldTransform, pos.x, pos.y, 0 );
+		GPU_MatrixTranslate( this->_worldTransform, pos.x, pos.y, _z );
 		GPU_MatrixRotate( this->_worldTransform, angle, 0, 0, 1 );
 		GPU_MatrixScale( this->_worldTransform, this->_scale.x, this->_scale.y, 1 );
 		this->_worldTransformDirty = false;
@@ -909,7 +793,7 @@ float* GameObject::Transform() {
 		
 		// apply local transform
 		GPU_MatrixIdentity( this->_transform );
-		GPU_MatrixTranslate( this->_transform, this->_position.x, this->_position.y, 0 );
+		GPU_MatrixTranslate( this->_transform, this->_position.x, this->_position.y, _z );
 		GPU_MatrixRotate( this->_transform, this->_angle, 0, 0, 1 );
 		GPU_MatrixScale( this->_transform, this->_scale.x, this->_scale.y, 1 );
 	}
@@ -959,6 +843,12 @@ void GameObject::SetY( float y ) {
 	this->_position.y = y;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->body ) this->body->SyncBodyToObject();
+}
+
+void GameObject::SetZ( float z ) {
+	this->Transform();
+	this->_z = z;
+	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 }
 
 void GameObject::SetAngle( float a ) {
@@ -1569,7 +1459,7 @@ void GameObject::Render( Event& event ) {
 	// if have rendering behavior
 	if ( this->render != NULL && this->render->active() ) {
 		// find function
-		BehaviorEventCallback func = this->render->GetCallbackForHash( event.hash );
+		BehaviorEventCallback func = this->render->GetCallbackForEvent( event.name );
 		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
 	}
 	

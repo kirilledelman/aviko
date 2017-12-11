@@ -1,23 +1,27 @@
 
-Implement bounds checks for Rendershape
 
-Image
-	.mask = GameObject can be done by adding a callback parameter to Render - and
-	switch blend mode to one replacing alpha channel
+RenderText
+	pressing up when top line is empty moves cursor
+	drag select autoscroll
+	copy, paste
+
+input.navigate( dir ); +1, -1
+
+stopEvent();
+
+
+Try using  GPU_Camera func for Image drawing transform
+
+scene.cameraX, Y, scale, rot -> GPU_Camera funcs
+GameObject.ignoreCamera  GPU_EnableCamera / per-object
+May need to update ispointinside func of GameObject
+
 
 ScriptableObject.async( function, sec ) - use eventListeners style interface/container
 ScriptableObject.debounce( string, function, time )
 ScriptableObject.cancelDebouncer( string )
 
-RenderText - add multiline rendering(alignment)
-	Implement bounds checks for UI
-	add measurement wo/ render
-	add outline+color
-	maybe quality switch too
 
-Layout class + subclasses
-anchors
-min/max width, height
 
 Image
 	save( pngpath )in /textures by default
@@ -30,7 +34,7 @@ RigidBody
 	body.removeShape
 	Joints etc.
 
-
+Demo project
 
 =============================================
 
@@ -38,6 +42,12 @@ Nice to have
 
 =============================================
 
+Make sure all paths in XCode project are relative / use $variables
+
+Install MS Visual Studio in windows, look at how to compile on win.
+
+
+Ask about GL_POINTS from Grimfang
 
 GameObject
 setParent - need circular check, also, scene shouldn't override its setparent, and disable it
@@ -59,6 +69,14 @@ methods:
 .transition( propname, startval, endval, duration, ease, onComplete )
 .transition( object, propname, startval, endval, duration, ease, onComplete )
 What about world space? Make it .body aware?
+
+
+Layout class + subclasses
+anchors
+min/max width, height
+
+
+RenderTileMap
 
 RenderSprite
 	displace shader?

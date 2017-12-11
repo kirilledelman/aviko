@@ -12,6 +12,43 @@ protected:
 	/// needs repaint
 	bool _dirty = false;
 	
+	// a prerendered single glyph
+	struct GlyphInfo {
+		SDL_Surface* surface = NULL;
+		int minX = 0;
+		int minY = 0;
+		int maxX = 0;
+		int maxY = 0;
+		int advance = 0;
+		GlyphInfo(){};
+		~GlyphInfo(){ if ( this->surface ) SDL_FreeSurface( this->surface ); };
+	};
+	
+	// single character
+	struct RenderTextCharacter {
+		Uint16 value = 0;
+		float x = 0;
+		float width = 0;
+		size_t pos = 0; // position in JSString
+		SDL_Color color = { 255,255,255,255 };
+		GlyphInfo* glyphInfo = NULL;
+		int pad = 0;
+	};
+	
+	/// prerendered glyphs ( 0 - normal, others, mask of TTF_STYLE_BOLD and TTF_STYLE_ITALIC )
+	unordered_map<Uint16, GlyphInfo> glyphs[ 4 ];
+	
+	/// returns prerendered glyph with style
+	GlyphInfo* GetGlyph( Uint16 c, bool b, bool i );
+	
+	struct RenderTextLine {
+		float width = 0;
+        float x = 0, y = 0;
+		vector<RenderTextCharacter> characters;
+	};
+	
+	vector<RenderTextLine> lines;
+	
 public:
 	
 	// init, destroy
@@ -24,8 +61,12 @@ public:
 	/// font for drawing
 	FontResource* fontResource = NULL;
 	
+	/// finished surface
 	GPU_Image* surface = NULL;
 	GPU_Rect surfaceRect = { 0 };
+	
+	/// center box
+	bool centered = false;
 	
 	/// font size
 	unsigned fontSize = 16;
@@ -35,6 +76,80 @@ public:
 	
 	/// text
 	string text;
+	
+	/// draw as outline
+	int outlineWidth = 0;
+	
+	/// quality
+	bool antialias = true;
+	
+	/// current setting
+	bool bold = false;
+	bool italic = false;
+	
+	/// text alignment ( 0 - left, 1 - center, 2 - right )
+	int align = 0;
+	
+	///
+	Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	
+	/// computed width
+	float width = 0;
+	
+	/// computed width
+	float height = 0;
+	
+	/// maximum width of the box ( before wrapping takes place )
+	int maxWidth = 1024;
+	
+	/// min width of the box - used when detecting
+	int minWidth = 32;
+
+    /// set to false to stop drawing instead
+    bool wrap = true;
+	
+	/// use ^codes
+	bool useCodes = true;
+	
+	/// allows newlines
+	bool multiLine = true;
+    
+	/// maximum number of lines
+	int maxLines = 10;
+	
+	// start drawing from this line
+	int lineOffset = 0;
+	
+    // offset x by this value
+    int horizontalOffset = 0;
+
+    // extra character spacing
+	float characterSpacing = 0;
+	
+	// extra line spacing
+	float lineSpacing = 0;
+	
+	/// num spaces
+	int tabSpaces = 4;
+	
+// selection / input
+    
+    //
+    bool showCaret = false;
+    
+    /// caret position ( 0 = before first char, string length = after last )
+    int caretPosition = 0;
+	
+	float caretX = 0;
+	float caretY = 0;
+	int caretLine = 0;
+    
+    /// selection drawing enabled
+    bool showSelection = false;
+    
+    /// selection painting
+    int selectionStart = 0, selectionEnd = 0;
+    
 	
 // scripting
 	
@@ -48,6 +163,15 @@ public:
 	
 	/// repaints current text, clears dirty flag
 	void Repaint();
+	
+	/// destroys prerendered glyphs on font change
+	void ClearGlyphs();
+	
+    ///
+    int GetCaretPositionAt( float x, float y );
+    
+	/// overridden from RenderBehavior
+	GPU_Rect GetBounds();
 	
 	/// render callback
 	static void Render( RenderTextBehavior* behavior, GPU_Target* target, Event* event );

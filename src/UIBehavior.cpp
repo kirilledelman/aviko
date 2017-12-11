@@ -381,7 +381,7 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 		
 		// mouse button was released
 		if ( behavior->mouseDown[ btn ] && !down ){
-			event.SetName( EVENT_CLICK );
+			event.name = EVENT_CLICK;
 			behavior->CallEvent( event );
 		}
 		

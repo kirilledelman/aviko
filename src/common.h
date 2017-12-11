@@ -52,6 +52,8 @@ const char* ReadFile( const char* filepath, const char* ext, const char* require
 bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext, const char* subPath );
 bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensions, string &outExtension );
 string HexStr( Uint32 w, size_t hex_len );
+int StringPositionToIndex( const char* str, int pos );
+int StringPositionLength( const char* str );
 
 /// built-in event types
 
@@ -101,6 +103,8 @@ string HexStr( Uint32 w, size_t hex_len );
 
 // Sound events
 #define EVENT_FINISHED "finished"
+
+#define GPU_BLEND_CUT_ALPHA 16
 
 // global forward declarations
 class ScriptArguments;

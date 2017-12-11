@@ -45,7 +45,7 @@ Image::~Image() {
 void Image::InitClass() {
 	
 	// create class
-	script.RegisterClass<Image>();
+	script.RegisterClass<Image>( "ScriptableObject" );
 	
 	// props
 	
@@ -304,6 +304,8 @@ GPU_Image* Image::_MakeImage() {
 		GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
 		GPU_SetSnapMode( img, GPU_SNAP_NONE );
 		GPU_LoadTarget( img );
+		GPU_SetDepthTest( img->target, true );
+		GPU_SetDepthWrite( img->target, true );
 		img->anchor_x = img->anchor_y = 0;
 		this->_sizeDirty = false;
 	}
@@ -381,7 +383,7 @@ void Image::Draw( GameObject* go ) {
 	
 	// invoke render
 	Event renderEvent;
-	renderEvent.SetName( EVENT_RENDER );
+	renderEvent.name = EVENT_RENDER;
 	renderEvent.behaviorParam = this->image->target;
 	GPU_MatrixMode( GPU_MODELVIEW );
 	go->Render( renderEvent );

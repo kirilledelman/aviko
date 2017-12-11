@@ -141,6 +141,7 @@ RenderShapeBehavior::~RenderShapeBehavior() {
 /* MARK:	-				Javascript
  -------------------------------------------------------------------- */
 
+
 // init script classes
 void RenderShapeBehavior::InitClass() {
 
@@ -271,8 +272,125 @@ void RenderShapeBehavior::InitClass() {
 }
 
 
-/* MARK:	-				Serialization
+/* MARK:	-				UI
  -------------------------------------------------------------------- */
+
+
+float DistanceToLine( float px, float py, float x1, float y1, float x2, float y2 ) {
+	float A = px - x1;
+	float B = py - y1;
+	float C = x2 - x1;
+	float D = y2 - y1;
+	float dot = A * C + B * D;
+	float len_sq = C * C + D * D;
+	float param = -1;
+	float xx, yy;
+	if ( len_sq != 0 ) param = dot / len_sq;
+	if ( param < 0 ) {
+		xx = x1;
+		yy = y1;
+	} else if ( param > 1 ) {
+		xx = x2;
+		yy = y2;
+	} else {
+		xx = x1 + param * C;
+		yy = y1 + param * D;
+	}
+	
+	float dx = px - xx;
+	float dy = py - yy;
+	return sqrt(dx * dx + dy * dy);
+}
+
+bool InsideArc( float px, float py, float cx, float cy, float r, float a1, float a2 ) {
+	a1 = fmod( a1, 360 );
+	a2 = fmod( a2, 360 );
+	if ( a1 > a2 ) { float tmp = a1; a1 = a2; a2 = tmp; }
+	
+	float dx = px - cx, dy = py - cy;
+	float pr = ( dx * dx + dy * dy );
+	if ( pr > r * r ) return false;
+	
+	float pa = atan2( dy, dx ) * RAD_TO_DEG;
+	if ( pa < 0 && a1 > 0 ) pa += 360;
+	return ( pa >= a1 && pa <= a2 );
+	return true;
+}
+
+bool InsideEllipse( float px, float py, float cx, float cy, float rx, float ry ) {
+	float q = rx / ry;
+	px -= cx;
+	py = ( py - cy ) * q;
+	return ( sqrt( px * px + py * py ) <= rx );
+}
+
+bool InsidePolygon( float px, float py, float* points, int numPoints ) {
+	
+	bool result = false;
+	for ( int i = 0, j = numPoints - 1; i < numPoints; j = i++ ) {
+		float x1 = points[ i * 2 ];
+		float y1 = points[ i * 2 + 1 ];
+		float x2 = points[ j * 2 ];
+		float y2 = points[ j * 2 + 1 ];
+		
+		if (( y1 > py ) != ( y2 > py ) &&
+			( px < (x2 - x1) * (py - y1) / (y2-y1) + x1) ) {
+			result = !result;
+		}
+	}
+	return result;
+}
+
+bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, float* outLocalX, float* outLocalY ) {
+	
+	// transform global point to local space
+	this->gameObject->ConvertPoint( screenX, screenY, *outLocalX, *outLocalY, false );
+	
+	// check if point is inside
+	if( shapeType == ShapeType::Line ){
+		
+		return ( DistanceToLine( *outLocalX, *outLocalY, 0, 0, x, y ) <= lineThickness * 0.5 );
+		
+	} else if( shapeType == ShapeType::Arc ){
+		
+		return InsideArc( *outLocalX, *outLocalY, x, y, radius, startAngle, endAngle );
+		
+	} else if ( shapeType == ShapeType::Circle ) {
+		
+		return InsideEllipse( *outLocalX, *outLocalY, centered ? 0 : radius, centered ? 0 : radius, radius, radius );
+		
+	} else if ( shapeType == ShapeType::Ellipse ) {
+		
+		return InsideEllipse( *outLocalX, *outLocalY, centered ? 0 : x, centered ? 0 : y, x, y );
+		
+	} else if ( shapeType == ShapeType::Sector ) {
+		
+		return InsideArc( *outLocalX, *outLocalY, x, y, radius, startAngle, endAngle ) &&
+			   !InsideArc( *outLocalX, *outLocalY, x, y, innerRadius, startAngle, endAngle );
+		
+	} else if ( shapeType == ShapeType::Triangle ) {
+	
+		static float triPoints[ 6 ];
+		triPoints[ 0 ] = x; triPoints[ 1 ] = y;
+		triPoints[ 2 ] = x1; triPoints[ 3 ] = y1;
+		triPoints[ 4 ] = x2; triPoints[ 5 ] = y2;
+		return InsidePolygon( *outLocalX, *outLocalY, triPoints, 3 );
+		
+	} else if ( shapeType == ShapeType::Rectangle || shapeType == ShapeType::RoundedRectangle ) {
+		if ( centered ) {
+			return ( *outLocalX >= -x * 0.5 && *outLocalX < x * 0.5 ) && ( *outLocalY >= -y * 0.5 && *outLocalY < y * 0.5 );
+		} else {
+			return ( *outLocalX >= 0 && *outLocalX < x ) && ( *outLocalY >= 0 && *outLocalY < y );
+		}
+	} else if ( shapeType == ShapeType::Polygon ) {
+	
+		return InsidePolygon( *outLocalX, *outLocalY, polyPoints.data(), (int) polyPoints.size() / 2 );
+		
+	}
+	
+	return false;
+	
+}
 
 
 
@@ -314,7 +432,18 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	
 	// setup
 	GPU_SetLineThickness( behavior->lineThickness );
-	GPU_SetShapeBlendMode( behavior->blendMode );
+	
+	// blend
+	if ( behavior->blendMode <= GPU_BLEND_NORMAL_FACTOR_ALPHA ) {
+		// normal mode
+		GPU_SetShapeBlendMode( (GPU_BlendPresetEnum) behavior->blendMode );
+		// special mode
+	} else if ( behavior->blendMode == GPU_BLEND_CUT_ALPHA ) {
+		// cut alpha
+		GPU_SetShapeBlendFunction( GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
+		GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
+	}
+	
 	SDL_Color color = behavior->color->rgba;
 	color.a *= behavior->gameObject->combinedOpacity;
 	if ( color.a == 0.0 ) return;
@@ -347,9 +476,9 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 				}
 			} else {
 				if ( behavior->filled ) {
-					GPU_CircleFilled( target, -behavior->radius * 0.5, -behavior->radius * 0.5, behavior->radius, color );
+					GPU_CircleFilled( target, behavior->radius, behavior->radius, behavior->radius, color );
 				} else {
-					GPU_Circle( target, -behavior->radius * 0.5, -behavior->radius * 0.5, behavior->radius, color );
+					GPU_Circle( target, behavior->radius, behavior->radius, behavior->radius, color );
 				}
 			}
 			break;
@@ -363,9 +492,9 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 				}
 			} else {
 				if ( behavior->filled ) {
-					GPU_EllipseFilled( target, -behavior->x * 0.5, -behavior->y * 0.5, behavior->x, behavior->y, 0, color );
+					GPU_EllipseFilled( target, behavior->x, behavior->y, behavior->x, behavior->y, 0, color );
 				} else {
-					GPU_Ellipse( target, -behavior->x * 0.5, -behavior->y * 0.5, behavior->x, behavior->y, 0, color );
+					GPU_Ellipse( target, behavior->x, behavior->y, behavior->x, behavior->y, 0, color );
 				}
 			}
 			break;

@@ -28,7 +28,7 @@ Behavior::~Behavior() {}
 void Behavior::InitClass() {
 	
 	// register class
-	script.RegisterClass<Behavior>( NULL, true );
+	script.RegisterClass<Behavior>( "ScriptableObject", true );
 	
 	// properties
 	script.AddProperty<Behavior>
@@ -113,7 +113,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			this->gameObject = NULL;
 			
 			// call detached event directly on event
-			BehaviorEventCallback func = this->GetCallbackForHash( HashString( EVENT_DETACHED ) );
+			BehaviorEventCallback func = this->GetCallbackForEvent( EVENT_DETACHED );
 			if ( func ) func( this, oldGameObject, &event );
 			
 		}
@@ -136,7 +136,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			}			
 			
 			// call attached event directly on event
-			BehaviorEventCallback func = this->GetCallbackForHash( HashString( EVENT_ATTACHED ) );
+			BehaviorEventCallback func = this->GetCallbackForEvent( EVENT_ATTACHED );
 			if ( func ) func( this, gameObject, &event );
 			
 			// gained a parent? protect us from GC
@@ -163,7 +163,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 void Behavior::CallEventCallback( Event &event ) {
 
 	// find function
-	BehaviorEventCallback func = this->GetCallbackForHash( event.hash );
+	BehaviorEventCallback func = this->GetCallbackForEvent( event.name );
 	
 	// if callback for this event exists, call it
 	if ( func != NULL ) (*func)( this, event.behaviorParam, &event );
@@ -172,7 +172,7 @@ void Behavior::CallEventCallback( Event &event ) {
 
 void Behavior::AddEventCallback( const char* eventName, BehaviorEventCallback callback ) {
 	
-	eventFunctions[ HashString( eventName ) ] = callback;
+	eventFunctions[ eventName ] = callback;
 	
 }
 

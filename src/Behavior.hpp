@@ -23,8 +23,8 @@ class GameObject;
 typedef void (*BehaviorEventCallback) ( void* behavior, void* param, Event* event );
 
 /// maps hash(char*) -> BehaviorEventCallback
-typedef unordered_map<size_t, BehaviorEventCallback> BehaviorEventMap;
-typedef unordered_map<size_t, BehaviorEventCallback>::iterator BehaviorEventIterator;
+typedef unordered_map<string, BehaviorEventCallback> BehaviorEventMap;
+typedef unordered_map<string, BehaviorEventCallback>::iterator BehaviorEventIterator;
 
 class Behavior : public ScriptableClass {
 public:
@@ -65,11 +65,8 @@ public:
 	void CallEventCallback( Event& event );
 	
 	/// returns callback, or NULL
-	inline BehaviorEventCallback GetCallbackForEvent( const char* eventName ) { BehaviorEventIterator it = eventFunctions.find( HashString( eventName ) ); return it == eventFunctions.end() ? NULL : it->second; }
+	inline BehaviorEventCallback GetCallbackForEvent( const char* eventName ) { BehaviorEventIterator it = eventFunctions.find( eventName ); return it == eventFunctions.end() ? NULL : it->second; }
 	
-	/// returns callback, or NULL
-	inline BehaviorEventCallback GetCallbackForHash( size_t eventNameHash ) { BehaviorEventIterator it = eventFunctions.find( eventNameHash ); return it == eventFunctions.end() ? NULL : it->second; }
-
 // active
 	
 	/// inactive behaviors don't get BehaviorEvents (or render)

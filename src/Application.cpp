@@ -136,6 +136,8 @@ void Application::UpdateBackscreen() {
 	GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
 	GPU_LoadTarget( this->backScreen );
+	GPU_SetDepthTest( this->backScreen->target, true );
+	GPU_SetDepthWrite( this->backScreen->target, true );
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -180,6 +182,7 @@ void Application::InitClass() {
 	script.SetGlobalConstant( "BLEND_NORMAL_KEEP_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_KEEP_ALPHA );
 	script.SetGlobalConstant( "BLEND_NORMAL_ADD_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_ADD_ALPHA );
 	script.SetGlobalConstant( "BLEND_NORMAL_FACTOR_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_FACTOR_ALPHA );
+	script.SetGlobalConstant( "BLEND_CUT_ALPHA", GPU_BLEND_CUT_ALPHA );
 	
 	// properties
 	script.AddProperty<Application>
@@ -377,6 +380,30 @@ void Application::InitClass() {
 	script.AddGlobalNamedObject( "app", this->scriptObject );
 	
 	// extensions
+	
+	script.DefineClassFunction
+	( "String", "positionToIndex", false,
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
+		int pos;
+		string *str = ((ArgValue*) p)->value.stringValue;
+		if ( !sa.ReadArguments( 1, TypeInt, &pos ) ) {
+			script.ReportError( "usage: String.positionToIndex( Int position )" );
+			return false;
+		}
+		
+		// return character index
+		sa.ReturnInt( StringPositionToIndex( str->c_str(), pos ) );
+		return true;
+	}));
+	
+	script.DefineClassFunction
+	( "String", "positionLength", false,
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
+		string *str = ((ArgValue*) p)->value.stringValue;
+		// return character length
+		sa.ReturnInt( StringPositionLength( str->c_str() ));
+		return true;
+	}));
 	
 	script.DefineClassFunction
 	( "JSON", "load", true,
@@ -607,7 +634,7 @@ void Application::GameLoop() {
 			scene->SimulatePhysics();
 
 			// update
-			event.SetName( EVENT_UPDATE );
+			event.name = EVENT_UPDATE;
 			scene->DispatchEvent( event, true );
 		}
 		
@@ -627,11 +654,11 @@ void Application::GameLoop() {
 		if ( scene ) {
 		
 			// late update
-			event.SetName( EVENT_LATE_UPDATE );
+			event.name = EVENT_LATE_UPDATE;
 			scene->DispatchEvent( event, true );
 			
 			// render to backscreen
-			event.SetName( EVENT_RENDER );
+			event.name = EVENT_RENDER;
 			event.behaviorParam = this->backScreen->target;
 			scene->Render( event );
 			event.behaviorParam = NULL;
@@ -788,5 +815,64 @@ string HexStr( Uint32 w, size_t hex_len ) {
 		rc[ i ] = digits[ ( w >> j ) & 0x0f ];
 	}
 	return rc;
+}
+
+// finds pos utf+8 character in string, or -1 if out of bounds
+int StringPositionToIndex( const char* str, int pos ) {
+
+	if ( pos < 0 ) return 0;
+	
+	const char *current = str;
+	size_t characterPos = 0;
+	
+	while ( *current != 0 ) {
+		if ( characterPos == pos ) break;
+		// decode utf-8
+		if ( (*current & 0x80) != 0 ) {
+			if ( (*current & 0xE0) == 0xC0 ) {
+				current += 1;
+			} else if ( (*current & 0xF0) == 0xE0 ) {
+				current += 2;
+			} else if ( (*current & 0xF8) == 0xF0 ) {
+				current += 3;
+			} else if ( (*current & 0xFC) == 0xF8 ) {
+				current += 4;
+			} else if ( (*current & 0xFE) == 0xFC ) {
+				current += 5;
+			}
+			// ascii
+		}
+		current++;
+		characterPos++;
+		
+	}
+	return (int)( current - str );
+	
+}
+
+int StringPositionLength( const char* str ) {
+	
+	const char *current = str;
+	size_t characterPos = 0;
+	
+	while ( *current != 0 ) {
+		// decode utf-8
+		if ( (*current & 0x80) != 0 ) {
+			if ( (*current & 0xE0) == 0xC0 ) {
+				current += 1;
+			} else if ( (*current & 0xF0) == 0xE0 ) {
+				current += 2;
+			} else if ( (*current & 0xF8) == 0xF0 ) {
+				current += 3;
+			} else if ( (*current & 0xFC) == 0xF8 ) {
+				current += 4;
+			} else if ( (*current & 0xFE) == 0xFC ) {
+				current += 5;
+			}
+		}
+		current++;
+		characterPos++;
+	}
+	return (int) characterPos;
 }
 

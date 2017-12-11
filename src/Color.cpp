@@ -36,7 +36,7 @@ Color::~Color() {}
 void Color::InitClass() {
 	
 	// create class
-	script.RegisterClass<Color>();
+	script.RegisterClass<Color>( "ScriptableObject" );
 	
 	// properties
 	script.AddProperty<Color>
@@ -91,7 +91,7 @@ void Color::InitClass() {
 		clr->UpdateHSV();
 		clr->SetHSV( val, clr->s, clr->v );
 		return val;
-	}));
+	}), PROP_ENUMERABLE );
 	
 	script.AddProperty<Color>
 	( "s",
@@ -105,7 +105,7 @@ void Color::InitClass() {
 		clr->UpdateHSV();
 		clr->SetHSV( clr->h, val, clr->v );
 		return val;
-	}));
+	}), PROP_ENUMERABLE );
 	
 	script.AddProperty<Color>
 	( "v",
@@ -119,7 +119,7 @@ void Color::InitClass() {
 		clr->UpdateHSV();
 		clr->SetHSV( clr->h, clr->s, val );
 		return val;
-	}));
+	}), PROP_ENUMERABLE );
 
 	script.AddProperty<Color>
 	( "hex",
@@ -128,7 +128,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->SetHex( val.c_str() );
 		return val;
-	} ));
+	} ), PROP_ENUMERABLE );
 	
 	// functions
 	
@@ -368,6 +368,14 @@ bool Color::SetHex( const char* s ) {
 	// all good
 	return true;
 
+}
+
+int Color::GetInt( bool withAlpha ) {
+	if ( withAlpha ) {
+		return ( ((Uint32) this->rgba.r) << 24 ) + ( ((Uint32) this->rgba.g) << 16 ) + ( ((Uint32) this->rgba.b) << 8 ) + ((Uint32) this->rgba.a);
+	} else {
+		return ( ((Uint32) this->rgba.r) << 16 ) + ( ((Uint32) this->rgba.g) << 8 ) + ((Uint32) this->rgba.b);
+	}
 }
 
 string Color::GetHex( bool withAlpha ) {

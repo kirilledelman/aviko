@@ -58,8 +58,6 @@ struct Event {
 	
 	/// event name
 	const char* name;
-	/// computed hash of the name
-	size_t hash = 0;
 	
 	/// if true, it's dispatched in children first, then parent (GameObject uses this)
 	bool bubbles = false;
@@ -75,15 +73,12 @@ struct Event {
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;
 	
-	// setting name updates hash
-	inline void SetName( const char* newName ){ name = newName; hash = HashString( name ); }
-	
 	// constructor
 	Event(){};
 	/// construct event with scriptObject as first script parameter
 	Event( void* scriptObject ) { if ( scriptObject != NULL ) { this->scriptParams.ResizeArguments( 0 ); this->scriptParams.AddObjectArgument( scriptObject ); } }
 	/// construct named event with scriptObject as first script parameter, if provided
-	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->SetName( name ); }
+	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->name =  name; }
 	
 };
 
@@ -104,7 +99,7 @@ public:
 	static void InitClass() {
 		
 		// register class
-		script.RegisterClass<ScriptableClass>( NULL, true);
+		script.RegisterClass<ScriptableClass>( NULL, true );
 		
 		// functions
 		
@@ -126,8 +121,7 @@ public:
 			}
 			
 			// listeners
-			size_t hashedProp = HashString( propName.c_str() );
-			EventListeners& list = self->eventListeners[ hashedProp ];
+			EventListeners& list = self->eventListeners[ propName ];
 			
 			// function specified
 			if ( handler ) {
@@ -167,8 +161,7 @@ public:
 			
 			// remove from event listeners
 			ScriptableClass* self = (ScriptableClass*) go;
-			size_t hashedProp = HashString( propName.c_str() );
-			EventListeners& list = self->eventListeners[ hashedProp ];
+			EventListeners& list = self->eventListeners[ propName ];
 			
 			// is specified, find it
 			if ( handler ) {
@@ -213,6 +206,20 @@ public:
 			self->CallEvent( event );
 			return true;
 		}));
+		
+		script.DefineFunction<ScriptableClass>
+		( "toString",
+		 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ) {
+			static char buf[512];
+			ScriptableClass* self = (ScriptableClass*) o;
+			
+			if ( !self ) {
+				sprintf( buf, "[ScriptableClass prototype]" );
+			} else sprintf( buf, "[%s %p]", self->scriptClassName, self );
+			
+			sa.ReturnString( buf );
+			return true;
+		}));
 
 	}
 	
@@ -220,8 +227,8 @@ public:
 	
 	typedef vector<ScriptFunctionObject> EventListeners;
 	typedef vector<ScriptFunctionObject>::iterator EventListenersIterator;
-	typedef unordered_map<size_t, EventListeners> EventListenersMap;
-	typedef unordered_map<size_t, EventListeners>::iterator EventListenersMapIterator;
+	typedef unordered_map<string, EventListeners> EventListenersMap;
+	typedef unordered_map<string, EventListeners>::iterator EventListenersMapIterator;
 	
 	/// hash(eventName) -> vector of script function callbacks
 	EventListenersMap eventListeners;
@@ -232,7 +239,7 @@ public:
 	/// calls script event listeners on this ScriptableObject
 	virtual void CallEvent( Event& event ) {
 		// event listeners array
-		EventListeners* list = &this->eventListeners[ event.hash ];
+		EventListeners* list = &this->eventListeners[ event.name ];
 		
 		// call each
 		EventListenersIterator it = list->begin();
@@ -262,7 +269,7 @@ public:
 	ScriptableClass(){}
 	
 	// abstract
-	ScriptableClass( ScriptArguments* ) { script.ReportError( "ScriptableClass can't be created using 'new'" ); }	
+	ScriptableClass( ScriptArguments* ) { script.ReportError( "ScriptableObject can't be created using 'new'" ); }	
 
 	// destructor
 	~ScriptableClass() {		
@@ -275,6 +282,6 @@ public:
 	}
 };
 
-SCRIPT_CLASS_NAME( ScriptableClass, "ScriptableClass" );
+SCRIPT_CLASS_NAME( ScriptableClass, "ScriptableObject" );
 
 #endif /* ScriptableClass_hpp */

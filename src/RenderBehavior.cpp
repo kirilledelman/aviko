@@ -9,6 +9,18 @@ RenderBehavior::SpriteShaderVariant RenderBehavior::shaders[ 8 ];
  -------------------------------------------------------------------- */
 
 
+/// returns true if screen space point x, y is inside this RenderBehavior. By default, just checks GetBounds rectangle
+bool RenderBehavior::IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY ) {
+	
+	// transform global point to local space
+	this->gameObject->ConvertPoint( x, y, *outLocalX, *outLocalY, false );
+	
+	// in bounds?
+	GPU_Rect bounds = this->GetBounds();
+	return ( *outLocalX >= bounds.x && *outLocalX < ( bounds.x + bounds.w ) ) &&
+	( *outLocalY >= bounds.y && *outLocalY < ( bounds.y + bounds.h ) );
+
+}
 
 
 /* MARK:	-				Shader methods
@@ -21,7 +33,7 @@ int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v,
 	
 	if ( this->tileX != 1 || this->tileY != 1 ) shaderIndex |= SHADER_TILE;
 	
-	if ( this->stipple != 0 ) shaderIndex |= SHADER_STIPPLE;
+	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
 	
 	SpriteShaderVariant &variant = shaders[ shaderIndex ];
 	
@@ -46,8 +58,9 @@ int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v,
 	}
 	
 	// stipple
-	if ( variant.stippleUniform >= 0 ) {
+	if ( variant.stippleUniform >= 0 || variant.stippleAlphaUniform >= 0 ) {
 		GPU_SetUniformi( variant.stippleUniform, 10000 * ( 1.0 - this->stipple ) );
+		GPU_SetUniformi( variant.stippleAlphaUniform, this->stippleAlpha ? 1 : 0 );
 	}
 	
 	// tile
@@ -120,7 +133,7 @@ void RenderBehavior::InitShaders() {
 	"uniform vec2 tile;\n\
 	uniform vec4 texInfo;\n";
 	string stipple =
-	"uniform int stipple;\n";
+	"uniform int stipple; uniform int stippleAlpha;\n";
 	string params[ 8 ];
 	params[ SHADER_BASE ] = "";
 	params[ SHADER_TEXTURE ] = tex;
@@ -139,6 +152,8 @@ void RenderBehavior::InitShaders() {
 	stipple =
 	"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
 	int limit = 0;\n\
+	int stippleValue = stipple; \n\
+	if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
 	if (index == 0) limit = 625;\n\
 	else if (index == 1) limit = 5625;\n\
 	else if (index == 2) limit = 1875;\n\
@@ -154,8 +169,8 @@ void RenderBehavior::InitShaders() {
 	else if (index == 12) limit = 10000;\n\
 	else if (index == 13) limit = 5000;\n\
 	else if (index == 14) limit = 8750;\n\
-	else if (index == 15) limit = 3750;\n\
-	if ( stipple < limit ) discard;";
+	else if (index >= 15) limit = 3750;\n\
+	if ( stippleValue < limit ) discard;";
 
 	string readPixel = glsles ? "vec4 src = texture2D(tex, coord) * color;\n" : "vec4 src = texture(tex, coord) * color;\n";
 	string readColor = "vec4 src = color;";
@@ -211,6 +226,7 @@ void RenderBehavior::InitShaders() {
 			shaders[ i ].texInfoUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texInfo" );
 			shaders[ i ].addColorUniform = GPU_GetUniformLocation( shaders[ i ].shader, "addColor" );
 			shaders[ i ].stippleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stipple" );
+			shaders[ i ].stippleAlphaUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stippleAlpha" );
 		} else {
 			printf ( "Shader error: %s\n", GPU_GetShaderMessage() );
 			memset( &shaders[ i ], 0, sizeof( SpriteShaderVariant ) );

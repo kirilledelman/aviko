@@ -23,6 +23,9 @@ public:
 	// show mouse cursor or not
 	bool showCursor = true;
 	
+	// send repeated keydowns while holding down a key
+	bool repeatKeyEnabled = true;
+	
 	// Joystick info 
 	typedef unordered_map<SDL_JoystickID, Controller*> JoystickMap;
 	typedef unordered_map<SDL_JoystickID, Controller*>::iterator JoystickMapIterator;

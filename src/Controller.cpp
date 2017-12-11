@@ -42,7 +42,7 @@ Controller::~Controller(){}
 void Controller::InitClass() {
 	
 	// register class
-	script.RegisterClass<Controller>();
+	script.RegisterClass<Controller>( "ScriptableObject", true );
 
 	// props
 	
@@ -385,7 +385,7 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 		int state = this->states[ b.action ];
 		int onState = ( b.type == BUTTON ? 1 : ( b.type == DIR_NEGATIVE ? -1 : 1 ) );
 		int newState = 0;
-		event.SetName( b.action.c_str() );
+		event.name = b.action.c_str();
 		event.scriptParams.ResizeArguments( 0 );
 		
 		// joystick axis
@@ -504,7 +504,7 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 			b.action.compare( app.input.navigationCancel ) == 0 ) {
 			
 			// dispatch as navigation event
-			event.SetName( EVENT_NAVIGATION );
+			event.name = EVENT_NAVIGATION;
 			app.input.UIEvent( event );
 			
 		}

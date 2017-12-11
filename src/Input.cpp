@@ -40,7 +40,7 @@ void Input::AddKeyboardController () {
 void Input::InitClass() {
 	
 	// register class
-	script.RegisterClass<Input>( NULL, true );
+	script.RegisterClass<Input>( "ScriptableObject", true );
 	
 	// key constants
 	script.SetGlobalConstant( "KEY_A", SDL_SCANCODE_A );
@@ -188,6 +188,11 @@ void Input::InitClass() {
 	( "showCursor",
 	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->showCursor; }),
 	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ SDL_ShowCursor( val ); return ((Input*) inp)->showCursor = val; }));
+	
+	script.AddProperty<Input>
+	( "repeatKeyEnabled",
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->repeatKeyEnabled; }),
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ SDL_ShowCursor( val ); return ((Input*) inp)->repeatKeyEnabled = val; }));
 	
 	script.AddProperty<Input>
 	( "mouseX",
@@ -405,8 +410,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 	
 	Uint32 etype = e.type;
 	Event event;
-	if ( etype == SDL_KEYDOWN && e.key.repeat == 0 ) {
-		event.SetName( EVENT_KEYDOWN );
+	if ( etype == SDL_KEYDOWN && ( repeatKeyEnabled || e.key.repeat == 0 ) ) {
+		event.name = EVENT_KEYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.key.keysym.scancode );
@@ -414,10 +419,11 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_ALT );
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_CTRL );
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_GUI );
+		event.scriptParams.AddBoolArgument( e.key.repeat > 0 );
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_KEYUP ) {
-		event.SetName( EVENT_KEYUP );
+		event.name = EVENT_KEYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.key.keysym.scancode );
@@ -428,14 +434,14 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_TEXTINPUT ) {
-		event.SetName( EVENT_KEYPRESS );
+		event.name = EVENT_KEYPRESS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddStringArgument( e.text.text );
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_MOUSEBUTTONDOWN ) {
-		event.SetName( EVENT_MOUSEDOWN );
+		event.name = EVENT_MOUSEDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.button.button );
@@ -444,7 +450,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_MOUSEBUTTONUP ) {
-		event.SetName( EVENT_MOUSEUP );
+		event.name = EVENT_MOUSEUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.button.button );
@@ -453,7 +459,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_MOUSEMOTION ) {
-		event.SetName( EVENT_MOUSEMOVE );
+		event.name = EVENT_MOUSEMOVE;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddFloatArgument( ( e.motion.x - app.backScreenDstRect.x ) * app.backscreenScale );
@@ -463,7 +469,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_MOUSEWHEEL ) {
-		event.SetName( EVENT_MOUSEWHEEL );
+		event.name = EVENT_MOUSEWHEEL;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddFloatArgument( e.wheel.y );
@@ -479,14 +485,14 @@ void Input::HandleEvent( SDL_Event& e ) {
 		// protect controller from GC
 		script.ProtectObject( &joy->scriptObject, true );
 		// fire event
-		event.SetName( EVENT_CONTROLLERADDED );
+		event.name = EVENT_CONTROLLERADDED;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYDEVICEREMOVED ) {
 		Controller* joy = this->joysticks[ e.jdevice.which ];
-		event.SetName( EVENT_CONTROLLERREMOVED );
+		event.name = EVENT_CONTROLLERREMOVED;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
@@ -494,21 +500,21 @@ void Input::HandleEvent( SDL_Event& e ) {
 		// unprotect controller from GC
 		script.ProtectObject( &joy->scriptObject, true );
 	} else if ( etype == SDL_JOYBUTTONDOWN ) {
-		event.SetName( EVENT_JOYDOWN );
+		event.name = EVENT_JOYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.jbutton.button );
 		event.scriptParams.AddIntArgument( e.jbutton.which );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYBUTTONUP ) {
-		event.SetName( EVENT_JOYUP );
+		event.name = EVENT_JOYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.jbutton.button );
 		event.scriptParams.AddIntArgument( e.jbutton.which );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYAXISMOTION ) {
-		event.SetName( EVENT_JOYAXIS );
+		event.name = EVENT_JOYAXIS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		Sint16 v = e.jaxis.value;
@@ -518,7 +524,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddIntArgument( e.jaxis.which );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYHATMOTION ) {
-		event.SetName( EVENT_JOYHAT );
+		event.name = EVENT_JOYHAT;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		Uint8 v = e.jhat.value;

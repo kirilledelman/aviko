@@ -40,6 +40,9 @@ protected:
 	/// x, y scale
 	b2Vec2 _scale = { 1, 1 };
 	
+	/// z-index
+	float _z = 0;
+	
 	/// rotation angle in degrees
 	float _angle = 0;
 	
@@ -54,6 +57,9 @@ protected:
 
 	/// true when inverse world transform matrix needs to be recalculated
 	bool _inverseWorldDirty = true;
+	
+	/// used for HUD style drawing
+	bool _ignoreCamera = false;
 	
 public:
 	

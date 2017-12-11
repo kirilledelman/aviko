@@ -361,14 +361,19 @@ private:
 		// scope
 		JSAutoRequest req( cx );
 		
-		// get object and construct arguments
+		// construct arguments
 		CallArgs args = CallArgsFromVp( argc, vp );
 		ScriptArguments sa( &args );
 		JSObject* obj = &args.thisv().toObject();
-		CLASS* self = (CLASS*) JS_GetPrivate( obj );
 		
 		// look up
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		if ( !classDef ) return false;
+		
+		// get self
+		CLASS* self = (CLASS*) JS_GetPrivate( obj );
+		
+		// func name
 		jsval name;
 		JS_GetProperty( cx, &args.callee(), "name", &name );
 		
@@ -376,6 +381,8 @@ private:
 		char *buf = JS_EncodeString( cx, JSVAL_TO_STRING( name ) );
 		string funcName(buf);
 		JS_free( cx, buf );
+		
+		// if self is null, but classDef
 		
 		// find and call func
 		return FuncCallbackCall( cx, classDef, self, funcName, sa );
@@ -388,34 +395,49 @@ private:
 		// construct arguments
 		CallArgs args = CallArgsFromVp( argc, vp );
 		ScriptArguments sa( &args );
-		JSObject* obj = &args.thisv().toObject();
-		string key;
 		
-		// find function name
+		// determine whether function is static, or built-in class, or global
+		void* obj = NULL;
+		string prefix, key;
+		HandleValue thisv = args.thisv();
+		ArgValue thisArgValue;
+		
+		// object
+		if ( thisv.isObjectOrNull() ) {
+			obj = thisv.toObjectOrNull();
+			// global object, or null
+			if ( obj == script.global_object || !obj ) {
+				// global function
+				obj = script.global_object;
+			// some object
+			} else {
+				
+				// get classname
+				JSClass* clp = JS_GetClass( (JSObject*) obj );
+				
+				// key into table is Class.FunctionName
+				prefix.append( clp->name );
+				prefix.append( "." );
+			}
+		// built in type
+		} else {
+			
+			thisArgValue = thisv;
+			obj = &thisArgValue;
+			if ( thisv.isString() ) prefix = "String.";
+			else if ( thisv.isNumber() ) prefix = "Number";
+			
+		}
+		
+		// get function name
 		jsval name;
 		JS_GetProperty( cx, &args.callee(), "name", &name );
-		
-		// jsstring to string
 		char *buf = JS_EncodeString( cx, JSVAL_TO_STRING( name ) );
 		string funcName = buf;
 		JS_free( cx, buf );
-
-		// global function
-		if ( obj == script.global_object ) {
-			
-			// just funcName
-			key = funcName;
-
-		// class function
-		} else {
-			// get classname
-			JSClass* clp = JS_GetClass( obj );
-			
-			// key into table is Class.FunctionName
-			key = clp->name;
-			key.append( "." );
-			key.append( funcName );
-		}
+		
+		// make "Class.funcName" key
+		key = prefix + funcName;
 		
 		// find function
 		FuncMapIterator it = script.classFuncCallbacks.find( key );

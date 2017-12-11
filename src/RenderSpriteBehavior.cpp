@@ -26,7 +26,17 @@ RenderSpriteBehavior::RenderSpriteBehavior( ScriptArguments* args ) : RenderSpri
 	if ( args && args->args.size() ) {
 		// first argument can be a string
 		if ( args->args[ 0 ].type == TypeString ) {
+			// texture
 			script.SetProperty( "texture", args->args[ 0 ], this->scriptObject );
+			
+		// or Image object
+		} else if ( args->args[ 0 ].type == TypeObject && args->args[ 0 ].value.objectValue != NULL ) {
+			Image* img = script.GetInstance<Image>( args->args[ 0 ].value.objectValue );
+			if ( img ) {
+				script.SetProperty( "image", args->args[ 0 ], this->scriptObject );
+			} else {
+				script.ReportError( "RenderSprite constructor accepts String texture, or Image instance" );
+			}
 		}
 	}
 }
@@ -101,6 +111,11 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->stipple; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->stipple = max( 0.0f, min( 1.0f, val ))); }) );
 	
+	script.AddProperty<RenderSpriteBehavior>
+	( "stippleAlpha",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->stippleAlpha; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderSpriteBehavior*) b)->stippleAlpha = val ); }) );
+
 	script.AddProperty<RenderSpriteBehavior>
 	( "centered",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->centered; }),
@@ -228,6 +243,8 @@ void RenderSpriteBehavior::InitClass() {
 /* MARK:	-				UI
  -------------------------------------------------------------------- */
 
+
+// returns sprite bounding box
 GPU_Rect RenderSpriteBehavior::GetBounds() {
 	GPU_Rect rect;
 	rect.w = this->width;
@@ -237,19 +254,6 @@ GPU_Rect RenderSpriteBehavior::GetBounds() {
 	return rect;
 }
 
-bool RenderSpriteBehavior::IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY ) {
-
-	// TODO - may have to be adjusted for "camera" view later
-	
-	// transform global point to local space
-	this->gameObject->ConvertPoint( x, y, *outLocalX, *outLocalY, false );
-
-	// in bounds?
-	GPU_Rect bounds = this->GetBounds();
-	return ( *outLocalX >= bounds.x && *outLocalX < ( bounds.x + bounds.w ) ) &&
-			( *outLocalY >= bounds.y && *outLocalY < ( bounds.y + bounds.h ) );
-	
-}
 
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
@@ -288,10 +292,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		srcRect = frame->locationOnTexture;
 		rotated = frame->rotated;
 		
-		// set flip
-		sy = behavior->height / frame->actualHeight;
-		sx = behavior->width / frame->actualWidth;
-		
 		// activate shader
 		behavior->SelectShader
 		( true,
@@ -306,12 +306,16 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// draw rotated
 		if ( rotated ) {
 			
-			cy += (frame->trimOffsetY + frame->locationOnTexture.w) * sy;
+			sy = behavior->width / frame->actualWidth;
+			sx = behavior->height / frame->actualHeight;
+			cy += (frame->trimOffsetY + frame->locationOnTexture.w) * sx;
 			r = -90;
 	
 		// normal
 		} else {
 			
+			sx = behavior->width / frame->actualWidth;
+			sy = behavior->height / frame->actualHeight;
 			cy += frame->trimOffsetY * sy;
 			
 		}
@@ -347,13 +351,21 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	if ( !image ) return;
 	
 	// blend mode and color
-	GPU_SetBlendMode( image, behavior->blendMode );
+	if ( behavior->blendMode <= GPU_BLEND_NORMAL_FACTOR_ALPHA ) {
+		// normal mode
+		GPU_SetBlendMode( image, (GPU_BlendPresetEnum) behavior->blendMode );
+	// special mode
+	} else if ( behavior->blendMode == GPU_BLEND_CUT_ALPHA ) {
+		// cut alpha
+		GPU_SetBlendFunction( image,  GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
+		GPU_SetBlendEquation( image, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
+	}
 	image->color = color;
 
 	// slices
 	if ( sliced ) {
 		float top, right, bottom, left;
-		float srcMidX = 0, srcMidY = 0, sliceMidX = 0, sliceMidY = 0;
+		float midX = 0, midY = 0, sliceMidX = 0, sliceMidY = 0;
 		
 		if ( rotated ) {
 			// compute margins
@@ -361,10 +373,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			left = ( (behavior->slice.h < 1) ? (srcRect.h * behavior->slice.h) : behavior->slice.h );
 			bottom = ( (behavior->slice.w < 1) ? (srcRect.w * behavior->slice.w) : behavior->slice.w );
 			right = ( (behavior->slice.y < 1) ? (srcRect.h * behavior->slice.y) : behavior->slice.y );
-			srcMidX = ( srcRect.w - (top + bottom) );
-			srcMidY = ( srcRect.h - (left + right) );
-			sliceMidX = ( behavior->width - (left + right) );
-			sliceMidY = ( behavior->height - (top + bottom) );
+			midX = ( srcRect.w - (top + bottom) );
+			midY = ( srcRect.h - (left + right) );
+			sliceMidX = max( 0.0f, behavior->width - (left + right) );
+			sliceMidY = max( 0.0f, behavior->height - (top + bottom) );
+			
+			// clip
+			behavior->width = max( behavior->width, left + right + sliceMidX );
+			behavior->height = max( behavior->height, top + right + sliceMidY );
 			
 			// bottom left
 			int i = 0;
@@ -380,17 +396,17 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += bottom;
-			slices[ i ].rect.w = srcMidX;
+			slices[ i ].rect.w = midX;
 			slices[ i ].rect.h = left;
 			slices[ i ].x = bottom;
 			slices[ i ].y = 0;
-			slices[ i ].sx = sliceMidY / srcMidX;
+			slices[ i ].sx = sliceMidY / midX;
 			slices[ i ].sy = 1;
 			
 			// upper left
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + srcMidX;
+			slices[ i ].rect.x += bottom + midX;
 			slices[ i ].rect.w = top;
 			slices[ i ].rect.h = left;
 			slices[ i ].x = bottom + sliceMidY;
@@ -403,40 +419,40 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.y += left;
 			slices[ i ].rect.w = bottom;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = 0;
 			slices[ i ].y = left;
 			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidX / srcMidY;
+			slices[ i ].sy = sliceMidX / midY;
 			
 			// mid
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += bottom;
 			slices[ i ].rect.y += left;
-			slices[ i ].rect.w = srcMidX;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.w = midX;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = bottom;
 			slices[ i ].y = left;
-			slices[ i ].sx = sliceMidY / srcMidX;
-			slices[ i ].sy = sliceMidX / srcMidY;
+			slices[ i ].sx = sliceMidY / midX;
+			slices[ i ].sy = sliceMidX / midY;
 			
 			// top
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + srcMidX;
+			slices[ i ].rect.x += bottom + midX;
 			slices[ i ].rect.y += left;
 			slices[ i ].rect.w = top;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = sliceMidY + bottom;
 			slices[ i ].y = left;
 			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidX / srcMidY;
+			slices[ i ].sy = sliceMidX / midY;
 			
 			// upper right
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += left + srcMidY;
+			slices[ i ].rect.y += left + midY;
 			slices[ i ].rect.w = bottom;
 			slices[ i ].rect.h = right;
 			slices[ i ].x = 0;
@@ -448,19 +464,19 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += bottom;
-			slices[ i ].rect.y += left + srcMidY;
-			slices[ i ].rect.w = srcMidX;
+			slices[ i ].rect.y += left + midY;
+			slices[ i ].rect.w = midX;
 			slices[ i ].rect.h = right;
 			slices[ i ].x = bottom;
 			slices[ i ].y = left + sliceMidX;
-			slices[ i ].sx = sliceMidY / srcMidX;
+			slices[ i ].sx = sliceMidY / midX;
 			slices[ i ].sy = 1;
 			
 			// bottom right
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + srcMidX;
-			slices[ i ].rect.y += left + srcMidY;
+			slices[ i ].rect.x += bottom + midX;
+			slices[ i ].rect.y += left + midY;
 			slices[ i ].rect.w = top;
 			slices[ i ].rect.h = right;
 			slices[ i ].x = bottom + sliceMidY;
@@ -474,10 +490,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			left = ( (behavior->slice.h < 1) ? (srcRect.w * behavior->slice.h) : behavior->slice.h );
 			bottom = ( (behavior->slice.w < 1) ? (srcRect.h * behavior->slice.w) : behavior->slice.w );
 			right = ( (behavior->slice.y < 1) ? (srcRect.w * behavior->slice.y) : behavior->slice.y );
-			srcMidX = ( srcRect.w - (left + right) );
-			srcMidY = ( srcRect.h - (top + bottom) );
-			sliceMidX = ( behavior->width - (left + right) );
-			sliceMidY = ( behavior->height - (top + bottom) );
+			midX = ( srcRect.w - (left + right) );
+			midY = ( srcRect.h - (top + bottom) );
+			sliceMidX = max( 0.0f, behavior->width - (left + right) );
+			sliceMidY = max( 0.0f, behavior->height - (top + bottom) );
+			
+			// clip
+			behavior->width = max( behavior->width, left + right + sliceMidX );
+			behavior->height = max( behavior->height, top + right + sliceMidY );
 			
 			// upper left
 			int i = 0;
@@ -493,11 +513,11 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += left;
-			slices[ i ].rect.w = srcMidX;
+			slices[ i ].rect.w = midX;
 			slices[ i ].rect.h = top;
 			slices[ i ].x = cx + left;
 			slices[ i ].y = cy;
-			slices[ i ].sx = sliceMidX / srcMidX;
+			slices[ i ].sx = sliceMidX / midX;
 			slices[ i ].sy = 1;
 			
 			// upper right
@@ -516,23 +536,23 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.y += top;
 			slices[ i ].rect.w = left;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = cx;
 			slices[ i ].y = top;
 			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidY / srcMidY;
+			slices[ i ].sy = sliceMidY / midY;
 			
 			// mid
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += left;
 			slices[ i ].rect.y += top;
-			slices[ i ].rect.w = srcMidX;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.w = midX;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = cx + left;
 			slices[ i ].y = cy + top;
-			slices[ i ].sx = sliceMidX / srcMidX;
-			slices[ i ].sy = sliceMidY / srcMidY;
+			slices[ i ].sx = sliceMidX / midX;
+			slices[ i ].sy = sliceMidY / midY;
 			
 			// right
 			i++;
@@ -540,16 +560,16 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].rect.x += slices[ i ].rect.w - right;
 			slices[ i ].rect.y += top;
 			slices[ i ].rect.w = right;
-			slices[ i ].rect.h = srcMidY;
+			slices[ i ].rect.h = midY;
 			slices[ i ].x = cx + sliceMidX + left;
 			slices[ i ].y = cy + top;
 			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidY / srcMidY;
+			slices[ i ].sy = sliceMidY / midY;
 			
 			// bottom left
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += top + srcMidY;
+			slices[ i ].rect.y += top + midY;
 			slices[ i ].rect.w = left;
 			slices[ i ].rect.h = bottom;
 			slices[ i ].x = cx;
@@ -561,19 +581,19 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			i++;
 			slices[ i ].rect = srcRect;
 			slices[ i ].rect.x += left;
-			slices[ i ].rect.y += top + srcMidY;
-			slices[ i ].rect.w = srcMidX;
+			slices[ i ].rect.y += top + midY;
+			slices[ i ].rect.w = midX;
 			slices[ i ].rect.h = bottom;
 			slices[ i ].x = cx + left;
 			slices[ i ].y = cy + top + sliceMidY;
-			slices[ i ].sx = sliceMidX / srcMidX;
+			slices[ i ].sx = sliceMidX / midX;
 			slices[ i ].sy = 1;
 			
 			// bottom right
 			i++;
 			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += left + srcMidX;
-			slices[ i ].rect.y += top + srcMidY;
+			slices[ i ].rect.x += left + midX;
+			slices[ i ].rect.y += top + midY;
 			slices[ i ].rect.w = right;
 			slices[ i ].rect.h = bottom;
 			slices[ i ].x = cx + left + sliceMidX;

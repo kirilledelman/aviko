@@ -71,6 +71,7 @@ struct ArgValue {
 	ArgValue( const ArgValue& copyFrom );
 	ArgValue( jsval val );
 	ArgValue& operator=( const ArgValue& copyFrom );
+	ArgValue& operator=( const jsval& jv );
 	
 	// value getters
 	bool toNumber( float& dest );

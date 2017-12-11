@@ -48,7 +48,6 @@ public:
 // ui
 	
 	GPU_Rect GetBounds();
-	bool IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY );
 	
 // methods
 		

@@ -46,7 +46,7 @@ Sound::~Sound() {
 void Sound::InitClass() {
 	
 	// create class
-	script.RegisterClass<Sound>();
+	script.RegisterClass<Sound>( "ScriptableObject" );
 	
 	// props
 	

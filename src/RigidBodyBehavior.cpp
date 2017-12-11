@@ -123,15 +123,9 @@ void RigidBodyBehavior::GetBodyTransform( b2Vec2& pos, float& angle ) {
 /// attach/detach from a gameObject
 bool RigidBodyBehavior::SetGameObject( GameObject* go, int pos ) {
 	
-	if ( go && go != this->gameObject ) {
-		// check if gameObject already has a body, fail
-		if ( go->body ) {
-			script.ReportError( "%s already has a physics body behavior attached.", go->name.c_str() );
-			return false;
-		} else if ( dynamic_cast<Scene*>(go) ) {
-			script.ReportError( "Scene can not have a physics behavior." );
-			return false;
-		}
+	if ( go && go != this->gameObject && dynamic_cast<Scene*>(go) ) {
+		script.ReportError( "Scene can not have a physics behavior." );
+		return false;
 	}
 	
 	// base

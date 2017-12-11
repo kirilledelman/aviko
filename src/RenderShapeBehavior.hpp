@@ -71,11 +71,11 @@ public:
 	/// end angle for arcs
 	float endAngle = 359.999;
 	
-	/// holds x,y points for GPU_Polygon
+	/// holds x,y point pairs for GPU_Polygon
 	vector<float> polyPoints;
 	
 	/// line thickness
-	float lineThickness = 2;
+	float lineThickness = 3;
 	
 	/// if true, rectangles and circles are centered at 0, 0
 	bool centered = true;
@@ -90,6 +90,9 @@ public:
 	/// render callback
 	static void Render( RenderShapeBehavior* behavior, GPU_Target* target, Event* event );
 	
+	/// overridden from RenderBehavior
+	bool IsScreenPointInside( float screenX, float screenY, float* outLocalX, float* outLocalY );
+	
 	/// returns .points as new ArgValueVector (delete it after using)
 	ArgValueVector* GetPoints();
 	
@@ -97,6 +100,12 @@ public:
 	void SetPoints( ArgValueVector* );
 	
 };
+
+float DistanceToLine( float px, float py, float x1, float y1, float x2, float y2 );
+bool InsideArc( float px, float py, float cx, float cy, float r, float a1, float a2 );
+bool InsideEllipse( float px, float py, float cx, float cy, float rx, float ry );
+bool InsidePolygon( float px, float py, float* points, int numPoints );
+
 
 SCRIPT_CLASS_NAME( RenderShapeBehavior, "RenderShape" );
 

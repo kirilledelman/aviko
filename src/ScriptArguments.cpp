@@ -178,6 +178,13 @@ ArgValue::ArgValue( const ArgValue& copyFrom ) {
 
 // convert constructor
 ArgValue::ArgValue( jsval val ) {
+	
+	*this = val;
+	
+}
+
+ArgValue& ArgValue::operator=( const jsval &val ) {
+
 	type = TypeUndefined; value.intValue = 0;
 	if ( val.isBoolean() ) {
 		type = TypeBool;
@@ -220,6 +227,9 @@ ArgValue::ArgValue( jsval val ) {
 			value.objectValue = NULL;
 		}
 	}
+	
+	return *this;
+	
 }
 
 /// copy assignment
