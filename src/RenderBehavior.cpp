@@ -5,6 +5,32 @@
 RenderBehavior::SpriteShaderVariant RenderBehavior::shaders[ 8 ];
 
 
+/* MARK:	-				Init / destroy
+ -------------------------------------------------------------------- */
+
+/// no 'new RenderBehavior()'
+RenderBehavior::RenderBehavior( ScriptArguments* ) { script.ReportError( "RenderBehavior can't be created using 'new'." ); }
+
+/// default constructor
+RenderBehavior::RenderBehavior() { };
+
+/// called by child classes to add default objects
+void RenderBehavior::AddDefaults() {
+	
+	// create color object
+	Color *color = new Color( NULL );
+	script.SetProperty( "color", ArgValue( color->scriptObject ), this->scriptObject );
+	
+	// create addColor object
+	color = new Color( NULL );
+	color->SetInts( 0, 0, 0, 0 );
+	script.SetProperty( "addColor", ArgValue( color->scriptObject ), this->scriptObject );
+	
+}
+
+RenderBehavior::~RenderBehavior() { }
+
+
 /* MARK:	-				UI
  -------------------------------------------------------------------- */
 
@@ -19,6 +45,74 @@ bool RenderBehavior::IsScreenPointInside( float x, float y, float* outLocalX, fl
 	GPU_Rect bounds = this->GetBounds();
 	return ( *outLocalX >= bounds.x && *outLocalX < ( bounds.x + bounds.w ) ) &&
 	( *outLocalY >= bounds.y && *outLocalY < ( bounds.y + bounds.h ) );
+
+}
+
+
+/* MARK:	-				Script
+ -------------------------------------------------------------------- */
+
+
+void RenderBehavior::InitClass() {
+
+	// register class
+	script.RegisterClass<RenderBehavior>( "Behavior", true );
+
+	script.AddProperty<RenderBehavior>
+	( "color",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderBehavior*) b)->color->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderBehavior* rs = (RenderBehavior*) b;
+		// replace if it's a color
+		Color* other = script.GetInstance<Color>(val);
+		if ( other ) rs->color = other;
+		return rs->color->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderBehavior>
+	( "addColor",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderBehavior*) b)->addColor->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderBehavior* rs = (RenderBehavior*) b;
+		Color* other = script.GetInstance<Color>(val);
+		if ( other ) rs->addColor = other;
+		return rs->addColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderBehavior>
+	( "blendMode",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderBehavior*) b)->blendMode; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderBehavior*) b)->blendMode = (GPU_BlendPresetEnum) val ); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "stipple",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->stipple; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->stipple = max( 0.0f, min( 1.0f, val ))); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "stippleAlpha",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderBehavior*) b)->stippleAlpha; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderBehavior*) b)->stippleAlpha = val ); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "tileX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->tileX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->tileX = val ); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "tileY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->tileY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->tileY = val ); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "pivotX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );
+	
+	script.AddProperty<RenderBehavior>
+	( "pivotY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotY = val ); }) );
 
 }
 
@@ -87,10 +181,6 @@ int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v,
 	return shaderIndex;
 	
 }
-
-/* MARK:	-				Initialization
- -------------------------------------------------------------------- */
-
 
 // init shaders
 void RenderBehavior::InitShaders() {
@@ -202,12 +292,15 @@ void RenderBehavior::InitShaders() {
 			void main(void){\n\
 				vec2 coord = texCoord;\n\
 			%s\n\
+				src *= color;\n\
+				if ( src.a == 0 ) discard;\n\
 				gl_FragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 		} else {
 			sprintf( fragShader,
 			"#version %d\n\
-			in vec4 color; in vec2 texCoord;\n\
+			in vec4 color;\n\
+			in vec2 texCoord;\n\
 			in vec4 gl_FragCoord;\n\
 			uniform vec4 addColor;\n\
 			out vec4 fragColor;\n\
@@ -215,7 +308,9 @@ void RenderBehavior::InitShaders() {
 			void main(void){\n\
 				vec2 coord = texCoord;\n\
 			%s\n\
-				fragColor = src * color + addColor;\n\
+				src *= color;\n\
+				if ( src.a == 0 ) discard;\n\
+				fragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 	
 		}

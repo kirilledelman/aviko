@@ -17,8 +17,17 @@ ScriptFunctionObject::~ScriptFunctionObject() {
 	}
 }
 
+/// replace
+void ScriptFunctionObject::SetFunc( void* newFunc ) {
+	if ( this->funcObject != newFunc ) {
+		JS_RemoveObjectRoot( script.js, &this->funcObject );
+		this->funcObject = (JSObject*) newFunc;
+		JS_AddObjectRoot( script.js, &this->funcObject );
+	}
+}
+
 /// invoke function with arguments
-void ScriptFunctionObject::Invoke( ScriptArguments &args, void* thisObject ){
+void ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	jsval rval;
 	int argc;
 	jsval* params = args.GetFunctionArguments( &argc );

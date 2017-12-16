@@ -38,7 +38,6 @@ UIBehavior::UIBehavior() {
 	
 	// flag
 	this->isUIBehavior = true;
-	this->dispatchEventsToPropertyFunctions = true;
 }
 
 // destructor
@@ -156,6 +155,19 @@ void UIBehavior::InitClass() {
 		self->Blur();
 		return true;
 	} ));
+	
+	script.DefineFunction<UIBehavior>
+	("navigate",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		UIBehavior* self = (UIBehavior*) p;
+		int dir = 0;
+		if ( !sa.ReadArguments( 1, TypeInt, &dir ) ) {
+			script.ReportError( "usage: navigate( Int direction )" );
+			return false;
+		}
+		// 
+		return self->Navigate( dir, 0 ) || self->Navigate( 0, dir );
+	} ));
 
 }
 
@@ -223,7 +235,7 @@ bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* 
 
 
 /// change focus to focusable UI that's in the direction x, y from this control
-void UIBehavior::Navigate( float x, float y ) {
+bool UIBehavior::Navigate( float x, float y ) {
 	
 	// normalize direction
 	Uint8 dir = ( y < 0 ? 0 :
@@ -284,7 +296,10 @@ void UIBehavior::Navigate( float x, float y ) {
 	}
 	
 	// if candidate is found, focus on it
-	if ( other ) other->Focus();
+	if ( other ) { other->Focus(); return true; }
+	
+	// nothing found
+	return false;
 	
 }
 
@@ -322,7 +337,7 @@ void UIBehavior::CheckClipping() {
  -------------------------------------------------------------------- */
 
 
-void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e){
+void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 	float x = e->scriptParams.args[ 0 ].value.floatValue;
 	float y = e->scriptParams.args[ 1 ].value.floatValue;
 	float localX, localY;

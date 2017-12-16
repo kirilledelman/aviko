@@ -40,6 +40,9 @@ protected:
 	/// x, y scale
 	b2Vec2 _scale = { 1, 1 };
 	
+	// skew
+	b2Vec2 _skew = { 0, 0 };
+	
 	/// z-index
 	float _z = 0;
 	
@@ -57,9 +60,6 @@ protected:
 
 	/// true when inverse world transform matrix needs to be recalculated
 	bool _inverseWorldDirty = true;
-	
-	/// used for HUD style drawing
-	bool _ignoreCamera = false;
 	
 public:
 	
@@ -96,6 +96,12 @@ public:
 	/// shortcut to ui behavior
 	UIBehavior* ui = NULL;
 	
+	/// used for HUD style drawing
+	bool ignoreCamera = false;
+	
+	/// returns true if any parent has ignored camera
+	bool IsCameraIgnored();
+	
 	/// sets local transform
 	void SetTransform( float x, float y, float angle, float scaleX, float scaleY );
 	void SetPosition( float x, float y );
@@ -107,15 +113,17 @@ public:
 	void SetZ( float z );
 	void SetScaleX( float sx );
 	void SetScaleY( float sy );
+	void SetSkewX( float sx );
+	void SetSkewY( float sy );
 	
 	// gets local transform
-	b2Vec2 GetPosition();
-	b2Vec2 GetScale();
 	float GetX();
 	float GetY();
 	float GetZ();
 	float GetScaleX();
 	float GetScaleY();
+	float GetSkewX();
+	float GetSkewY();
 	float GetAngle();
 
 	/// sets world transform

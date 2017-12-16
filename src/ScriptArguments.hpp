@@ -157,17 +157,22 @@ class ScriptFunctionObject {
 public:
 	
 	JSObject *funcObject = NULL;
+	void *thisObject = NULL;
 	
 	/// used by event dispatcher to remove this function from its list after a single call
 	bool callOnce = false;
 	
 	/// invoke this function with arguments
-	void Invoke( ScriptArguments& args, void* thisObject=NULL );
+	void Invoke( ScriptArguments& args );
 	
 	// comparing to a pointer to a JSFunction, used when removing event listeners
 	bool operator==( void* jsfunc ) { return funcObject == jsfunc; };
 	
+	// replace with new funcObject
+	void SetFunc( void* newFunc );
+	
 	// create / destroy
+	ScriptFunctionObject(){};
 	ScriptFunctionObject( void* scriptFunc, bool once=false );
 	~ScriptFunctionObject();
 	

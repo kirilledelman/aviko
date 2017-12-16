@@ -4,7 +4,15 @@
 #include "RenderTextBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "SampleBehavior.hpp"
-#include "ScriptBehavior.hpp"
+
+// from ScriptableClass.hpp
+vector<Event*> Event::eventStack;
+
+// from ScriptableClass.hpp
+int ScriptableClass::asyncIndex = 0;
+ScriptableClass::AsyncMap* ScriptableClass::scheduledAsyncs = NULL;
+ScriptableClass::DebouncerMap* ScriptableClass::scheduledDebouncers = NULL;
+
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -51,6 +59,10 @@ Application::Application() {
 		exit( 1 );
 	}
 	
+	// init async containers
+	ScriptableClass::scheduledAsyncs = new AsyncMap();
+	ScriptableClass::scheduledDebouncers = new DebouncerMap();
+	
 	// register classes
 	this->InitClass();
 	
@@ -78,10 +90,15 @@ Application::~Application() {
 	// shut down script engine
 	script.Shutdown();
 	
+	// delete async
+	delete ScriptableClass::scheduledAsyncs;
+	delete ScriptableClass::scheduledDebouncers;
 }
+
 
 /* MARK:	-				Rendering init / update
  -------------------------------------------------------------------- */
+
 
 void Application::InitRender() {
 	
@@ -136,8 +153,11 @@ void Application::UpdateBackscreen() {
 	GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
 	GPU_LoadTarget( this->backScreen );
+	GPU_AddDepthBuffer( this->backScreen->target );
 	GPU_SetDepthTest( this->backScreen->target, true );
 	GPU_SetDepthWrite( this->backScreen->target, true );
+	this->backScreen->target->camera.near = -65535;
+	this->backScreen->target->camera.far = 65535;
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -235,6 +255,12 @@ void Application::InitClass() {
 				// clear
 				app.sceneStack.clear();
 			}
+			// generate event
+			Event event;
+			event.name = EVENT_SCENECHANGED;
+			event.scriptParams.AddObjectArgument( current ? current->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			app.CallEvent( event );
 		}
 		return val;
 	 })
@@ -300,6 +326,8 @@ void Application::InitClass() {
 			return false;
 		}
 		
+		Scene* oldScene = app.sceneStack.size() ? app.sceneStack.back() : NULL;
+		
 		// check if it's already in the stack
 		vector<Scene*>::iterator it, end = app.sceneStack.end();
 		it = find( app.sceneStack.begin(), app.sceneStack.end(), newScene );
@@ -312,6 +340,15 @@ void Application::InitClass() {
 			// protect and add at end
 			app.sceneStack.push_back( newScene );
 			script.ProtectObject( &newScene->scriptObject, true );
+		}
+		
+		// generate event
+		if ( newScene != oldScene ) {
+			Event event;
+			event.name = EVENT_SCENECHANGED;
+			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			app.CallEvent( event );
 		}
 		return true;
 	}) );
@@ -329,6 +366,8 @@ void Application::InitClass() {
 			script.ReportError( "usage: app.popScene( [ Scene popToScene ] )" );
 			return false;
 		}
+		
+		Scene* oldScene = app.sceneStack.size() ? app.sceneStack.back() : NULL;
 		
 		// pop up to this scene
 		if ( newScene ) {
@@ -348,6 +387,14 @@ void Application::InitClass() {
 			app.sceneStack.pop_back();
 		}
 		
+		// generate event
+		if ( newScene != oldScene ) {
+			Event event;
+			event.name = EVENT_SCENECHANGED;
+			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			app.CallEvent( event );
+		}
 		return true;
 	}) );
 	
@@ -365,13 +412,7 @@ void Application::InitClass() {
 		app.windowScalingFactor = max( 0.1f, min( 8.0f, sc ) );
 		app.InitRender();
 		app.UpdateBackscreen();
-		return true;
-	}) );
-	
-	script.DefineFunction<Application>
-	( "quit",
-	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
-		app.run = false;
+		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
 		return true;
 	}) );
 	
@@ -551,6 +592,27 @@ void Application::InitClass() {
 		return true;
 	}) );
 
+	// stops current event
+	script.DefineGlobalFunction
+	( "stopEvent",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		// stop current / last event
+		if ( Event::eventStack.size() ) {
+			Event::eventStack.back()->stopped = true;
+			sa.ReturnBool( true );
+		} else {
+			sa.ReturnBool( false );
+		}
+		return true;
+	}) );
+	
+	script.DefineGlobalFunction
+	( "quit",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		app.run = false;
+		return true;
+	}) );
+	
 	// call registration functions for all classes
 	input.InitClass(); // single instance
 	Controller::InitClass();
@@ -560,6 +622,7 @@ void Application::InitClass() {
 	Scene::InitClass();
 	Image::InitClass();
 	Behavior::InitClass();
+	RenderBehavior::InitClass();
 	RenderBehavior::InitShaders();
 	RenderShapeBehavior::InitClass();
 	RenderSpriteBehavior::InitClass();
@@ -567,7 +630,6 @@ void Application::InitClass() {
 	RigidBodyBehavior::InitClass();
 	UIBehavior::InitClass();
 	SampleBehavior::InitClass();
-	ScriptBehavior::InitClass();
 	
 }
 
@@ -627,6 +689,9 @@ void Application::GameLoop() {
 			_timeFps = _time;
 		}
 		
+		// perform asyncs
+		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
+		
 		// if have active scene
 		if ( scene ) {
 		
@@ -635,6 +700,7 @@ void Application::GameLoop() {
 
 			// update
 			event.name = EVENT_UPDATE;
+			event.scriptParams.AddFloatArgument( deltaTime );
 			scene->DispatchEvent( event, true );
 		}
 		
@@ -803,9 +869,19 @@ size_t HashString( const char* p ) {
 float* MatrixCompose( float* mat, float x, float y, float angleDegrees, float scaleX, float scaleY ) {
 	GPU_MatrixIdentity( mat );
 	GPU_MatrixTranslate( mat, x, y, 0 );
-	GPU_MatrixRotate( mat, angleDegrees, 0, 0, 1 );
-	GPU_MatrixScale( mat, scaleX, scaleY, 1 );
+	if ( angleDegrees != 0 ) GPU_MatrixRotate( mat, angleDegrees, 0, 0, 1 );
+	if ( scaleX != 0 || scaleY != 0 ) GPU_MatrixScale( mat, scaleX, scaleY, 1 );
 	return mat;
+}
+
+void MatrixSkew( float* result, float sx, float sy ) {
+	if(result == NULL) return;
+	float A[16];
+	A[0] = 1; A[1] = tan(sy * DEG_TO_RAD); A[2] = 0; A[3] = 0;
+	A[4] = tan(sx * DEG_TO_RAD); A[5] = 1; A[6] = 0; A[7] = 0;
+	A[8] = 0; A[9] = 0; A[10] = 1; A[11] = 0;
+	A[12] = 0; A[13] = 0; A[14] = 0; A[15] = 1;
+	GPU_MultiplyAndAssign(result, A);
 }
 
 string HexStr( Uint32 w, size_t hex_len ) {

@@ -13,11 +13,23 @@ input.controllerAdded = function ( kb ) {
 
 app.scene = new Scene();
 
-var a = app.scene.addChild( new GameObject( 'TextField' ) );
-a.text = "Кирилл";
-a.x = 100; a.y = 100;
+function m0(){  this.gameObject.render.color.r = 0; }
+function m1(){  this.gameObject.render.color.r = 1; }
+function m2( wy ){  this.gameObject.angle += wy; }
+for ( var i = 0; i < 10; i++ ){
 
+	var o = new GameObject();
+	o.render = new RenderSprite( '123/4' );
+	o.x = 10 + i * 30;
+	o.y = 50;
+	o.ui = new UI();
+	o.ui.mouseOver = m0;
+	o.ui.mouseOut = m1;
+	o.ui.mouseWheel = m2;
+	
+	app.scene.addChild( o );
 
+}
 
 
 

@@ -11,14 +11,8 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	// add scriptObject
 	script.NewScriptObject<RenderShapeBehavior>( this );
 	
-	// create color object
-	Color *color = new Color( NULL );
-	script.SetProperty( "color", ArgValue( color->scriptObject ), this->scriptObject );
-
-	// create addColor object
-	color = new Color( NULL );
-	color->SetInts( 0, 0, 0, 0 );
-	script.SetProperty( "addColor", ArgValue( color->scriptObject ), this->scriptObject );
+	// add defaults
+	RenderBehavior::AddDefaults();	
 	
 	// read params
 	int pShape = 0;
@@ -146,7 +140,7 @@ RenderShapeBehavior::~RenderShapeBehavior() {
 void RenderShapeBehavior::InitClass() {
 
 	// register class
-	script.RegisterClass<RenderShapeBehavior>( "Behavior" );
+	script.RegisterClass<RenderShapeBehavior>( "RenderBehavior" );
 	
 	// constants
 	
@@ -172,36 +166,6 @@ void RenderShapeBehavior::InitClass() {
 	( "filled",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderShapeBehavior*) b)->filled; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderShapeBehavior*) b)->filled = val ); }) );
-	
-	script.AddProperty<RenderShapeBehavior>
-	( "color",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderShapeBehavior*) b)->color->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		 // replace if it's a color
-		 Color* other = script.GetInstance<Color>(val);
-		 if ( other ) ((RenderShapeBehavior*) b)->color = other;
-		 return ((RenderShapeBehavior*) b)->color->scriptObject;
-	 }) );
-	
-	script.AddProperty<RenderShapeBehavior>
-	( "addColor",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderShapeBehavior*) b)->addColor->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) ((RenderShapeBehavior*) b)->addColor = other;
-		return ((RenderShapeBehavior*) b)->addColor->scriptObject;
-	}) );
-	
-	script.AddProperty<RenderShapeBehavior>
-	( "blendMode",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderShapeBehavior*) b)->blendMode; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderShapeBehavior*) b)->blendMode = (GPU_BlendPresetEnum) val ); }) );
-	
-	script.AddProperty<RenderShapeBehavior>
-	( "stipple",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->stipple; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->stipple = max( 0.0f, min( 1.0f, val ))); }) );
 	
 	script.AddProperty<RenderShapeBehavior>
 	( "radius",
@@ -254,7 +218,7 @@ void RenderShapeBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->endAngle = val ); }) );
 
 	script.AddProperty<RenderShapeBehavior>
-	( "thickness",
+	( "lineWidth",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->lineThickness; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->lineThickness = val ); }) );
 

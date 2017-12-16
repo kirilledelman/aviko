@@ -1,31 +1,29 @@
 
 
-RenderText
-	pressing up when top line is empty moves cursor
-	drag select autoscroll
-	copy, paste
 
-input.navigate( dir ); +1, -1
+Tween class
+	new Tween( )
+	.target - obj
+	.properties [ "x", "y" ]...
+	.startValues[ 0, 0 ]
+	.endValues [ 1, 1 ]
+	.duration
+	.time
+	.running
+	.finished
+	.callback ( function( ){} )
 
-stopEvent();
+Array-like object called Vector - can use with shapes/points in rendershape, or rigidbodyshape
+	.type ( Uint8, Int8, Uint16, Int16, Uint32, Int32, Float, String )
+	.toArray()
+	.fromArray()
+	[]
+	.splice
+	.push, .pop
+	.slice
+	.length
+	.concat
 
-
-Try using  GPU_Camera func for Image drawing transform
-
-scene.cameraX, Y, scale, rot -> GPU_Camera funcs
-GameObject.ignoreCamera  GPU_EnableCamera / per-object
-May need to update ispointinside func of GameObject
-
-
-ScriptableObject.async( function, sec ) - use eventListeners style interface/container
-ScriptableObject.debounce( string, function, time )
-ScriptableObject.cancelDebouncer( string )
-
-
-
-Image
-	save( pngpath )in /textures by default
-	.base64 <-> string
 
 RigidBody
 	RigidBodyShape class
@@ -42,7 +40,24 @@ Nice to have
 
 =============================================
 
-Make sure all paths in XCode project are relative / use $variables
+GameObject
+	.moveTo(), .moveBy()
+
+Color
+	.tweenTo()
+
+RenderSprite
+	.frames = [ "anim/1", "anim/2", "anim/3" ] | null
+	.frame = 0
+
+Image
+save( pngpath )in /textures by default
+.base64 <-> string
+
+
+New SubClass can be intercepted + wired up in constructor ScriptHost hook
+
+Later, investigate/fix skewX,skewY on objects with bodies.
 
 Install MS Visual Studio in windows, look at how to compile on win.
 
@@ -59,16 +74,7 @@ $( 'name/name/name' ) -> great-grandchild
 $( '../sibling' ) -> sibling named
 can extend later to filter by properties
 
-TweenBehavior
-GameObject gets .tween var/behavior
-.tween gets created if doesn't exist on access?
-methods:
-.moveTo( x, y, duration, easetype, onCompleteCallback ) - transition x,y together
-.scaleTo
-.rotateTo
-.transition( propname, startval, endval, duration, ease, onComplete )
-.transition( object, propname, startval, endval, duration, ease, onComplete )
-What about world space? Make it .body aware?
+
 
 
 Layout class + subclasses

@@ -13,7 +13,6 @@
 		7117EBEA1F420D5000C25611 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7117EBE71F420D5000C25611 /* SDL2_mixer.framework */; };
 		7117EBEB1F420D5000C25611 /* SDL2_ttf.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7117EBE81F420D5000C25611 /* SDL2_ttf.framework */; };
 		711B388A1F64B55E00A6B224 /* libmozjs-24.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 711B38891F64B55E00A6B224 /* libmozjs-24.0.dylib */; };
-		7125DEFB1FC3667A000674F5 /* ScriptBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7125DEF91FC3667A000674F5 /* ScriptBehavior.cpp */; };
 		7126DBBB1F8404B900BD4E44 /* ScriptResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */; };
 		713D70221F82CDE80011B7E8 /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D70201F82CDE80011B7E8 /* Input.cpp */; };
 		7170F8541F588E9800F71E87 /* SceneDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7170F8521F588E9800F71E87 /* SceneDebugDraw.cpp */; };
@@ -191,8 +190,6 @@
 		7117EBE81F420D5000C25611 /* SDL2_ttf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_ttf.framework; path = ../../../../../../Library/Frameworks/SDL2_ttf.framework; sourceTree = "<group>"; };
 		711B38891F64B55E00A6B224 /* libmozjs-24.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libmozjs-24.0.dylib"; path = "../../../../../usr/local/lib/libmozjs-24.0.dylib"; sourceTree = "<group>"; };
 		71257C601F520EFC006A8EEC /* fxport.jsfl */ = {isa = PBXFileReference; lastKnownFileType = text; path = fxport.jsfl; sourceTree = "<group>"; };
-		7125DEF91FC3667A000674F5 /* ScriptBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptBehavior.cpp; path = src/ScriptBehavior.cpp; sourceTree = "<group>"; };
-		7125DEFA1FC3667A000674F5 /* ScriptBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptBehavior.hpp; path = src/ScriptBehavior.hpp; sourceTree = "<group>"; };
 		7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptResource.cpp; path = src/ScriptResource.cpp; sourceTree = "<group>"; };
 		7126DBBA1F8404B900BD4E44 /* ScriptResource.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptResource.hpp; path = src/ScriptResource.hpp; sourceTree = "<group>"; };
 		713D70201F82CDE80011B7E8 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Input.cpp; path = src/Input.cpp; sourceTree = "<group>"; };
@@ -503,8 +500,6 @@
 				7185331E1F9F92E60080B05A /* RenderTextBehavior.cpp */,
 				71130ED91F5494CD001D453E /* RigidBodyBehavior.hpp */,
 				71130ED81F5494CD001D453E /* RigidBodyBehavior.cpp */,
-				7125DEFA1FC3667A000674F5 /* ScriptBehavior.hpp */,
-				7125DEF91FC3667A000674F5 /* ScriptBehavior.cpp */,
 				71D8D3A31FCC9640004DDE7E /* UIBehavior.hpp */,
 				71D8D3A21FCC9640004DDE7E /* UIBehavior.cpp */,
 				71E694641F5318E9001EB381 /* SampleBehavior.hpp */,
@@ -906,7 +901,6 @@
 				71F4851A1F814C8D00AF17EA /* b2ParticleGroup.cpp in Sources */,
 				71F4851B1F814C8D00AF17EA /* b2ParticleSystem.cpp in Sources */,
 				71F4851C1F814C8D00AF17EA /* b2VoronoiDiagram.cpp in Sources */,
-				7125DEFB1FC3667A000674F5 /* ScriptBehavior.cpp in Sources */,
 				71F4851D1F814C8D00AF17EA /* b2Rope.cpp in Sources */,
 				71E6946F1F5318E9001EB381 /* SampleBehavior.cpp in Sources */,
 				71BA89C01FC9BD18003A5A37 /* RenderBehavior.cpp in Sources */,

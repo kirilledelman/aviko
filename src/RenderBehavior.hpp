@@ -14,6 +14,11 @@
 class RenderBehavior : public Behavior {
 public:
 	
+	// init, destroy
+	RenderBehavior( ScriptArguments* args );
+	RenderBehavior();
+	~RenderBehavior();
+	
 	// ui
 	
 	/// (overriden in child classes) returns local-space bounding box
@@ -29,6 +34,11 @@ public:
 	/// tiling
 	float tileX = 1;
 	float tileY = 1;
+	
+	// rendering pivot / offset ( range 0.0 - 1.0 )
+	float pivotX = 0;
+	float pivotY = 0;
+	bool _pivotDirty = true;
 
 	// stipple transparency
 	float stipple = 0;
@@ -37,7 +47,7 @@ public:
 	bool stippleAlpha = false;
 	
 	/// blend mode
-	Uint8 blendMode = GPU_BLEND_NORMAL;
+	Uint8 blendMode = GPU_BLEND_PREMULTIPLIED_ALPHA;
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)
 	typedef struct {
@@ -49,6 +59,17 @@ public:
 		int stippleUniform;
 		int stippleAlphaUniform;
 	} SpriteShaderVariant;
+	
+	
+// scripting
+	
+	/// registers class for scripting
+	static void InitClass();
+	
+	/// creates color objects
+	void AddDefaults();
+	
+// shaders
 	
 	///
 	static SpriteShaderVariant shaders[ 8 ];
@@ -66,5 +87,7 @@ public:
 	static bool CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader );
 	
 };
+
+SCRIPT_CLASS_NAME( RenderBehavior, "RenderBehavior" );
 
 #endif /* RenderBehavior_hpp */

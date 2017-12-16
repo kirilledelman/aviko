@@ -66,7 +66,16 @@ void GameObject::InitClass() {
 	script.AddProperty<GameObject>
 	( "active",
 	 static_cast<ScriptBoolCallback>([](void* go, bool a ) { return ((GameObject*) go)->active(); }),
-	 static_cast<ScriptBoolCallback>([](void* go, bool a ) { return ((GameObject*) go)->active( a ); }));
+	 static_cast<ScriptBoolCallback>([](void* go, bool a ) {
+		return ((GameObject*) go)->active( a );
+	}));
+	
+	script.AddProperty<GameObject>
+	( "ignoreCamera",
+	 static_cast<ScriptBoolCallback>([](void* go, bool a ) { return ((GameObject*) go)->ignoreCamera; }),
+	 static_cast<ScriptBoolCallback>([](void* go, bool a ) {
+		return (((GameObject*) go)->ignoreCamera = a );
+	}));
 	
 	script.AddProperty<GameObject>
 	( "numChildren",
@@ -206,6 +215,24 @@ void GameObject::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
 		GameObject* go = ((GameObject*) o);
 		go->SetScaleY( val );
+		return val;
+	}));
+		
+	script.AddProperty<GameObject>
+	( "skewX",
+	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((GameObject*) o)->GetSkewX(); }),
+	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
+		GameObject* go = ((GameObject*) o);
+		go->SetSkewX( val );
+		return val;
+	}));
+	
+	script.AddProperty<GameObject>
+	( "skewY",
+	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((GameObject*) o)->GetSkewY(); }),
+	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
+		GameObject* go = ((GameObject*) o);
+		go->SetSkewY( val );
 		return val;
 	}));
 	
@@ -545,6 +572,9 @@ void GameObject::InitClass() {
 /// calls event handlers on each behavior, then script event listeners on gameObject. Recurses to active children.
 void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallback *forEachGameObject ) {
 	
+	// reset flag for reused events
+	event.stopped = false;
+	
 	// if a lambda callback is provided, call it
 	if ( forEachGameObject != NULL ) (*forEachGameObject)( this );
 	
@@ -563,10 +593,12 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		if ( obj->active() && obj != event.skipObject ) {
 			obj->DispatchEvent( event, true, forEachGameObject );
 		}
+		// if event was stopped, abort
+		if ( event.stopped ) return;
 	}
 	
 	// if bubbling, call on self after children
-	if ( event.bubbles && callOnSelf ) {
+	if ( event.bubbles && callOnSelf && !event.stopped ) {
 		this->CallEvent( event );
 	}
 }
@@ -586,6 +618,8 @@ void GameObject::CallEvent( Event &event ) {
 		// process event
 		behavior->CallEventCallback( event );
 		
+		// if event was stopped, abort
+		if ( event.stopped ) break;
 	}
 	
 	// dispatches script events on this object
@@ -712,7 +746,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			// gained a parent? protect us from GC
 			if ( !oldParent ) script.ProtectObject( &this->scriptObject, true );
 			
-			// no new parent - means we've definitely been removed from scene
+		// no new parent - means we've definitely been removed from scene
 		} else {
 			
 			// means this object has been removed from scene, dispatch event and make it orphan
@@ -778,8 +812,8 @@ float* GameObject::Transform() {
 		this->body->GetBodyTransform( pos, angle );
 		GPU_MatrixIdentity( this->_worldTransform );
 		GPU_MatrixTranslate( this->_worldTransform, pos.x, pos.y, _z );
-		GPU_MatrixRotate( this->_worldTransform, angle, 0, 0, 1 );
-		GPU_MatrixScale( this->_worldTransform, this->_scale.x, this->_scale.y, 1 );
+		if ( angle != 0 ) GPU_MatrixRotate( this->_worldTransform, angle, 0, 0, 1 );
+		if ( this->_scale.x != 1 || this->_scale.y != 1 ) GPU_MatrixScale( this->_worldTransform, this->_scale.x, this->_scale.y, 1 );
 		this->_worldTransformDirty = false;
 		
 		// multiply by parent's inverse world to get local
@@ -787,6 +821,10 @@ float* GameObject::Transform() {
 		
 		// decompose local into components
 		this->DecomposeTransform( this->_transform, this->_position, this->_angle, this->_scale );
+		
+		// add skew
+		if ( this->_skew.x != 0 || this->_skew.y != 0 ) MatrixSkew( this->_transform, _skew.x, _skew.y );
+		
 		this->_localCoordsAreDirty = false;
 		
 	} else if ( this->_transformDirty ) {
@@ -794,8 +832,9 @@ float* GameObject::Transform() {
 		// apply local transform
 		GPU_MatrixIdentity( this->_transform );
 		GPU_MatrixTranslate( this->_transform, this->_position.x, this->_position.y, _z );
-		GPU_MatrixRotate( this->_transform, this->_angle, 0, 0, 1 );
-		GPU_MatrixScale( this->_transform, this->_scale.x, this->_scale.y, 1 );
+		if ( this->_angle != 0 ) GPU_MatrixRotate( this->_transform, this->_angle, 0, 0, 1 );
+		if ( this->_scale.x != 1 || this->_scale.y != 1 ) GPU_MatrixScale( this->_transform, this->_scale.x, this->_scale.y, 1 );
+		if ( this->_skew.x != 0 || this->_skew.y != 0 ) MatrixSkew( this->_transform, _skew.x, _skew.y );
 	}
 	
 	// clear flag
@@ -858,6 +897,20 @@ void GameObject::SetAngle( float a ) {
 	if ( this->body ) this->body->SyncBodyToObject();
 }
 
+void GameObject::SetSkewX( float sx ) {
+	this->Transform();
+	this->_skew.x = sx;
+	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
+	if ( this->body ) this->body->SyncBodyToObject();
+}
+
+void GameObject::SetSkewY( float sy ) {
+	this->Transform();
+	this->_skew.y = sy;
+	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
+	if ( this->body ) this->body->SyncBodyToObject();
+}
+
 void GameObject::SetScale( float sx, float sy ) {
 	this->Transform();
 	this->_scale.Set( sx, sy );
@@ -877,11 +930,6 @@ void GameObject::SetScaleY( float sy ) {
 	this->_scale.y = sy;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->body ) this->body->SyncBodyToObject();
-}
-
-b2Vec2 GameObject::GetPosition() {
-	this->Transform();
-	return this->_position;
 }
 
 float GameObject::GetX() {
@@ -904,9 +952,14 @@ float GameObject::GetScaleY() {
 	return this->_scale.y;
 }
 
-b2Vec2 GameObject::GetScale() {
+float GameObject::GetSkewX() {
 	this->Transform();
-	return this->_scale;
+	return this->_skew.x;
+}
+
+float GameObject::GetSkewY() {
+	this->Transform();
+	return this->_skew.y;
 }
 
 float GameObject::GetAngle() {
@@ -916,6 +969,9 @@ float GameObject::GetAngle() {
 
 // sets world transform
 void GameObject::SetWorldTransform( float x, float y, float angle, float scaleX, float scaleY ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// have body
 	if ( this->body ) {
 		// set body transform
@@ -934,6 +990,9 @@ void GameObject::SetWorldTransform( float x, float y, float angle, float scaleX,
 }
 
 void GameObject::SetWorldPosition( float x, float y ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	if ( this->body ) {
 		this->body->SetBodyPosition( b2Vec2( x, y ) );
 		this->body->SyncObjectToBody();
@@ -952,6 +1011,9 @@ void GameObject::SetWorldPosition( float x, float y ) {
 }
 
 void GameObject::SetWorldPositionAndAngle( float x, float y, float angle ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	if ( this->body ) {
 		this->body->SetBodyTransform( b2Vec2( x, y ), angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
@@ -970,6 +1032,9 @@ void GameObject::SetWorldPositionAndAngle( float x, float y, float angle ) {
 }
 
 void GameObject::SetWorldX( float x ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -989,6 +1054,9 @@ void GameObject::SetWorldX( float x ) {
 }
 
 void GameObject::SetWorldY( float y ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -1008,6 +1076,9 @@ void GameObject::SetWorldY( float y ) {
 }
 
 void GameObject::SetWorldAngle( float angle ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -1026,6 +1097,9 @@ void GameObject::SetWorldAngle( float angle ) {
 }
 
 void GameObject::SetWorldScale( float sx, float sy ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -1044,6 +1118,9 @@ void GameObject::SetWorldScale( float sx, float sy ) {
 }
 
 void GameObject::SetWorldScaleX( float sx ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -1062,6 +1139,9 @@ void GameObject::SetWorldScaleX( float sx ) {
 }
 
 void GameObject::SetWorldScaleY( float sy ) {
+	// resets skew
+	this->_skew.SetZero();
+	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
 	if ( this->body ) {
@@ -1386,6 +1466,12 @@ bool GameObject::MatrixInverse( float *m, float *inv ) {
 	return true;
 }
 
+/// recursive ignore cam check
+bool GameObject::IsCameraIgnored() {
+	if ( ignoreCamera ) return true;
+	if ( parent ) return parent->IsCameraIgnored();
+	return false;
+}
 
 // converts between coord systems
 void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal ) {
@@ -1397,18 +1483,24 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 	GPU_MatrixTranslate( mat, x, y, 0 );
 	
 	// multiply by inverse world
+	Scene* scene = orphan ? NULL : GetScene();
 	if ( localToGlobal ) {
-		
 		GPU_MatrixMultiply( res, mat, this->WorldTransform() );
-		
-		
+		// apply camera transform
+		if ( scene && !this->IsCameraIgnored() ) {
+			GPU_MatrixCopy( mat, res );
+			GPU_MatrixMultiply( res, scene->CameraTransform(), mat );
+		}
 	// multiply by world
 	} else {
-		
-		GPU_MatrixMultiply( res, mat, this->InverseWorld() );
-		
+		// apply inverse camera
+		if ( scene && !this->IsCameraIgnored() ) {
+			GPU_MatrixMultiply( res, scene->InverseCameraTransform(), mat );
+			GPU_MatrixCopy( mat, res );
+		}
+		GPU_MatrixMultiply( res, this->InverseWorld(), mat );
+
 	}
-	
 	outX = res[ 12 ];
 	outY = res[ 13 ];
 }
@@ -1432,7 +1524,15 @@ void GameObject::DirtyTransform() {
 // Renders this GameObject using renderer behavior, goes recursive
 void GameObject::Render( Event& event ) {
 	
+	// push view matrix
+	GPU_MatrixMode( GPU_PROJECTION );
+	GPU_PushMatrix();
+	
+	// if ignoring camera, load identity
+	if ( this->ignoreCamera ) GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+	
 	// push parent transform matrix
+	GPU_MatrixMode( GPU_MODELVIEW );
 	GPU_PushMatrix();
 	GPU_FlushBlitBuffer(); // without this, child transform affects parent
 	
@@ -1471,12 +1571,15 @@ void GameObject::Render( Event& event ) {
 		for( int i = numChildren - 1; i >= 0; i-- ) {
 			GameObject* obj = this->children[ i ];
 			// recurse if render behavior didn't ask to skip it
-			if ( obj != event.skipObject ) obj->Render( event );
+			if ( obj->active() && obj != event.skipObject ) obj->Render( event );
 		}
 		
 	}
 	
-	// pop matrix
+	// pop matrices
+	GPU_MatrixMode( GPU_MODELVIEW );
+	GPU_PopMatrix();
+	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PopMatrix();
 }
 

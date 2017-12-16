@@ -69,8 +69,9 @@ void RigidBodyBehavior::SyncObjectToBody() {
 	// construct world transform matrix for object
 	GPU_MatrixIdentity( this->gameObject->_worldTransform );
 	GPU_MatrixTranslate( this->gameObject->_worldTransform, pos.x, pos.y, 0 );
-	GPU_MatrixRotate( this->gameObject->_worldTransform, angle, 0, 0, 1 );
-	GPU_MatrixScale( this->gameObject->_worldTransform, this->gameObject->_scale.x, this->gameObject->_scale.y, 1 );
+	if ( angle != 0 ) GPU_MatrixRotate( this->gameObject->_worldTransform, angle, 0, 0, 1 );
+	if ( this->gameObject->_scale.x != 1 || this->gameObject->_scale.y != 1 ) GPU_MatrixScale( this->gameObject->_worldTransform, this->gameObject->_scale.x, this->gameObject->_scale.y, 1 );
+	if ( this->gameObject->_skew.x != 1 || this->gameObject->_skew.y != 1 ) MatrixSkew( this->gameObject->_worldTransform, this->gameObject->_skew.x, this->gameObject->_skew.y );
 	this->gameObject->_worldTransformDirty = false;
 	this->gameObject->_localCoordsAreDirty = this->gameObject->_inverseWorldDirty = this->gameObject->_transformDirty = true;
 		

@@ -6,12 +6,12 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
+#include <list>
 #include <unordered_set>
 #include <algorithm>
 #include <math.h>
 #include <functional>
 using namespace std;
-
 
 // SDL
 #include <SDL2/SDL.h>
@@ -48,6 +48,7 @@ using namespace JS;
 // global funcs (defined at the end of Application.cpp)
 size_t HashString( const char* p );
 float* MatrixCompose( float* mat, float x, float y, float angleDegrees, float scaleX, float scaleY );
+void MatrixSkew( float* result, float sx, float sy );
 const char* ReadFile( const char* filepath, const char* ext, const char* requiredSubPath, const char* optionalSubPath, string* finalPath, size_t *fileSize );
 bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext, const char* subPath );
 bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensions, string &outExtension );
@@ -56,6 +57,7 @@ int StringPositionToIndex( const char* str, int pos );
 int StringPositionLength( const char* str );
 
 /// built-in event types
+#define EVENT_SCENECHANGED "sceneChanged"
 
 // GameObject events
 #define EVENT_UPDATE "update"

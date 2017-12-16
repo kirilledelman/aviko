@@ -13,15 +13,12 @@ RenderSpriteBehavior::RenderSpriteBehavior( ScriptArguments* args ) : RenderSpri
 	// add scriptObject
 	script.NewScriptObject<RenderSpriteBehavior>( this );
 	
-	// create color object
-	Color *color = new Color( NULL );
-	script.SetProperty( "color", ArgValue( color->scriptObject ), this->scriptObject );
+	// set to normal
+	this->blendMode = GPU_BLEND_NORMAL;
 	
-	// create addColor object
-	color = new Color( NULL );
-	color->SetInts( 0, 0, 0, 0 );
-	script.SetProperty( "addColor", ArgValue( color->scriptObject ), this->scriptObject );
-
+	// add defaults
+	RenderBehavior::AddDefaults();	
+	
 	// with arguments
 	if ( args && args->args.size() ) {
 		// first argument can be a string
@@ -77,50 +74,10 @@ RenderSpriteBehavior::~RenderSpriteBehavior() {
 void RenderSpriteBehavior::InitClass() {
 	
 	// register class
-	script.RegisterClass<RenderSpriteBehavior>( "Behavior" );
+	script.RegisterClass<RenderSpriteBehavior>( "RenderBehavior" );
 	
 	// properties
 	
-	script.AddProperty<RenderSpriteBehavior>
-	( "color",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderSpriteBehavior*) b)->color->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) ((RenderSpriteBehavior*) b)->color = other;
-		return ((RenderSpriteBehavior*) b)->color->scriptObject;
-	}) );
-	
-	script.AddProperty<RenderSpriteBehavior>
-	( "addColor",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderSpriteBehavior*) b)->addColor->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) ((RenderSpriteBehavior*) b)->addColor = other;
-		return ((RenderSpriteBehavior*) b)->addColor->scriptObject;
-	}) );
-	
-	script.AddProperty<RenderSpriteBehavior>
-	( "blendMode",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderSpriteBehavior*) b)->blendMode; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderSpriteBehavior*) b)->blendMode = (GPU_BlendPresetEnum) val ); }) );
-
-	script.AddProperty<RenderSpriteBehavior>
-	( "stipple",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->stipple; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->stipple = max( 0.0f, min( 1.0f, val ))); }) );
-	
-	script.AddProperty<RenderSpriteBehavior>
-	( "stippleAlpha",
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->stippleAlpha; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderSpriteBehavior*) b)->stippleAlpha = val ); }) );
-
-	script.AddProperty<RenderSpriteBehavior>
-	( "centered",
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->centered; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderSpriteBehavior*) b)->centered = val ); }) );
-
 	script.AddProperty<RenderSpriteBehavior>
 	( "texture",
 	 static_cast<ScriptStringCallback>([](void *b, string val) {
@@ -228,15 +185,6 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.h; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.h = val ); }) );
 
-	script.AddProperty<RenderSpriteBehavior>
-	( "tileX", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->tileX; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->tileX = val ); }) );
-
-	script.AddProperty<RenderSpriteBehavior>
-	( "tileY", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->tileY; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->tileY = val ); }) );
 }
 
 
@@ -249,8 +197,8 @@ GPU_Rect RenderSpriteBehavior::GetBounds() {
 	GPU_Rect rect;
 	rect.w = this->width;
 	rect.h = this->height;
-	rect.x = this->centered ? -this->width * 0.5f : 0;
-	rect.y = this->centered ? -this->height * 0.5f : 0;
+	rect.x = -this->width * this->pivotX;
+	rect.y = -this->height * this->pivotY;
 	return rect;
 }
 
@@ -622,11 +570,9 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			
 		}
 		
-		// center
-		if ( behavior->centered ) {
-			cx += -behavior->width * 0.5;
-			cy += -behavior->height * 0.5;
-		}
+		// pivot
+		cx += -behavior->width * behavior->pivotX;
+		cy += -behavior->height * behavior->pivotY;
 		
 		// single slice
 		GPU_BlitTransform( image, &srcRect, target, cx, cy, r, sx, sy );
@@ -644,10 +590,10 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// transform
 		GPU_PushMatrix();
 		if ( behavior->flipX || behavior->flipY ) {
-			if ( !behavior->centered ) GPU_Translate( behavior->flipX ? behavior->width : 0, behavior->flipY ? behavior->height : 0, 0 );
+			//if ( !behavior->centered ) GPU_Translate( behavior->flipX ? behavior->width : 0, behavior->flipY ? behavior->height : 0, 0 );
 			GPU_Scale( behavior->flipX ? -1 : 1, behavior->flipY ? -1 : 1, 1 );
 		}
-		if ( behavior->centered )  GPU_Translate( -behavior->width * 0.5, -behavior->height * 0.5, 0 );
+		GPU_Translate( -behavior->width * behavior->pivotX, -behavior->height * behavior->pivotY, 0 );
 		if ( rotated ) {
 			GPU_Translate( cx, cy, 0 );
 			GPU_Rotate( -90, 0, 0, 1 );

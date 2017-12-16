@@ -11,24 +11,23 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	// add scriptObject
 	script.NewScriptObject<RenderTextBehavior>( this );
 	
-	// create color object
-	Color *color = new Color( NULL );
-	script.SetProperty( "color", ArgValue( color->scriptObject ), this->scriptObject );
+	// add defaults
+	RenderBehavior::AddDefaults();
 	
-	// create addColor object
-	color = new Color( NULL );
+	// create background object
+	Color* color = new Color( NULL );
 	color->SetInts( 0, 0, 0, 0 );
-	script.SetProperty( "addColor", ArgValue( color->scriptObject ), this->scriptObject );
+	script.SetProperty( "backgroundColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// create ^0 - ^9 colors
 	int defaultColors[ 10 ] = { 0xFFFFFF, 0x3333FF, 0xFF3333, 0xFF33FF, 0x33FF33, 0x33FFFF, 0xFFFF33, 0x0, 0xFFFF33, 0x666666 };
 	for ( int i = 0; i < 10; i++ ) {
 		colors[ i ] = new Color( NULL );
 		colors[ i ]->SetInt( defaultColors[ i ], false );
+		static char clrProp[6];
+		sprintf( clrProp, "color%d", i ) ;
+		script.SetProperty( clrProp, ArgValue( colors[ i ]->scriptObject ), this->scriptObject );
 	}
-	
-	// default blend mode
-	this->blendMode = (Uint8) GPU_BLEND_PREMULTIPLIED_ALPHA;
 	
 	// with arguments
 	if ( args ) {
@@ -43,6 +42,13 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	}
 	// default
 	SetFont( app.defaultFontName.c_str(), this->fontSize );
+	
+	// set default width, height
+	this->width = this->fontSize * 10;
+	if ( this->fontResource && this->fontResource->font ) {
+		this->height = TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing;
+	}
+	
 }
 
 // init
@@ -79,40 +85,35 @@ RenderTextBehavior::~RenderTextBehavior() {
 void RenderTextBehavior::InitClass() {
 	
 	// register class
-	script.RegisterClass<RenderTextBehavior>( "Behavior" );
+	script.RegisterClass<RenderTextBehavior>( "RenderBehavior" );
 	
 	// constants
 	
 	script.SetGlobalConstant( "ALIGN_LEFT", ArgValue( 0 ) );
-	script.SetGlobalConstant( "ALIGN_CENTER", ArgValue( 2 ) );
 	script.SetGlobalConstant( "ALIGN_RIGHT", ArgValue( 1 ) );
+	script.SetGlobalConstant( "ALIGN_CENTER", ArgValue( 2 ) );
 	
 	// properties
 	
 	script.AddProperty<RenderTextBehavior>
-	( "color",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderBehavior*) b)->color->scriptObject; }),
+	( "backgroundColor",
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->backgroundColor->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
 		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->color = other;
-		return rs->color->scriptObject;
-	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "addColor",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderBehavior*) b)->addColor->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->addColor = other;
-		return rs->addColor->scriptObject;
+		if ( other ) rs->backgroundColor = other;
+		rs->_dirty = true;
+		return rs->backgroundColor->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color0",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 0 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 0 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -124,7 +125,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color1",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 1 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 1 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -136,7 +139,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color2",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 2 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 2 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -148,7 +153,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color3",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 3 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 3 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -160,7 +167,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color4",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 4 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 4 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -172,7 +181,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color5",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 5 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 5 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -184,7 +195,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color6",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 6 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 6 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -196,7 +209,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color7",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 7 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 7 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -208,7 +223,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color8",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 8 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 8 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -220,7 +237,9 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color9",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((RenderTextBehavior*) b)->colors[ 9 ]->scriptObject; }),
+	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return rs->colors[ 9 ]->scriptObject; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		// replace if it's a color
@@ -229,16 +248,6 @@ void RenderTextBehavior::InitClass() {
 		rs->_dirty = true;
 		return rs->colors[ 9 ]->scriptObject;
 	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "blendMode",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->blendMode; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderTextBehavior*) b)->blendMode = (GPU_BlendPresetEnum) val ); }) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "stipple",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->stipple; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->stipple = max( 0.0f, min( 1.0f, val ))); }) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "font",
@@ -293,11 +302,32 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "width",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (float) ((RenderTextBehavior*) b)->width; }));
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->width; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->width = max( 0, val );
+		rs->_dirty = true;
+		return rs->width;
+	 }));
 	 
 	script.AddProperty<RenderTextBehavior>
 	( "height",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (float) ((RenderTextBehavior*) b)->height; }));
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->height; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->height = max( 0, val );
+		rs->_dirty = true;
+		return rs->height;
+	}));
+	
+	script.AddProperty<RenderTextBehavior>
+	( "dirty",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->_dirty; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->_dirty = val;
+		return val;
+	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "bold",
@@ -331,11 +361,6 @@ void RenderTextBehavior::InitClass() {
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "centered",
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->centered; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderTextBehavior*) b)->centered = val ); }) );
-
-	script.AddProperty<RenderTextBehavior>
 	( "align", //
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->align; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
@@ -344,18 +369,6 @@ void RenderTextBehavior::InitClass() {
 		rs->_dirty = true;
 		return rs->align;
 	}));
-
-	script.AddProperty<RenderTextBehavior>
-	( "maxWidth",
-	 static_cast<ScriptFloatCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->maxWidth; }),
-	 static_cast<ScriptFloatCallback>([](void *b, int val ){
-		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->maxWidth != val ) {
-			rs->maxWidth = max( 0, val );
-			rs->_dirty = true;
-		}
-		return rs->maxWidth;
-	}) );
 
     script.AddProperty<RenderTextBehavior>
     ( "wrap",
@@ -376,41 +389,35 @@ void RenderTextBehavior::InitClass() {
 		rs->_dirty = true;
 		return val;
 	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "maxLines",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->maxLines; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){
-		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->maxLines != val ) {
-			rs->maxLines = max( 0, val );
-			rs->_dirty = true;
-		}
-		return rs->maxLines;
-	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "lineOffset",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->lineOffset; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){
-		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->lineOffset != val ) {
-			rs->lineOffset = max( 0, val );
-			rs->_dirty = true;
-		}
-		return rs->lineOffset;
-	}) );
 
     script.AddProperty<RenderTextBehavior>
-    ( "horizontalOffset",
-     static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->horizontalOffset; }),
+    ( "scrollLeft",
+     static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->scrollLeft; }),
      static_cast<ScriptIntCallback>([](void *b, int val ){
         RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-        rs->horizontalOffset = val;
+        rs->scrollLeft = val;
         rs->_dirty = true;
         return val;
     }) );
-    
+	
+	script.AddProperty<RenderTextBehavior>
+	( "scrollTop",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->scrollTop; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->scrollTop = val;
+		rs->_dirty = true;
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "scrollWidth",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->scrollWidth; }));
+	 
+	script.AddProperty<RenderTextBehavior>
+	( "scrollHeight",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->scrollHeight; }));
+	
 	script.AddProperty<RenderTextBehavior>
 	( "numLines",
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
@@ -424,10 +431,8 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderTextBehavior*) b)->characterSpacing; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->characterSpacing != val ) {
-			rs->characterSpacing = val;
-			rs->_dirty = true;
-		}
+		rs->characterSpacing = val;
+		rs->_dirty = true;
 		return rs->characterSpacing;
 	 }) );
 
@@ -436,10 +441,8 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderTextBehavior*) b)->lineSpacing; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->lineSpacing != val ) {
-			rs->lineSpacing = val;
-			rs->_dirty = true;
-		}
+		rs->lineSpacing = val;
+		rs->_dirty = true;
 		return rs->lineSpacing;
 	}) );
 	
@@ -448,21 +451,18 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void* b, int val ) {
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
 		if ( !rs->fontResource || !rs->fontResource->font ) return 0;
-		return (int) ceil( TTF_FontHeight( rs->fontResource->font ) + rs->lineSpacing + rs->outlineWidth * 2 );
+		return (int) ceil( TTF_FontLineSkip( rs->fontResource->font ) + rs->lineSpacing );
 	}));
 	
 	script.AddProperty<RenderTextBehavior>
-	( "useCodes",
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->useCodes; }),
+	( "formatting",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->formatting; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		if ( rs->useCodes != val ) {
-			rs->useCodes = val;
-			rs->_dirty = true;
-		}
-		return rs->useCodes;
+		rs->formatting = val;
+		rs->_dirty = true;
+		return rs->formatting;
 	}) );
-
 	
     script.AddProperty<RenderTextBehavior>
     ( "showCaret",
@@ -619,8 +619,8 @@ GPU_Rect RenderTextBehavior::GetBounds() {
 	GPU_Rect rect;
 	rect.w = this->width;
 	rect.h = this->height;
-	rect.x = this->centered ? -this->width * 0.5f : 0;
-	rect.y = this->centered ? -this->height * 0.5f : 0;
+	rect.x = -this->width * this->pivotX;
+	rect.y = -this->height * this->pivotY;
 	return rect;
 }
 
@@ -630,20 +630,21 @@ int RenderTextBehavior::GetCaretPositionAt( float localX, float localY ) {
     if ( this->_dirty ) Repaint();
 	
 	// adjust coord
-	if ( this->centered ) { localX += this->width * 0.5; localY += this->height * 0.5; }
+	localX += this->width * pivotX;
+	localY += this->height * pivotY;
 	
     // locate character
 	int nc;
     size_t lineIndex = 0;
 	size_t totalLines = lines.size();
-    int lineHeight = ceil( TTF_FontHeight( this->fontResource->font ) + this->lineSpacing + this->outlineWidth * 2 );
+    int lineHeight = ceil( TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing );
     RenderTextLine* currentLine = NULL;
     while ( lineIndex < totalLines ) {
         currentLine = &this->lines[ lineIndex ];
         // on line
         if ( currentLine->y <= localY && currentLine->y + lineHeight > localY ) {
 			nc = (int) currentLine->characters.size();
-			if ( nc == 0 ) continue;
+			if ( nc == 0 ) { lineIndex++; continue; }
 			// if before current line
 			if ( currentLine->x > localX ) {
 				// return before first char
@@ -718,7 +719,6 @@ void RenderTextBehavior::Repaint() {
 		// redraw all lines
 		SDL_Surface* textSurface = NULL;
 		this->lines.clear();
-		this->width = this->height = 0;
 		RenderTextLine* currentLine = NULL;
 		
 		// for each character
@@ -726,8 +726,7 @@ void RenderTextBehavior::Repaint() {
 		Uint16 character = 0;
 		size_t characterPos = 0;
 		SDL_Color currentColor = { 255, 255, 255, 255 };
-		int surfaceWidth = 0;
-		int surfaceHeight = 0;
+		scrollWidth = scrollHeight = 0;
 		bool currentBold = this->bold;
 		bool currentItalic = this->italic;
 		
@@ -791,11 +790,11 @@ void RenderTextBehavior::Repaint() {
 				previousCharacter = NULL;
 				
 			// character is special sequence
-			} else if ( character == '^' ){
+			} else if ( character == '^' && this->formatting ){
 				
 				// check next character
 				Uint16 nextChar = *(current + 1);
-				bool skipTwo = false;
+				bool skipTwo = false, skipOne = false;
 				
 				// code
 				if ( nextChar == 'B' ) {
@@ -816,11 +815,13 @@ void RenderTextBehavior::Repaint() {
 				} else if ( nextChar >= '0' && nextChar <= '9' ) {
 					currentColor = this->colors[ nextChar - '0' ]->rgba;
 					skipTwo = true;
+				} else if ( nextChar == '^' ) {
+					skipOne = true;
 				}
 				
 				// constrol code accepted
-				if ( skipTwo ) {
-					RenderTextCharacter empty;
+				RenderTextCharacter empty;
+				if ( skipOne || skipTwo ) {
 					empty.x = previousCharacter ?
 						( previousCharacter->x +
 						 previousCharacter->glyphInfo->advance + this->characterSpacing ) : 0;
@@ -828,12 +829,17 @@ void RenderTextBehavior::Repaint() {
 					empty.glyphInfo = GetGlyph( '\n', currentBold, currentItalic );
 					empty.pos = characterPos;
 					currentLine->characters.push_back( empty );
+					current++;
+					characterPos++;
+					
+				}
+				if ( skipTwo ) {
 					empty.value = nextChar;
 					empty.pos = characterPos + 1;
 					empty.color = currentColor;
 					currentLine->characters.push_back( empty );
-					current += 2;
-					characterPos += 2;
+					current++;
+					characterPos++;
 					continue;
 				}
 			}
@@ -842,7 +848,7 @@ void RenderTextBehavior::Repaint() {
 			GlyphInfo* glyph = GetGlyph( character, currentBold, currentItalic );
 			
 			// check if line width will exceed max line width
-			if ( currentLine->width + glyph->advance >= this->maxWidth && this->wrap && this->multiLine ) {
+			if ( currentLine->width + glyph->advance >= this->width && this->wrap && this->multiLine ) {
 				// start new line
 				lines.emplace_back();
 				currentLine = &lines.back();
@@ -854,7 +860,7 @@ void RenderTextBehavior::Repaint() {
 			thisCharacter.color = currentColor;
 			thisCharacter.glyphInfo = glyph;
 			thisCharacter.value = character;
-			thisCharacter.width = glyph->advance + this->outlineWidth * 2 + this->characterSpacing;
+			thisCharacter.width = glyph->advance + this->characterSpacing;
 			thisCharacter.pos = characterPos;
 			if ( previousCharacter ) {
 				thisCharacter.x = glyph->minX + previousCharacter->x + previousCharacter->width;
@@ -871,7 +877,7 @@ void RenderTextBehavior::Repaint() {
 			currentLine->width = thisCharacter.x + thisCharacter.width;
 			
 			// measure
-			surfaceWidth = max( surfaceWidth, (int) currentLine->width );
+			this->scrollWidth = max( this->scrollWidth, (int) currentLine->width );
 			
 			// advance
 			currentLine->characters.push_back( thisCharacter );
@@ -880,28 +886,30 @@ void RenderTextBehavior::Repaint() {
 			
 		}
 		
-		// create surface
-		surfaceWidth = max( minWidth, min( maxWidth, surfaceWidth - this->horizontalOffset ) ) + ( this->showCaret ? 2 : 0 );
-		int lineHeight = ceil( TTF_FontHeight( this->fontResource->font ) + this->lineSpacing + this->outlineWidth * 2 );
-		surfaceHeight = (int) ceil( max( 0, (int) lines.size() - (int) lineOffset ) * lineHeight ) + 1;
-		if ( surfaceWidth <= 0 || surfaceHeight <= 0 || (int) lineOffset > (int) lines.size() - 1 ) return;
-		textSurface = SDL_CreateRGBSurfaceWithFormat( 0, surfaceWidth, surfaceHeight, 32, SDL_PIXELFORMAT_RGBA32 );
-		if ( !textSurface ) return;
-		
-		// for each line
+		// set up
 		characterPos = 0;
+		int lineHeight = ceil( TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing );
 		size_t lineIndex = 0;
 		size_t totalLines = (int) lines.size();
-		size_t lastLine = ( lineOffset + maxLines - 1 );
-		float x = 0, y = -lineOffset * lineHeight;
+		this->scrollHeight = (int) totalLines * lineHeight;
+		float x = 0, y = -scrollTop;
 		SDL_Rect rect;
 		int selStart = this->selectionStart;
 		int selEnd = this->selectionEnd;
-		SDL_Color selColor = this->colors[ 9 ]->rgba;
-		this->width = 0;
-		this->height = lines.size() * lineHeight;
-		Uint32 selColorVal = SDL_MapRGB( textSurface->format, selColor.r, selColor.g, selColor.b );
 		if ( selStart > selEnd ) { int tmp = selStart; selStart = selEnd; selEnd = tmp; }
+		
+		// create surface
+		if ( width <= 0 || height <= 0 ) return;
+		textSurface = SDL_CreateRGBSurfaceWithFormat( 0, width, height, 32, SDL_PIXELFORMAT_RGBA32 );
+		if ( !textSurface ) return;
+		
+		SDL_Rect temp = { 0, 0, width, height };
+		Uint32 bgColorVal = SDL_MapRGBA( textSurface->format, backgroundColor->rgba.r, backgroundColor->rgba.g, backgroundColor->rgba.b, backgroundColor->rgba.a );
+		SDL_FillRect( textSurface, &temp, bgColorVal );
+		
+		// for each line
+		SDL_Color selColor = this->colors[ 9 ]->rgba;
+		Uint32 selColorVal = SDL_MapRGBA( textSurface->format, selColor.r, selColor.g, selColor.b, selColor.a );
 		while ( lineIndex < totalLines ) {
 			currentLine = &this->lines[ lineIndex ];
             
@@ -910,16 +918,15 @@ void RenderTextBehavior::Repaint() {
 				x = 0;
 			// right aligned?
 			} else if ( this->align == 1 ) {
-				x = surfaceWidth - currentLine->width - ( this->showCaret ? 2 : 0 );
+				x = width - currentLine->width - ( this->showCaret ? 2 : 0 );
 			// center
 			} else {
-				x = floor( surfaceWidth - currentLine->width ) * 0.5;
+				x = floor( width - currentLine->width ) * 0.5;
 			}
 			
-            x -= horizontalOffset;
+            x -= scrollLeft;
             currentLine->x = x;
             currentLine->y = y;
-			this->width = max( this->width, currentLine->width );
 			
 			// if line is empty, and we need to draw caret, add empty character
 			if ( showCaret && currentLine->characters.size() == 0 ){
@@ -931,7 +938,7 @@ void RenderTextBehavior::Repaint() {
 				currentLine->characters.push_back( thisCharacter );
 			}
 			
-			bool drawCurrentLine = ( lineIndex >= lineOffset && lineIndex <= lastLine );
+			bool drawCurrentLine = ( y >= -lineHeight && y < height );
 			
 			// for each character
 			for ( size_t i = 0, nc = currentLine->characters.size(); i < nc; i++ ) {
@@ -962,14 +969,14 @@ void RenderTextBehavior::Repaint() {
 				if ( character->pos == this->caretPosition - 1 ) {
 					// after current character?
 					caretRect.x = x + character->x + character->width;
-					caretX = caretRect.x - ( this->centered ? surfaceWidth : 0 ) * 0.5;
-					caretY = y - ( this->centered ? surfaceHeight : 0 ) * 0.5;
+					caretX = caretRect.x - width * pivotX;
+					caretY = y - height * pivotY;
 					caretLine = (int) lineIndex;
 					drawCaret = this->showCaret && drawCurrentLine;
 				} else if ( character->pos == 0 && this->caretPosition == 0 && lineIndex == 0 ) {
 					caretRect.x = x + character->x;
-					caretX = caretRect.x - ( this->centered ? surfaceWidth : 0 ) * 0.5;
-					caretY = y - ( this->centered ? surfaceHeight : 0 ) * 0.5;
+					caretX = caretRect.x - width * pivotX;
+					caretY = y - height * pivotY;
 					caretLine = (int) lineIndex;
 					drawCaret = this->showCaret && drawCurrentLine;
 				}
@@ -983,7 +990,7 @@ void RenderTextBehavior::Repaint() {
 				}
 				
 				// draw
-				if ( drawCurrentLine ) {
+				if ( drawCurrentLine && character->glyphInfo ) {
 					// set color
 					SDL_SetSurfaceColorMod( character->glyphInfo->surface, character->color.r, character->color.g, character->color.b );
 					// draw
@@ -1043,11 +1050,9 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	behavior->SelectShader( true );
 	
 	// draw
-	float x = 0, y = 0;
-	if ( behavior->centered ) {
-		x -= behavior->surface->base_w * 0.5f;
-		y -= behavior->surface->base_h * 0.5f;
-	}
+	float x = -behavior->surface->base_w * behavior->pivotX,
+		  y = -behavior->surface->base_h * behavior->pivotY;
+	
 	GPU_Blit( behavior->surface, &behavior->surfaceRect, target, x, y );
 	
 }

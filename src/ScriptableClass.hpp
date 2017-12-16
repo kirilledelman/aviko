@@ -52,6 +52,7 @@
  -------------------------------------------------------------------- */
 
 class GameObject;
+class Scene;
 
 /// event structure
 struct Event {
@@ -68,20 +69,37 @@ struct Event {
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
 	
+	// used during render event
+	Scene* scene = NULL;
+	
 	/// param passed to behaviors
 	void* behaviorParam = NULL;
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;
 	
+	// global event stack
+	static vector<Event*> eventStack;
+	
 	// constructor
-	Event(){};
+	Event(){ Event::eventStack.push_back( this ); };
 	/// construct event with scriptObject as first script parameter
-	Event( void* scriptObject ) { if ( scriptObject != NULL ) { this->scriptParams.ResizeArguments( 0 ); this->scriptParams.AddObjectArgument( scriptObject ); } }
+	Event( void* scriptObject ) : Event::Event() { if ( scriptObject != NULL ) { this->scriptParams.ResizeArguments( 0 ); this->scriptParams.AddObjectArgument( scriptObject ); } }
 	/// construct named event with scriptObject as first script parameter, if provided
 	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->name =  name; }
+	// destructor
+	~Event(){
+		// erase self from stack
+		vector<Event*>::iterator it = Event::eventStack.end(), begin = Event::eventStack.begin();
+		while ( it > begin ){
+			it--;
+			if ( *it == this ) {
+				Event::eventStack.erase( it );
+				break;
+			}
+		}
+	}
 	
 };
-
 
 /// classes that want to be available for scripting should inherit from this class
 class ScriptableClass {
@@ -102,6 +120,85 @@ public:
 		script.RegisterClass<ScriptableClass>( NULL, true );
 		
 		// functions
+
+		// schedule a call
+		script.DefineFunction<ScriptableClass>
+		( "async",
+		 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+			// validate params
+			const char* error = "usage: async( Function handler [, Number delay ] )";
+			void* handler = NULL;
+			float delay = 0;
+			
+			// validate
+			ScriptableClass* self = (ScriptableClass*) o;
+			if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay ) ) {
+				script.ReportError( error );
+				return false;
+			}
+			// schedule call
+			sa.ReturnInt( ScriptableClass::AddAsync( self->scriptObject, handler, delay ) );
+			return true;
+		}));
+		
+		// cancel a call
+		script.DefineFunction<ScriptableClass>
+		( "cancelAsync",
+		 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+			// validate params
+			const char* error = "usage: cancelAsync( Int asyncId )";
+			int index = 0;
+			
+			// validate
+			ScriptableClass* self = (ScriptableClass*) o;
+			if ( !sa.ReadArguments( 1, TypeInt, &index ) ) {
+				script.ReportError( error );
+				return false;
+			}
+			// cancel scheduled call
+			sa.ReturnBool( ScriptableClass::CancelAsync( self->scriptObject, index ) );
+			return true;
+		}));
+		
+		// schedule a call
+		script.DefineFunction<ScriptableClass>
+		( "debounce",
+		 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+			// validate params
+			const char* error = "usage: debounce( String debounceId, Function handler [, Number delay ] )";
+			void* handler = NULL;
+			string name;
+			float delay = 0;
+			
+			// validate
+			ScriptableClass* self = (ScriptableClass*) o;
+			if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay ) ) {
+				script.ReportError( error );
+				return false;
+			}
+			// schedule call
+			ScriptableClass::AddDebouncer( self->scriptObject, name, handler, delay );
+			return true;
+		}));
+		
+		// cancel a call
+		script.DefineFunction<ScriptableClass>
+		( "cancelDebouncer",
+		 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+			// validate params
+			const char* error = "usage: cancelDebouncer( String debounceId )";
+			string name;
+			
+			// validate
+			ScriptableClass* self = (ScriptableClass*) o;
+			if ( !sa.ReadArguments( 1, TypeString, &name ) ) {
+				script.ReportError( error );
+				return false;
+			}
+			// cancel scheduled call
+			sa.ReturnBool( ScriptableClass::CancelDebouncer( self->scriptObject, name ) );
+			return true;
+		}));
 		
 		// add event listener
 		script.DefineFunction<ScriptableClass>
@@ -230,11 +327,11 @@ public:
 	typedef unordered_map<string, EventListeners> EventListenersMap;
 	typedef unordered_map<string, EventListeners>::iterator EventListenersMapIterator;
 	
-	/// hash(eventName) -> vector of script function callbacks
+	/// eventName -> vector of script function callbacks
 	EventListenersMap eventListeners;
 	
-	/// 
-	bool dispatchEventsToPropertyFunctions = false;
+	/// if true, also calls eventName() by name as function
+	bool dispatchEventsToPropertyFunctions = true;
 
 	/// calls script event listeners on this ScriptableObject
 	virtual void CallEvent( Event& event ) {
@@ -245,10 +342,14 @@ public:
 		EventListenersIterator it = list->begin();
 		while ( it != list->end() ){
 			ScriptFunctionObject *fobj = &(*it);
-			fobj->Invoke( event.scriptParams, this->scriptObject );
+			fobj->thisObject = this->scriptObject;
+			fobj->Invoke( event.scriptParams );
 			if ( fobj->callOnce ) {
 				it = list->erase( it );
 			} else it++;
+			
+			// if event was stopped, abort
+			if ( event.stopped ) return;
 		}
 		
 		// some objects will dispatch events to functions with the same name, for ease of use
@@ -263,6 +364,155 @@ public:
 		
 	}
 
+	// async, debounce
+	
+	struct ScheduledCall {
+		ScriptFunctionObject func;
+		float timeLeft = 0;
+		float timeSet = 0;
+		int index = 0;
+		bool TimePassed( float dt ) {
+			this->timeLeft -= dt;
+			if ( this->timeLeft <= 0 ){
+				ScriptArguments args;
+				this->func.Invoke( args );
+				return true;
+			}
+			return false;
+		}
+		ScheduledCall(){ index = ++ScriptableClass::asyncIndex; }
+		ScheduledCall( void* obj, void* fun, float delay ) : func( fun, true ) {
+			func.thisObject = obj;
+			timeSet = timeLeft = delay;
+			index = ++ScriptableClass::asyncIndex;
+		}
+	};
+	typedef list<ScheduledCall> ScheduledCallList;
+	typedef unordered_map<void*, ScheduledCallList> AsyncMap;
+	typedef unordered_map<void*, unordered_map<string, ScheduledCall>> DebouncerMap;
+	
+	/// auto-incremented async index, so we can remove it by index
+	static int asyncIndex;
+	
+	// scriptedObject -> list of ScheduledCalls
+	static AsyncMap* scheduledAsyncs;
+	
+	// scriptedObject -> map "debounce string" -> ScheduledCall
+	static DebouncerMap* scheduledDebouncers;
+	
+	/// adds scheduled async
+	static int AddAsync( void* obj, void* func, float delay ) {
+		list<ScheduledCall>& asyncs = (*scheduledAsyncs)[ obj ];
+		asyncs.emplace_back( obj, func, delay );
+		return asyncs.back().index;
+	}
+	
+	/// removes async by index
+	static bool CancelAsync( void *obj, int index ){
+		AsyncMap::iterator it = scheduledAsyncs->find( obj );
+		if ( it == scheduledAsyncs->end() ) return false;
+		// index = -1 kills all asyncs for this object
+		if ( index == -1 ) {
+			scheduledAsyncs->erase( it );
+			return true;
+		// erase scheduled call with index
+		} else {
+			ScheduledCallList &list = it->second;
+			ScheduledCallList::iterator lit = list.begin(), lend = list.end();
+			while ( lit != lend ) {
+				if ( lit->index == index ) {
+					lit = list.erase( lit );
+					return true;
+				}
+				lit++;
+			}
+		}
+		return false;
+	}
+	
+	/// add/replaces debounce
+	static void AddDebouncer( void *obj, string name, void* func, float delay ){
+		unordered_map<string, ScheduledCall> &debouncers = (*scheduledDebouncers)[ obj ];
+		unordered_map<string, ScheduledCall>::iterator it = debouncers.find( name );
+		// already exists
+		if ( it != debouncers.end() ){
+			ScheduledCall &sched = it->second;
+			sched.func.SetFunc( func );
+			// delay specified? update to new delay
+			if ( delay > 0 ) {
+				sched.timeSet = sched.timeLeft = delay;
+			// reset delay
+			} else {
+				sched.timeLeft = sched.timeSet;
+			}
+		// new
+		} else {
+			ScheduledCall &sched = debouncers[ name ];
+			sched.func.SetFunc( func );
+			sched.func.thisObject = obj;
+			sched.timeLeft = sched.timeSet = delay;
+		}
+		
+	}
+	
+	/// cancels debouncer
+	static bool CancelDebouncer( void *obj, string name ){
+		DebouncerMap::iterator it = scheduledDebouncers->find( obj );
+		if ( it == scheduledDebouncers->end() ) return false;
+		// name = "" kills all debouncers for this object
+		if ( name.length() == 0 ) {
+			scheduledDebouncers->erase( it );
+			return true;
+		// find debouncer with name
+		} else {
+			unordered_map<string, ScheduledCall> &debouncers = it->second;
+			unordered_map<string, ScheduledCall>::iterator dit = debouncers.find( name );
+			if ( dit != debouncers.end() ) {
+				debouncers.erase( dit );
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	static void ProcessScheduledCalls( float dt ) {
+		AsyncMap::iterator it = scheduledAsyncs->begin();
+		while ( it != scheduledAsyncs->end() ) {
+			ScheduledCallList &list = it->second;
+			ScheduledCallList::iterator lit = list.begin();
+			if ( lit == list.end() ) {
+				it = scheduledAsyncs->erase( it );
+				continue;
+			}
+			while ( lit != list.end() ) {
+				if ( lit->TimePassed( dt ) ) {
+					lit = list.erase( lit );
+				} else {
+					lit++;
+				}
+			}
+			it++;
+		}
+		DebouncerMap::iterator dit = scheduledDebouncers->begin();
+		while( dit != scheduledDebouncers->end() ) {
+			unordered_map<string, ScheduledCall> &debouncers = dit->second;
+			unordered_map<string, ScheduledCall>::iterator dbit = debouncers.begin();
+			if ( dbit == debouncers.end() ) {
+				dit = scheduledDebouncers->erase( dit );
+				continue;
+			}
+			while ( dbit != debouncers.end() ) {
+				ScheduledCall& sched = dbit->second;
+				if ( sched.TimePassed( dt ) ) {
+					dbit = debouncers.erase( dbit );
+				} else {
+					dbit++;
+				}
+			}
+			dit++;
+		}
+	}
+	
 // init
 	
 	// constructor
@@ -272,9 +522,13 @@ public:
 	ScriptableClass( ScriptArguments* ) { script.ReportError( "ScriptableObject can't be created using 'new'" ); }	
 
 	// destructor
-	~ScriptableClass() {		
-		// clean up
+	~ScriptableClass() {
+		// script
 		if ( this->scriptObject && script.js ) {
+			// remove from all scheduled calls
+			ScriptableClass::CancelAsync( this->scriptObject, -1 );
+			ScriptableClass::CancelDebouncer( this->scriptObject, "" );
+			// clean up
 			script.ProtectObject( &this->scriptObject, false );
 			JS_SetPrivate( (JSObject*) this->scriptObject, NULL );
 			this->scriptObject = NULL;

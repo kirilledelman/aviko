@@ -47,6 +47,15 @@ public:
 	// clear color
 	Color *clearColor = NULL;
 	
+	// camera
+	float inverseCameraMatrix[ 16 ];
+	float cameraMatrix[ 16 ];
+	float camX = 0, camY = 0, camAngle = 0, camZoom = 1, camPivotX = 0, camPivotY = 0;
+	bool _camTransformDirty = true;
+	bool _inverseCamTransformDirty = true;
+	float* CameraTransform();
+	float* InverseCameraTransform();
+	
 	/// called to render all objects
 	void Render( Event& event );
 	

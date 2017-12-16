@@ -306,6 +306,9 @@ GPU_Image* Image::_MakeImage() {
 		GPU_LoadTarget( img );
 		GPU_SetDepthTest( img->target, true );
 		GPU_SetDepthWrite( img->target, true );
+		GPU_AddDepthBuffer( img->target );
+		img->target->camera.near = -65535;
+		img->target->camera.far = 65535;
 		img->anchor_x = img->anchor_y = 0;
 		this->_sizeDirty = false;
 	}
@@ -357,7 +360,7 @@ void Image::Draw( GameObject* go ) {
 	
 	// if autodraw, clear
 	if ( this->autoDraw ) {
-		SDL_Color clr = { 0, 0, 0, 0 };
+		SDL_Color clr = { 0, 0, 0, 20 };
 		GPU_ClearColor( this->image->target, clr );
 	}
 	

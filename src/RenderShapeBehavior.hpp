@@ -41,6 +41,9 @@ public:
 	/// fill shape
 	bool filled = false;
 	
+	/// center circles etc.
+	bool centered = true;
+	
 	/// radius used for circles, ellipses, arcs, sectors
 	float radius = 10;
 	
@@ -76,10 +79,7 @@ public:
 	
 	/// line thickness
 	float lineThickness = 3;
-	
-	/// if true, rectangles and circles are centered at 0, 0
-	bool centered = true;
-	
+		
 // scripting
 	
 	/// registers class for scripting

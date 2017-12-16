@@ -536,9 +536,7 @@ private:
 	static void Finalize ( JSFreeOp *fop, JSObject *obj )  {
 		// delete underlying object
 		CLASS* object = (CLASS*) JS_GetPrivate( obj );
-		// printf( "Finalize %s\n", ScriptClassName<CLASS>::name().c_str() );
 		if ( object ) {
-			object->scriptObject = NULL;
 			delete object;
 		}
 	};
@@ -566,7 +564,7 @@ public:
 		JSAutoRequest req( this->js );
 		
 		// create global object
-		this->global_class = { "global", JSCLASS_GLOBAL_FLAGS, JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub, JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub };
+		this->global_class = { "Global", JSCLASS_GLOBAL_FLAGS, JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub, JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub };
 		this->global_object = JS_NewGlobalObject( this->js, &this->global_class, NULL );
 		
 		// global GC compartment
@@ -580,6 +578,7 @@ public:
 		
 		// add global object as root for GC
 		JS_AddObjectRoot( this->js, &this->global_object );
+		AddGlobalNamedObject( "global", this->global_object );
 		
 		printf ( "Spidermonkey initialized\n" );
 	}

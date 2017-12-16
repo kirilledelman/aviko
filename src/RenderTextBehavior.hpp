@@ -65,9 +65,6 @@ public:
 	GPU_Image* surface = NULL;
 	GPU_Rect surfaceRect = { 0 };
 	
-	/// center box
-	bool centered = false;
-	
 	/// font size
 	unsigned fontSize = 16;
 	
@@ -93,36 +90,36 @@ public:
 	///
 	Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	
-	/// computed width
-	float width = 0;
+	// bg
+	Color *backgroundColor = NULL;
 	
-	/// computed width
-	float height = 0;
+	/// surface width
+	int width = 0;
 	
-	/// maximum width of the box ( before wrapping takes place )
-	int maxWidth = 1024;
+	/// surface height
+	int height = 0;
 	
-	/// min width of the box - used when detecting
-	int minWidth = 32;
-
     /// set to false to stop drawing instead
-    bool wrap = true;
+    bool wrap = false;
 	
 	/// use ^codes
-	bool useCodes = true;
+	bool formatting = true;
 	
 	/// allows newlines
-	bool multiLine = true;
-    
-	/// maximum number of lines
-	int maxLines = 10;
-	
-	// start drawing from this line
-	int lineOffset = 0;
+	bool multiLine = false;
 	
     // offset x by this value
-    int horizontalOffset = 0;
+    int scrollLeft = 0;
 
+	// offset y by this value
+	int scrollTop = 0;
+	
+	// content width
+	int scrollWidth = 0;
+	
+	// constent height
+	int scrollHeight = 0;
+	
     // extra character spacing
 	float characterSpacing = 0;
 	

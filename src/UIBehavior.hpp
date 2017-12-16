@@ -33,7 +33,7 @@ public:
 	void Blur( bool sendEvent=true );
 	
 	/// pick a new focus object
-	void Navigate( float x, float y );
+	bool Navigate( float x, float y );
 	
 	// focus overrides
 	UIBehavior* navigationLeft = NULL;

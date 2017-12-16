@@ -9,7 +9,6 @@
 Input::Input() {
 	
 	SDL_StartTextInput();
-	this->dispatchEventsToPropertyFunctions = true;
 	
 }
 
@@ -410,6 +409,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	
 	Uint32 etype = e.type;
 	Event event;
+	event.bubbles = true;
 	if ( etype == SDL_KEYDOWN && ( repeatKeyEnabled || e.key.repeat == 0 ) ) {
 		event.name = EVENT_KEYDOWN;
 		event.behaviorParam = &e;

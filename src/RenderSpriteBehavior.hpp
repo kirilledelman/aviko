@@ -16,9 +16,6 @@ public:
 	RenderSpriteBehavior();
 	~RenderSpriteBehavior();
 	
-	/// if true, sprite is centered
-	bool centered = false;
-
 	/// texture for drawing
 	ImageResource* imageResource = NULL;
 	
