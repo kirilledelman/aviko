@@ -4,8 +4,10 @@
 Sound* Sound::musicSound = NULL;
 unordered_map<int, Sound*> Sound::soundChannels;
 
+
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
+
 
 Sound::Sound( ScriptArguments* args ) {
 	

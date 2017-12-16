@@ -81,7 +81,7 @@ struct ArgValue {
 	bool isNull( bool strict=false );
 	bool get( void* destination, ScriptType desiredType );
 	jsval toValue();
-	
+		
 	// destructor
 	~ArgValue();
 };

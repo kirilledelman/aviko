@@ -15,6 +15,8 @@
 		711B388A1F64B55E00A6B224 /* libmozjs-24.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 711B38891F64B55E00A6B224 /* libmozjs-24.0.dylib */; };
 		7126DBBB1F8404B900BD4E44 /* ScriptResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */; };
 		713D70221F82CDE80011B7E8 /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D70201F82CDE80011B7E8 /* Input.cpp */; };
+		713F33A21FE596F0001147CD /* Vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A01FE596F0001147CD /* Vector.cpp */; };
+		713F33A51FE5B046001147CD /* Tween.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A31FE5B046001147CD /* Tween.cpp */; };
 		7170F8541F588E9800F71E87 /* SceneDebugDraw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7170F8521F588E9800F71E87 /* SceneDebugDraw.cpp */; };
 		718533201F9F92E60080B05A /* RenderTextBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7185331E1F9F92E60080B05A /* RenderTextBehavior.cpp */; };
 		718533231F9FCD660080B05A /* SoundResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 718533211F9FCD660080B05A /* SoundResource.cpp */; };
@@ -195,6 +197,10 @@
 		713D70201F82CDE80011B7E8 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Input.cpp; path = src/Input.cpp; sourceTree = "<group>"; };
 		713D70211F82CDE80011B7E8 /* Input.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Input.hpp; path = src/Input.hpp; sourceTree = "<group>"; };
 		713D702C1F82D7370011B7E8 /* default */ = {isa = PBXFileReference; lastKnownFileType = folder; path = default; sourceTree = "<group>"; };
+		713F33A01FE596F0001147CD /* Vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Vector.cpp; path = src/Vector.cpp; sourceTree = "<group>"; };
+		713F33A11FE596F0001147CD /* Vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Vector.hpp; path = src/Vector.hpp; sourceTree = "<group>"; };
+		713F33A31FE5B046001147CD /* Tween.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tween.cpp; path = src/Tween.cpp; sourceTree = "<group>"; };
+		713F33A41FE5B046001147CD /* Tween.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tween.hpp; path = src/Tween.hpp; sourceTree = "<group>"; };
 		71515BAC1F682EDB004ED8C0 /* ScriptHost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptHost.hpp; path = src/ScriptHost.hpp; sourceTree = "<group>"; };
 		715EEE571F7555DD000B99AE /* ScriptableClass.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptableClass.hpp; path = src/ScriptableClass.hpp; sourceTree = "<group>"; };
 		7170F8521F588E9800F71E87 /* SceneDebugDraw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneDebugDraw.cpp; path = src/SceneDebugDraw.cpp; sourceTree = "<group>"; };
@@ -389,6 +395,10 @@
 				719291BC1FA26BAA0067892E /* Controller.cpp */,
 				710A47361F7EB4F300A89171 /* Color.hpp */,
 				710A47351F7EB4F300A89171 /* Color.cpp */,
+				713F33A41FE5B046001147CD /* Tween.hpp */,
+				713F33A31FE5B046001147CD /* Tween.cpp */,
+				713F33A11FE596F0001147CD /* Vector.hpp */,
+				713F33A01FE596F0001147CD /* Vector.cpp */,
 				718533251F9FF7B90080B05A /* Sound.hpp */,
 				718533241F9FF7B90080B05A /* Sound.cpp */,
 				71E793911FC47DAD0026ABCB /* Image.hpp */,
@@ -848,6 +858,7 @@
 				71F484EC1F814C8D00AF17EA /* b2Collision.cpp in Sources */,
 				71F484ED1F814C8D00AF17EA /* b2Distance.cpp in Sources */,
 				71F484EE1F814C8D00AF17EA /* b2DynamicTree.cpp in Sources */,
+				713F33A21FE596F0001147CD /* Vector.cpp in Sources */,
 				71F484EF1F814C8D00AF17EA /* b2TimeOfImpact.cpp in Sources */,
 				71F484F01F814C8D00AF17EA /* b2ChainShape.cpp in Sources */,
 				71F484F11F814C8D00AF17EA /* b2CircleShape.cpp in Sources */,
@@ -911,6 +922,7 @@
 				7170F8541F588E9800F71E87 /* SceneDebugDraw.cpp in Sources */,
 				71E6946C1F5318E9001EB381 /* main.cpp in Sources */,
 				71130EDA1F5494CD001D453E /* RigidBodyBehavior.cpp in Sources */,
+				713F33A51FE5B046001147CD /* Tween.cpp in Sources */,
 				71E694691F5318E9001EB381 /* GameObject.cpp in Sources */,
 				71E694681F5318E9001EB381 /* Behavior.cpp in Sources */,
 				71E6946E1F5318E9001EB381 /* RenderSpriteBehavior.cpp in Sources */,

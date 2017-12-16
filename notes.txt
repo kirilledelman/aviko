@@ -1,29 +1,17 @@
 
-
-
 Tween class
 	new Tween( )
 	.target - obj
-	.properties [ "x", "y" ]...
-	.startValues[ 0, 0 ]
-	.endValues [ 1, 1 ]
 	.duration
 	.time
+	.useUnscaledTime = false
 	.running
 	.finished
 	.callback ( function( ){} )
 
-Array-like object called Vector - can use with shapes/points in rendershape, or rigidbodyshape
-	.type ( Uint8, Int8, Uint16, Int16, Uint32, Int32, Float, String )
-	.toArray()
-	.fromArray()
-	[]
-	.splice
-	.push, .pop
-	.slice
-	.length
-	.concat
 
+App
+	setWindowSize -> "resize" event or something
 
 RigidBody
 	RigidBodyShape class
@@ -33,6 +21,8 @@ RigidBody
 	Joints etc.
 
 Demo project
+
+
 
 =============================================
 
@@ -46,6 +36,12 @@ GameObject
 Color
 	.tweenTo()
 
+Vector - other types besides Float
+	.splice
+	.slice
+	.concat
+	.push, .pop
+
 RenderSprite
 	.frames = [ "anim/1", "anim/2", "anim/3" ] | null
 	.frame = 0
@@ -54,6 +50,7 @@ Image
 save( pngpath )in /textures by default
 .base64 <-> string
 
+*Vector classes can dispatch events on change
 
 New SubClass can be intercepted + wired up in constructor ScriptHost hook
 

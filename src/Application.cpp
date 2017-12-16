@@ -4,6 +4,7 @@
 #include "RenderTextBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "SampleBehavior.hpp"
+#include "Vector.hpp"
 
 // from ScriptableClass.hpp
 vector<Event*> Event::eventStack;
@@ -12,6 +13,9 @@ vector<Event*> Event::eventStack;
 int ScriptableClass::asyncIndex = 0;
 ScriptableClass::AsyncMap* ScriptableClass::scheduledAsyncs = NULL;
 ScriptableClass::DebouncerMap* ScriptableClass::scheduledDebouncers = NULL;
+
+// from Tween.hpp
+unordered_set<Tween*> *Tween::activeTweens = NULL;
 
 
 /* MARK:	-				Init / destroy
@@ -59,9 +63,10 @@ Application::Application() {
 		exit( 1 );
 	}
 	
-	// init async containers
+	// init containers
 	ScriptableClass::scheduledAsyncs = new AsyncMap();
 	ScriptableClass::scheduledDebouncers = new DebouncerMap();
+	Tween::activeTweens = new unordered_set<Tween*>();
 	
 	// register classes
 	this->InitClass();
@@ -93,6 +98,9 @@ Application::~Application() {
 	// delete async
 	delete ScriptableClass::scheduledAsyncs;
 	delete ScriptableClass::scheduledDebouncers;
+	
+	printf( "activeTweens: %d\n", Tween::activeTweens->size() );
+	delete Tween::activeTweens;
 }
 
 
@@ -180,6 +188,7 @@ void Application::UpdateBackscreen() {
 /* MARK:	-				Script
  -------------------------------------------------------------------- */
 
+
 /// initialize class scripting
 void Application::InitClass() {
 	
@@ -187,7 +196,7 @@ void Application::InitClass() {
 	ScriptableClass::InitClass();
 	
 	// register class
-	script.RegisterClass<Application>( NULL, true );
+	script.RegisterClass<Application>( "ScriptableObject", true );
 	
 	// constants
 	
@@ -616,8 +625,10 @@ void Application::InitClass() {
 	// call registration functions for all classes
 	input.InitClass(); // single instance
 	Controller::InitClass();
+	FloatVector::InitClass();
 	Color::InitClass();
 	Sound::InitClass();
+	Tween::InitClass();
 	GameObject::InitClass();
 	Scene::InitClass();
 	Image::InitClass();
@@ -691,6 +702,9 @@ void Application::GameLoop() {
 		
 		// perform asyncs
 		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
+		
+		// advance tweens
+		Tween::ProcessActiveTweens( deltaTime, unscaledDeltaTime );
 		
 		// if have active scene
 		if ( scene ) {

@@ -103,7 +103,7 @@ int StringPositionLength( const char* str );
 #define KEY_MOUSE_WHEEL (SDL_NUM_SCANCODES + 6)
 #define KEY_MOUSE_WHEEL_X (SDL_NUM_SCANCODES + 7)
 
-// Sound events
+// Sound etc. events
 #define EVENT_FINISHED "finished"
 
 #define GPU_BLEND_CUT_ALPHA 16

@@ -674,7 +674,7 @@ public:
 
 	
 	template <class CLASS>
-	void AddIndexProperty( ScriptIndexCallback getter, ScriptIndexCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+	void AddIndexProperty( ScriptIndexCallback getter, ScriptIndexCallback setter, unsigned flags=PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
 		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter, &setter );
@@ -682,7 +682,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
+	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
 		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter );

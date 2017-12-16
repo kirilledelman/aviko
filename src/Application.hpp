@@ -10,6 +10,7 @@
 #include "ScriptResource.hpp"
 #include "FontResource.hpp"
 #include "SoundResource.hpp"
+#include "Tween.hpp"
 #include "Sound.hpp"
 #include "Image.hpp"
 
@@ -64,6 +65,7 @@ public:
 // input
 	
 	Input input;
+	
 
 // resource managers
 	

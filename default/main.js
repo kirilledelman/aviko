@@ -16,6 +16,21 @@ app.scene = new Scene();
 function m0(){  this.gameObject.render.color.r = 0; }
 function m1(){  this.gameObject.render.color.r = 1; }
 function m2( wy ){  this.gameObject.angle += wy; }
+function m3() {
+	var t = new Tween
+	( this.gameObject,
+	 ['x','y'],
+	 null,
+	 [ this.gameObject.x + (50 * Math.random() - 25),
+	  this.gameObject.y + (50 * Math.random() - 25) ] );
+	
+	t.finished = function () {
+		log( "Finished!");
+		app.async( function(){ gc(); } );
+	}
+}
+
+
 for ( var i = 0; i < 10; i++ ){
 
 	var o = new GameObject();
@@ -26,10 +41,10 @@ for ( var i = 0; i < 10; i++ ){
 	o.ui.mouseOver = m0;
 	o.ui.mouseOut = m1;
 	o.ui.mouseWheel = m2;
+	o.ui.click = m3;
 	
 	app.scene.addChild( o );
 
 }
-
 
 
