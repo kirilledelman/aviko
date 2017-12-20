@@ -1,9 +1,12 @@
 #include "GameObject.hpp"
 #include "Scene.hpp"
 #include "Application.hpp"
+#include "Tween.hpp"
+
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
+
 
 /// constructor for when a GameObject is created from script
 GameObject::GameObject( ScriptArguments* args ) : GameObject() {
@@ -476,7 +479,7 @@ void GameObject::InitClass() {
 	("addChild", // ( GameObject child [, int position ] ) -> GameObject child
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: addChild( [ GameObject obj [,int desiredPosition ] ] )";
+		const char* error = "usage: addChild( [ GameObject obj [,Int desiredPosition ] ] )";
 		int pos = -1;
 		void* obj = NULL;
 		GameObject* other = NULL;
@@ -512,7 +515,7 @@ void GameObject::InitClass() {
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		
 		// validate params
-		const char* error = "usage: removeChild( GameObject obj | int removePosition )";
+		const char* error = "usage: removeChild( GameObject obj | Int removePosition )";
 		GameObject* self = (GameObject*) go;
 		GameObject* other = NULL;
 		void* obj = NULL;
@@ -541,6 +544,226 @@ void GameObject::InitClass() {
 		
 		// unparent
 		other->SetParent( NULL );
+		return true;
+	}));
+	
+	
+	script.DefineFunction<GameObject>
+	( "moveTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: moveTo( Number x, Number y[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float x, y, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 2 );
+		t->properties[ 0 ] = "x";
+		t->properties[ 1 ] = "y";
+		t->startValues.resize( 2 );
+		t->startValues[ 0 ] = self->GetX();
+		t->startValues[ 1 ] = self->GetY();
+		t->endValues.resize( 2 );
+		t->endValues[ 0 ] = x;
+		t->endValues[ 1 ] = y;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "moveBy",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: moveBy( Number deltaX, Number deltaY[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float x, y, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 2 );
+		t->properties[ 0 ] = "x";
+		t->properties[ 1 ] = "y";
+		t->startValues.resize( 2 );
+		t->startValues[ 0 ] = self->GetX();
+		t->startValues[ 1 ] = self->GetY();
+		t->endValues.resize( 2 );
+		t->endValues[ 0 ] = self->GetX() + x;
+		t->endValues[ 1 ] = self->GetY() + y;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "rotateTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: rotateTo( Number angle[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float a, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeFloat, &a, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 1 );
+		t->properties[ 0 ] = "angle";
+		t->startValues.resize( 1 );
+		t->startValues[ 0 ] = self->GetAngle();
+		t->endValues.resize( 1 );
+		t->endValues[ 0 ] = a;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "rotateBy",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: rotateBy( Number deltaAngle[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float a, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeFloat, &a, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 1 );
+		t->properties[ 0 ] = "angle";
+		t->startValues.resize( 1 );
+		t->startValues[ 0 ] = self->GetAngle();
+		t->endValues.resize( 1 );
+		t->endValues[ 0 ] = self->GetAngle() + a;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "scaleTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: scaleTo( Number scale[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float s, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeFloat, &s, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 1 );
+		t->properties[ 0 ] = "scale";
+		t->startValues.resize( 1 );
+		t->startValues[ 0 ] = self->GetScaleX();
+		t->endValues.resize( 1 );
+		t->endValues[ 0 ] = s;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "scaleBy",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: scaleBy( Number deltaScale[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float s, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeFloat, &s, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 1 );
+		t->properties[ 0 ] = "scale";
+		t->startValues.resize( 1 );
+		t->startValues[ 0 ] = self->GetScaleX();
+		t->endValues.resize( 1 );
+		t->endValues[ 0 ] = self->GetScaleX() + s;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "stopMotion",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		GameObject* self = (GameObject*) go;
+		unordered_set<Tween*>::iterator it = Tween::activeTweens->begin();
+		while( it != Tween::activeTweens->end() ) {
+			if ( (*it)->target == self->scriptObject ) {
+				Tween* t = *it;
+				it = Tween::activeTweens->erase( it );
+				t->active( false );
+			} else it++;
+		}
 		return true;
 	}));
 	

@@ -44,6 +44,8 @@ public:
 	/// upscaling
 	float windowScalingFactor = 2;
 	
+	bool windowResizable = false;
+	
 	/// computed in UpdateBackscreen
 	float backscreenScale = 0.5;
 		
@@ -61,6 +63,8 @@ public:
 	
 	// (re) creates back buffer
 	void UpdateBackscreen();
+	
+	void WindowResized( Sint32 newWidth, Sint32 newHeight );
 	
 // input
 	

@@ -1,17 +1,5 @@
+SDL_gpu has my dropbox path hardcoded
 
-Tween class
-	new Tween( )
-	.target - obj
-	.duration
-	.time
-	.useUnscaledTime = false
-	.running
-	.finished
-	.callback ( function( ){} )
-
-
-App
-	setWindowSize -> "resize" event or something
 
 RigidBody
 	RigidBodyShape class
@@ -20,7 +8,11 @@ RigidBody
 	body.removeShape
 	Joints etc.
 
+Change RenderShape points to FloatVector
+
 Demo project
+	Controller configurator
+
 
 
 
@@ -30,11 +22,9 @@ Nice to have
 
 =============================================
 
-GameObject
-	.moveTo(), .moveBy()
-
 Color
 	.tweenTo()
+
 
 Vector - other types besides Float
 	.splice
@@ -54,7 +44,7 @@ save( pngpath )in /textures by default
 
 New SubClass can be intercepted + wired up in constructor ScriptHost hook
 
-Later, investigate/fix skewX,skewY on objects with bodies.
+Investigate/fix skewX,skewY on objects with bodies.
 
 Install MS Visual Studio in windows, look at how to compile on win.
 
@@ -106,8 +96,6 @@ Intern all built-in-event strings
 ParticleSystem render behavior
 
 Promise-like interface?
-
-Look up box2d elevators ( distance joint? + fixed rotation )
 
 
 FXPORT.jsfl

@@ -6,13 +6,12 @@
 
 /// constructor
 ScriptFunctionObject::ScriptFunctionObject( void* scriptFunc, bool once ) : callOnce( once ) {
-	this->funcObject = (JSObject*) scriptFunc;
-	JS_AddObjectRoot( script.js, &this->funcObject );
+	this->SetFunc( scriptFunc );
 }
 
 /// destructor
 ScriptFunctionObject::~ScriptFunctionObject() {
-	if ( script.js ) {
+	if ( script.js && this->funcObject ) {
 		JS_RemoveObjectRoot( script.js, &this->funcObject );
 	}
 }
@@ -20,14 +19,21 @@ ScriptFunctionObject::~ScriptFunctionObject() {
 /// replace
 void ScriptFunctionObject::SetFunc( void* newFunc ) {
 	if ( this->funcObject != newFunc ) {
-		JS_RemoveObjectRoot( script.js, &this->funcObject );
+		if ( this->funcObject ) {
+			JS_RemoveObjectRoot( script.js, &this->funcObject );
+		}
 		this->funcObject = (JSObject*) newFunc;
-		JS_AddObjectRoot( script.js, &this->funcObject );
+		if ( newFunc ) {
+			JS_AddObjectRoot( script.js, &this->funcObject );
+		}
 	}
 }
 
 /// invoke function with arguments
 void ScriptFunctionObject::Invoke( ScriptArguments &args ){
+	
+	if( !funcObject ) return;
+	
 	jsval rval;
 	int argc;
 	jsval* params = args.GetFunctionArguments( &argc );
@@ -320,7 +326,7 @@ jsval ArgValue::toValue() {
 		val.setInt32( this->value.intValue );
 	} else if ( this->type == TypeFloat ){
 		val.setDouble( this->value.floatValue );
-	} else if ( this->type == TypeObject ){
+	} else if ( this->type == TypeObject || this->type == TypeFunction ){
 		val.setObjectOrNull( (JSObject*) this->value.objectValue );
 	} else if ( this->type == TypeString ){
 		val.setString( JS_NewStringCopyZ( script.js, this->value.stringValue->c_str() ) );

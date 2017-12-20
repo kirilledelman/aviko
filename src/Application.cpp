@@ -29,6 +29,7 @@ Application::Application() {
     char *cwd = (char*) malloc( 1024 );
     getcwd( cwd, 1024 );
 	this->currentDirectory = string( cwd );
+	printf( "Current working directory is %s\n", cwd );
     free( cwd );
 	
 	// init SDL_gpu
@@ -97,9 +98,7 @@ Application::~Application() {
 	
 	// delete async
 	delete ScriptableClass::scheduledAsyncs;
-	delete ScriptableClass::scheduledDebouncers;
-	
-	printf( "activeTweens: %d\n", Tween::activeTweens->size() );
+	delete ScriptableClass::scheduledDebouncers;	
 	delete Tween::activeTweens;
 }
 
@@ -110,39 +109,54 @@ Application::~Application() {
 
 void Application::InitRender() {
 	
-	// if window exists - this is a re-initialization
-	if ( this->screen ) {
-		
-		GPU_SetWindowResolution( this->windowWidth, this->windowHeight );
-		
 	// init SDL_gpu library
-	} else {
-		
-		// get current mode
-		if( SDL_Init(SDL_INIT_VIDEO) < 0) {
-			printf( "Couldn't init SDL video: %s\n", SDL_GetError() );
-			exit( 1 );
-		}
-		SDL_DisplayMode current;
-		SDL_GetCurrentDisplayMode( 0, &current );
-		
-		// init GPU
-		this->screen = GPU_Init( current.w, current.h, GPU_DEFAULT_INIT_FLAGS );
-		if ( this->screen == NULL ) {
-			GPU_ErrorObject err = GPU_PopErrorCode();
-			printf( "Failed to initialize SDL_gpu library: %s.\n", err.details );
-			exit( 1 );
-		}
+	
+	// get current mode
+	if( SDL_Init(SDL_INIT_VIDEO) < 0) {
+		printf( "Couldn't init SDL video: %s\n", SDL_GetError() );
+		exit( 1 );
 	}
+	SDL_DisplayMode current;
+	SDL_GetCurrentDisplayMode( 0, &current );
+	
+	// init GPU
+	this->screen = GPU_Init( current.w, current.h, GPU_DEFAULT_INIT_FLAGS );
+	if ( this->screen == NULL ) {
+		GPU_ErrorObject err = GPU_PopErrorCode();
+		printf( "Failed to initialize SDL_gpu library: %s.\n", err.details );
+		exit( 1 );
+	}
+	
 	this->windowWidth = this->screen->base_w;
 	this->windowHeight = this->screen->base_h;
 	GPU_UnsetVirtualResolution( this->screen );
+	
+	// resizable
+	SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
 	
 #ifdef __MACOSX__
 	// make windowed on desktop
 	GPU_SetFullscreen( false, false );
 #endif
 	
+}
+
+void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
+	if ( ( newWidth && newHeight ) && ( newWidth != this->windowWidth || newHeight != this->windowHeight ) ) {
+		GPU_SetWindowResolution( newWidth, newHeight );
+		this->windowWidth = newWidth;
+		this->windowHeight = newHeight;
+		GPU_UnsetVirtualResolution( this->screen );
+		UpdateBackscreen();
+		
+		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
+		
+		// send event
+		Event event( EVENT_RESIZED );
+		event.scriptParams.AddIntArgument( newWidth );
+		event.scriptParams.AddIntArgument( newHeight );
+		this->CallEvent( event );
+	}
 }
 
 void Application::UpdateBackscreen() {
@@ -304,6 +318,14 @@ void Application::InitClass() {
 	 );
 	
 	script.AddProperty<Application>
+	("windowResizable",
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.windowResizable; }),
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){
+		SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), ((SDL_bool) (app.windowResizable = v)) );
+		return v;
+	}));
+	
+	script.AddProperty<Application>
 	("windowWidth", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowWidth; }) );
 	
 	script.AddProperty<Application>
@@ -416,12 +438,9 @@ void Application::InitClass() {
 			script.ReportError( "usage: app.setWindowSize( Int width, Int height, [ Float windowScalingFactor ] )" );
 			return false;
 		}
-		app.windowWidth = max( 320, min( 4096, w ) );
-		app.windowHeight = max( 320, min( 4096, h ) );
 		app.windowScalingFactor = max( 0.1f, min( 8.0f, sc ) );
-		app.InitRender();
+		app.WindowResized( max( 320, min( 4096, w ) ), max( 320, min( 4096, h ) ) );
 		app.UpdateBackscreen();
-		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
 		return true;
 	}) );
 	
@@ -728,6 +747,11 @@ void Application::GameLoop() {
 			// Exit on escape
 			if ( e.type == SDL_QUIT || ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE && e.key.repeat > 0 ) ) { run = false; break; }
 
+			// window events
+			else if ( e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ) {
+				// adjust buffers
+				WindowResized( e.window.data1, e.window.data2 );
+			}
 		}
 		
 		// continue

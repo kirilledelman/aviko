@@ -28,6 +28,8 @@
 		719FA1451F994984007B5AD4 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 719FA1441F994984007B5AD4 /* SDL2.framework */; };
 		71A09F221F9BC785005ED838 /* FontResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A09F201F9BC785005ED838 /* FontResource.cpp */; };
 		71BA89C01FC9BD18003A5A37 /* RenderBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71BA89BE1FC9BD18003A5A37 /* RenderBehavior.cpp */; };
+		71D4542E1FE98543007475E6 /* default in CopyFiles */ = {isa = PBXBuildFile; fileRef = 713D702C1F82D7370011B7E8 /* default */; };
+		71D454311FE98688007475E6 /* SDL2_gpu.framework/SDL2_gpu in CopyFiles */ = {isa = PBXBuildFile; fileRef = 718CE3941F62D5A600A3B498 /* SDL2_gpu.framework/SDL2_gpu */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		71D8D3A41FCC9640004DDE7E /* UIBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D8D3A21FCC9640004DDE7E /* UIBehavior.cpp */; };
 		71E694671F5318E9001EB381 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694511F5318E9001EB381 /* Application.cpp */; };
 		71E694681F5318E9001EB381 /* Behavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694531F5318E9001EB381 /* Behavior.cpp */; };
@@ -40,10 +42,6 @@
 		71E694701F5318E9001EB381 /* Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694651F5318E9001EB381 /* Scene.cpp */; };
 		71E793921FC47DAD0026ABCB /* Image.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E793901FC47DAD0026ABCB /* Image.cpp */; };
 		71E793971FC480A00026ABCB /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71E793961FC480A00026ABCB /* SDL2_net.framework */; };
-		71F099FA1F62DD8A00C2299A /* SDL2_gpu.framework/SDL2_gpu in CopyFiles */ = {isa = PBXBuildFile; fileRef = 718CE3941F62D5A600A3B498 /* SDL2_gpu.framework/SDL2_gpu */; };
-		71F099FB1F62DD8A00C2299A /* SDL2_image.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7117EBE61F420D5000C25611 /* SDL2_image.framework */; };
-		71F099FC1F62DD8A00C2299A /* SDL2_mixer.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7117EBE71F420D5000C25611 /* SDL2_mixer.framework */; };
-		71F099FD1F62DD8A00C2299A /* SDL2_ttf.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 7117EBE81F420D5000C25611 /* SDL2_ttf.framework */; };
 		71F484E81F814C8D00AF17EA /* b2BroadPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484701F814B9300AF17EA /* b2BroadPhase.cpp */; };
 		71F484E91F814C8D00AF17EA /* b2CollideCircle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484721F814B9300AF17EA /* b2CollideCircle.cpp */; };
 		71F484EA1F814C8D00AF17EA /* b2CollideEdge.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484731F814B9300AF17EA /* b2CollideEdge.cpp */; };
@@ -167,16 +165,23 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		717C0CA01F40F92200AA54E7 /* CopyFiles */ = {
+		71D4542D1FE9853A007475E6 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
+			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
-				71F099FA1F62DD8A00C2299A /* SDL2_gpu.framework/SDL2_gpu in CopyFiles */,
-				71F099FB1F62DD8A00C2299A /* SDL2_image.framework in CopyFiles */,
-				71F099FC1F62DD8A00C2299A /* SDL2_mixer.framework in CopyFiles */,
-				71F099FD1F62DD8A00C2299A /* SDL2_ttf.framework in CopyFiles */,
+				71D4542E1FE98543007475E6 /* default in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		71D4542F1FE98593007475E6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 11;
+			files = (
+				71D454311FE98688007475E6 /* SDL2_gpu.framework/SDL2_gpu in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -741,7 +746,8 @@
 			buildPhases = (
 				717C0C9E1F40F92200AA54E7 /* Sources */,
 				717C0C9F1F40F92200AA54E7 /* Frameworks */,
-				717C0CA01F40F92200AA54E7 /* CopyFiles */,
+				71D4542D1FE9853A007475E6 /* CopyFiles */,
+				71D4542F1FE98593007475E6 /* CopyFiles */,
 			);
 			buildRules = (
 			);

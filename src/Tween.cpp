@@ -25,8 +25,13 @@ Tween::Tween( ScriptArguments* args ) {
 		// param 1 is either a string or array
 		if ( args->args.size() >= 2 && ( args->args[ 1 ].type == TypeArray || args->args[ 1 ].type == TypeString ) ) {
 			this->SetProperties( args->args[ 1 ] );
+		// callback function
+		} else if ( args->args.size() >= 2 && args->args[ 1 ].type == TypeFunction ) {
+			script.SetProperty( "callback", args->args[ 1 ], this->scriptObject );
+			this->startValues.push_back( 0 );
+			this->endValues.push_back( 1 );
 		} else {
-			script.ReportError( "Tween constructor: second parameter must be String or Array of Strings." );
+			script.ReportError( "Tween constructor: second parameter must be String, or Array of Strings, or callback Function." );
 			return;
 		}
 		
@@ -45,15 +50,22 @@ Tween::Tween( ScriptArguments* args ) {
 			args->args[ 4 ].toNumber( this->duration );
 		}
 		
-		// easing
+		// ease type
 		if ( args->args.size() >= 6 ) {
 			int e = EaseNone;
 			args->args[ 5 ].toInt( e );
-			this->easingFunc = (EasingFunc) e;
+			this->easeType = (EasingType) e;
+		}
+		
+		// ease func
+		if ( args->args.size() >= 7 ) {
+			int e = EaseNone;
+			args->args[ 6 ].toInt( e );
+			this->easeFunc = (EasingFunc) e;
 		}
 		
 		// start, if valid
-		this->running( properties.size() > 0 && duration > 0 );
+		this->active( true );
 	}
 	
 }
@@ -77,8 +89,84 @@ void Tween::InitClass() {
 	// create class
 	script.RegisterClass<Tween>( "Tween" );
 
-	//
+	// constants
+	script.SetGlobalConstant( "EASE_NONE", EaseNone );
+	script.SetGlobalConstant( "EASE_IN", EaseIn );
+	script.SetGlobalConstant( "EASE_OUT", EaseOut );
+	script.SetGlobalConstant( "EASE_INOUT", EaseInOut );
+
+	// http://easings.net/
+	script.SetGlobalConstant( "EASE_LINEAR", EaseLinear );
+	script.SetGlobalConstant( "EASE_SINE", EaseSine );
+	script.SetGlobalConstant( "EASE_QUAD", EaseQuad );
+	script.SetGlobalConstant( "EASE_CUBIC", EaseCubic );
+	script.SetGlobalConstant( "EASE_QUART", EaseQuart );
+	script.SetGlobalConstant( "EASE_QUINT", EaseQuint );
+	script.SetGlobalConstant( "EASE_CIRC", EaseCirc );
+	script.SetGlobalConstant( "EASE_EXPO", EaseExpo );
+	script.SetGlobalConstant( "EASE_BACK", EaseBack );
+	script.SetGlobalConstant( "EASE_ELASTIC", EaseElastic );
+	script.SetGlobalConstant( "EASE_BOUNCE", EaseBounce );
 	
+	// properties
+	
+	// easing type
+	script.AddProperty<Tween>
+	("easeType",
+	 static_cast<ScriptIntCallback>([]( void* p, int val ){ return (int)((Tween*)p)->easeType; }),
+	 static_cast<ScriptIntCallback>([]( void* p, int val ){ ((Tween*)p)->easeType = (EasingType) val; return val; }));
+	
+	// easing function
+	script.AddProperty<Tween>
+	("easeFunc",
+	 static_cast<ScriptIntCallback>([]( void* p, int val ){ return (int)((Tween*)p)->easeFunc; }),
+	 static_cast<ScriptIntCallback>([]( void* p, int val ){ ((Tween*)p)->easeFunc = (EasingFunc) val; return val; }));
+	
+	// active (use to pause)
+	script.AddProperty<Tween>
+	("active",
+	 static_cast<ScriptBoolCallback>([]( void* p, bool val ){ return ((Tween*)p)->active(); }),
+	 static_cast<ScriptBoolCallback>([]( void* p, bool val ){ ((Tween*)p)->active( val ); return val; } ));
+	
+	// time
+	script.AddProperty<Tween>
+	("time",
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*)p)->time; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*) p)->time = max( 0.0f, val ); }));
+	
+	// duration
+	script.AddProperty<Tween>
+	("duration",
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*)p)->duration; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*) p)->duration = max( 0.0f, val ); }));
+
+	script.AddProperty<Tween>
+	("pos",
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*)p)->time / ((Tween*)p)->duration; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ){ return ((Tween*) p)->time = max( 0.0f, min( 1.0f, val * ((Tween*)p)->duration ) ); }));
+
+	// use unscaled time
+	script.AddProperty<Tween>
+	("unscaledTime",
+	 static_cast<ScriptBoolCallback>([]( void* p, bool val ){ return ((Tween*)p)->useUnscaledTime; }),
+	 static_cast<ScriptBoolCallback>([]( void* p, bool val ){ return ((Tween*)p)->useUnscaledTime = val; } ));
+	
+	// callback function
+	script.AddProperty<Tween>
+	("callback",
+	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){ return ArgValue( ((Tween*)p)->callback.funcObject ); }),
+	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){
+		Tween* t = (Tween*) p;
+		void* f = NULL;
+		if ( val.type == TypeFunction ) {
+			f = val.value.objectValue;
+			t->callback.SetFunc( f );
+			t->callback.thisObject = t->scriptObject;
+		}
+		return ArgValue( f );
+	}), PROP_ENUMERABLE );
+	
+	//
 	script.AddProperty<Tween>
 	("properties",
 	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){
@@ -87,7 +175,7 @@ void Tween::InitClass() {
 	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){
 		((Tween*) p)->SetProperties( val );
 		return val;
-	 }), PROP_NOSTORE | PROP_ENUMERABLE );
+	 }), PROP_NOSTORE | PROP_ENUMERABLE | PROP_SERIALIZED);
 	
 	script.AddProperty<Tween>
 	("startValues",
@@ -97,7 +185,7 @@ void Tween::InitClass() {
 	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){
 		((Tween*) p)->SetStartValues( val );
 		return val;
-	}), PROP_NOSTORE | PROP_ENUMERABLE );
+	}), PROP_NOSTORE | PROP_ENUMERABLE | PROP_SERIALIZED );
 	
 	script.AddProperty<Tween>
 	("endValues",
@@ -107,72 +195,247 @@ void Tween::InitClass() {
 	 static_cast<ScriptValueCallback>([]( void* p, ArgValue val ){
 		((Tween*) p)->SetEndValues( val );
 		return val;
-	}), PROP_NOSTORE | PROP_ENUMERABLE );
+	}), PROP_NOSTORE | PROP_ENUMERABLE | PROP_SERIALIZED );
 
+	// functions
 	
+	// stop
+	script.DefineFunction<Tween>
+	("stop",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		((Tween*)p)->active( false );
+		return true;
+	}));
+	
+	// start
+	script.DefineFunction<Tween>
+	("start",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		Tween* t = (Tween*)p;
+		t->active( true );
+		args.ReturnBool( t->active() );
+		return true;
+	}));
+	
+	// reverse
+	script.DefineFunction<Tween>
+	("reverse",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		((Tween*)p)->Reverse();
+		return true;
+	}));
+	
+	// cut off beginning
+	script.DefineFunction<Tween>
+	("cut",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		((Tween*)p)->Cut();
+		return true;
+	}));
+	
+	// static func
+	
+	// returns an array of all active tweens (optionally filtered by object)
+	script.DefineClassFunction( "Tween", "getActive", true,
+    static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		void *obj = NULL;
+		args.ReadArguments( 1, TypeObject, &obj );
+		ArgValueVector vec;
+		unordered_set<Tween*>::iterator it = activeTweens->begin(), end = activeTweens->end();
+		while( it != end ) {
+			if ( !obj || (*it)->target == obj ) {
+				vec.emplace_back( (*it)->scriptObject );
+			}
+			it++;
+		}
+		args.ReturnArray( vec );
+		return true;
+	}));
+	
+	script.DefineClassFunction( "Tween", "stopActive", true,
+		static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& args){
+		void *obj = NULL;
+		args.ReadArguments( 1, TypeObject, &obj );
+		unordered_set<Tween*>::iterator it = activeTweens->begin();
+		while( it != activeTweens->end() ) {
+			if ( !obj || (*it)->target == obj ) {
+				Tween* t = (*it);
+				it = activeTweens->erase( it );
+				t->active( false );
+			} else it++;
+		}
+		return true;
+	}));
 	
 }
 
+bool Tween::_canRun() {
+	return this->target != NULL && duration > 0 &&
+		( ( properties.size() && endValues.size() ) || ( callback.funcObject != NULL ) );
+}
 
 
-/* MARK:	-				Update
+/* MARK:	-				Reverse and Split
  -------------------------------------------------------------------- */
 
 
-bool Tween::ProcessTween( float deltaTime, float unscaledDeltaTime ) {
+void Tween::Reverse() {
+
+	// reverse start and end values
+	vector<float> tmp = endValues;
+	endValues = startValues;
+	startValues = tmp;
 	
-	// remove if became invalid
-	if ( !this->_running || !this->target || !this->properties.size() ) return true;
+	// reverse time
+	if ( time > 0 ) time = max( 0.0f, duration - time );
 	
-	// advance time
-	this->time += this->useUnscaledTime ? unscaledDeltaTime : deltaTime;
-	
-	// current position
-	float pos = this->time / this->duration;
-	
-	// for each property
+}
+
+void Tween::Cut() {
+
+	// truncate start values to current value
+	float pos = min( this->time / this->duration, 1.0f );
 	size_t np = this->properties.size();
 	size_t ns = startValues.size();
 	size_t ne = endValues.size();
+	if ( ns < np ) startValues.resize( np );
 	for ( size_t i = 0; i < np; i++ ){
-		string& prop = this->properties[ i ];
-		float fromVal = ( i < ns ? startValues[ i ] : 0 );
+		float fromVal = startValues[ i ];
 		float toVal = ( i < ne ? endValues[ i ] : 0 );
-		float value = fromVal;
-		
-		// transition using easing func
-		switch ( easingFunc ) {
+		startValues[ i ] = fromVal + ( toVal - fromVal ) * Tween::Ease( easeType, easeFunc, pos );
+	}
+	
+	// clip time
+	duration -= time;
+	time = 0;
+	
+}
+
+/* MARK:	-				Easing
+ -------------------------------------------------------------------- */
+
+
+float _bounceEaseOut(float p) {
+	if(p < 4/11.0) {
+		return (121 * p * p)/16.0;
+	} else if(p < 8/11.0) {
+		return (363/40.0 * p * p) - (99/10.0 * p) + 17/5.0;
+	} else if(p < 9/10.0) {
+		return (4356/361.0 * p * p) - (35442/1805.0 * p) + 16061/1805.0;
+	} else {
+		return (54/5.0 * p * p) - (513/25.0 * p) + 268/25.0;
+	}
+}
+
+float Tween::Ease( Tween::EasingType type, Tween::EasingFunc func, float p ) {
+	
+	// no easing = linear
+	if ( type == EaseNone || func == EaseLinear ) return p;
+	
+	// EASE IN
+	if ( type == EaseIn ) {
+		switch ( func ) {
+			case EaseSine: return sin((p - 1) * M_PI_2) + 1;
+			case EaseQuad: return p * p;
+			case EaseCubic: return p * p * p;
+			case EaseQuart: return p * p * p * p;
+			case EaseQuint: return p * p * p * p * p;
+			case EaseCirc: return 1 - sqrt(1 - (p * p));
+			case EaseExpo: return (p == 0.0) ? p : pow(2, 10 * (p - 1));
+			case EaseBack: return p * p * p - p * sin(p * M_PI);
+			case EaseElastic: return sin(13 * M_PI_2 * p) * pow(2, 10 * (p - 1));
+			default: return 1 - _bounceEaseOut(1 - p);
+		}
+	// EASE OUT
+	} else if ( type == EaseOut ) {
+		float f = 0;
+		switch ( func ) {
+			case EaseSine: return sin(p * M_PI_2);
+			case EaseQuad: return -(p * (p - 2));
+			case EaseCubic: f = (p - 1); return f * f * f + 1;
+			case EaseQuart: f = (p - 1); return f * f * f * (1 - p) + 1;
+			case EaseQuint: f = (p - 1); return f * f * f * f * f + 1;
+			case EaseCirc: return sqrt((2 - p) * p);
+			case EaseExpo: return (p == 1.0) ? p : 1 - pow(2, -10 * p);
+			case EaseBack: f = (1 - p); return 1 - (f * f * f - f * sin(f * M_PI));
+			case EaseElastic: return sin(-13 * M_PI_2 * (p + 1)) * pow(2, -10 * p) + 1;
 			default:
-				value = fromVal + ( toVal - fromVal ) * pos;
-				break;
-			
+				if(p < 4/11.0) {
+					return (121 * p * p)/16.0;
+				} else if(p < 8/11.0) {
+					return (363/40.0 * p * p) - (99/10.0 * p) + 17/5.0;
+				} else if(p < 9/10.0) {
+					return (4356/361.0 * p * p) - (35442/1805.0 * p) + 16061/1805.0;
+				}
+				return (54/5.0 * p * p) - (513/25.0 * p) + 268/25.0;
 		}
 		
-		// apply final value
-		script.SetProperty( prop.c_str(), ArgValue( value ), this->target );
-		
+	// EASE IN OUT
+	} else {
+		float f = 0;
+		switch ( func ) {
+			case EaseSine: return 0.5 * (1 - cos(p * M_PI));
+			case EaseQuad:
+				if(p < 0.5) {
+					return 2 * p * p;
+				}
+				return (-2 * p * p) + (4 * p) - 1;
+			case EaseCubic:
+				if(p < 0.5) {
+					return 4 * p * p * p;
+				}
+				f = ((2 * p) - 2);
+				return 0.5 * f * f * f + 1;
+			case EaseQuart:
+				if(p < 0.5) {
+					return 8 * p * p * p * p;
+				}
+				f = (p - 1);
+				return -8 * f * f * f * f + 1;
+			case EaseQuint:
+				if(p < 0.5) {
+					return 16 * p * p * p * p * p;
+				}
+				f = ((2 * p) - 2);
+				return  0.5 * f * f * f * f * f + 1;
+			case EaseCirc:
+				if(p < 0.5) {
+					return 0.5 * (1 - sqrt(1 - 4 * (p * p)));
+				}
+				return 0.5 * (sqrt(-((2 * p) - 3) * ((2 * p) - 1)) + 1);
+			case EaseExpo:
+				if(p == 0.0 || p == 1.0) return p;
+				if(p < 0.5) return 0.5 * pow(2, (20 * p) - 10);
+				return -0.5 * pow(2, (-20 * p) + 10) + 1;
+			case EaseBack:
+				if(p < 0.5) {
+					f = 2 * p;
+					return 0.5 * (f * f * f - f * sin(f * M_PI));
+				} else {
+					f = (1 - (2*p - 1));
+					return 0.5 * (1 - (f * f * f - f * sin(f * M_PI))) + 0.5;
+				}
+			case EaseElastic:
+				if(p < 0.5) {
+					return 0.5 * sin(13 * M_PI_2 * (2 * p)) * pow(2, 10 * ((2 * p) - 1));
+				} else {
+					return 0.5 * (sin(-13 * M_PI_2 * ((2 * p - 1) + 1)) * pow(2, -10 * (2 * p - 1)) + 2);
+				}
+			default:
+				if(p < 0.5) {
+					return 0.5 * ( 1 - _bounceEaseOut(1 - p * 2) );
+				} else {
+					return 0.5 * _bounceEaseOut(p * 2 - 1) + 0.5;
+				}
+		}
 	}
-	
-	// dispatch end event
-	if ( pos >= 1 ) {
-		
-		Event event( EVENT_FINISHED );
-		event.scriptParams.AddObjectArgument( this->scriptObject );
-		this->CallEvent( event );
-		
-		// remove
-		return true;
-	}
-	
-	// keep going
-	return false;
-	
 }
 
 /* MARK:	-				Getters / Setters
  -------------------------------------------------------------------- */
 
 
+/// setter for property names
 void Tween::SetProperties( ArgValue val ) {
 	if ( val.type == TypeString ) {
 		// just one
@@ -197,6 +460,7 @@ void Tween::SetProperties( ArgValue val ) {
 	}
 }
 
+/// getter for property names
 ArgValue Tween::GetProperties() {
 	ArgValue val;
 	val.type = TypeArray;
@@ -207,6 +471,7 @@ ArgValue Tween::GetProperties() {
 	return val;
 }
 
+/// setter for start values
 void Tween::SetStartValues( ArgValue val ) {
 	float f = 0;
 	if ( val.toNumber( f ) ) {
@@ -233,6 +498,7 @@ void Tween::SetStartValues( ArgValue val ) {
 	}
 }
 
+/// getter for start values
 ArgValue Tween::GetStartValues() {
 	ArgValue val;
 	val.type = TypeArray;
@@ -243,6 +509,7 @@ ArgValue Tween::GetStartValues() {
 	return val;
 }
 
+/// setter for end values
 void Tween::SetEndValues( ArgValue val ) {
 	float f = 0;
 	if ( val.toNumber( f ) ) {
@@ -266,6 +533,7 @@ void Tween::SetEndValues( ArgValue val ) {
 	}
 }
 
+/// getter for end values
 ArgValue Tween::GetEndValues() {
 	ArgValue val;
 	val.type = TypeArray;
@@ -276,29 +544,84 @@ ArgValue Tween::GetEndValues() {
 	return val;
 }
 
+/// setter for .active property. Adds/removes this tween to global running tweens array, and protects/unprotects from garbage collection.
+void Tween::active( bool r ) {
+	if ( r != _active ) {
+		if ( r && !this->_canRun() ) return;
+		this->_active = r;
+		if ( r ) {
+			// restart if ended
+			if ( time >= duration ) time = 0;
+			activeTweens->insert( this );
+			script.ProtectObject( &this->scriptObject, true );
+		} else {
+			unordered_set<Tween*>::iterator it = activeTweens->find( this );
+			if( it != activeTweens->end() ) activeTweens->erase( it );
+			script.ProtectObject( &this->scriptObject, false );
+		}
+	}
+}
+
 
 /* MARK:	-				Process
  -------------------------------------------------------------------- */
 
 
-void Tween::running( bool r ) {
-	if ( r != _running ) {
-		this->_running = r;
-		if ( r ) {
-			activeTweens->insert( this );
-		} else {
-			unordered_set<Tween*>::iterator it = activeTweens->find( this );
-			if( it != activeTweens->end() ) activeTweens->erase( it );
-		}
+bool Tween::ProcessTween( float deltaTime, float unscaledDeltaTime ) {
+	
+	// remove if became invalid
+	if ( !this->_active || !_canRun() ) return true;
+	
+	// advance time
+	this->time += this->useUnscaledTime ? unscaledDeltaTime : deltaTime;
+	
+	// current position
+	float pos = min( this->time / this->duration, 1.0f );
+	
+	// use callback, if specified
+	if ( this->callback.funcObject ) {
+		ScriptArguments callbackArguments;
+		callbackArguments.AddObjectArgument( this->scriptObject );
+		this->callback.Invoke( callbackArguments );
 	}
+	
+	// for each property
+	size_t np = this->properties.size();
+	size_t ns = startValues.size();
+	size_t ne = endValues.size();
+	for ( size_t i = 0; i < np; i++ ){
+		string& prop = this->properties[ i ];
+		float fromVal = ( i < ns ? startValues[ i ] : 0 );
+		float toVal = ( i < ne ? endValues[ i ] : 0 );
+		float value = fromVal + ( toVal - fromVal ) * Tween::Ease( easeType, easeFunc, pos );
+		
+		// apply final value
+		script.SetProperty( prop.c_str(), ArgValue( value ), this->target );
+	}
+	
+	// dispatch end event
+	if ( pos >= 1 ) {
+		
+		Event event( EVENT_FINISHED );
+		event.scriptParams.AddObjectArgument( this->scriptObject );
+		this->CallEvent( event );
+		
+		// remove
+		return true;
+	}
+	
+	// keep going
+	return false;
+	
 }
 
+/// calls ProcessTween on all running tweens (called by game loop)
 void Tween::ProcessActiveTweens( float deltaTime, float unscaledDeltaTime ) {
 	// advance all active tweens
 	unordered_set<Tween*>::iterator it = activeTweens->begin();
 	while( it != activeTweens->end() ) {
-		if ( !(*it)->_running || (*it)->ProcessTween( deltaTime, unscaledDeltaTime ) ) {
-			(*it)->_running = false;
+		if ( !(*it)->_active || (*it)->ProcessTween( deltaTime, unscaledDeltaTime ) ) {
+			(*it)->_active = false;
 			it = activeTweens->erase( it );
 			continue;
 		}

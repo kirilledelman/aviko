@@ -909,6 +909,7 @@ public:
 /* MARK:	-				Function call
  -------------------------------------------------------------------- */
 	
+	
 	/// calls function on object with params
 	void CallFunction( void* funcObject, void* thisObject, ScriptArguments &args ){
 		jsval rval;

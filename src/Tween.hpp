@@ -15,12 +15,26 @@ public:
 	
 // processing
 	
-	typedef enum {
+	enum EasingType {
 		EaseNone,
 		EaseIn,
 		EaseOut,
 		EaseInOut
-	} EasingFunc;
+	};
+	
+	enum EasingFunc {
+		EaseLinear,
+		EaseSine,
+		EaseQuad,
+		EaseCubic,
+		EaseQuart,
+		EaseQuint,
+		EaseCirc,
+		EaseExpo,
+		EaseBack,
+		EaseElastic,
+		EaseBounce
+	};
 	
 	// all currently running tweens
 	static unordered_set<Tween*> *activeTweens;
@@ -33,10 +47,13 @@ public:
 	
 	// props
 	
-	bool _running = false;
-	void running( bool r );
-	bool running() { return _running; }
+	bool _active = false;
+	void active( bool r );
+	bool active() { return _active; }
 
+	// returns true if tween is viable to run
+	bool _canRun();
+	
 	bool useUnscaledTime = false;
 	
 	// tween target object
@@ -46,6 +63,9 @@ public:
 	vector<string> properties;
 	void SetProperties( ArgValue val );
 	ArgValue GetProperties();
+	
+	/// custom update function
+	ScriptFunctionObject callback;
 	
 	/// from
 	vector<float> startValues;
@@ -63,7 +83,14 @@ public:
 	/// current time
 	float time = 0;
 	
-	EasingFunc easingFunc = EaseNone;
+	/// easing
+	EasingType easeType = EasingType::EaseInOut;
+	EasingFunc easeFunc = EasingFunc::EaseSine;
+	
+	static float Ease( EasingType type, EasingFunc func, float p );
+	
+	void Reverse();
+	void Cut();
 	
 	// script
 	
