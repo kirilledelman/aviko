@@ -1,11 +1,11 @@
-CC=g++ -std=c++1y -O3 -Wno-invalid-offsetof -g \
-	-I./ -I/usr/include/mozjs-24 -I/usr/include/SDL2 -Isdl-gpu/lib/include \
+CC=g++ -std=c++1y -O3 -Wno-invalid-offsetof -DRASPBERRY_PI -g \
+	-I./ -I/usr/include/mozjs-24 -I/usr/include/SDL2 \
 	-I/usr/local/include -I/usr/include
 
 # Raspberry
 
 LIBS=-Wl,-Bstatic \
-	-Lsdl-gpu/lib -lSDL2_gpu \
+	-lSDL2_gpu \
 	-Wl,-Bdynamic \
 	-L/usr/lib/arm-linux-gnueabihf \
 	-lSDL2_image -lSDL2_ttf -lSDL2_mixer -lmozjs-24 \
@@ -17,7 +17,7 @@ OBJ_FILES := $(addprefix obj/,$(notdir $(CPP_FILES:.cpp=.o)))
 
 
 make: $(OBJ_FILES)
-	$(CC) $^ -o ./m $(LIBS)
+	$(CC) $^ -o ./aviko $(LIBS)
 
 obj/%.o: src/%.cpp
 	$(CC) -c -o $@ $<
@@ -48,6 +48,6 @@ obj/%.o: Box2D/Rope/%.cpp
 
 
 clean:
-	rm obj/*.o ./m
+	rm obj/*.o ./aviko
 
 

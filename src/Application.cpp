@@ -175,11 +175,13 @@ void Application::UpdateBackscreen() {
 	GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
 	GPU_LoadTarget( this->backScreen );
-	GPU_AddDepthBuffer( this->backScreen->target );
+	if ( !GPU_AddDepthBuffer( this->backScreen->target ) ){
+		printf( "Warning: depth buffer is not supported.\n" );
+	}
 	GPU_SetDepthTest( this->backScreen->target, true );
 	GPU_SetDepthWrite( this->backScreen->target, true );
-	this->backScreen->target->camera.near = -65535;
-	this->backScreen->target->camera.far = 65535;
+	this->backScreen->target->camera.z_near = -65535;
+	this->backScreen->target->camera.z_far = 65535;
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -258,23 +260,15 @@ void Application::InitClass() {
 				} else {
 					// replace current (last)
 					if ( current ) {
-						// unprotect and pop
-						script.ProtectObject( &current->scriptObject, false );
+						// pop
 						app.sceneStack.pop_back();
 					}
-					// protect and add at end
+					//  add at end
 					app.sceneStack.push_back( newScene );
-					script.ProtectObject( &newScene->scriptObject, true );
 				}
 				
 			// setting scene to null, removes all scenes from stack
 			} else {
-				// unprotect all
-				it = app.sceneStack.begin();
-				while ( it != end ) {
-					script.ProtectObject( &(*it)->scriptObject, false );
-					it++;
-				}
 				// clear
 				app.sceneStack.clear();
 			}
@@ -368,9 +362,8 @@ void Application::InitClass() {
 			app.sceneStack.push_back( newScene );
 		// not in stack
 		} else {
-			// protect and add at end
+			// add at end
 			app.sceneStack.push_back( newScene );
-			script.ProtectObject( &newScene->scriptObject, true );
 		}
 		
 		// generate event
@@ -409,12 +402,10 @@ void Application::InitClass() {
 					app.sceneStack.resize( i + 1 );
 					break;
 				}
-				script.ProtectObject( &s->scriptObject, false );
 			}
 		// pop one
 		} else if ( app.sceneStack.size() ){
 			newScene = app.sceneStack.back();
-			script.ProtectObject( &newScene->scriptObject, false );
 			app.sceneStack.pop_back();
 		}
 		
@@ -474,12 +465,12 @@ void Application::InitClass() {
 		return true;
 	}));
 	
-	script.DefineClassFunction
-	( "JSON", "load", true,
+	script.DefineGlobalFunction
+	( "load",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		string filename;
 		if ( !sa.ReadArguments( 1, TypeString, &filename ) ) {
-			script.ReportError( "usage: JSON.load( String filename )" );
+			script.ReportError( "usage: load( String filename )" );
 			return false;
 		}
 		// read file
@@ -500,8 +491,8 @@ void Application::InitClass() {
 	
 	// patched stringify function
 	ArgValue jsonStringify = script.GetClassProperty( "JSON", "stringify" );
-	script.DefineClassFunction
-	( "JSON", "stringify", true,
+	script.DefineGlobalFunction
+	( "stringify",
 	 static_cast<ScriptFunctionCallback>([jsonStringify](void*, ScriptArguments& sa ){
 		
 		// call modify stringify's params
@@ -523,13 +514,13 @@ void Application::InitClass() {
 		return true;
 	}));
 	
-	script.DefineClassFunction
-	( "JSON", "save", true,
+	script.DefineGlobalFunction
+	( "save",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		void *obj = NULL;
 		string filename;
 		if ( !sa.ReadArguments( 2, TypeObject, &obj, TypeString, &filename ) ) {
-			script.ReportError( "usage: JSON.save( Object obj, String filename )" );
+			script.ReportError( "usage: save( Object obj, String filename )" );
 			return false;
 		}
 		
@@ -651,6 +642,7 @@ void Application::InitClass() {
 	GameObject::InitClass();
 	Scene::InitClass();
 	Image::InitClass();
+	RigidBodyShape::InitClass();
 	Behavior::InitClass();
 	RenderBehavior::InitClass();
 	RenderBehavior::InitShaders();
@@ -677,6 +669,13 @@ void Application::GarbageCollect() {
 	printf( "GC performed\n" );
 }
 
+void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	// protect scenes stack
+	for ( size_t i = 0, ns = this->sceneStack.size(); i < ns; i++ ){
+		protectedObjects.push_back( &sceneStack[ i ]->scriptObject );
+	}
+}
+
 
 /* MARK:	-				Game loop
  -------------------------------------------------------------------- */
@@ -686,7 +685,9 @@ void Application::GarbageCollect() {
 void Application::GameLoop() {
 	
 	// load and run "main.js" script
-	script.Execute( scriptManager.Get( "/main.js" ) );
+	if ( !script.Execute( scriptManager.Get( "/main.js" ) ) ){
+		return;
+	}
 	
 	// add default "keyboard" controller to input
 	input.AddKeyboardController();

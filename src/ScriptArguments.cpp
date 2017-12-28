@@ -64,7 +64,7 @@ void ScriptArguments::ResizeArguments( int len ) {
 }
 void ScriptArguments::AddIntArgument( int val ){ this->args.emplace_back( val ); jsval jv; jv.setInt32( val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddBoolArgument( bool val ){ this->args.emplace_back( val ); jsval jv; jv.setBoolean( val ); this->funcArgs()->append( jv ); }
-void ScriptArguments::AddFloatArgument( float val ){ this->args.emplace_back( val ); jsval jv; jv.setDouble( val ); this->funcArgs()->append( jv ); }
+void ScriptArguments::AddFloatArgument( float val ){ this->args.emplace_back( val ); jsval jv; jv.setDouble( (double) val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddObjectArgument( void* val ){ this->args.emplace_back( val ); jsval jv; jv.setObjectOrNull( (JSObject*) val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddStringArgument( const char* val ){ this->args.emplace_back( val ); jsval jv; jv.setString( JS_NewStringCopyZ( script.js, val ) ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddArgument( ArgValue val ){ this->args.emplace_back( val ); this->funcArgs()->append( val.toValue() ); }
@@ -154,7 +154,7 @@ bool ScriptArguments::ReadArguments( int minRequired,
 	if ( args.size() < minRequired ) return false;
 	
 	// read args
-	if ( !args[ 0 ].get( value0, type0 ) ) return false;
+	if ( args.size() >= 1 && value0 != NULL && !args[ 0 ].get( value0, type0 ) ) return false;
 	if ( args.size() >= 2 && value1 != NULL && !args[ 1 ].get( value1, type1 ) ) return false;
 	if ( args.size() >= 3 && value2 != NULL && !args[ 2 ].get( value2, type2 ) ) return false;
 	if ( args.size() >= 4 && value3 != NULL && !args[ 3 ].get( value3, type3 ) ) return false;

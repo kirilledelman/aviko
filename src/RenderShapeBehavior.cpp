@@ -11,8 +11,14 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	// add scriptObject
 	script.NewScriptObject<RenderShapeBehavior>( this );
 	
+	// polypoints
+	this->polyPoints = new FloatVector( NULL );
+	
 	// add defaults
 	RenderBehavior::AddDefaults();	
+	
+	// shapes' opacity works best with normal
+	this->blendMode = GPU_BlendPresetEnum::GPU_BLEND_NORMAL;
 	
 	// read params
 	int pShape = 0;
@@ -108,7 +114,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 			}
 		} else if ( this->shapeType == Polygon ) { /// polygon between polyPoints (x,y pairs)
 			if ( pArray ) {
-				this->SetPoints( pArray );
+				this->polyPoints->Set( args->args[ 1 ] );
 			}
 		}
 		
@@ -154,6 +160,7 @@ void RenderShapeBehavior::InitClass() {
 	script.SetGlobalConstant( "SHAPE_ROUNDED_RECTANGLE", (int) ShapeType::RoundedRectangle );
 	script.SetGlobalConstant( "SHAPE_SECTOR", (int) ShapeType::Sector );
 	script.SetGlobalConstant( "SHAPE_TRIANGLE", (int) ShapeType::Triangle );
+	script.SetGlobalConstant( "SHAPE_CHAIN", (int) ShapeType::Chain );
 	
 	// properties
 	
@@ -229,12 +236,22 @@ void RenderShapeBehavior::InitClass() {
 
 	script.AddProperty<RenderShapeBehavior>
 	( "points",
-	 static_cast<ScriptArrayCallback>([](void *b, ArgValueVector* in ){ return ((RenderShapeBehavior*) b)->GetPoints(); }),
-	 static_cast<ScriptArrayCallback>([](void *b, ArgValueVector* in ){ ((RenderShapeBehavior*) b)->SetPoints( in ); return in; }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderShapeBehavior*) b)->polyPoints->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderShapeBehavior* rb = (RenderShapeBehavior*) b;
+		rb->polyPoints->Set( val );
+		return ArgValue( rb->polyPoints->scriptObject );
+	}),
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE );
 	
 }
 
+void RenderShapeBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	
+	// points vector
+	protectedObjects.push_back( &this->polyPoints->scriptObject );
+	
+}
 
 /* MARK:	-				UI
  -------------------------------------------------------------------- */
@@ -348,42 +365,12 @@ bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, flo
 		}
 	} else if ( shapeType == ShapeType::Polygon ) {
 	
-		return InsidePolygon( *outLocalX, *outLocalY, polyPoints.data(), (int) polyPoints.size() / 2 );
+		return InsidePolygon( *outLocalX, *outLocalY, polyPoints->vec.Data(), (int) polyPoints->vec.GetLength() / 2 );
 		
 	}
 	
 	return false;
 	
-}
-
-
-
-/* MARK:	-				Geometry
- -------------------------------------------------------------------- */
-
-
-/// returns .points as new ArgValueVector (delete it after using)
-ArgValueVector* RenderShapeBehavior::GetPoints() {
-	ArgValueVector* out = new ArgValueVector();
-	size_t np = this->polyPoints.size();
-	out->resize( np );
-	for ( size_t i = 0; i < np; i += 2 ) {
-		out->at( i ) = ArgValue( this->polyPoints[ i ] );
-		out->at( i + 1 ) = ArgValue( this->polyPoints[ i + 1 ] );
-	}
-	return out;
-}
-
-/// updates .points from ArgValueVector
-void RenderShapeBehavior::SetPoints( ArgValueVector *in ) {
-	size_t np = in ? in->size() : 0;
-	if ( np % 2 ) { np++; in->emplace_back( 0.f ); }
-	this->polyPoints.resize( np );
-	float fval = 0;
-	for ( size_t i = 0; i < np; i++ ) {
-		if ( !in->at( i ).toNumber(fval) ) fval = 0;
-		this->polyPoints.at( i ) = fval;
-	}
 }
 
 
@@ -507,9 +494,9 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			
 		case ShapeType::Polygon:
 			if ( behavior->filled ) {
-				GPU_PolygonFilled( target, (unsigned int) behavior->polyPoints.size() / 2, behavior->polyPoints.data(), color );
+				GPU_PolygonFilled( target, (unsigned int) behavior->polyPoints->vec.GetLength() / 2, behavior->polyPoints->vec.Data(), color );
 			} else {
-				GPU_Polygon( target, (unsigned int) behavior->polyPoints.size() / 2, behavior->polyPoints.data(), color );
+				GPU_Polygon( target, (unsigned int) behavior->polyPoints->vec.GetLength() / 2, behavior->polyPoints->vec.Data(), color );
 			}
 			break;
 		

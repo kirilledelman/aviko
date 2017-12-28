@@ -24,6 +24,8 @@
 #include <assert.h>
 #include <float.h>
 
+// #define NDEBUG
+
 #define B2_NOT_USED(x) ((void)(x))
 #if DEBUG && !defined(NDEBUG)
 #define b2Assert(A) assert(A)
@@ -94,7 +96,7 @@ typedef unsigned long long uint64;
 
 /// The maximum number of vertices on a convex polygon. You cannot increase
 /// this too much because b2BlockAllocator has a maximum object size.
-#define b2_maxPolygonVertices	8
+#define b2_maxPolygonVertices	16
 
 /// This is used to fatten AABBs in the dynamic tree. This allows proxies
 /// to move by a small amount without triggering a tree adjustment.
@@ -153,7 +155,7 @@ typedef unsigned long long uint64;
 /// This scale factor controls how fast overlap is resolved. Ideally this would be 1 so
 /// that overlap is removed in one time step. However using values close to 1 often lead
 /// to overshoot.
-#define b2_baumgarte				0.2f
+#define b2_baumgarte				0.5f
 #define b2_toiBaugarte				0.75f
 
 

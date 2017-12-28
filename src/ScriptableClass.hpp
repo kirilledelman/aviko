@@ -363,6 +363,12 @@ public:
 		}
 		
 	}
+	
+	// trace ops
+	
+	virtual void TraceProtectedObjects( vector<void**> &protectedObjects ) {
+		// push &scriptObject of each child object that needs to be protected on vector
+	}
 
 	// async, debounce
 	

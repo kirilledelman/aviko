@@ -304,11 +304,12 @@ GPU_Image* Image::_MakeImage() {
 		GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
 		GPU_SetSnapMode( img, GPU_SNAP_NONE );
 		GPU_LoadTarget( img );
+		GPU_AddDepthBuffer( img->target );
 		GPU_SetDepthTest( img->target, true );
 		GPU_SetDepthWrite( img->target, true );
 		GPU_AddDepthBuffer( img->target );
-		img->target->camera.near = -65535;
-		img->target->camera.far = 65535;
+		img->target->camera.z_near = -65535;
+		img->target->camera.z_far = 65535;
 		img->anchor_x = img->anchor_y = 0;
 		this->_sizeDirty = false;
 	}

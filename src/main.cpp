@@ -8,8 +8,6 @@ Application app;
 // application entry point
 int main( int argc, char* args[] ) {
 	
-	printf( "#### %s\n", args[ 0 ] );
-	
 	// if given an argument, use it as a path to base folder
 	if ( argc >= 2 && strlen( args[ 1 ] ) > 0 ) {
 		char resolved[MAXPATHLEN];

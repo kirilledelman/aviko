@@ -222,7 +222,7 @@ void Sound::Play( int loops ) {
 			Mix_ResumeMusic();
 		}
 		
-		// prevent this sound from being garbage collected
+		// prevent this sound from being garbage collected while playing
 		script.ProtectObject( &this->scriptObject, true );
 		
 		// flag

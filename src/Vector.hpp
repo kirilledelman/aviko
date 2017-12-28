@@ -25,7 +25,7 @@ public:
 		}
 		return out;
 	}
-	T GetElement( int pos ) {
+	T GetElement( size_t pos ) {
 		if ( pos < vec.size() ) return vec[ pos ];
 		return defaultValue;
 	}
@@ -40,11 +40,18 @@ public:
 	//void Slice( int pos, int length, ArgValue& returned );
 	//void Concat( ScriptArguments& additions, ArgValue& returned );
 
+	void Copy( TypedVector<T>& other ) {
+		vec = other.vec;
+	}
+	
 	// init/destroy
 	TypedVector() { };
 	~TypedVector() { };
 	
 };
+
+class FloatVector;
+typedef function<void (FloatVector*)> FloatVectorCallback;
 
 /// base class for vector container
 class FloatVector : public ScriptableClass {
@@ -52,6 +59,17 @@ public:
 	
 	// container
 	TypedVector<float> vec;
+	
+	bool notify = false;
+	FloatVectorCallback callback = NULL;
+	
+	// ops
+	
+	void Notify();
+	
+	void ToVec2Vector( vector<b2Vec2>& points, float multiplier=WORLD_TO_BOX2D_SCALE );
+	
+	bool Set( ArgValue& val );
 	
 	// scripting
 	

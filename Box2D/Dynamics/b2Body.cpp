@@ -336,7 +336,7 @@ void b2Body::ResetMassData()
 	if (m_I > 0.0f && (m_flags & e_fixedRotationFlag) == 0)
 	{
 		// Center the inertia about the center of mass.
-		m_I -= m_mass * b2Dot(localCenter, localCenter);
+		m_I = fmax( 0.00001f, m_I - m_mass * b2Dot(localCenter, localCenter) );
 		b2Assert(m_I > 0.0f);
 		m_invI = 1.0f / m_I;
 
@@ -428,6 +428,7 @@ void b2Body::SetTransform(const b2Vec2& position, float32 angle)
 		return;
 	}
 
+	b2Assert( !(position.x != position.x  || position.y != position.y) );
 	m_xf.q.Set(angle);
 	m_xf.p = position;
 	m_xf0 = m_xf;

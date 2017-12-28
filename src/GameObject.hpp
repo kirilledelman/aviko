@@ -88,7 +88,10 @@ public:
 // transformation
 	
 	/// shortcut to rigid body behavior, if attached
-	RigidBodyBehavior* body = NULL;
+	BodyBehavior* body = NULL;
+	
+	/// returns true if theres a physics body in the world
+	bool HasBody();
 	
 	/// shortcut to rendering behavior
 	RenderBehavior* render = NULL;
@@ -189,6 +192,9 @@ public:
 
 	/// used for serialization
 	ArgValueVector* SetChildrenVector( ArgValueVector* in );
+	
+	/// garbage collection callback
+	void TraceProtectedObjects( vector<void **> &protectedObjects );
 	
 // render
 	

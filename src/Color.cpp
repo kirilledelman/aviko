@@ -1,5 +1,6 @@
 #include "Color.hpp"
 
+
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
 
@@ -316,15 +317,12 @@ bool Color::Set( ScriptArguments &sa ) {
 		
 	} else if ( sa.args.size() >= 3 ) {
 		
-		int R,G,B,A = this->a * 255;
-		// ints
-		if ( sa.args[ 0 ].type == TypeInt && sa.ReadArguments( 3, TypeInt, &R, TypeInt, &G, TypeInt, &B, TypeInt, &A ) ) {
-			this->SetInts( R, G, B, A );
-			
-		// floats
-		} else if ( sa.args[ 0 ].type == TypeFloat && sa.ReadArguments( 3, TypeFloat, &this->r, TypeFloat, &this->g, TypeFloat, &this->b, TypeFloat, &this->a ) ) {
-			this->SetFloats( this->r, this->g, this->b, this->a );
-		}
+		float _r = 0, _g = 0, _b = 0, _a = 1;
+		sa.args[ 0 ].toNumber( _r );
+		sa.args[ 1 ].toNumber( _g );
+		sa.args[ 2 ].toNumber( _b );
+		if ( sa.args.size() >= 4 ) sa.args[ 3 ].toNumber( _a );
+		this->SetFloats( _r, _g, _b, _a );
 		
 	} else return false;
 	

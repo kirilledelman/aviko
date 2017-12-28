@@ -1,12 +1,13 @@
 #ifndef RigidBodyBehavior_hpp
 #define RigidBodyBehavior_hpp
 
-#include "Behavior.hpp"
+#include "BodyBehavior.hpp"
+#include "RigidBodyShape.hpp"
 
 class Scene;
 
 /// Box2D body behavior
-class RigidBodyBehavior : public Behavior {
+class RigidBodyBehavior : public BodyBehavior {
 public:
 	
 	// init, destroy
@@ -17,24 +18,62 @@ public:
 	/// box2d body attached to this GameObject
 	b2Body* body = NULL;
 	
+	/// body type
+	b2BodyType bodyType = b2BodyType::b2_dynamicBody;
+	
+	/// joints attached
+	/// TODO
+	
+	/// shapes
+	vector<RigidBodyShape*> shapes;
+	
+	/// mass and center of mass
+	b2MassData massData;
+	
+	bool fixedRotation = false;
+	
+	bool canSleep = true;
+	
+	bool bullet = false;
+	
+	float angularDamping = 0.1;
+	
+	float linearDamping = 0.1;
+	
+	b2Vec2 velocity = { 0, 0 };
+	float angularVelocity = 0;
+	
+	b2Vec2 GetVelocity();
+	void SetVelocity( b2Vec2 );
+	float GetAngularVelocity();
+	void SetAngularVelocity( float );
+	void Impulse( b2Vec2 impulse, b2Vec2 point );
+	void AngularImpulse( b2Vec2 impulse, b2Vec2 point );
+	
 // scripting
 	
 	/// registers class for scripting
 	static void InitClass();
 	
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
+	
+// shapes
+	
+	/// replace all shapes with one or NULL
+	void ReplaceShapes( RigidBodyShape* rbs );
+	
+	// getter/setter for shapes array
+	ArgValueVector* GetShapesVector();
+	ArgValueVector* SetShapesVector( ArgValueVector* in );
+	
+// joints
+	
+	// TODO
+	
 // methods
 	
-	/// active callback
-	static void ActiveChanged( RigidBodyBehavior* behavior, GameObject* target, Event* event );
-	
-	/// added to scene or attached to gameObject callback
-	static void Attached( RigidBodyBehavior* behavior, GameObject* target, Event* event );
-	
-	/// removed from scene or detached from gameObject callback
-	static void Detached( RigidBodyBehavior* behavior, GameObject* target, Event* event );
-	
-	/// override Behavior active setter
-	bool active( bool a );
+	/// turns body on and off ( active switch )
+	void EnableBody( bool e );
 	
 	/// called after physics step on each body to sync position and rotation
 	void SyncObjectToBody();
@@ -54,9 +93,6 @@ public:
 	/// set body angle
 	void SetBodyAngle( float angleInRad );
 	
-	// overrides Behavior's version
-	bool SetGameObject( GameObject* go, int pos=-1 );
-	
 	/// construct and add body to scene->world
 	void AddBody( Scene* scene );
 	
@@ -65,6 +101,6 @@ public:
 	
 };
 
-SCRIPT_CLASS_NAME( RigidBodyBehavior, "RigidBody" );
+SCRIPT_CLASS_NAME( RigidBodyBehavior, "Body" );
 
 #endif /* RigidBodyBehavior_hpp */

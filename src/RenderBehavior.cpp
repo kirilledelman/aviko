@@ -262,7 +262,7 @@ void RenderBehavior::InitShaders() {
 	else if (index >= 15) limit = 3750;\n\
 	if ( stippleValue < limit ) discard;";
 
-	string readPixel = glsles ? "vec4 src = texture2D(tex, coord) * color;\n" : "vec4 src = texture(tex, coord) * color;\n";
+	string readPixel = glsles ? "vec4 src = texture2D(tex, coord);\n" : "vec4 src = texture(tex, coord);\n";
 	string readColor = "vec4 src = color;";
 	string features[ 8 ];
 	features[ SHADER_BASE ] = readColor;
@@ -292,8 +292,8 @@ void RenderBehavior::InitShaders() {
 			void main(void){\n\
 				vec2 coord = texCoord;\n\
 			%s\n\
-				src *= color;\n\
-				if ( src.a == 0 ) discard;\n\
+				src = src * color;\n\
+				if ( src.a == 0.0f ) discard;\n\
 				gl_FragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 		} else {
@@ -308,8 +308,8 @@ void RenderBehavior::InitShaders() {
 			void main(void){\n\
 				vec2 coord = texCoord;\n\
 			%s\n\
-				src *= color;\n\
-				if ( src.a == 0 ) discard;\n\
+				src = src * color;\n\
+				if ( src.a == 0.0f ) discard;\n\
 				fragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 	

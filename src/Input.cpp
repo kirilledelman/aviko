@@ -22,8 +22,6 @@ void Input::AddKeyboardController () {
 	// create blank one
 	Controller* kbd = new Controller( (SDL_Joystick*) NULL );
 	this->joysticks[ -9999 ] = kbd;
-	// protect controller from GC
-	script.ProtectObject( &kbd->scriptObject, true );
 	// fire event
 	Event event( EVENT_CONTROLLERADDED );
 	event.scriptParams.ResizeArguments( 0 );
@@ -223,7 +221,7 @@ void Input::InitClass() {
 		ArgValueVector* ret = new ArgValueVector();
 		size_t nj = app.input.joysticks.size();
 		ret->resize( nj );
-		JoystickMapIterator it = app.input.joysticks.begin();
+		JoystickMap::iterator it = app.input.joysticks.begin();
 		for( size_t i = 0; i < nj; i++ ) {
 			ArgValue &v = ret->at( i );
 			v.type = TypeObject;
@@ -319,7 +317,7 @@ void Input::InitClass() {
 		// joystick button
 		} else if ( index == KEY_JOY_BUTTON ) {
 			bool btnPressed = false;
-			JoystickMapIterator it;
+			JoystickMap::iterator it;
 			
 			// any joystick
 			if ( joyId == -1 ) {
@@ -342,7 +340,7 @@ void Input::InitClass() {
 		// hat direction
 		} else if ( index == KEY_JOY_HAT_X || index == KEY_JOY_HAT_Y ) {
 			float axisValue = 0;
-			JoystickMapIterator it;
+			JoystickMap::iterator it;
 			
 			// any joystick
 			if ( joyId == -1 ) {
@@ -365,7 +363,7 @@ void Input::InitClass() {
 		// axis
 		} else if ( index == KEY_JOY_AXIS ) {
 			float axisValue = 0;
-			JoystickMapIterator it;
+			JoystickMap::iterator it;
 			
 			// any joystick
 			if ( joyId == -1 ) {
@@ -398,6 +396,15 @@ void Input::InitClass() {
 	// set defaults
 	SDL_ShowCursor( this->showCursor );
 	SDL_CaptureMouse( (SDL_bool) this->captureMouse );
+}
+
+void Input::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	// add controllers
+	JoystickMap::iterator it = this->joysticks.begin(), end = this->joysticks.end();
+	while( it != end ) {
+		protectedObjects.push_back( &it->second->scriptObject );
+		it++;
+	}
 }
 
 
@@ -482,8 +489,6 @@ void Input::HandleEvent( SDL_Event& e ) {
 		SDL_JoystickID jid = SDL_JoystickInstanceID( jck );
 		Controller* joy = new Controller( jck );
 		this->joysticks[ jid ] = joy;
-		// protect controller from GC
-		script.ProtectObject( &joy->scriptObject, true );
 		// fire event
 		event.name = EVENT_CONTROLLERADDED;
 		event.behaviorParam = &e;
@@ -491,14 +496,14 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYDEVICEREMOVED ) {
-		Controller* joy = this->joysticks[ e.jdevice.which ];
+		JoystickMap::iterator it = this->joysticks.find( e.jdevice.which );
+		Controller* joy = it->second;
+		this->joysticks.erase( it );
 		event.name = EVENT_CONTROLLERREMOVED;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
 		CallEvent( event );
-		// unprotect controller from GC
-		script.ProtectObject( &joy->scriptObject, true );
 	} else if ( etype == SDL_JOYBUTTONDOWN ) {
 		event.name = EVENT_JOYDOWN;
 		event.behaviorParam = &e;
@@ -538,7 +543,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	}
 	
 	// pass to controllers
-	for ( JoystickMapIterator it = this->joysticks.begin(), end = this->joysticks.end(); it != end; it++ ) {
+	for ( JoystickMap::iterator it = this->joysticks.begin(), end = this->joysticks.end(); it != end; it++ ) {
 		(it->second)->HandleEvent( e );
 	}
 	

@@ -148,12 +148,14 @@ void RenderSpriteBehavior::InitClass() {
 	script.AddProperty<RenderSpriteBehavior>
 	( "width", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->width; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->width = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->width = val ); }),
+	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_LATE );
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "height", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->height; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->height = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->height = val ); }),
+	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_LATE );
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "flipX",

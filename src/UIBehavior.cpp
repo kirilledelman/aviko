@@ -340,7 +340,7 @@ void UIBehavior::CheckClipping() {
 void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 	float x = e->scriptParams.args[ 0 ].value.floatValue;
 	float y = e->scriptParams.args[ 1 ].value.floatValue;
-	float localX, localY;
+	float localX = 0, localY = 0;
 	bool inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
 	
 	// if clipped by RenderSprite/image+autoDraw, check if still in bounds
@@ -376,7 +376,7 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 	float x = e->scriptParams.args[ 1 ].value.floatValue;
 	float y = e->scriptParams.args[ 2 ].value.floatValue;
 	int btn = e->scriptParams.args[ 0 ].value.intValue;
-	float localX, localY;
+	float localX = 0, localY = 0;
 	bool inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
 	bool down = ( strcmp( e->name, EVENT_MOUSEDOWN ) == 0 );
 	
@@ -521,21 +521,4 @@ void UIBehavior::Detached( UIBehavior* behavior, GameObject* go, Event* e ){
 	behavior->scene = NULL;
 	
 }
-
-
-// prevents mouse event from going to objects clipped by RenderSprite with Image+autoDraw
-//void UIBehavior::MaybeClipMouseEvent( Event *e ) {
-//
-//	// if mouse if out of bounds and our gameObject is RenderSprite
-//	if ( this->gameObject->render && static_cast<RenderSpriteBehavior*>(this->gameObject->render) != nullptr ) {
-//		RenderSpriteBehavior* rsb = (RenderSpriteBehavior*) this->gameObject->render;
-//		// and this RenderSprite is rendering Image with autoDraw / direct child of this behavior
-//		if ( rsb->imageInstance && rsb->imageInstance->autoDraw && rsb->imageInstance->autoDraw->parent == this->gameObject ) {
-//			// clip mouse event
-//			e->skipObject = rsb->imageInstance->autoDraw;
-//		}
-//	}
-//	
-//}
-
 

@@ -139,15 +139,6 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			BehaviorEventCallback func = this->GetCallbackForEvent( EVENT_ATTACHED );
 			if ( func ) func( this, gameObject, &event );
 			
-			// gained a parent? protect us from GC
-			if ( !oldGameObject ) script.ProtectObject( &this->scriptObject, true );
-			
-		// no new gameobject - means we've definitely been removed from scene
-		} else {
-			
-			// unprotect us from GC
-			script.ProtectObject( &this->scriptObject, false );
-			
 		}
 		
 	}

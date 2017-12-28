@@ -1,14 +1,17 @@
-SDL_gpu has my dropbox path hardcoded
+Sensor collision - receives bad coordinates, normal
 
 
-RigidBody
-	RigidBodyShape class
-	body.addShape
-	body.getShape
-	body.removeShape
-	Joints etc.
 
-Change RenderShape points to FloatVector
+Collision filter
+
+Raycast
+Volume test
+
+Joints
+
+
+
+
 
 Demo project
 	Controller configurator
@@ -22,11 +25,23 @@ Nice to have
 
 =============================================
 
+.color
+.addColor properties - change setters to Value, accept 0xFF... integers 
+
+Transplant from parent to parent, maintain transform
+
+
+BodyShape
+.setCircle( radius, x, y );
+.setX___....
+
+
 Color
 	.tweenTo()
 
 
 Vector - other types besides Float
+*Vector classes can dispatch events on change, or be attached to Scriptable objects w handlers
 	.splice
 	.slice
 	.concat
@@ -40,9 +55,6 @@ Image
 save( pngpath )in /textures by default
 .base64 <-> string
 
-*Vector classes can dispatch events on change
-
-New SubClass can be intercepted + wired up in constructor ScriptHost hook
 
 Investigate/fix skewX,skewY on objects with bodies.
 
@@ -60,6 +72,8 @@ $( 'child/childname,childname,childname' ) -> [] grandchildren
 $( 'name/name/name' ) -> great-grandchild
 $( '../sibling' ) -> sibling named
 can extend later to filter by properties
+
+detect circular parenting
 
 
 
@@ -122,17 +136,13 @@ Building and dependencies
 
 SDL_gpu - compile from source:
 	git clone https://github.com/grimfang4/sdl-gpu.git sdl-gpu
-	use cmake to turn off building demos
+	use cmake to turn off building demos, and GLES3
 
-Pi:
+ORi/RPi:
 	CMakeLists.txt - disable all but OpenGL 1 base and OpenGLES 2.x renderer
 	cmake -G "Unix Makefiles"
 	make
 
-Mac:
-SDL_gpu linking:
-	included SDL_gpu.h is from sdl-gpu/lib/include, not from framework, and is linked to static library
-	SDL2_gpu.framework is needed to make "_glXXXX not found" go away.
 
 ---------------------------------------------
 

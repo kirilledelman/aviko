@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "RenderBehavior.hpp"
+#include "Vector.hpp"
 
 class RenderShapeBehavior: public RenderBehavior {
 public:
@@ -31,6 +32,8 @@ public:
 		RoundedRectangle,
 		/// polygon between polyPoints (x,y pairs)
 		Polygon,
+		// line sequence
+		Chain,
 		///
 		None
 	} ShapeType;
@@ -75,15 +78,18 @@ public:
 	float endAngle = 359.999;
 	
 	/// holds x,y point pairs for GPU_Polygon
-	vector<float> polyPoints;
+	FloatVector* polyPoints = NULL;
 	
 	/// line thickness
-	float lineThickness = 3;
+	float lineThickness = 2;
 		
 // scripting
 	
 	/// registers class for scripting
 	static void InitClass();
+	
+	// garbage collector
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
 	
 // methods
 	
@@ -92,12 +98,6 @@ public:
 	
 	/// overridden from RenderBehavior
 	bool IsScreenPointInside( float screenX, float screenY, float* outLocalX, float* outLocalY );
-	
-	/// returns .points as new ArgValueVector (delete it after using)
-	ArgValueVector* GetPoints();
-	
-	/// updates .points from ArgValueVector
-	void SetPoints( ArgValueVector* );
 	
 };
 

@@ -23,20 +23,22 @@ using namespace std;
 #include <SDL2_ttf/SDL_ttf.h>
 #include <SDL2_mixer/SDL_mixer.h>
 #include <SDL2_net/SDL_net.h>
+#include <SDL2_gpu.framework/Headers/SDL_gpu.h>
 #else
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_net.h>
+#include <SDL2/SDL_gpu.h>
+#include "SDL_opengles2_gl2.h"
 #endif
-
-// SDL gpu
-#include "SDL_gpu.h"
 
 // physics library
 #include <Box2D/Box2D.h>
 #define BOX2D_VELOCITY_ITERATIONS 5
 #define BOX2D_POSITION_ITERATIONS 5
+#define WORLD_TO_BOX2D_SCALE 0.1f
+#define BOX2D_TO_WORLD_SCALE 10.0f
 #define RAD_TO_DEG (180.0f / 3.1415f)
 #define DEG_TO_RAD (3.1415f / 180.0f)
 #define RAND() (((float) rand() / (RAND_MAX)) + 1)
@@ -103,10 +105,16 @@ int StringPositionLength( const char* str );
 #define KEY_MOUSE_WHEEL (SDL_NUM_SCANCODES + 6)
 #define KEY_MOUSE_WHEEL_X (SDL_NUM_SCANCODES + 7)
 
+// Physics events
+#define EVENT_TOUCH "touch"
+#define EVENT_UNTOUCH "untouch"
+
 // Misc events
 #define EVENT_FINISHED "finished"
 #define EVENT_RESIZED "resized"
+#define EVENT_AWAKE "awake"
 
+// additional blending mode
 #define GPU_BLEND_CUT_ALPHA 16
 
 // global forward declarations

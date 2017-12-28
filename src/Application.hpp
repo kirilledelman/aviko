@@ -28,6 +28,9 @@ public:
 	/// registers classes for scripting
 	void InitClass();
 	
+	/// used with garbage collection
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
+	
 // scene management
 	
 	/// current scene
@@ -64,12 +67,12 @@ public:
 	// (re) creates back buffer
 	void UpdateBackscreen();
 	
+	// callback to resize screen
 	void WindowResized( Sint32 newWidth, Sint32 newHeight );
 	
 // input
 	
 	Input input;
-	
 
 // resource managers
 	

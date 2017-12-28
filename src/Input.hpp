@@ -28,12 +28,13 @@ public:
 	
 	// Joystick info 
 	typedef unordered_map<SDL_JoystickID, Controller*> JoystickMap;
-	typedef unordered_map<SDL_JoystickID, Controller*>::iterator JoystickMapIterator;
 	JoystickMap joysticks;
 	
 // scripting
 	
 	void InitClass();
+	
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
 	
 	void AddKeyboardController();
 	

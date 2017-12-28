@@ -7,7 +7,7 @@
 #include "UIBehavior.hpp"
 #include "SceneDebugDraw.hpp"
 
-class Scene : public GameObject {
+class Scene : public GameObject, b2ContactListener {
 protected:
 	
 	/// instance of Box2D debug draw class
@@ -36,8 +36,32 @@ public:
 	/// Box2D world
 	b2World* world = NULL;
 	
+	b2Vec2 gravity;
+	
+	typedef function<void()> PhysicsEventCallback;
+	
+	vector<PhysicsEventCallback> physicsEvents;
+	
 	/// called at the top of the frame
 	void SimulatePhysics();
+	
+	/// Called when two fixtures begin to touch.
+	void BeginContact(b2Contact* contact);
+	
+	/// Called when two fixtures cease to touch.
+	void EndContact(b2Contact* contact);
+	
+	//virtual void BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact);
+	
+	// void EndContact(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 index);
+	
+	// void BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact);
+	
+	// void EndContact(b2ParticleSystem* particleSystem, int32 indexA, int32 indexB);
+	
+	// void PreSolve(b2Contact* contact, const b2Manifold* oldManifold);
+	
+	// void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse);
 	
 // rendering
 	

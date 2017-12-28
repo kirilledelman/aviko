@@ -5,6 +5,8 @@
 #include "ScriptArguments.hpp"
 #include "ScriptResource.hpp"
 
+class ScriptableClass;
+
 /* MARK:	-				Get/set callback types
  
  Different types of getter an setter callbacks, based on value types
@@ -79,13 +81,14 @@ private:
 		ScriptIndexCallback indexCallback;
 	};
 
-#define PROP_ENUMERABLE 0x01
-#define PROP_STATIC 	0x02
-#define PROP_SERIALIZED 0x04
-#define PROP_READONLY 	0x10
-#define PROP_NOSTORE 	0x20
-#define PROP_LATE	 	0x40
-
+#define PROP_ENUMERABLE (1 << 0)
+#define PROP_STATIC 	(1 << 1)
+#define PROP_SERIALIZED (1 << 2)
+#define PROP_READONLY 	(1 << 3)
+#define PROP_NOSTORE 	(1 << 4)
+#define PROP_EARLY	 	(1 << 5)
+#define PROP_LATE	 	(1 << 6)
+	
 	/// struct storing a getter and a setter for an class property
 	struct GetterSetter {
 		ScriptType type;
@@ -477,7 +480,7 @@ private:
 		ret = ret && !JS_IsExceptionPending( cx );
 		return ret;
 	}
-	
+
 	
 /* MARK:	-				Logging
  -------------------------------------------------------------------- */
@@ -525,7 +528,7 @@ private:
 		// construct object
 		ScriptArguments sa( &args );
 		CLASS* obj = new CLASS( &sa );
-		obj->scriptClassName = className;
+		obj->scriptClassName = cdef->jsc.name;
 		
 		// return its scriptObject
 		args.rval().set( OBJECT_TO_JSVAL( (JSObject*) obj->scriptObject ) );
@@ -643,6 +646,7 @@ public:
 		def->singleton = singleton;
 		def->jsc.name = def->className.c_str(),
 		def->jsc.finalize = (JSFinalizeOp) ScriptHost::Finalize<CLASS>;
+		def->jsc.trace = (JSTraceOp) ScriptHost::TraceScriptableClass<CLASS>;
 		def->jsc.getProperty = (JSPropertyOp) ScriptHost::PropGetter;
 		def->jsc.setProperty = (JSStrictPropertyOp) ScriptHost::PropSetter;
 		def->parent = ( def->parent = CDEF( string( parentClassName ? parentClassName : "ScriptableClass" ) ) ) == def ? NULL : def->parent;
@@ -886,7 +890,7 @@ public:
 	/// returns property of a constructor object
 	ArgValue GetClassProperty( const char* className, const char* propName ) {
 		JSAutoRequest req( this->js );
-		JSObject *class_constructor = NULL, *class_prototype = NULL;
+		JSObject *class_constructor = NULL;//, *class_prototype = NULL;
 		jsval val;
 		
 		// get constructor from the global object.
@@ -915,6 +919,10 @@ public:
 		jsval rval;
 		int argc;
 		jsval* params = args.GetFunctionArguments( &argc );
+		if ( JS_IsExceptionPending( this->js ) ){
+			printf( "Whaat!" );
+			return;
+		}
 		JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval );
 	}
 	
@@ -924,159 +932,18 @@ public:
 
 	
 	/// returns init object
-	ArgValue MakeInitObject( ArgValue& val ) {
-		// this will track of all objects already added
-		unordered_map<unsigned long,JSObject*> alreadySerialized;
-		return _MakeInitObject( val, alreadySerialized );
-	};
+	ArgValue MakeInitObject( ArgValue& val );
 	
 	/// populates property names
-	void GetPropertyNames( void* obj, unordered_set<string>& ret ) {
-		this->_GetPropertyNames( obj, ret );
-	}
+	void GetPropertyNames( void* obj, unordered_set<string>& ret );
 	
 	private:
-	// rrecursively construct init object
-	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized ) {
-		
-		// if value is an array
-		if ( val.type == TypeArray ) {
-			// replace each value with processed value
-			for ( size_t i = 0, ne = val.value.arrayValue->size(); i < ne; i++ ) {
-				(*val.value.arrayValue)[ i ] = _MakeInitObject( (*val.value.arrayValue)[ i ], alreadySerialized );
-			}
-			// return it
-			return val;
-		
-		// otherwise, if value is object
-		} else if ( val.type == TypeObject && val.value.objectValue != NULL ) {
-			
-			// check .serialized property
-			ArgValue serialized = GetProperty( "serialized", val.value.objectValue );
-			if ( serialized.type == TypeBool && serialized.value.boolValue ) return ArgValue();
-
-			// object
-			JSObject* obj = (JSObject*) val.value.objectValue;
-			
-			// if object is already serialized, return an object stub
-			unordered_map<unsigned long,JSObject*>::iterator it = alreadySerialized.find( (unsigned long) obj );
-			if ( it != alreadySerialized.end() ) {
-				// create stub object
-				JSObject* stub = JS_NewObject( this->js, NULL, NULL, NULL );
-				static char buf[16];
-				sprintf( buf, "%p", obj );
-				ArgValue objId( buf );
-				SetProperty( "__stub__", &objId, stub );
-				// make sure original object has id property
-				SetProperty( "__id__", &objId, it->second );
-				return stub;
-			}
-			
-			// get property names
-			unordered_set<string> properties;
-			ClassDef* cdef = this->_GetPropertyNames( obj, properties );
-			
-			// if ScriptableObject
-			if ( cdef ) {
-				// bail if reference to singleton class
-				if ( cdef->singleton ) return ArgValue( (void*) NULL );
-			}
-			
-			// otherwise, create blank object
-			JSObject* init = JS_NewObject( this->js, NULL, NULL, NULL );
-			
-			// add it to alreadySerialized
-			alreadySerialized[ (unsigned long) obj ] = init;
-			
-			// get classname
-			const char* className = NULL;
-			JSClass* clp = NULL;
-			
-			// if it's ScriptableObject
-			if ( cdef ) {
-				className = cdef->className.c_str();
-			// built-in object
-			} else if ( ( clp = JS_GetClass( obj ) ) && strcmp( clp->name, "Object" ) != 0 ) {
-				className = clp->name;
-				// TODO - if need to save built in objects like "Date", or "RegExp", can add props here to re-initialize them upon load
-			}
-
-			// add "__class__" property
-			if ( className ) {
-				SetProperty( "__class__", ArgValue( className ), init );
-			}
-
-			// add all values
-			unordered_set<string>::iterator p = properties.begin(), end = properties.end();
-			ArgValue prop;
-			while ( p != end ) {
-				prop = this->GetProperty( p->c_str(), obj );
-				SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized ), init );
-				p++;
-			}
-			
-			// return this new object
-			return ArgValue( (void*) init );
-			
-		}
-		
-		// otherwise return original value
-		return val;
 	
-	};
+	// recursively construct init object
+	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized );
 	
 	// places enumerable properties of given object, including all non-readonly props defined for scriptable class into given set. Returns ClassDef, if found.
-	ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL ) {
-		// add object's own properties first
-		JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) obj );
-		jsval propVal;
-		jsid propId;
-		while( JS_NextProperty( this->js, iterator, &propId ) && propId != JSID_VOID ) {
-			// convert each property to string
-			if ( JS_IdToValue( this->js, propId, &propVal ) ) {
-				JSString* str = JS_ValueToString( this->js, propVal );
-				char *buf = JS_EncodeString( this->js, str );
-				unsigned attrs = 0;
-				JSBool found = false;
-				// if property isn't read-only
-				if ( JS_GetPropertyAttributes( this->js, (JSObject*) obj, buf, &attrs, &found) && found && !( attrs & JSPROP_READONLY ) ) {
-					// add it to list
-					ret.emplace( buf );
-				}
-				JS_free( this->js, buf );
-			}
-		}
-
-		// if class def wasn't passed in
-		if ( !cdef ) {
-			// grab object's own class def
-			JSClass* clp = JS_GetClass( (JSObject*)obj );
-			cdef = CDEF( string(clp->name) );
-		}
-		
-		// if class def is found
-		if ( cdef ) {
-			// add properties listed in class def
-			GetterSetterMapIterator iter = cdef->getterSetter.begin(), iterEnd = cdef->getterSetter.end();
-			while( iter != iterEnd ) {
-				GetterSetter& gs = iter->second;
-				// if property is serialized
-				if ( gs.flags & PROP_SERIALIZED & ~PROP_READONLY) {
-					ret.emplace( iter->first.c_str() );
-				}
-				iter++;
-			}
-			
-			// if there's parent class, add that too and return result
-			if ( cdef->parent ) {
-				this->_GetPropertyNames( obj, ret, cdef->parent );
-				return cdef;
-			}
-			
-		}
-		
-		return cdef;
-	}
+	ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL );
 	
 	// used to fill out stubs when unserializing
 	struct _StubRef {
@@ -1086,249 +953,23 @@ public:
 		_StubRef( JSObject* o, string s, int i ) : object( o ), propName( s ), index( i ){};
 	};
 	
-	// used to fill out PROP_LATE properties when unserializing
-	struct _LateProp {
-		JSObject* object = NULL;
-		string propName;
-		jsval value;
-		_LateProp( JSObject* o, string s, jsval val ) : object( o ), propName( s ), value( val ){};
-	};
-	
 	public:
 	
 	/// unserialize obj using initObject
-	void* InitObject( void* initObj ) {
-		JSAutoRequest r( this->js );
-		
-		// populate this object
-		unordered_map<string, void*> map;
-		unordered_map<string, vector<_StubRef>> stubs;
-		vector<_LateProp> lateProps;
-		void* obj = _InitObject( NULL, initObj, &map, &stubs, &lateProps );
-		
-		// process stubs
-		unordered_map<string, vector<_StubRef>>::iterator it = stubs.begin();
-		while( it != stubs.end() ) {
-			// see if value is now available
-			unordered_map<string, void*>::iterator vit = map.find( it->first );
-			
-			// found
-			if ( vit != map.end() ) {
-				jsval objVal;
-				objVal.setObjectOrNull( (JSObject*) vit->second );
-				vector<_StubRef> &stubList = it->second;
-				for ( size_t i = 0, ns = stubList.size(); i < ns; i++ ) {
-					_StubRef &stub = stubList[ i ];
-					if ( stub.index == -1 ) {
-						JS_SetProperty( this->js, stub.object, stub.propName.c_str(), &objVal );
-					} else {
-						JS_SetElement( this->js, stub.object, stub.index, &objVal );
-					}
-				}
-			} else {
-				printf("%s not found during deserialization\n", it->first.c_str() );
-			}
-			it++;
-		}
-		
-		// set late properties in reverse order
-		for( int i = (int) lateProps.size() - 1; i >= 0; i-- ){
-			_LateProp &lp = lateProps[ i ];
-			JS_SetProperty( this->js, (JSObject*) lp.object, lp.propName.c_str(), &lp.value );
-		}
-		return obj;
-		
-	}
+	void* InitObject( void* initObj );
 	
 	private:
 	void* _InitObject( void* obj, void* initObj,
 					  unordered_map<string, void*> *alreadyInitialized,
 					  unordered_map<string, vector<_StubRef>> *stubs,
-					  vector<_LateProp> *lateProps ){
-
-		string stubName, className;
-
-		// if obj is null, this function was called from Object.instantiate(), and obj needs to be created first as initObj[__class__]
-		if ( !obj ) {
-			if ( _IsInitObject( initObj, className ) ) {
-				obj = NewObject( className.c_str() );
-			} else {
-				obj = NewObject();
-			}
-		}
-		
-		// add this object to alreadyInitialized ( if it has __id__ property )
-		_AddToAlreadyInitialized( obj, initObj, alreadyInitialized );
-		
-		// check if object is array or regular object
-		bool isArray = JS_IsArrayObject( this->js, (JSObject*) obj );
-		
-		uint32_t length = 0;
-		JSObject* iterator = NULL;
-		
-		// iterate over initObj properties
-		if ( isArray ) {
-			JS_GetArrayLength( this->js, (JSObject*) initObj, &length );
-		} else {
-			iterator = JS_NewPropertyIterator( this->js, (JSObject*) initObj );
-		}
-		
-		jsid propId;
-		jsval propVal;
-		uint32_t propIndex = 0;
-		char *propName = NULL;
-		while( true ) {
-
-			// array
-			if ( isArray ) {
-				
-				// check end condition
-				if ( propIndex + 1 > length ) break;
-				
-			// object
-			} else {
-				
-				// check end condition
-				if ( !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
-				
-				// convert property to string
-				if ( !JS_IdToValue( this->js, propId, &propVal ) ) continue;
-				
-				// convert property name to string
-				JSString* str = JS_ValueToString( this->js, propVal );
-				propName = JS_EncodeString( this->js, str );
-				size_t propLen = strlen( propName );
-				propIndex = 0;
-				// skip __special_properties__
-				if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
-			}
-			
-			// get value
-			ArgValue val = isArray ? GetElement( propIndex, initObj ) : GetProperty( propName, initObj );
-			
-			// check for late property
-			bool isLateProp = false;
-			if ( !isArray ) {
-				ClassDef* cdef = CDEF( className.c_str() );
-				if ( cdef ) {
-					GetterSetterMapIterator it = cdef->getterSetter.find( propName );
-					if ( it != cdef->getterSetter.end() ) {
-						isLateProp = (it->second.flags & PROP_LATE);
-					}
-				}
-			}
-
-			// value is an object
-			if ( val.type == TypeObject ) {
-				
-				// check if it's a stub first
-				if ( _IsStub( val.value.objectValue, stubName ) ){
-					
-					// add to stubs list
-					vector<_StubRef> &stubList = (*stubs)[ stubName ];
-					if ( propName )
-						stubList.emplace_back( (JSObject*) obj, string( propName ), -1 );
-					else
-						stubList.emplace_back( (JSObject*) obj, string(""), propIndex );
-					// set to null
-					propVal.setNull();
-					
-				// otherwise, if it's an init object
-				} else if ( _IsInitObject( val.value.objectValue, className ) ) {
-					
-					JSObject* newObject = (JSObject*) NewObject( className.c_str() );
-					if ( newObject ) _InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, lateProps );
-					propVal.setObjectOrNull( newObject );
-					
-				// regular object
-				} else if ( val.value.objectValue ){
-					
-					// construct a blank object
-					JSObject* newObject = JS_NewObject( this->js, NULL, NULL, NULL);
-					// populate it, recursively
-					_InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, lateProps );
-					// will set this new object
-					propVal.setObjectOrNull( newObject );
-					
-				// null value
-				} else {
-					propVal.setNull();
-				}
-				
-			// value is an array
-			} else if ( val.type == TypeArray ) {
-				
-				// create new array object
-				JSObject* newObject = JS_NewArrayObject( this->js, 0, &propVal );
-				// populate it, recursively
-				_InitObject( newObject, val.arrayObject, alreadyInitialized, stubs, lateProps );
-				uint32_t len = 0;
-				JS_GetArrayLength( this->js, newObject, &len );
-				// will set this new object
-				propVal.setObjectOrNull( newObject );
-				
-			// simple, just copy prop
-			} else {
-				propVal = val.toValue();
-			}
-			
-			// propVal contains our value
-			
-			// late property?
-			if ( isLateProp ){
-				lateProps->emplace_back( (JSObject*) obj, string( propName ), propVal );
-			// assign property
-			} else if ( isArray ) {
-				JS_SetElement( this->js, (JSObject*)obj, propIndex, &propVal );
-				propIndex++;
-			} else if( propName ){
-				JS_SetProperty( this->js, (JSObject*)obj, propName, &propVal );
-			}
-			
-			// release propName
-			if ( !isArray && propName ) JS_free( this->js, propName );
-			
-		}
-		return obj;
-		
-	}
+					  vector<ScriptableClass*> *awakeList );
 	
-	bool _IsInitObject( void *obj, string& className ) {
-		jsval hasClass;
-		JS_GetProperty( this->js, (JSObject*) obj, "__class__", &hasClass );
-		if ( JSVAL_IS_STRING( hasClass ) ) {
-			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( hasClass ) );
-			className = buf;
-			JS_free( this->js, (void*) buf );
-			return true;
-		}
-		return false;
-	}
+	bool _IsInitObject( void *obj, string& className );
 	
-	bool _IsStub( void *obj, string& stubName ) {
-		jsval stubVal;
-		JS_GetProperty( this->js, (JSObject*) obj, "__stub__", &stubVal );
-		if ( JSVAL_IS_STRING( stubVal ) ) {
-			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( stubVal ) );
-			stubName = buf;
-			JS_free( this->js, (void*) buf );
-			return true;
-		}
-		return false;
-	}
+	bool _IsStub( void *obj, string& stubName );
 	
-	void _AddToAlreadyInitialized( void *obj, void* initObj, unordered_map<string, void*> *alreadyInitialized ) {
-		jsval idVal;
-		if ( JS_IsArrayObject( this->js, (JSObject*) obj ) ) return;
-		JS_GetProperty( this->js, (JSObject*) initObj, "__id__", &idVal );
-		if ( JSVAL_IS_STRING( idVal ) ) {
-			char* buf = JS_EncodeString( this->js, JSVAL_TO_STRING( idVal ) );
-			string idName = buf;
-			JS_free( this->js, (void*) buf );
-			(*alreadyInitialized)[ idName ] = obj;
-			printf( "%s added to map.\n", idName.c_str() );
-		}
-	}
+	void _AddToAlreadyInitialized( void *obj, void* initObj, unordered_map<string, void*> *alreadyInitialized );
+	
 	public:
 	
 	
@@ -1496,6 +1137,7 @@ public:
 		JSAutoRequest req( this->js );
 		// find classDef
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		instance->scriptClassName = classDef->jsc.name;
 		// add
 		instance->scriptObject = JS_NewObject( this->js, &classDef->jsc, classDef->proto, NULL );
 		JS_SetPrivate( (JSObject*) instance->scriptObject, instance );
@@ -1526,6 +1168,21 @@ public:
 /* MARK:	-				Garbage collection
  -------------------------------------------------------------------- */
 
+	
+	template<class CLASS>
+	static void TraceScriptableClass( JSTracer *trc, JSObject *obj ) {
+		// ask instance which objects should be protected from GC
+		vector<void**> protectedObjects;
+		CLASS* instance = script.GetInstance<CLASS>( obj );
+		if ( !instance ) return;
+		instance->TraceProtectedObjects( protectedObjects );
+		
+		// protect them
+		for ( size_t i = 0, np = protectedObjects.size(); i < np; i++ ){
+			JS_CallObjectTracer( trc, (JSObject**) protectedObjects.at( i ), "" );
+		}
+	}
+	
 	/// protect / release script object from garbage collecton
 	void ProtectObject( void ** obj, bool protect ) {
 		
@@ -1544,6 +1201,7 @@ public:
 		// call garbage collection in Spidermonkey
 		JS_GC( this->jsr );
 	}
+	
 	
 /* MARK:	-				Script execution & JSON
  -------------------------------------------------------------------- */
@@ -1565,7 +1223,11 @@ public:
 		
 		// make sure it's valid
 		if ( !scriptResource || scriptResource->error ) {
-			printf( "Failed to execute %s - script isn't compiled.\n", scriptResource->key.c_str() );
+			if ( scriptResource->error == ERROR_COMPILE ) {
+				printf( "Failed to execute %s - script isn't compiled.\n", scriptResource->key.c_str() );
+			} else if ( scriptResource->error == ERROR_NOT_FOUND ){
+				printf( "Script %s not found.\n", scriptResource->key.c_str() );
+			}
 			return false;
 		}
 		
