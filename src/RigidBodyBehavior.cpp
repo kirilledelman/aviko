@@ -48,7 +48,7 @@ RigidBodyBehavior::~RigidBodyBehavior() {
 void RigidBodyBehavior::InitClass() {
 	
 	// register class
-	script.RegisterClass<RigidBodyBehavior>( "Behavior" );
+	script.RegisterClass<RigidBodyBehavior>( "BodyBehavior" );
 	
 	// constants
 	

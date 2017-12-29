@@ -33,7 +33,36 @@ BodyBehavior::~BodyBehavior() { };
 
 void BodyBehavior::InitClass() {
 	
-	// nothing for now
+	// register class
+	script.RegisterClass<BodyBehavior>( "Behavior", true );
+	
+	// properties
+	
+	script.AddProperty<BodyBehavior>
+	("category", //
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		ArgValue ret;
+		BodyBehavior::BitsToValue( ((BodyBehavior*) p)->categoryBits, ret );
+		return ret;
+	 }),
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		((BodyBehavior*) p)->categoryBits = BodyBehavior::ValueToBits( val );
+		return val;
+	 }));
+	
+	script.AddProperty<BodyBehavior>
+	("mask", //
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		ArgValue ret;
+		BodyBehavior::BitsToValue( ~((BodyBehavior*) p)->maskBits, ret );
+		return ret;
+	}),
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		((BodyBehavior*) p)->maskBits = ~BodyBehavior::ValueToBits( val );
+		return val;
+	}));
+	
+	// functions
 	
 }
 
@@ -97,3 +126,64 @@ void BodyBehavior::ActiveChanged( BodyBehavior* behavior, GameObject* target, Ev
 	behavior->EnableBody( behavior->_active && behavior->gameObject->active() );
 	
 }
+
+
+/* MARK:	-				Masking helpers
+ -------------------------------------------------------------------- */
+
+
+// converts int, or array of ints to flags integer
+void BodyBehavior::BitsToValue( uint32 v, ArgValue& ret ) {
+	// zero is zero
+	if ( v == 0 ) {
+		ret.type = TypeInt;
+		ret.value.intValue = 0;
+		return;
+	}
+	
+	// make array
+	ret.type = TypeArray;
+	ret.value.arrayValue = new ArgValueVector();
+	
+	// loop over bits, add set bit numbers to array
+	for ( uint32 i=1, iter=1; iter <= 32; i <<= 1, iter++ ){
+		if ( v & i ) ret.value.arrayValue->emplace_back( (int) iter );
+	}
+	
+	// single, or no value?
+	size_t numBits = ret.value.arrayValue->size();
+	if ( numBits == 1 ) {
+		int val = ( numBits == 1 ? ret.value.arrayValue->at( 0 ).value.intValue : 0 );
+		delete ret.value.arrayValue;
+		ret.type = TypeInt;
+		ret.value.intValue = val;
+	}
+}
+
+// converts flags or mask to value array or single int
+uint32 BodyBehavior::ValueToBits( ArgValue& value ) {
+
+	// check for invalid set, or 0
+	int x = 0;
+	if ( (value.type != TypeArray && !value.toInt( x )) || x <= 0 || x > 32 ) {
+		return 0;
+	}
+	
+	// a single number
+	if ( value.type != TypeArray ) {
+		return 1 << ( x - 1 );
+	}
+	
+	// array
+	uint32 ret = 0;
+	for ( size_t i = 0, na = value.value.arrayValue->size(); i < na; i++ ){
+		if ( value.toInt( x ) && x > 0 && x <= 32 ) {
+			ret |= ( 1 << ( x - 1 ) );
+		}
+	}
+	return ret;
+	
+}
+
+
+

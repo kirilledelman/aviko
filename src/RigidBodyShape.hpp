@@ -21,6 +21,10 @@ public:
 	/// re-creates fixture, if dirty, and have body
 	void UpdateFixture();
 	
+	// override body collision settings
+	uint32 categoryBits = 0x0;
+	uint32 maskBits = 0xFFFFFFFF;
+	
 	/// params
 	float density = 5;
 	float friction = 0.25;

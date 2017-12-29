@@ -68,9 +68,14 @@ function m3( btn ) {
 			log( "touch", a.body.gameObject.name, b.body.gameObject.name );
 			
 			var tmp = app.scene.addChild();
-			tmp.render = new RenderShape( SHAPE_LINE );
-			tmp.render.x = nx * 10;
-			tmp.render.y = ny * 10;
+			if ( nx == 0 && ny == 0 ){
+				tmp.render = new RenderShape( SHAPE_CIRCLE );
+				tmp.render.radius = 2;
+			} else {
+				tmp.render = new RenderShape( SHAPE_LINE );
+				tmp.render.x = nx * 10;
+				tmp.render.y = ny * 10;
+			}
 			tmp.render.color.set( 1, 0, 0 );
 			tmp.x = x;
 			tmp.y = y;
@@ -104,7 +109,9 @@ for ( var i = 0; i < 10; i++ ){
 	o.render.pivotX = o.render.pivotY = 0;
 	o.x = 10 + i * 30;
 	o.y = 50;
-	// o.angle = 90 * Math.random();
+	if ( i % 2 ) {
+		o.angle = 45;
+	}
 	o.ui = new UI();
 	o.ui.mouseOver = m0;
 	o.ui.mouseOut = m1;
@@ -134,8 +141,21 @@ a.body.shape.sensor = true;
 a.body.shape.type = SHAPE_RECTANGLE;
 a.body.shape.width = app.windowWidth / 2;
 a.body.shape.height = 20;
+a.body.category = 2;
 a.x = 0; a.y = app.windowHeight / 2 - a.body.shape.height - 100;
 a.name = "Sensor";
 
-input.keyDown = function () {
-}
+var lx = 0, ly = 0;
+input.on( 'mouseDown', function ( btn, x, y ) {
+		 var trace = app.scene.addChild();
+		 trace.setTransform( lx, ly );
+		 trace.render = new RenderShape( SHAPE_LINE );
+		 trace.render.x = x - trace.x;
+		 trace.render.y = y - trace.y;
+		 trace.async( function(){ this.parent = null; }, 1 );
+		 
+		 var res = app.scene.rayCast( lx, ly, trace.render.x, trace.render.y );
+		 log( stringify( res, 0, '  ' ) );
+		 
+		 lx = x; ly = y;
+});

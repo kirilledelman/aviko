@@ -60,6 +60,30 @@ void RigidBodyShape::InitClass() {
 	} ) );
 	
 	script.AddProperty<RigidBodyShape>
+	("category", //
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		ArgValue ret;
+		BodyBehavior::BitsToValue( ((RigidBodyShape*) p)->categoryBits, ret );
+		return ret;
+	}),
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		((RigidBodyShape*) p)->categoryBits = BodyBehavior::ValueToBits( val );
+		return val;
+	}));
+	
+	script.AddProperty<RigidBodyShape>
+	("mask", //
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		ArgValue ret;
+		BodyBehavior::BitsToValue( ~((RigidBodyShape*) p)->maskBits, ret );
+		return ret;
+	}),
+	 static_cast<ScriptValueCallback>([](void* p, ArgValue val ){
+		((RigidBodyShape*) p)->maskBits = ~BodyBehavior::ValueToBits( val );
+		return val;
+	}));
+	
+	script.AddProperty<RigidBodyShape>
 	( "centerX",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyShape*) b)->center.x * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){

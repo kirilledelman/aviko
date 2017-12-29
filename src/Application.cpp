@@ -649,6 +649,7 @@ void Application::InitClass() {
 	RenderShapeBehavior::InitClass();
 	RenderSpriteBehavior::InitClass();
 	RenderTextBehavior::InitClass();
+	BodyBehavior::InitClass();
 	RigidBodyBehavior::InitClass();
 	UIBehavior::InitClass();
 	SampleBehavior::InitClass();

@@ -49,6 +49,7 @@ Scene::Scene() {
 	this->_sceneDebugDraw.SetFlags( b2Draw::e_shapeBit | b2Draw::e_pairBit | b2Draw::e_jointBit );
 	this->world->SetDebugDraw( &this->_sceneDebugDraw );
 	this->world->SetContactListener( this );
+	this->world->SetContactFilter( this );
 
 }
 
@@ -195,6 +196,47 @@ void Scene::InitClass() {
 	
 	// functions
 
+	script.DefineFunction<Scene>
+	("rayCast",
+	 static_cast<ScriptFunctionCallback>([]( void* p, ScriptArguments& sa ){
+		Scene* s = (Scene*) p;
+		// arguments
+		float x = 0, y = 0, dx = 0, dy = 0;
+		void* ignoreBody = NULL;
+		int maxResults = 0;
+		const char *error = "usage: rayCast( Number startX, Number startY, Number directionX, Number directionY, [ Int maxResults, [ Body ignoreBody ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy, TypeInt, &maxResults, TypeObject, &ignoreBody ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// call
+		ArgValueVector* res = s->RayCast( x * WORLD_TO_BOX2D_SCALE, y * WORLD_TO_BOX2D_SCALE, dx * WORLD_TO_BOX2D_SCALE, dy * WORLD_TO_BOX2D_SCALE, maxResults, ignoreBody );
+		sa.ReturnArray( *res );
+		delete res;
+		return true;
+	}));
+	
+	script.DefineFunction<Scene>
+	("query",
+	 static_cast<ScriptFunctionCallback>([]( void* p, ScriptArguments& sa ){
+		Scene* s = (Scene*) p;
+		// arguments
+		float x = 0, y = 0, dx = 0, dy = 0;
+		void* ignoreBody = NULL;
+		int maxResults = 0;
+		const char *error = "usage: query( Number x, Number y, Number width, Number height, [ Int maxResults, [ Body ignoreBody ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy, TypeInt, &maxResults, TypeObject, &ignoreBody ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// call
+		ArgValueVector* res = s->Query( x * WORLD_TO_BOX2D_SCALE, y * WORLD_TO_BOX2D_SCALE, dx * WORLD_TO_BOX2D_SCALE, dy * WORLD_TO_BOX2D_SCALE, maxResults, ignoreBody );
+		sa.ReturnArray( *res );
+		delete res;
+		return true;
+	}));
 	
 }
 
@@ -262,6 +304,126 @@ void Scene::Render( Event& event ) {
 /* MARK:	-				Physics
  -------------------------------------------------------------------- */
 
+/// adds results to _raycastResult, and calls callback
+float32 Scene::ReportFixture( b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction ) {
+	RigidBodyShape *shape = (RigidBodyShape*) fixture->GetUserData();
+	if ( !shape ) return 1; // ignore
+	
+	// check if should be ignored
+	if ( shape->scriptObject == _raycastIgnore || shape->body->scriptObject == _raycastIgnore || shape->body->gameObject->scriptObject == _raycastIgnore ) return 1;
+	
+	// add result
+	_RayCastResult& r = _raycastResult[ fraction ];
+	r.point = point * BOX2D_TO_WORLD_SCALE;
+	r.normal = normal;
+	r.shape = shape;
+	
+	// return
+	_maxRaycastResults--;
+	if ( _maxRaycastResults == 0 ) return fraction; // max results achieved
+	return 1; // keep going
+}
+
+// returns new vector (delete after use)
+ArgValueVector* Scene::RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody ) {
+	_raycastIgnore = ignoreBody;
+	_maxRaycastResults = maxResults;
+	_raycastResult.clear();
+	b2Vec2 p1 = { x, y };
+	b2Vec2 p2 = { x + dx, y + dy };
+	this->world->RayCast( this, p1, p2 );
+	
+	// populate and return results
+	ArgValueVector* ret = new ArgValueVector();
+	ret->resize( _raycastResult.size() );
+	ArgValueVector::iterator vi = ret->begin();
+	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
+	while( it != end ) {
+		_RayCastResult& r = it->second;
+		ArgValue& val = *vi;
+		val.type = TypeObject;
+		void* obj = val.value.objectValue = script.NewObject();
+		script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
+		script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
+		script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
+		script.SetProperty( "x", ArgValue( r.point.x ), obj );
+		script.SetProperty( "y", ArgValue( r.point.y ), obj );
+		script.SetProperty( "normalX", ArgValue( r.normal.x ), obj );
+		script.SetProperty( "normalY", ArgValue( r.normal.y ), obj );
+		it++; vi++;
+	}
+	return ret;
+}
+
+bool Scene::ReportFixture( b2Fixture* fixture ) {
+	RigidBodyShape *shape = (RigidBodyShape*) fixture->GetUserData();
+	if ( !shape ) return true; // ignore
+	
+	// check if should be ignored
+	if ( shape->scriptObject == _raycastIgnore || shape->body->scriptObject == _raycastIgnore || shape->body->gameObject->scriptObject == _raycastIgnore ) return true;
+	
+	// add result
+	_RayCastResult& r = _raycastResult[ (float) _maxRaycastResults ];
+	r.shape = shape;
+	
+	// return
+	_maxRaycastResults--;
+	if ( _maxRaycastResults == 0 ) return false; // max results achieved
+	return true; // keep going
+}
+
+ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults, void *ignoreBody ) {
+	_raycastIgnore = ignoreBody;
+	_maxRaycastResults = maxResults;
+	_raycastResult.clear();
+	b2AABB aabb;
+	aabb.lowerBound.Set( x, y );
+	aabb.upperBound.Set( x + fmax( w, 1 ), y + fmax( h, 1 ) );
+	this->world->QueryAABB( this, aabb );
+	
+	// populate and return results
+	ArgValueVector* ret = new ArgValueVector();
+	ret->resize( _raycastResult.size() );
+	ArgValueVector::iterator vi = ret->begin();
+	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
+	while( it != end ) {
+		_RayCastResult& r = it->second;
+		ArgValue& val = *vi;
+		val.type = TypeObject;
+		void* obj = val.value.objectValue = script.NewObject();
+		script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
+		script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
+		script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
+		it++; vi++;
+	}
+	return ret;
+}
+
+bool Scene::ShouldCollide( b2Fixture* a, b2Fixture* b ) {
+	RigidBodyShape *shapeA = (RigidBodyShape*) a->GetUserData();
+	RigidBodyShape *shapeB = (RigidBodyShape*) b->GetUserData();
+	if ( !shapeA || !shapeA->body || !shapeA->body->gameObject ||
+		!shapeB || !shapeB->body || !shapeB->body->gameObject ) return true;
+	RigidBodyBehavior* bodyA = shapeA->body;
+	RigidBodyBehavior* bodyB = shapeB->body;
+	// get category and mask bits from shape
+	long unsigned catA = shapeA->categoryBits;
+	long unsigned maskA = shapeA->maskBits;
+	long unsigned catB = shapeB->categoryBits;
+	long unsigned maskB = shapeB->maskBits;
+	// if not set, use body's
+	if ( !catA ) {
+		catA = bodyA->categoryBits;
+		maskA = bodyA->maskBits;
+	}
+	if ( !catB ) {
+		catB = bodyB->categoryBits;
+		maskB = bodyB->maskBits;
+	}
+	// do bitwise check
+	return (catA & maskB) && (catB & maskA);
+}
+
 
 /// Called when two fixtures begin to touch.
 void Scene::BeginContact( b2Contact* contact ) {
@@ -271,11 +433,20 @@ void Scene::BeginContact( b2Contact* contact ) {
 	RigidBodyShape *shapeB = b ? (RigidBodyShape*) b->GetUserData() : NULL;
 	if ( !contact->IsTouching() || !shapeA || !shapeA->body || !shapeA->body->gameObject ||
 					!shapeB || !shapeB->body || !shapeB->body->gameObject ) return;
-	b2WorldManifold worldManifold;
-	contact->GetWorldManifold( &worldManifold );
-	b2Vec2 point = worldManifold.points[ 0 ] * BOX2D_TO_WORLD_SCALE;
-	b2Vec2 normal = worldManifold.normal;
-	float separation = worldManifold.separations[ 0 ];
+	b2Vec2 point, normal = { 0, 0 };
+	float separation = 0;
+	if ( shapeA->isSensor ) {
+		point = b->GetBody()->GetPosition();
+	} else if ( shapeB->isSensor ) {
+		point = a->GetBody()->GetPosition();
+	} else {
+		b2WorldManifold worldManifold;
+		contact->GetWorldManifold( &worldManifold );
+		point = worldManifold.points[ 0 ];
+		normal = worldManifold.normal;
+		separation = worldManifold.separations[ 0 ];
+	}
+	point *= BOX2D_TO_WORLD_SCALE;
 	physicsEvents.emplace_back
 	( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point, normal, separation ](){
 		Event event( EVENT_TOUCH );
@@ -308,22 +479,15 @@ void Scene::EndContact( b2Contact* contact ) {
 	RigidBodyShape *shapeB = b ? (RigidBodyShape*) b->GetUserData() : NULL;
 	if ( !shapeA || !shapeA->body || !shapeA->body->gameObject ||
 		!shapeB || !shapeB->body || !shapeB->body->gameObject ) return;
-	b2WorldManifold worldManifold;
-	contact->GetWorldManifold( &worldManifold );
-	b2Vec2 point = worldManifold.points[ 0 ] * BOX2D_TO_WORLD_SCALE;
 	physicsEvents.emplace_back
-	( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point ](){
+	( static_cast<PhysicsEventCallback>([ shapeA, shapeB ](){
 		Event event( EVENT_UNTOUCH );
 		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
 		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
-		event.scriptParams.AddFloatArgument( point.x );
-		event.scriptParams.AddFloatArgument( point.y );
 		shapeA->body->CallEvent( event );
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
-		event.scriptParams.AddFloatArgument( point.x );
-		event.scriptParams.AddFloatArgument( point.y );
 		shapeB->body->CallEvent( event );
 	}) );
 }

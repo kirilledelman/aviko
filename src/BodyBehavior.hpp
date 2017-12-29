@@ -13,6 +13,12 @@ public:
 	BodyBehavior();
 	~BodyBehavior();
 
+	// collision
+	
+	// default collision category and mask (shapes can override)
+	uint32 categoryBits = 0x1;
+	uint32 maskBits = 0xFFFFFFFF;
+	
 	// scripting
 	
 	/// registers class for scripting
@@ -55,13 +61,19 @@ public:
 	bool SetGameObject( GameObject* go, int pos=-1 );
 	
 	/// construct and add body to scene->world
-	virtual void AddBody( Scene* scene ) = 0;
+	virtual void AddBody( Scene* scene ){};
 	
 	/// removes body from world
-	virtual void RemoveBody() = 0;
+	virtual void RemoveBody(){};
 	
 	// is set to true when body is in the world
 	bool live = false;
+	
+	// converts flags to value array or single int
+	static void BitsToValue( uint32, ArgValue& );
+	
+	// converts int, or array of ints to flags integer
+	static uint32 ValueToBits( ArgValue& );
 	
 };
 
