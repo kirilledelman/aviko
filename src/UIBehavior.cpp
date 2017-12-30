@@ -307,6 +307,7 @@ bool UIBehavior::Navigate( float x, float y ) {
 /* MARK:	-				Events
  -------------------------------------------------------------------- */
 
+
 // finds closest RenderSpriteBehavior with image+autoDraw = parent
 void UIBehavior::CheckClipping() {
 
@@ -356,6 +357,8 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		Event event( EVENT_MOUSEOVER );
 		event.scriptParams.AddFloatArgument( localX );
 		event.scriptParams.AddFloatArgument( localY );
+		event.scriptParams.AddFloatArgument( x );
+		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
 		
 	// exited bounds
@@ -365,6 +368,8 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		Event event( EVENT_MOUSEOUT );
 		event.scriptParams.AddFloatArgument( localX );
 		event.scriptParams.AddFloatArgument( localY );
+		event.scriptParams.AddFloatArgument( x );
+		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
 		
 	}
@@ -392,6 +397,8 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 		event.scriptParams.AddIntArgument( btn );
 		event.scriptParams.AddFloatArgument( localX );
 		event.scriptParams.AddFloatArgument( localY );
+		event.scriptParams.AddFloatArgument( x );
+		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
 		
 		// mouse button was released
@@ -413,6 +420,8 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 			event.scriptParams.AddIntArgument( btn );
 			event.scriptParams.AddFloatArgument( localX );
 			event.scriptParams.AddFloatArgument( localY );
+			event.scriptParams.AddFloatArgument( x );
+			event.scriptParams.AddFloatArgument( y );
 			behavior->CallEvent( event );
 		}
 		

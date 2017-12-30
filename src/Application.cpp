@@ -643,6 +643,7 @@ void Application::InitClass() {
 	Scene::InitClass();
 	Image::InitClass();
 	RigidBodyShape::InitClass();
+	RigidBodyJoint::InitClass();
 	Behavior::InitClass();
 	RenderBehavior::InitClass();
 	RenderBehavior::InitShaders();

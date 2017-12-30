@@ -23,9 +23,7 @@ RigidBodyShape::RigidBodyShape( ScriptArguments* args ) {
 	}
 }
 
-RigidBodyShape::~RigidBodyShape() {
-	
-}
+RigidBodyShape::~RigidBodyShape() {}
 
 
 /* MARK:	-				Scripting

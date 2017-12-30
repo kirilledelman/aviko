@@ -138,7 +138,16 @@ public:
 					   ScriptType type5=TypeUndefined, void* value5=NULL,
 					   ScriptType type6=TypeUndefined, void* value6=NULL);
 	
-
+	// read params into typed values (helper for function calls), starting with nth param
+	bool ReadArgumentsFrom( int startFrom, int minRequired,
+					   ScriptType type0, void* value0,
+					   ScriptType type1=TypeUndefined, void* value1=NULL,
+					   ScriptType type2=TypeUndefined, void* value2=NULL,
+					   ScriptType type3=TypeUndefined, void* value3=NULL,
+					   ScriptType type4=TypeUndefined, void* value4=NULL,
+					   ScriptType type5=TypeUndefined, void* value5=NULL,
+					   ScriptType type6=TypeUndefined, void* value6=NULL);
+	
 	/// converts array to jsval(JSObject)
 	static jsval ArrayToVal( ArgValueVector &arr );
 

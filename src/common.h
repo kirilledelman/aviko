@@ -106,6 +106,7 @@ int StringPositionLength( const char* str );
 #define KEY_MOUSE_WHEEL (SDL_NUM_SCANCODES + 6)
 #define KEY_MOUSE_WHEEL_X (SDL_NUM_SCANCODES + 7)
 
+
 // Physics events
 #define EVENT_TOUCH "touch"
 #define EVENT_UNTOUCH "untouch"

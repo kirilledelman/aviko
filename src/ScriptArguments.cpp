@@ -150,19 +150,48 @@ bool ScriptArguments::ReadArguments( int minRequired,
 									ScriptType type4, void* value4,
 									ScriptType type5, void* value5,
 									ScriptType type6, void* value6 ) {
+	
+	size_t argSize = args.size();
+	
 	// fail if not enough args
-	if ( args.size() < minRequired ) return false;
+	if ( argSize < minRequired ) return false;
 	
 	// read args
-	if ( args.size() >= 1 && value0 != NULL && !args[ 0 ].get( value0, type0 ) ) return false;
-	if ( args.size() >= 2 && value1 != NULL && !args[ 1 ].get( value1, type1 ) ) return false;
-	if ( args.size() >= 3 && value2 != NULL && !args[ 2 ].get( value2, type2 ) ) return false;
-	if ( args.size() >= 4 && value3 != NULL && !args[ 3 ].get( value3, type3 ) ) return false;
-	if ( args.size() >= 5 && value4 != NULL && !args[ 4 ].get( value4, type4 ) ) return false;
-	if ( args.size() >= 6 && value5 != NULL && !args[ 5 ].get( value5, type5 ) ) return false;
-	if ( args.size() >= 7 && value6 != NULL && !args[ 6 ].get( value6, type6 ) ) return false;
+	if ( argSize >= 1 && value0 != NULL && !args[ 0 ].get( value0, type0 ) ) return false;
+	if ( argSize >= 2 && value1 != NULL && !args[ 1 ].get( value1, type1 ) ) return false;
+	if ( argSize >= 3 && value2 != NULL && !args[ 2 ].get( value2, type2 ) ) return false;
+	if ( argSize >= 4 && value3 != NULL && !args[ 3 ].get( value3, type3 ) ) return false;
+	if ( argSize >= 5 && value4 != NULL && !args[ 4 ].get( value4, type4 ) ) return false;
+	if ( argSize >= 6 && value5 != NULL && !args[ 5 ].get( value5, type5 ) ) return false;
+	if ( argSize >= 7 && value6 != NULL && !args[ 6 ].get( value6, type6 ) ) return false;
 
 	return true;
+}
+
+bool ScriptArguments::ReadArgumentsFrom( int startFrom, int minRequired,
+									ScriptType type0, void* value0,
+									ScriptType type1, void* value1,
+									ScriptType type2, void* value2,
+									ScriptType type3, void* value3,
+									ScriptType type4, void* value4,
+									ScriptType type5, void* value5,
+									ScriptType type6, void* value6 ) {
+	size_t argSize = args.size();
+	
+	// fail if not enough args
+	if ( argSize < startFrom + 1 || argSize < minRequired + startFrom ) return false;
+	
+	// read args
+	if ( argSize >= startFrom + 1 && value0 != NULL && !args[ startFrom ].get( value0, type0 ) ) return false;
+	if ( argSize >= startFrom + 2 && value1 != NULL && !args[ startFrom + 1 ].get( value1, type1 ) ) return false;
+	if ( argSize >= startFrom + 3 && value2 != NULL && !args[ startFrom + 2 ].get( value2, type2 ) ) return false;
+	if ( argSize >= startFrom + 4 && value3 != NULL && !args[ startFrom + 3 ].get( value3, type3 ) ) return false;
+	if ( argSize >= startFrom + 5 && value4 != NULL && !args[ startFrom + 4 ].get( value4, type4 ) ) return false;
+	if ( argSize >= startFrom + 6 && value5 != NULL && !args[ startFrom + 5 ].get( value5, type5 ) ) return false;
+	if ( argSize >= startFrom + 7 && value6 != NULL && !args[ startFrom + 6 ].get( value6, type6 ) ) return false;
+	
+	return true;
+
 }
 
 void* ScriptArguments::GetThis() {

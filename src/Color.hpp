@@ -24,6 +24,7 @@ public:
 	float v = 0;
 
 	bool Set( ScriptArguments& sa );
+	void Set( ArgValue &val );
 	
 	/// set color as R, G, B, A 0-255 values
 	void SetInts( int red, int green, int blue, int alpha=255 );

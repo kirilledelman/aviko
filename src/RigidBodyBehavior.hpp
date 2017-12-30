@@ -3,6 +3,7 @@
 
 #include "BodyBehavior.hpp"
 #include "RigidBodyShape.hpp"
+#include "RigidBodyJoint.hpp"
 
 class Scene;
 
@@ -20,12 +21,6 @@ public:
 	
 	/// body type
 	b2BodyType bodyType = b2BodyType::b2_dynamicBody;
-	
-	/// joints attached
-	/// TODO
-	
-	/// shapes
-	vector<RigidBodyShape*> shapes;
 	
 	/// mass and center of mass
 	b2MassData massData;
@@ -59,6 +54,9 @@ public:
 	
 // shapes
 	
+	/// shapes
+	vector<RigidBodyShape*> shapes;
+	
 	/// replace all shapes with one or NULL
 	void ReplaceShapes( RigidBodyShape* rbs );
 	
@@ -68,7 +66,18 @@ public:
 	
 // joints
 	
-	// TODO
+	/// joints, where body = this body
+	vector<RigidBodyJoint*> joints;
+	
+	/// joints, where otherBody = this body
+	vector<RigidBodyJoint*> otherJoints;
+	
+	/// replace all joints with one or NULL
+	void ReplaceJoints( RigidBodyJoint* rbs );
+	
+	// getter/setter for joints array
+	ArgValueVector* GetJointsVector( bool other );
+	ArgValueVector* SetJointsVector( ArgValueVector* in, bool other );
 	
 // methods
 	

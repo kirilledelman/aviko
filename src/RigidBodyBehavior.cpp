@@ -34,6 +34,10 @@ RigidBodyBehavior::~RigidBodyBehavior() {
 	// clean up
 	this->ReplaceShapes( NULL );
 	
+	// unlink joints
+	while ( this->joints.size() ) this->joints[ 0 ]->SetBody( NULL );
+	while ( this->otherJoints.size() ) this->otherJoints[ 0 ]->SetOtherBody( NULL );
+	
 	// remove body
 	this->RemoveBody();
 	
@@ -160,7 +164,11 @@ void RigidBodyBehavior::InitClass() {
 	
 	script.AddProperty<RigidBodyBehavior>
 	( "mass",
-	 static_cast<ScriptFloatCallback>([]( void* p, float val ) { return ((RigidBodyBehavior*)p)->massData.mass; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
+		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+		if ( rb->body ) rb->body->GetMassData( &rb->massData );
+		return rb->massData.mass;
+	 }),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		rb->massData.mass = val;
@@ -170,7 +178,10 @@ void RigidBodyBehavior::InitClass() {
 	
 	script.AddProperty<RigidBodyBehavior>
 	( "massCenterX",
-	 static_cast<ScriptFloatCallback>([]( void* p, float val ) { return ((RigidBodyBehavior*)p)->massData.center.x * BOX2D_TO_WORLD_SCALE; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
+		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+		if ( rb->body ) rb->body->GetMassData( &rb->massData );
+		return rb->massData.center.x * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		rb->massData.center.x = val * WORLD_TO_BOX2D_SCALE;
@@ -180,7 +191,10 @@ void RigidBodyBehavior::InitClass() {
 	
 	script.AddProperty<RigidBodyBehavior>
 	( "massCenterY",
-	 static_cast<ScriptFloatCallback>([]( void* p, float val ) { return ((RigidBodyBehavior*)p)->massData.center.y * BOX2D_TO_WORLD_SCALE; }),
+	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
+		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+		if ( rb->body ) rb->body->GetMassData( &rb->massData );
+		return rb->massData.center.y * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		rb->massData.center.y = val * WORLD_TO_BOX2D_SCALE;
@@ -214,8 +228,44 @@ void RigidBodyBehavior::InitClass() {
 	 );
 	
 	script.AddProperty<RigidBodyBehavior>
+	( "joint",
+	 static_cast<ScriptObjectCallback>([]( void* p, void* val ) {
+		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+		if ( rb->joints.size() ) return rb->joints.back()->scriptObject;
+		return (void*) NULL;
+	}),
+	 static_cast<ScriptObjectCallback>([]( void* p, void* val ) {
+		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+		RigidBodyJoint* j = script.GetInstance<RigidBodyJoint>( val );
+		if ( val && !j ) {
+			script.ReportError( "Body .joint can only be set to Joint instance, or null." );
+			return (void*) NULL;
+		}
+		rb->ReplaceJoints( j );
+		return val;
+	}), PROP_ENUMERABLE | PROP_NOSTORE);
+	
+	script.AddProperty<RigidBodyBehavior>
+	( "joints",
+	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ) { return ((RigidBodyBehavior*) go)->GetJointsVector( false ); }),
+	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ){ return ((RigidBodyBehavior*) go)->SetJointsVector( in, false ); }),
+	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
+	 );
+	
+	script.AddProperty<RigidBodyBehavior>
+	( "otherJoints",
+	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ) { return ((RigidBodyBehavior*) go)->GetJointsVector( true ); }),
+	 static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ){ return ((RigidBodyBehavior*) go)->SetJointsVector( in, true ); }),
+	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
+	 );
+	
+	script.AddProperty<RigidBodyBehavior>
 	( "numShapes",
 	 static_cast<ScriptIntCallback>([]( void* p, int val ) { return ((RigidBodyBehavior*)p)->shapes.size(); }));
+	
+	script.AddProperty<RigidBodyBehavior>
+	( "numJoints",
+	 static_cast<ScriptIntCallback>([]( void* p, int val ) { return ((RigidBodyBehavior*)p)->joints.size(); }));
 	
 	// functions
 	
@@ -279,6 +329,67 @@ void RigidBodyBehavior::InitClass() {
 		return true;
 	} ));
 	
+	script.DefineFunction<RigidBodyBehavior>
+	("addJoint",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+		void *j = NULL;
+		RigidBodyJoint* joint = NULL;
+		if ( sa.args.size() ) {
+			if ( !sa.ReadArguments( 1, TypeObject, &j ) || !( joint = script.GetInstance<RigidBodyJoint>( j ) ) ){
+				script.ReportError( "usage: addJoint( [ Joint instance ] )" );
+				return false;
+			}
+		} else {
+			joint = new RigidBodyJoint( NULL );
+		}
+		// add and return it
+		joint->SetBody( self );
+		sa.ReturnObject( joint->scriptObject );
+		return true;
+	} ));
+	
+	script.DefineFunction<RigidBodyBehavior>
+	("removeJoint",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+		void *j = NULL;
+		RigidBodyJoint* joint = NULL;
+		int index = -1;
+		const char *error = "usage: removeJoint( Joint instance | Int index )";
+		if ( sa.ReadArguments( 1, TypeObject, &j ) ){
+			joint = script.GetInstance<RigidBodyJoint>( j );
+			if ( !joint ) {
+				script.ReportError( error );
+				return false;
+			}
+		} else if ( sa.ReadArguments( 1, TypeInt, &index ) ) {
+			if ( index < 0 || index >= self->joints.size() ) {
+				// index out of range, return null
+				sa.ReturnObject( NULL );
+				return true;
+			}
+			joint = self->joints[ index ];
+		}
+		joint->SetBody( NULL );
+		return true;
+	} ));
+	
+	script.DefineFunction<RigidBodyBehavior>
+	("getJoint",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+		int index = -1;
+		if ( !sa.ReadArguments( 1, TypeInt, &index ) ) {
+			script.ReportError( "usage: getJoint( Int index )" );
+			return false;
+		}
+		if ( index < 0 || index >= self->joints.size() ) sa.ReturnObject( NULL );
+		else sa.ReturnObject( self->joints[ index ]->scriptObject );
+		return true;
+	} ));
+
+	
 }
 
 void RigidBodyBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -289,7 +400,12 @@ void RigidBodyBehavior::TraceProtectedObjects( vector<void**> &protectedObjects 
 	}
 	
 	// joints
-	
+	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
+		protectedObjects.push_back( &joints[ i ]->scriptObject );
+	}
+	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
+		protectedObjects.push_back( &otherJoints[ i ]->scriptObject );
+	}
 }
 
 
@@ -444,6 +560,51 @@ ArgValueVector* RigidBodyBehavior::SetShapesVector( ArgValueVector* in ) {
 }
 
 
+/* MARK:	-				Joints
+ -------------------------------------------------------------------- */
+
+
+void RigidBodyBehavior::ReplaceJoints( RigidBodyJoint* rbs ) {
+	vector<RigidBodyJoint*>::iterator it = joints.begin();
+	while( it != joints.end() ) {
+		RigidBodyJoint* shp = *it;
+		if ( shp != rbs ) {
+			it = joints.erase( it );
+			shp->SetBody( NULL );
+		} else it++;
+	}
+	if ( rbs ) rbs->SetBody( this );
+}
+
+// returns shapes vector
+ArgValueVector* RigidBodyBehavior::GetJointsVector( bool other ) {
+	ArgValueVector* vec = new ArgValueVector();
+	vector<RigidBodyJoint*> &list = ( other ? otherJoints : joints );
+	size_t nc = list.size();
+	vec->resize( nc );
+	for ( size_t i = 0; i < nc; i++ ){
+		ArgValue &val = (*vec)[ i ];
+		val.type = TypeObject;
+		val.value.objectValue = list[ i ]->scriptObject;
+	}
+	return vec;
+}
+
+/// overwrites shapes
+ArgValueVector* RigidBodyBehavior::SetJointsVector( ArgValueVector* in, bool other ) {
+	vector<RigidBodyJoint*> &list = ( other ? otherJoints : joints );
+	while( list.size() ) list[ 0 ]->SetBody( NULL );
+	// add joints
+	size_t nc = in->size();
+	for ( size_t i = 0; i < nc; i++ ){
+		ArgValue &val = (*in)[ i ];
+		RigidBodyJoint* go = script.GetInstance<RigidBodyJoint>( val.value.objectValue );
+		if ( go ) go->SetBody( this );
+	}
+	return in;
+}
+
+
 /* MARK:	-				Attached / removed / active
  -------------------------------------------------------------------- */
 
@@ -488,6 +649,14 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 	// have body
 	this->live = true;
 	
+	// update all joints
+	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
+		joints[ i ]->UpdateJoint();
+	}
+	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
+		otherJoints[ i ]->UpdateJoint();
+	}
+	
 }
 
 void RigidBodyBehavior::RemoveBody() {
@@ -502,6 +671,14 @@ void RigidBodyBehavior::RemoveBody() {
 	
 	// no body
 	this->live = false;
+	
+	// update all joints
+	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
+		joints[ i ]->UpdateJoint();
+	}
+	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
+		otherJoints[ i ]->UpdateJoint();
+	}
 	
 }
 

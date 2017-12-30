@@ -419,8 +419,8 @@
 			children = (
 				71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */,
 				71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */,
-				713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */,
 				713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */,
+				713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */,
 				713D70211F82CDE80011B7E8 /* Input.hpp */,
 				713D70201F82CDE80011B7E8 /* Input.cpp */,
 				719291BD1FA26BAA0067892E /* Controller.hpp */,

@@ -11,89 +11,59 @@ input.controllerAdded = function ( kb ) {
 	kb.bind( 'cancel', KEY_ESCAPE );
 };
 
-
 app.scene = new Scene();
 app.scene.debugDraw = true;
 app.scene.gravityY = 10;
 
 
-
+function f(f) { this.gameObject.render.addColor.set( f == this ? 0x333333 : 0x0 ); }
 function m0(){  this.gameObject.z = 10; this.gameObject.render.color.r = 0; }
 function m1(){  this.gameObject.z = 0; this.gameObject.render.color.r = 1; }
 function m2( wy, wx ){
 	
-	if ( input.get( KEY_LSHIFT ) ){
-		
-		this.gameObject.angle += wy;
-		
-	} else {
-		this.gameObject.render.width += wx;
-		this.gameObject.render.height += wy;
-		if ( this.gameObject.body ){
-			this.gameObject.body.shape.width = this.gameObject.render.width;
-			this.gameObject.body.shape.height = this.gameObject.render.height;
-		}
+	this.gameObject.render.width += wx;
+	this.gameObject.render.height += wy;
+	if ( this.gameObject.body ){
+		this.gameObject.body.shape.width = this.gameObject.render.width;
+		this.gameObject.body.shape.height = this.gameObject.render.height;
 	}
 	
 }
 
-function m3( btn ) {
+var mouseJoint = null;
+function m3( btn, x, y, gx, gy ) {
+	
+	if ( input.get( KEY_LSHIFT ) && this.gameObject.body && app.scene.currentFocus != this ) {
+		
+		var rj = this.gameObject.body.addJoint( new Joint( JOINT_WELD, app.scene.currentFocus.gameObject.body ) );
+		return;
+	}
+	
+	this.focus();
 	
 	if ( this.gameObject.body ) {
 		
-		if ( input.get( KEY_LALT ) ) {
-			
-			this.gameObject.body.angularVelocity = 20;
-			
-		} else if ( input.get( KEY_LSHIFT ) || input.get( KEY_RSHIFT ) ) {
-			
-			this.gameObject.body.velocityX = 100;
-			
-			
-		} else {
-			var c = toInit( this.gameObject );
-			c.y -= 100;
-			app.scene.addChild( init( c ) );
-		}
+		mouseJoint = new Joint( JOINT_MOUSE, gx, gy );
+		mouseJoint.maxForce = 100 * this.gameObject.body.mass;
+		mouseJoint.body = this.gameObject.body;
 		
 	} else {
+		
 		var b = this.gameObject.body = new Body();
 		var s = b.shape;
 		s.type = SHAPE_RECTANGLE;
 		s.width = this.gameObject.render.width;
 		s.height = this.gameObject.render.height;
 		
-		b.touch = function ( a, b, x, y, nx, ny, s ) {
-			
-			log( "touch", a.body.gameObject.name, b.body.gameObject.name );
-			
-			var tmp = app.scene.addChild();
-			if ( nx == 0 && ny == 0 ){
-				tmp.render = new RenderShape( SHAPE_CIRCLE );
-				tmp.render.radius = 2;
-			} else {
-				tmp.render = new RenderShape( SHAPE_LINE );
-				tmp.render.x = nx * 10;
-				tmp.render.y = ny * 10;
-			}
-			tmp.render.color.set( 1, 0, 0 );
-			tmp.x = x;
-			tmp.y = y;
-			tmp.z = -1;
-			var t = new Tween( tmp, 'opacity', 1, 0, 2 );
-			t.finished = function() { tmp.parent = null; }
-			
-			t = new Tween( this.gameObject.render.addColor, 'r', 1, 0 );
-			
-		}
-		
-		b.untouch = function ( a, b ) {
-			
-			log( "untouch", a.body.gameObject.name, b.body.gameObject.name );
-			
-		}
 	}
 	
+}
+
+function m4() {
+	if ( mouseJoint ) {
+		mouseJoint.destroy();
+		mouseJoint = null;		
+	}
 }
 
 
@@ -109,14 +79,14 @@ for ( var i = 0; i < 10; i++ ){
 	o.render.pivotX = o.render.pivotY = 0;
 	o.x = 10 + i * 30;
 	o.y = 50;
-	if ( i % 2 ) {
-		o.angle = 45;
-	}
+
 	o.ui = new UI();
+	o.ui.focusChanged = f;
 	o.ui.mouseOver = m0;
 	o.ui.mouseOut = m1;
 	o.ui.mouseWheel = m2;
-	o.ui.click = m3;
+	o.ui.mouseDown = m3;
+	o.ui.mouseUp = o.ui.mouseUpOutside = m4;
 	
 }
 
@@ -133,29 +103,21 @@ a.render.width = a.body.shape.width = app.windowWidth / 2;
 a.render.height = a.body.shape.height = 20;
 a.x = 0; a.y = app.windowHeight / 2 - a.body.shape.height;
 a.name = "Ground";
+global.ground = a;
 
-a = app.scene.addChild();
-a.body = new Body();
-a.body.type = BODY_STATIC;
-a.body.shape.sensor = true;
-a.body.shape.type = SHAPE_RECTANGLE;
-a.body.shape.width = app.windowWidth / 2;
-a.body.shape.height = 20;
-a.body.category = 2;
-a.x = 0; a.y = app.windowHeight / 2 - a.body.shape.height - 100;
-a.name = "Sensor";
-
-var lx = 0, ly = 0;
-input.on( 'mouseDown', function ( btn, x, y ) {
-		 var trace = app.scene.addChild();
-		 trace.setTransform( lx, ly );
-		 trace.render = new RenderShape( SHAPE_LINE );
-		 trace.render.x = x - trace.x;
-		 trace.render.y = y - trace.y;
-		 trace.async( function(){ this.parent = null; }, 1 );
-		 
-		 var res = app.scene.rayCast( lx, ly, trace.render.x, trace.render.y );
-		 log( stringify( res, 0, '  ' ) );
-		 
-		 lx = x; ly = y;
+input.on( 'mouseMove', function (  x, y ) {
+		 if ( mouseJoint ) {
+			 mouseJoint.setMouseTarget( x, y );
+		 }
 });
+
+input.keyDown = function ( k ) {
+
+	if ( app.scene.currentFocus ) {
+		var b = app.scene.currentFocus.gameObject.body;
+		if ( b && b.joint && b.joint.type == JOINT_REVOLUTE ) {
+			//b.joint.pinMotor = !b.joint.pinMotor;
+			//log ( stringify( b.joint ) );
+		}
+	}
+};

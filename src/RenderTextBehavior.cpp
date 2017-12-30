@@ -97,154 +97,205 @@ void RenderTextBehavior::InitClass() {
 	
 	script.AddProperty<RenderTextBehavior>
 	( "backgroundColor",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->backgroundColor->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		return ArgValue(((RenderTextBehavior*) b)->backgroundColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->backgroundColor = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->backgroundColor = other;
+		} else {
+			rs->backgroundColor->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->backgroundColor->scriptObject;
 	}) );
 	
+	/*
+	 script.AddProperty<RenderTextBehavior>
+	 ( "color0",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
+		return ArgValue(rs->colors[ 0 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			 Color* other = script.GetInstance<Color>( val.value.objectValue );
+			 if ( other ) rs->color = other;
+		} else {
+			 rs->colors[ 0 ]->Set( val );
+		}
+		rs->_dirty = true;
+		return rs->colors[ 0 ]->scriptObject;
+	 }) );
+	 */
+	
 	script.AddProperty<RenderTextBehavior>
 	( "color0",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 0 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 0 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 0 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 0 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 0 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color1",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 1 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 1 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 1 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 1 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 1 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color2",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 2 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 2 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 2 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 2 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 2 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color3",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 3 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 3 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 3 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 3 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 3 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color4",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 4 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 4 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 4 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 4 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 4 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color5",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 5 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 5 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 5 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 5 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 5 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color6",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 6 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 6 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 6 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 6 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 6 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color7",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 7 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 7 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 7 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 7 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 7 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color8",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 8 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 8 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 8 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 8 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 8 ]->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "color9",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return rs->colors[ 9 ]->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
+		return ArgValue(rs->colors[ 9 ]->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) rs->colors[ 9 ] = other;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->color = other;
+		} else {
+			rs->colors[ 9 ]->Set( val );
+		}
 		rs->_dirty = true;
 		return rs->colors[ 9 ]->scriptObject;
 	}) );

@@ -1721,7 +1721,8 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 	// multiply by inverse world
 	Scene* scene = orphan ? NULL : GetScene();
 	if ( localToGlobal ) {
-		GPU_MatrixMultiply( res, mat, this->WorldTransform() );
+		this->_worldTransformDirty = true;
+		GPU_MatrixMultiply( res, this->WorldTransform(), mat );
 		// apply camera transform
 		if ( scene && !this->IsCameraIgnored() ) {
 			GPU_MatrixCopy( mat, res );

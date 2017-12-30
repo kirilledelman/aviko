@@ -1,10 +1,8 @@
 
-
-Joints
-
-
-
-
+Replace constants with static properties?
+	Key.Space
+	Shape.Circle
+	Joint.Mouse
 
 Demo project
 	Controller configurator
@@ -18,8 +16,9 @@ Nice to have
 
 =============================================
 
-.color
-.addColor properties - change setters to Value, accept 0xFF... integers 
+modify query and rayTrace for non-physics based queries
+
+.color, .addColor properties - change setters to Value, accept 0xFF... integers
 
 Transplant from parent to parent, maintain transform
 

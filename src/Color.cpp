@@ -330,6 +330,38 @@ bool Color::Set( ScriptArguments &sa ) {
 	
 }
 
+void Color::Set( ArgValue &val ) {
+	
+	// copy from another color
+	if ( val.type == TypeObject ) {
+		
+		Color* other = script.GetInstance<Color>( val.value.objectValue );
+		if ( other ) {
+			this->rgba = other->rgba;
+			this->r = other->r;
+			this->g = other->g;
+			this->b = other->b;
+			this->a = other->a;
+			this->_hsvDirty = true;
+		}
+		
+	// parse string
+	} else if ( val.type == TypeString ) {
+		
+		this->SetHex( val.value.stringValue->c_str() );
+		
+	} else if ( val.type == TypeInt ) {
+		
+		this->SetInt( val.value.intValue, false );
+		
+	} else if ( val.type == TypeFloat ) {
+		
+		this->SetInt( static_cast<unsigned int>(val.value.floatValue), true );
+		
+	}
+	
+}
+
 bool Color::SetHex( const char* s ) {
 	
 	string hex( s );
