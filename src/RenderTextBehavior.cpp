@@ -89,9 +89,12 @@ void RenderTextBehavior::InitClass() {
 	
 	// constants
 	
-	script.SetGlobalConstant( "ALIGN_LEFT", ArgValue( 0 ) );
-	script.SetGlobalConstant( "ALIGN_RIGHT", ArgValue( 1 ) );
-	script.SetGlobalConstant( "ALIGN_CENTER", ArgValue( 2 ) );
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "TextAlign", constants );
+	script.SetProperty( "Left", ArgValue( 0 ), constants );
+	script.SetProperty( "Right", ArgValue( 1 ), constants );
+	script.SetProperty( "Center", ArgValue( 2 ), constants );
+	script.FreezeObject( constants );
 	
 	// properties
 	
@@ -111,25 +114,6 @@ void RenderTextBehavior::InitClass() {
 		return rs->backgroundColor->scriptObject;
 	}) );
 	
-	/*
-	 script.AddProperty<RenderTextBehavior>
-	 ( "color0",
-	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
-		RenderTextBehavior* rs = (RenderTextBehavior*) b; rs->_dirty = true;
-		return ArgValue(rs->colors[ 0 ]->scriptObject); }),
-	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
-		RenderTextBehavior* rs = (RenderTextBehavior*) b;
-		if ( val.type == TypeObject ) { // replace if it's a color
-			 Color* other = script.GetInstance<Color>( val.value.objectValue );
-			 if ( other ) rs->color = other;
-		} else {
-			 rs->colors[ 0 ]->Set( val );
-		}
-		rs->_dirty = true;
-		return rs->colors[ 0 ]->scriptObject;
-	 }) );
-	 */
-	
 	script.AddProperty<RenderTextBehavior>
 	( "color0",
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
@@ -139,7 +123,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 0 ] = other;
 		} else {
 			rs->colors[ 0 ]->Set( val );
 		}
@@ -156,7 +140,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 1 ] = other;
 		} else {
 			rs->colors[ 1 ]->Set( val );
 		}
@@ -173,7 +157,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 2 ] = other;
 		} else {
 			rs->colors[ 2 ]->Set( val );
 		}
@@ -190,7 +174,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 3 ] = other;
 		} else {
 			rs->colors[ 3 ]->Set( val );
 		}
@@ -207,7 +191,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 4 ] = other;
 		} else {
 			rs->colors[ 4 ]->Set( val );
 		}
@@ -224,7 +208,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 5 ] = other;
 		} else {
 			rs->colors[ 5 ]->Set( val );
 		}
@@ -241,7 +225,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 6 ] = other;
 		} else {
 			rs->colors[ 6 ]->Set( val );
 		}
@@ -258,7 +242,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 7 ] = other;
 		} else {
 			rs->colors[ 7 ]->Set( val );
 		}
@@ -275,7 +259,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 8 ] = other;
 		} else {
 			rs->colors[ 8 ]->Set( val );
 		}
@@ -292,7 +276,7 @@ void RenderTextBehavior::InitClass() {
 		RenderTextBehavior* rs = (RenderTextBehavior*) b;
 		if ( val.type == TypeObject ) { // replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->color = other;
+			if ( other ) rs->colors[ 9 ] = other;
 		} else {
 			rs->colors[ 9 ]->Set( val );
 		}

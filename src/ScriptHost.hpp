@@ -865,6 +865,12 @@ public:
 		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
 	}
 	
+	/// prevent adding more properties
+	void FreezeObject( void *obj ) {
+		
+		JS_FreezeObject( this->js, (JSObject*) obj );
+		
+	}
 	
 /* MARK:	-				Property get
  -------------------------------------------------------------------- */
@@ -1206,6 +1212,8 @@ public:
 /* MARK:	-				Script execution & JSON
  -------------------------------------------------------------------- */
 
+	/// used to resolve relative paths when including scripts
+	ScriptResource* currentScript = NULL;
 	
 	ArgValue Evaluate( const char *code, const char* filename=NULL, void* thisObj=NULL ) {
 		JSAutoRequest req( this->js );
@@ -1231,6 +1239,15 @@ public:
 			return false;
 		}
 		
+		// set current script
+		ScriptResource* previousCurrent = this->currentScript;
+		bool prevNoUnload = false;
+		if ( previousCurrent ) {
+			prevNoUnload = previousCurrent->dontUnload;
+			previousCurrent->dontUnload = true;
+		}
+		this->currentScript = scriptResource;
+		
 		// context
 		JSObject* obj = thisObject ? (JSObject*) thisObject : this->global_object;
 		
@@ -1243,6 +1260,10 @@ public:
 		JSBool success = JS_ExecuteScript( this->js, robj, scriptResource->compiledScript, rval.address() );
 		if ( success && out ) *out = ArgValue( *rval.address() );
 		JS_MaybeGC( this->js );
+		
+		// restore current
+		this->currentScript = previousCurrent;
+		if ( previousCurrent ) this->currentScript->dontUnload = prevNoUnload;
 		return success;
 	}
 	

@@ -1,13 +1,40 @@
+Layout - addition to UI component
+	.anchorLeft, anchorRight, anchorTop, anchorBottom: 0 = start, 0.5 = center, 1 = opposite side
+	.left, .right, .top, .bottom
 
-Replace constants with static properties?
-	Key.Space
-	Shape.Circle
-	Joint.Mouse
+
+	scene/component layout event
+
+
+		dispatch 'layout' event x, y, w, h
+
+
+
+
+
+UI:
+	Button
+	Checkbox
+	Scrollable
+	List
+	Dropdown
+	TextInput - finish keyboard support (home, end, ctrl+jump)
+
+
+
+
+
+
+
+
+Intern all built-in-event strings
 
 Demo project
 	Controller configurator
+	UI: skinned buttons, dropdowns, checkboxes, scrollable panels
 
 
+Normalize error messages
 
 
 =============================================
@@ -16,21 +43,18 @@ Nice to have
 
 =============================================
 
+Add the rest of joint types
+
 modify query and rayTrace for non-physics based queries
 
-.color, .addColor properties - change setters to Value, accept 0xFF... integers
+Transplant from parent to parent, maintain transform (only need to do anything if no body)
 
-Transplant from parent to parent, maintain transform
+Add logging level - none, normal, verbose
 
 
 BodyShape
 .setCircle( radius, x, y );
 .setX___....
-
-
-Color
-	.tweenTo()
-
 
 Vector - other types besides Float
 *Vector classes can dispatch events on change, or be attached to Scriptable objects w handlers
@@ -48,12 +72,10 @@ save( pngpath )in /textures by default
 .base64 <-> string
 
 
-Investigate/fix skewX,skewY on objects with bodies.
 
 Install MS Visual Studio in windows, look at how to compile on win.
 
 
-Ask about GL_POINTS from Grimfang
 
 GameObject
 setParent - need circular check, also, scene shouldn't override its setparent, and disable it
@@ -80,7 +102,7 @@ RenderTileMap
 RenderSprite
 	displace shader?
 
-Add logging level - none, normal, verbose
+
 
 Can extend Texture to add masks, blur, etc filters on Texture object
 Can use this class to download images .src = url
@@ -97,7 +119,6 @@ Input should be able to read retroarch config
 	https://github.com/RetroPie/RetroPie-Setup/wiki/RetroArch-Configuration
 
 
-Intern all built-in-event strings
 
 ParticleSystem render behavior
 

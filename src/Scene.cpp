@@ -16,9 +16,9 @@ Scene::Scene( ScriptArguments* args ) : Scene() {
 	script.NewScriptObject<Scene>( this );
 	
 	// create color object
-	clearColor = new Color( NULL );
-	clearColor->SetInts( 25, 50, 75, 255 );
-	script.SetProperty( "clearColor", ArgValue( clearColor->scriptObject ), this->scriptObject );
+	backgroundColor = new Color( NULL );
+	backgroundColor->SetInts( 25, 50, 75, 255 );
+	script.SetProperty( "backgroundColor", ArgValue( backgroundColor->scriptObject ), this->scriptObject );
 	
 	// if have at least one argument
 	if ( args && args->args.size() >= 1 ) {
@@ -101,13 +101,18 @@ void Scene::InitClass() {
 	 static_cast<ScriptBoolCallback>([]( void* s, bool val ){ return ((Scene*)s)->debugDraw = val; }));
 	
 	script.AddProperty<Scene>
-	( "clearColor",
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ return ((Scene*) b)->clearColor->scriptObject; }),
-	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
-		// replace if it's a color
-		Color* other = script.GetInstance<Color>(val);
-		if ( other ) ((Scene*) b)->clearColor = other;
-		return ((Scene*) b)->clearColor->scriptObject;
+	( "backgroundColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((Scene*) b)->backgroundColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		Scene* rs = (Scene*) b;
+		if ( val.type == TypeObject ) {
+			// replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->backgroundColor = other;
+		} else {
+			rs->backgroundColor->Set( val );
+		}
+		return rs->backgroundColor->scriptObject;
 	}) );
 	
 	script.AddProperty<Scene>
@@ -279,7 +284,7 @@ void Scene::Render( Event& event ) {
 	GPU_Target* rt = (GPU_Target*) event.behaviorParam;
 	
 	// clear screen
-	SDL_Color &color = this->clearColor->rgba;
+	SDL_Color &color = this->backgroundColor->rgba;
 	GPU_ClearRGBA( rt, color.r, color.g, color.b, color.a );
 	
 	// pass self

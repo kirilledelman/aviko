@@ -14,8 +14,10 @@ public:
 	TTF_Font* font = NULL;
 	int size = 16;
 	
+	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
+	
 	// init, destroy
-	FontResource( const char* ckey );
+	FontResource( const char* originalKey, string& path, string& ext );
 	~FontResource();
 };
 

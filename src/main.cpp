@@ -20,10 +20,6 @@ int main( int argc, char* args[] ) {
 			realpath( temp.c_str(), resolved );
 		}
 		app.currentDirectory = resolved;
-	// no arguments?
-	} else {
-		// use /default subdirectory 
-		app.currentDirectory.append( "/default" );
 	}
 	
     // run game

@@ -90,23 +90,28 @@ void Tween::InitClass() {
 	script.RegisterClass<Tween>( "Tween" );
 
 	// constants
-	script.SetGlobalConstant( "EASE_NONE", EaseNone );
-	script.SetGlobalConstant( "EASE_IN", EaseIn );
-	script.SetGlobalConstant( "EASE_OUT", EaseOut );
-	script.SetGlobalConstant( "EASE_INOUT", EaseInOut );
+	
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "Ease", constants );
+	script.SetProperty( "None", ArgValue( EaseNone ), constants );
+	script.SetProperty( "In", ArgValue( EaseIn ), constants );
+	script.SetProperty( "Out", ArgValue( EaseOut ), constants );
+	script.SetProperty( "InOut", ArgValue( EaseInOut ), constants );
 
 	// http://easings.net/
-	script.SetGlobalConstant( "EASE_LINEAR", EaseLinear );
-	script.SetGlobalConstant( "EASE_SINE", EaseSine );
-	script.SetGlobalConstant( "EASE_QUAD", EaseQuad );
-	script.SetGlobalConstant( "EASE_CUBIC", EaseCubic );
-	script.SetGlobalConstant( "EASE_QUART", EaseQuart );
-	script.SetGlobalConstant( "EASE_QUINT", EaseQuint );
-	script.SetGlobalConstant( "EASE_CIRC", EaseCirc );
-	script.SetGlobalConstant( "EASE_EXPO", EaseExpo );
-	script.SetGlobalConstant( "EASE_BACK", EaseBack );
-	script.SetGlobalConstant( "EASE_ELASTIC", EaseElastic );
-	script.SetGlobalConstant( "EASE_BOUNCE", EaseBounce );
+	script.SetProperty( "Linear", ArgValue( EaseLinear ), constants );
+	script.SetProperty( "Sine", ArgValue( EaseSine ), constants );
+	script.SetProperty( "Quadratic", ArgValue( EaseQuad ), constants );
+	script.SetProperty( "Cubic", ArgValue( EaseCubic ), constants );
+	script.SetProperty( "Quartic", ArgValue( EaseQuart ), constants );
+	script.SetProperty( "Quintic", ArgValue( EaseQuint ), constants );
+	script.SetProperty( "Circular", ArgValue( EaseCirc ), constants );
+	script.SetProperty( "Exponential", ArgValue( EaseExpo ), constants );
+	script.SetProperty( "Back", ArgValue( EaseBack ), constants );
+	script.SetProperty( "Elastic", ArgValue( EaseElastic ), constants );
+	script.SetProperty( "Bounce", ArgValue( EaseBounce ), constants );
+	script.FreezeObject( constants );
+
 	
 	// properties
 	
@@ -559,6 +564,34 @@ void Tween::active( bool r ) {
 			if( it != activeTweens->end() ) activeTweens->erase( it );
 			script.ProtectObject( &this->scriptObject, false );
 		}
+	}
+}
+
+
+/* MARK:	-				Stop all
+ -------------------------------------------------------------------- */
+
+
+void Tween::StopTweens( void* target, const char* prop ) {
+	unordered_set<Tween*>::iterator it = Tween::activeTweens->begin();
+	while( it != Tween::activeTweens->end() ) {
+		if ( (*it)->target == target ) {
+			Tween* t = *it;
+			bool remove = (prop == NULL);
+			if ( prop ) { // see if property matches
+				for ( size_t i = 0, np = t->properties.size(); i < np; i++ ){
+					if ( t->properties[ i ].compare( prop ) == 0 ) {
+						remove = true; break;
+					}
+				}
+			}
+			if ( remove ) {
+				it = Tween::activeTweens->erase( it );
+				t->active( false );
+			} else {
+				it++;
+			}
+		} else it++;
 	}
 }
 

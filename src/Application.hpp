@@ -114,10 +114,10 @@ public:
 	float unscaledTime = 0;
 	
 	/// time passed since last frame
-	float deltaTime;
+	float deltaTime = 0;
 	
 	/// unscaled time passed since last frame
-	float unscaledDeltaTime;
+	float unscaledDeltaTime = 0;
 	
 	/// total frames rendered
 	int frames = 0;

@@ -63,9 +63,6 @@ struct Event {
 	/// if true, it's dispatched in children first, then parent (GameObject uses this)
 	bool bubbles = false;
 	
-	/// for stopping event processing loops
-	bool stopped = false;
-	
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
 	
@@ -77,27 +74,14 @@ struct Event {
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;
 	
-	// global event stack
-	static vector<Event*> eventStack;
-	
 	// constructor
-	Event(){ Event::eventStack.push_back( this ); };
+	Event(){};
 	/// construct event with scriptObject as first script parameter
 	Event( void* scriptObject ) : Event::Event() { if ( scriptObject != NULL ) { this->scriptParams.ResizeArguments( 0 ); this->scriptParams.AddObjectArgument( scriptObject ); } }
 	/// construct named event with scriptObject as first script parameter, if provided
 	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->name =  name; }
 	// destructor
-	~Event(){
-		// erase self from stack
-		vector<Event*>::iterator it = Event::eventStack.end(), begin = Event::eventStack.begin();
-		while ( it > begin ){
-			it--;
-			if ( *it == this ) {
-				Event::eventStack.erase( it );
-				break;
-			}
-		}
-	}
+	~Event(){}
 	
 };
 
@@ -347,9 +331,6 @@ public:
 			if ( fobj->callOnce ) {
 				it = list->erase( it );
 			} else it++;
-			
-			// if event was stopped, abort
-			if ( event.stopped ) return;
 		}
 		
 		// some objects will dispatch events to functions with the same name, for ease of use
@@ -518,6 +499,17 @@ public:
 			dit++;
 		}
 	}
+	
+// safe casting
+
+	template <class CLASS>
+	/// compares class names to return desired class instance, or NULL
+	static CLASS* ClassInstance( ScriptableClass* inst ) {
+		if ( !inst ) return NULL;
+		if ( strcmp( inst->scriptClassName, ScriptClassName<CLASS>::name().c_str() ) == 0 ) return static_cast<CLASS*>( inst );
+		return NULL;
+	}
+	
 	
 // init
 	

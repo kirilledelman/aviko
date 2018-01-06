@@ -39,7 +39,9 @@ public:
 	int GetInt( bool withAlpha );
 	
 	/// sets color from integer
-	void SetInt( unsigned int clr, bool withAlpha );
+	void SetInt( int clr, bool withAlpha );
+	
+	static void FromInt( int clr, float &r, float &g, float &b );
 	
 	/// returns hexadecimal RRGGBB(AA) integer value as string
 	string GetHex( bool withAlpha );

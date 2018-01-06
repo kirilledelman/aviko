@@ -1,4 +1,5 @@
 #include "Color.hpp"
+#include "Tween.hpp"
 
 
 /* MARK:	-				Init / destroy
@@ -151,6 +152,149 @@ void Color::InitClass() {
 	 }));
 	
 	script.DefineFunction<Color>
+	( "rgbaTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: rgbaTo( Number red, Number green, Number blue, Number alpha, [ Float duration, [ Int easeType, [ Int easeFunc ]]] )";
+		float r, g, b, a, dur = 1;
+		int etype = (int) Tween::EaseOut, efunc = (int) Tween::EaseSine;
+		Color* self = (Color*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 4, TypeFloat, &r, TypeFloat, &g, TypeFloat, &b, TypeFloat, &a, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+
+		// stop previous tweens
+		Tween::StopTweens( self->scriptObject );
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 4 );
+		t->properties[ 0 ] = "r";
+		t->properties[ 1 ] = "g";
+		t->properties[ 2 ] = "b";
+		t->properties[ 3 ] = "a";
+		t->startValues.resize( 4 );
+		t->startValues[ 0 ] = self->r;
+		t->startValues[ 1 ] = self->g;
+		t->startValues[ 2 ] = self->b;
+		t->startValues[ 3 ] = self->a;
+		t->endValues.resize( 4 );
+		t->endValues[ 0 ] = r;
+		t->endValues[ 1 ] = g;
+		t->endValues[ 2 ] = b;
+		t->endValues[ 3 ] = a;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<Color>
+	( "hexTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: hexTo( Int rgb, [ Float duration, [ Int easeType, [ Int easeFunc ]]] )";
+		float r, g, b, dur = 1;
+		int hex = 0;
+		int etype = (int) Tween::EaseOut, efunc = (int) Tween::EaseSine;
+		Color* self = (Color*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeInt, &hex, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// convert
+		Color::FromInt( hex, r, g, b );
+		
+		// stop previous tweens
+		Tween::StopTweens( self->scriptObject );
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 3 );
+		t->properties[ 0 ] = "r";
+		t->properties[ 1 ] = "g";
+		t->properties[ 2 ] = "b";
+		t->startValues.resize( 3 );
+		t->startValues[ 0 ] = self->r;
+		t->startValues[ 1 ] = self->g;
+		t->startValues[ 2 ] = self->b;
+		t->endValues.resize( 3 );
+		t->endValues[ 0 ] = r;
+		t->endValues[ 1 ] = g;
+		t->endValues[ 2 ] = b;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<Color>
+	( "hsvTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: hsvTo( Number hue, Number saturation, Number value, [ Float duration, [ Int easeType, [ Int easeFunc ]]] )";
+		float h, s, v, dur = 1;
+		int etype = (int) Tween::EaseOut, efunc = (int) Tween::EaseSine;
+		Color* self = (Color*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 3, TypeFloat, &h, TypeFloat, &s, TypeFloat, &v, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// stop previous tweens
+		Tween::StopTweens( self->scriptObject );
+		self->_hsvDirty = true;
+		self->UpdateHSV();
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 3 );
+		t->properties[ 0 ] = "h";
+		t->properties[ 1 ] = "s";
+		t->properties[ 2 ] = "v";
+		t->startValues.resize( 3 );
+		t->startValues[ 0 ] = self->h;
+		t->startValues[ 1 ] = self->s;
+		t->startValues[ 2 ] = self->v;
+		t->endValues.resize( 3 );
+		t->endValues[ 0 ] = h;
+		t->endValues[ 1 ] = s;
+		t->endValues[ 2 ] = v;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<Color>
+	( "stopMotion",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		Color* self = (Color*) go;
+		Tween::StopTweens( self->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<Color>
 	( "toString",
 	 static_cast<ScriptFunctionCallback>([]( void* o, ScriptArguments& sa ) {
 		 static char buf[256];
@@ -165,6 +309,7 @@ void Color::InitClass() {
 
 /* MARK:	-				Manipulation
  -------------------------------------------------------------------- */
+
 
 void Color::UpdateHSV() {
 
@@ -261,7 +406,7 @@ void Color::SetHSV( float hue, float sat, float val ) {
 	this->_hsvDirty = false;
 }
 
-void Color::SetInt( unsigned int val, bool withAlpha ) {
+void Color::SetInt( int val, bool withAlpha ) {
 	
 	// rrggbb
 	if ( withAlpha ) {
@@ -279,6 +424,12 @@ void Color::SetInt( unsigned int val, bool withAlpha ) {
 	// update
 	this->SetInts( this->rgba.r, this->rgba.g, this->rgba.b, this->rgba.a );
 	
+}
+
+void Color::FromInt( int val, float &r, float &g, float &b) {
+	b = ( val & 0xFF ) / 255.0f;
+	g = ( ( val >> 8 ) & 0xFF ) / 255.0f;
+	r = ( ( val >> 16 ) & 0xFF ) / 255.0f;
 }
 
 bool Color::Set( ScriptArguments &sa ) {
@@ -305,13 +456,11 @@ bool Color::Set( ScriptArguments &sa ) {
 			
 			return this->SetHex( sa.args[ 0 ].value.stringValue->c_str() );
 			
-		} else if ( sa.args[ 0 ].type == TypeInt ) {
+		} else if ( sa.args[ 0 ].type == TypeInt || sa.args[ 0 ].type == TypeFloat ) {
 			
-			this->SetInt( sa.args[ 0 ].value.intValue, false );
-			
-		} else if ( sa.args[ 0 ].type == TypeFloat ) {
-			
-			this->SetInt( static_cast<unsigned int>(sa.args[ 0 ].value.floatValue), true );
+			int v = 0;
+			sa.args[ 0 ].toInt( v );
+			this->SetInt( v, false );
 			
 		} else return false;
 		
@@ -350,13 +499,11 @@ void Color::Set( ArgValue &val ) {
 		
 		this->SetHex( val.value.stringValue->c_str() );
 		
-	} else if ( val.type == TypeInt ) {
-		
-		this->SetInt( val.value.intValue, false );
-		
-	} else if ( val.type == TypeFloat ) {
-		
-		this->SetInt( static_cast<unsigned int>(val.value.floatValue), true );
+	} else if ( val.type == TypeInt || val.type == TypeFloat ) {
+	
+		int v = 0;
+		val.toInt( v );
+		this->SetInt( v, false );
 		
 	}
 	
@@ -439,3 +586,4 @@ void Color::SetFloats( float red, float green, float blue, float alpha ) {
 	this->rgba.b = (Uint8) max( 0, min( 255, (int) (blue * 255.0f) ));
 	this->rgba.a = (Uint8) max( 0, min( 255, (int) (alpha * 255.0f) ));
 }
+

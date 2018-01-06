@@ -205,7 +205,6 @@ void* ScriptHost::InitObject( void* initObj ) {
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddObjectArgument( instance->scriptObject );
 		instance->CallEvent( event );
-		if ( event.stopped ) break;
 	}
 	
 	return obj;

@@ -8,8 +8,10 @@ public:
 	
 	JSScript* compiledScript = NULL;
 	
+	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
+	
 	// init, destroy
-	ScriptResource( const char* ckey );
+	ScriptResource( const char* originalKey, string& path, string& ext );
 	~ScriptResource();
 	
 };

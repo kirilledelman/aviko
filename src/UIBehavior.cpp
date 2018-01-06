@@ -35,6 +35,7 @@ UIBehavior::UIBehavior() {
 	AddEventCallback( EVENT_ADDED, (BehaviorEventCallback) &UIBehavior::Attached );
 	AddEventCallback( EVENT_REMOVED, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ACTIVE_CHANGED, (BehaviorEventCallback) &UIBehavior::ActiveChanged );
+	AddEventCallback( EVENT_LAYOUT, (BehaviorEventCallback) &UIBehavior::Layout );
 	
 	// flag
 	this->isUIBehavior = true;
@@ -57,10 +58,21 @@ void UIBehavior::InitClass() {
 	// register class
 	script.RegisterClass<UIBehavior>( "Behavior" );
 	
+	// constants
+	
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "Layout", constants );
+	script.SetProperty( "None", ArgValue( (int) LayoutType::None ), constants );
+	script.SetProperty( "Anchors", ArgValue( (int) LayoutType::Anchors ), constants );
+	script.SetProperty( "Vertical", ArgValue( (int) LayoutType::Horizontal ), constants );
+	script.SetProperty( "Horizontal", ArgValue( (int) LayoutType::Vertical ), constants );
+	script.SetProperty( "Grid", ArgValue( (int) LayoutType::Grid ), constants );
+	script.FreezeObject( constants );
+	
 	// props
 	
 	script.AddProperty<UIBehavior>
-	( "isMouseOver", // has to be that to prevent overlap w .mouseOver = func()
+	( "over", // 
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->mouseOver; }));
 
 	script.AddProperty<UIBehavior>
@@ -138,6 +150,123 @@ void UIBehavior::InitClass() {
 		ui->navigationDown = other;
 		return val;
 	}));
+	
+	script.AddProperty<UIBehavior>
+	( "anchorLeft", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorLeft; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->anchorLeft = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "anchorRight", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorRight; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->anchorRight = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "anchorTop", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorTop; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->anchorTop = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "anchorBottom", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorBottom; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->anchorBottom = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "left", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->left; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->left = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "right", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->right; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->right = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "top", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->top; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->top = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "bottom", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->bottom; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->bottom = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "width", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->width; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->width = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "height", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->height; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->height = val;
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "minWidth", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minWidth; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->minWidth = fmax( 0, val );
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "maxWidth", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxWidth; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->maxWidth = fmax( 0, val );
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "minHeight", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minHeight; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->minHeight = fmax( 0, val );
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "maxHeight", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxHeight; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		((UIBehavior*) b)->maxHeight = fmax( 0, val );
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "layoutType",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->layoutType; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((UIBehavior*) b)->layoutType = (LayoutType) val ); }) );
 	
 	// functions
 	
@@ -304,7 +433,135 @@ bool UIBehavior::Navigate( float x, float y ) {
 }
 
 
-/* MARK:	-				Events
+/* MARK:	-				Layout
+ -------------------------------------------------------------------- */
+
+
+void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
+
+	if ( !behavior->gameObject ) return;
+	
+	float x, y, w, h;
+	behavior->UpdatePosition( x, y, w, h );
+	
+	behavior->gameObject->SetX( x );
+	behavior->gameObject->SetY( y );
+	behavior->width = w;
+	behavior->height = h;
+	
+	// dispatch event on component
+	Event e ( EVENT_LAYOUT );
+	e.scriptParams.AddFloatArgument( x );
+	e.scriptParams.AddFloatArgument( y );
+	e.scriptParams.AddFloatArgument( w );
+	e.scriptParams.AddFloatArgument( h );
+	behavior->CallEvent( e );
+	
+}
+
+void UIBehavior::UpdatePosition( float& x, float& y, float& w, float& h ) {
+	
+	if ( !this->gameObject ) return;
+	UIBehavior* parentUI = gameObject->parent ? gameObject->parent->ui : NULL;
+	
+	x = gameObject->GetX();
+	y = gameObject->GetY();
+	w = width;
+	h = height;
+	
+	if ( parentUI ) {
+	
+		float parentWidth = parentUI->width;
+		float parentHeight = parentUI->height;
+		
+		// anchors
+		if ( layoutType == LayoutType::Anchors ) {
+			
+			float thisSide = 0;
+			float otherSide = 0;
+			
+			// left is measured from start edge
+			if ( anchorLeft == 0 ) {
+				thisSide = left;
+			// left is measured from opposite edge
+			} else if ( anchorLeft == 1 ) {
+				thisSide = parentWidth - left;
+			// left is measured from middle
+			} else if ( anchorLeft > 0 ){
+				thisSide = parentWidth * anchorLeft + left;
+			}
+			// right is measured from start edge
+			if ( anchorRight == 0 ) {
+				otherSide = parentWidth - right;
+			// right is measured from opposite edge
+			} else if ( anchorRight == 1 ) {
+				otherSide = right;
+			// right is measured from middle
+			} else if ( anchorRight > 0 ){
+				otherSide = parentWidth * ( 1 - anchorRight ) + right;
+			}
+			
+			// apply
+			if ( anchorLeft >= 0 || anchorRight >= 0 ) {
+				// start anchor is disabled
+				if ( anchorLeft < 0 ) {
+					x = otherSide - w;
+				// end anchor is disabled
+				} else if ( anchorRight < 0 ) {
+					x = thisSide;
+				} else {
+					x = thisSide;
+					w = otherSide - thisSide;
+				}
+			}
+			
+			
+			// top is measured from start edge
+			if ( anchorTop == 0 ) {
+				thisSide = top;
+			// top is measured from opposite edge
+			} else if ( anchorTop == 1 ) {
+				thisSide = parentHeight - top;
+			// top is measured from middle
+			} else if ( anchorTop > 0 ){
+				thisSide = parentHeight * anchorTop + top;
+			}
+			// bottom is measured from start edge
+			if ( anchorBottom == 0 ) {
+				otherSide = parentHeight - bottom;
+			// right is measured from opposite edge
+			} else if ( anchorBottom == 1 ) {
+				otherSide = bottom;
+				// right is measured from middle
+			} else if ( anchorBottom > 0 ){
+				otherSide = parentHeight * ( 1 - anchorBottom ) + bottom;
+			}
+			
+			if ( anchorTop >= 0 || anchorBottom >= 0 ) {
+				// start anchor is disabled
+				if ( anchorTop < 0 ) {
+					y = otherSide - h;
+				// end anchor is disabled
+				} else if ( anchorBottom < 0 ) {
+					y = thisSide;
+				} else {
+					y = thisSide;
+					h = otherSide - thisSide;
+				}
+			}
+		
+			w = fmax( minWidth, fmin( maxWidth, w ) );
+			h = fmax( minHeight, fmin( maxHeight, h ) );
+		
+			
+		}
+		
+	}
+	
+}
+
+
+/* MARK:	-				Clipping
  -------------------------------------------------------------------- */
 
 
@@ -319,7 +576,7 @@ void UIBehavior::CheckClipping() {
 	GameObject* p = this->gameObject->parent;
 	GameObject* c = this->gameObject;
 	while ( p ) {
-		RenderSpriteBehavior* rs = static_cast<RenderSpriteBehavior*>(p->render);
+		RenderSpriteBehavior* rs = ClassInstance<RenderSpriteBehavior>(p->render);
 		if ( rs ) {
 			if ( rs->imageInstance && rs->imageInstance->autoDraw == c ) {
 				this->clippedBy = rs;
@@ -360,7 +617,6 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		event.scriptParams.AddFloatArgument( x );
 		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
-		
 	// exited bounds
 	} else if ( !inBounds && behavior->mouseOver ) {
 		
@@ -371,7 +627,6 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		event.scriptParams.AddFloatArgument( x );
 		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
-		
 	}
 	behavior->mouseOver = inBounds;
 	
@@ -443,9 +698,6 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 	// if focused
 	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
-		
-		// event handled
-		e->stopped = true;
 		
 		// get name and direction
 		string axisName = *e->scriptParams.args[ 0 ].value.stringValue;
@@ -521,6 +773,12 @@ void UIBehavior::Attached( UIBehavior* behavior, GameObject* go, Event* e ){
 	// remember scene
 	behavior->scene = go->GetScene();
 	behavior->CheckClipping();
+	
+	// do layout, if on scene
+	if ( behavior->scene ) {
+		Event event( EVENT_LAYOUT );
+		behavior->gameObject->DispatchEvent( event, true );
+	}
 	
 }
 

@@ -33,6 +33,9 @@ public:
 	/// key in resource hash
 	string key;
 	
+	/// final path
+	string path;
+		
 	/// true if failed to load
 	ResourceError error = ERROR_NONE;
 	
@@ -42,7 +45,6 @@ public:
 	/// use to tell GC when it's ok to unload this resource
 	virtual void AdjustUseCount( int increment ) {
 		this->useCount += increment;
-		// printf( "%s.useCount = %d\n", key.c_str(), this->useCount );
 	}
 	
 	/// returns true if this resource can be unloaded
@@ -50,8 +52,11 @@ public:
 		return ( !dontUnload && useCount <= 0 );
 	}
 	
+	/// creates new key (as path to file without app.currentDir part), extracts filename, extension, if provided
+	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
+	
+	Resource( const char* originalKey, string& path, string& ext ){}
 	Resource() {}
-	Resource( const char* ckey ){}
 	~Resource() {}
 	
 	/// static function to split string via token
@@ -62,7 +67,7 @@ public:
 			pos = str.find(delim, prev);
 			if (pos == string::npos) pos = str.length();
 			string token = str.substr(prev, pos-prev);
-			if (!token.empty()) tokens.push_back(token);
+			/* if (!token.empty()) */ tokens.push_back(token);
 			prev = pos + delim.length();
 		}
 		while (pos < str.length() && prev < str.length());
@@ -100,8 +105,11 @@ public:
 	/// get resource by filename/key
 	RESOURCE_TYPE* Get( const char* ckey, bool incrementUseCount=false ){
 		
+		// resolve key
+		string filepath, extension, key;
+		key = RESOURCE_TYPE::ResolveKey( ckey, filepath, extension );
+		
 		// find it
-		string key = ckey;
 		auto it = this->map.find( key );
 		
 		// if loaded return it
@@ -110,7 +118,9 @@ public:
 		}
 		
 		// otherwise, load
-		RESOURCE_TYPE* resource = new RESOURCE_TYPE( ckey );
+		RESOURCE_TYPE* resource = new RESOURCE_TYPE( ckey, filepath, extension );
+		resource->path = filepath;
+		resource->key = key;
 		
 		// add to map
 		this->map.insert( make_pair( key, resource ) );

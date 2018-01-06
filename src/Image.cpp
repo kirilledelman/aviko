@@ -49,17 +49,6 @@ void Image::InitClass() {
 	
 	// props
 	
-	/* script.AddProperty<Image>
-	( "url",
-	 static_cast<ScriptStringCallback>([](void *b, string val) {
-		Image* img = (Image*) b;
-		return val;
-	 }),
-	 static_cast<ScriptStringCallback>([](void *b, string val) {
-		Image* img = (Image*) b;
-		return val;
-	 }));*/
-	
 	script.AddProperty<Image>
 	( "autoDraw",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val) {

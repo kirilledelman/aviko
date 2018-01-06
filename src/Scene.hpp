@@ -129,7 +129,7 @@ public:
 	bool debugDraw = true;
 	
 	// clear color
-	Color *clearColor = NULL;
+	Color *backgroundColor = NULL;
 	
 	// camera
 	float inverseCameraMatrix[ 16 ];

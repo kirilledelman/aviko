@@ -92,6 +92,9 @@ public:
 	void Reverse();
 	void Cut();
 	
+	/// stops all tweens for target, optionally with matching property
+	static void StopTweens( void* target, const char* prop=NULL );
+	
 	// script
 	
 	static void InitClass();

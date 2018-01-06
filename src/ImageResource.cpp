@@ -4,73 +4,39 @@
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
 
-// create
-ImageResource::ImageResource( const char* ckey ) {
-	
-	this->key = ckey;
-	
-	// split path into chunks
-	bool startsWithSlash = ( ckey[ 0 ] == '/' );
-	vector<string> parts = Resource::splitString( key, string( "/" ) );
-	
-	// get file extension
-	string::size_type extPos = parts[ parts.size() - 1 ].find_last_of( '.' );
-	string extension = "", filename = key, path, path2;
+ImageResource::ImageResource( const char* originalKey, string& path, string& ext ) {
 	
 	// clear frame struct
 	memset( &this->frame, 0, sizeof( ImageFrame ) );
 	
-	// filename included extension?
-	if ( extPos != string::npos ) {
+	// if it's a frame
+	string okey = originalKey;
+	string::size_type colPos = okey.find_last_of( ':' );
+	if ( colPos != string::npos ) {
+		// separate name and frame
+		string frame = okey.substr( colPos + 1 );
+		okey = okey.substr( 0, colPos );
 		
-		// load as is
-		filename = key.substr( 0, extPos );
-		extension = key.substr( extPos );
+		// add main resource first
+		ImageResource* res = app.textureManager.Get( okey.c_str() );
+		this->mainResource = res;
 		
-	// filename without extension
-	} else {
-		
-		// if more than one part
-		if ( parts.size() > 1 ) {
-			
-			// if png file with full pathname doesn't exist
-			path = app.currentDirectory + ( startsWithSlash ? "" : app.texturesDirectory ) + filename;
-			if ( access( (path + ".png").c_str(), R_OK ) == -1 &&
-				 access( (path + ".jpg").c_str(), R_OK ) == -1 ) {
-				
-				// but png and json without last path chunk do
-				path2 = Resource::concatStrings( parts, "/", (int) parts.size() - 1 );
-				path = app.currentDirectory + ( startsWithSlash ? "/" : app.texturesDirectory ) + path2;
-				if ( ( access( (path + ".png").c_str(), R_OK ) != -1 || access( (path + ".jpg").c_str(), R_OK ) != -1 )&&
-					access( (path + ".json").c_str(), R_OK ) != -1 ) {
-					
-					// prepend /
-					if ( startsWithSlash ) path2 = "/" + path2;
-					
-					// add that resource first
-					ImageResource* res = app.textureManager.Get( path2.c_str() );
-					this->mainResource = res;
-					
-					// locate needed frame
-					ImageFramesIterator it = this->mainResource->frames.find( parts[ parts.size() - 1 ] );
-					if ( it == this->mainResource->frames.end() ) {						
-						printf( "Frame %s not found.\n", filename.c_str() );
-						this->error = ERROR_NOT_FOUND;
-						return;
-					}
-					
-					// copy frame info
-					this->frame = it->second;
-					return;
-					
-				}
-				
-			}
-			
+		// locate needed frame
+		ImageFramesIterator it = this->mainResource->frames.find( frame );
+		if ( it == this->mainResource->frames.end() ) {
+			printf( "Frame %s not found.\n", originalKey );
+			this->error = ERROR_NOT_FOUND;
+			return;
 		}
 		
-		// load json from file
-		path = app.currentDirectory + ( startsWithSlash ? "" : app.texturesDirectory ) + filename + ".json";
+		// copy frame info
+		this->frame = it->second;
+		return;
+	}
+	
+	// if loading json + image
+	if ( ext.compare( "json" ) == 0 ) {
+		
 		FILE *f = fopen( (char*) path.c_str(), "r" );
 		if ( f != NULL ) {
 			// get file size
@@ -127,7 +93,7 @@ ImageResource::ImageResource( const char* ckey ) {
 							w.toNumber( frameInfo.rotated ? frameInfo.locationOnTexture.h : frameInfo.locationOnTexture.w );
 							h.toNumber( frameInfo.rotated ? frameInfo.locationOnTexture.w : frameInfo.locationOnTexture.h );
 						} else {
-							printf( "Error while loading \"%s.json\"", filename.c_str() );
+							printf( "Error while loading \"%s.json\"", path.c_str() );
 							break;
 						}
 						
@@ -139,10 +105,10 @@ ImageResource::ImageResource( const char* ckey ) {
 							w.toNumber( frameInfo.actualWidth );
 							h.toNumber( frameInfo.actualHeight );
 						} else {
-							printf( "Error while loading \"%s.json\"", filename.c_str() );
+							printf( "Error while loading \"%s.json\"", path.c_str() );
 							break;
 						}
-
+						
 						// .spriteSourceSize
 						subObj = script.GetProperty( "spriteSourceSize", frameObj.value.objectValue );
 						if ( subObj.type == TypeObject ) {
@@ -151,7 +117,7 @@ ImageResource::ImageResource( const char* ckey ) {
 							x.toNumber( frameInfo.trimOffsetX );
 							y.toNumber( frameInfo.trimOffsetY );
 						} else {
-							printf( "Error while loading \"%s.json\"", filename.c_str() );
+							printf( "Error while loading \"%s.json\"", path.c_str() );
 							break;
 						}
 						
@@ -159,28 +125,27 @@ ImageResource::ImageResource( const char* ckey ) {
 						this->frames.insert( make_pair( keyName, frameInfo ) );
 						it++;
 					}
-				
+					
 				} else {
-					printf( "Error while loading \"%s.json\": object doesn't contain 'frames' property.\n", filename.c_str() );
+					printf( "Error while loading \"%s.json\": object doesn't contain 'frames' property.\n", path.c_str() );
 				}
-			// failed to parse
+				// failed to parse
 			} else {
-				printf( "Error while loading \"%s.json\": bad JSON\n", filename.c_str() );
+				printf( "Error while loading \"%s.json\": bad JSON\n", path.c_str() );
 			}
 			
 		}
 		
-		// add ext
-		path = app.currentDirectory + ( startsWithSlash ? "" : app.texturesDirectory ) + filename;
-		TryFileExtensions( path.c_str(), "png,jpg", extension );
-		
+		// reattach image extension
+		path = path.substr( 0, path.length() - ext.length() - 1 );
+		TryFileExtensions( path.c_str(), "png,jpg", ext );
+		path = path + ext;
 	}
 	
-	// load from file
-	path = app.currentDirectory + ( startsWithSlash ? "" : app.texturesDirectory ) + filename + extension;
+	// load image
 	SDL_Surface* surface = IMG_Load( path.c_str() );
 	if ( surface == NULL ) {
-		printf( "%s was not found", path.c_str() );
+		printf( "%s was not found\n", path.c_str() );
 		this->error = ERROR_NOT_FOUND;
 		return;
 	}
@@ -196,12 +161,31 @@ ImageResource::ImageResource( const char* ckey ) {
 	GPU_SetImageFilter( this->image, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->image, GPU_SNAP_NONE );
 	
-	printf( "Loaded %s - %p\n", path.c_str(), this->image );
+	// printf( "Loaded %s - %p\n", path.c_str(), this->image );
 	
 	// destroy surface
 	SDL_FreeSurface( surface );
 	
 }
+
+
+//
+string ImageResource::ResolveKey( const char* ckey, string& fullpath, string& extension ) {
+	
+	// see if there's frame in ckey
+	string okey = ckey;
+	string::size_type colPos = okey.find_last_of( ':' );
+	string frame;
+	if ( colPos != string::npos ) {
+		frame = okey.substr( colPos );
+		okey = okey.substr( 0, colPos );
+	}
+	
+	fullpath = ResolvePath( okey.c_str(), "json,png,jpg,jpeg", extension, app.texturesDirectory.c_str() );
+	return fullpath.substr( app.currentDirectory.length() ) + frame;
+	
+}
+
 
 /// adjust use count
 void ImageResource::AdjustUseCount( int increment ) {
@@ -221,7 +205,7 @@ bool ImageResource::CanUnload() {
 ImageResource::~ImageResource() {
 
 	//
-	printf( "Unloading image %s\n", this->key.c_str() );
+	// printf( "Unloading image %s\n", this->key.c_str() );
 
 	// unload
 	if ( this->image ) GPU_FreeImage( this->image );

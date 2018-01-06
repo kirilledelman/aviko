@@ -12,8 +12,10 @@ public:
 	Mix_Chunk* sample = NULL;
 	Mix_Music* music = NULL;
 	
+	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
+	
 	// init, destroy
-	SoundResource( const char* ckey );
+	SoundResource( const char* originalKey, string& path, string& ext );
 	~SoundResource();
 };
 

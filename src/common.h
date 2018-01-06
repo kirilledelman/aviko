@@ -52,8 +52,11 @@ using namespace JS;
 size_t HashString( const char* p );
 float* MatrixCompose( float* mat, float x, float y, float angleDegrees, float scaleX, float scaleY );
 void MatrixSkew( float* result, float sx, float sy );
-const char* ReadFile( const char* filepath, const char* ext, const char* requiredSubPath, const char* optionalSubPath, string* finalPath, size_t *fileSize );
-bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext, const char* subPath );
+string ResolvePath( const char* filepath, const char* ext, const char* optionalSubPath );
+string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, string& extension, const char* optionalSubPath );
+const char* ReadFile( const char* filepath, const char* ext, const char* optionalSubPath, string* finalPath, size_t *fileSize );
+const char* ReadFile( const char* absoluteFilepath, size_t *fileSize );
+bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext );
 bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensions, string &outExtension );
 string HexStr( Uint32 w, size_t hex_len );
 int StringPositionToIndex( const char* str, int pos );
@@ -115,6 +118,7 @@ int StringPositionLength( const char* str );
 #define EVENT_FINISHED "finished"
 #define EVENT_RESIZED "resized"
 #define EVENT_AWAKE "awake"
+#define EVENT_LAYOUT "layout"
 
 // additional blending mode
 #define GPU_BLEND_CUT_ALPHA 16

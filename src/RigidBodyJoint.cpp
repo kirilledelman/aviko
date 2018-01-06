@@ -99,12 +99,17 @@ void RigidBodyJoint::InitClass() {
 	
 	// register class
 	script.RegisterClass<RigidBodyJoint>( "ScriptableObject" );
+
+	// constants
 	
-	script.SetGlobalConstant( "JOINT_MOUSE", (int) b2JointType::e_mouseJoint );
-	script.SetGlobalConstant( "JOINT_REVOLUTE", (int) b2JointType::e_revoluteJoint );
-	script.SetGlobalConstant( "JOINT_PRISMATIC", (int) b2JointType::e_prismaticJoint );
-	script.SetGlobalConstant( "JOINT_DISTANCE", (int) b2JointType::e_distanceJoint );
-	script.SetGlobalConstant( "JOINT_WELD", (int) b2JointType::e_weldJoint );
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "JointType", constants );
+	script.SetProperty( "Mouse", ArgValue( (int) b2JointType::e_mouseJoint ), constants );
+	script.SetProperty( "Revolute", ArgValue( (int) b2JointType::e_revoluteJoint ), constants );
+	script.SetProperty( "Prismatic", ArgValue( (int) b2JointType::e_prismaticJoint  ), constants );
+	script.SetProperty( "Distance", ArgValue( (int) b2JointType::e_distanceJoint  ), constants );
+	script.SetProperty( "Weld", ArgValue( (int) b2JointType::e_weldJoint  ), constants );
+	script.FreezeObject( constants );
 	
 	// props
 	

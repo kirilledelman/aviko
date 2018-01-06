@@ -99,6 +99,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 			}
 		} else if ( this->shapeType == Rectangle ) { /// rectangle x wide, y tall
 			this->x = 30; this->y = 20;
+			this->centered = false;
 			if ( numArgs >= 3 ) {
 				this->x = p1;
 				this->y = p2;
@@ -150,17 +151,21 @@ void RenderShapeBehavior::InitClass() {
 	
 	// constants
 	
-	script.SetGlobalConstant( "SHAPE_NONE", (int) ShapeType::None );
-	script.SetGlobalConstant( "SHAPE_ARC", (int) ShapeType::Arc );
-	script.SetGlobalConstant( "SHAPE_CIRCLE", (int) ShapeType::Circle );
-	script.SetGlobalConstant( "SHAPE_ELLIPSE", (int) ShapeType::Ellipse );
-	script.SetGlobalConstant( "SHAPE_LINE", (int) ShapeType::Line );
-	script.SetGlobalConstant( "SHAPE_POLYGON", (int) ShapeType::Polygon );
-	script.SetGlobalConstant( "SHAPE_RECTANGLE", (int) ShapeType::Rectangle );
-	script.SetGlobalConstant( "SHAPE_ROUNDED_RECTANGLE", (int) ShapeType::RoundedRectangle );
-	script.SetGlobalConstant( "SHAPE_SECTOR", (int) ShapeType::Sector );
-	script.SetGlobalConstant( "SHAPE_TRIANGLE", (int) ShapeType::Triangle );
-	script.SetGlobalConstant( "SHAPE_CHAIN", (int) ShapeType::Chain );
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "Shape", constants );
+	script.SetProperty( "None", ArgValue( (int) ShapeType::None ), constants );
+	script.SetProperty( "Arc", ArgValue( (int) ShapeType::Arc ), constants );
+	script.SetProperty( "Circle", ArgValue( (int) ShapeType::Circle ), constants );
+	script.SetProperty( "Ellipse", ArgValue( (int) ShapeType::Ellipse ), constants );
+	script.SetProperty( "Line", ArgValue( (int) ShapeType::Line ), constants );
+	script.SetProperty( "Polygon", ArgValue( (int) ShapeType::Polygon ), constants );
+	script.SetProperty( "Rectangle", ArgValue( (int) ShapeType::Rectangle ), constants );
+	script.SetProperty( "RoundedRectangle", ArgValue( (int) ShapeType::RoundedRectangle ), constants );
+	script.SetProperty( "Sector", ArgValue( (int) ShapeType::Sector ), constants );
+	script.SetProperty( "Triangle", ArgValue( (int) ShapeType::Triangle ), constants );
+	script.SetProperty( "Chain", ArgValue( (int) ShapeType::Chain ), constants );
+	script.FreezeObject( constants );
+	
 	
 	// properties
 	

@@ -317,7 +317,8 @@ void Controller::InitClass() {
 bool Controller::LoadConfig() {
 	
 	// read file
-	const char* file = ReadFile( this->name.c_str(), "json", app.configDirectory.c_str(), NULL, NULL, NULL );
+	string path = app.configDirectory + this->name;
+	const char* file = ReadFile( path.c_str(), "json", NULL, NULL, NULL );
 	if ( !file ) return false;
 	
 	// make obj
@@ -365,7 +366,7 @@ bool Controller::SaveConfig() {
 	
 	// save to file
 	string path = app.configDirectory + this->name;
-	return SaveFile( str.value.stringValue->c_str(), str.value.stringValue->length(), path.c_str(), "json", NULL );
+	return SaveFile( str.value.stringValue->c_str(), str.value.stringValue->length(), path.c_str(), "json" );
 }
 
 /* MARK:	-				Controller actions

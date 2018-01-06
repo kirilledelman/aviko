@@ -7,9 +7,6 @@
 #include "Vector.hpp"
 
 // from ScriptableClass.hpp
-vector<Event*> Event::eventStack;
-
-// from ScriptableClass.hpp
 int ScriptableClass::asyncIndex = 0;
 ScriptableClass::AsyncMap* ScriptableClass::scheduledAsyncs = NULL;
 ScriptableClass::DebouncerMap* ScriptableClass::scheduledDebouncers = NULL;
@@ -156,6 +153,7 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 		event.scriptParams.AddIntArgument( newWidth );
 		event.scriptParams.AddIntArgument( newHeight );
 		this->CallEvent( event );
+
 	}
 }
 
@@ -216,18 +214,21 @@ void Application::InitClass() {
 	
 	// constants
 	
-	script.SetGlobalConstant( "BLEND_NORMAL", GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
-	script.SetGlobalConstant( "BLEND_PREMULTIPLIED_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_PREMULTIPLIED_ALPHA );
-	script.SetGlobalConstant( "BLEND_MULTIPLY", GPU_BlendPresetEnum::GPU_BLEND_MULTIPLY );
-	script.SetGlobalConstant( "BLEND_ADD", GPU_BlendPresetEnum::GPU_BLEND_ADD );
-	script.SetGlobalConstant( "BLEND_SUBTRACT", GPU_BlendPresetEnum::GPU_BLEND_SUBTRACT );
-	script.SetGlobalConstant( "BLEND_MOD_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_MOD_ALPHA );
-	script.SetGlobalConstant( "BLEND_SET_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_SET_ALPHA );
-	script.SetGlobalConstant( "BLEND_SET", GPU_BlendPresetEnum::GPU_BLEND_SET );
-	script.SetGlobalConstant( "BLEND_NORMAL_KEEP_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_KEEP_ALPHA );
-	script.SetGlobalConstant( "BLEND_NORMAL_ADD_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_ADD_ALPHA );
-	script.SetGlobalConstant( "BLEND_NORMAL_FACTOR_ALPHA", GPU_BlendPresetEnum::GPU_BLEND_NORMAL_FACTOR_ALPHA );
-	script.SetGlobalConstant( "BLEND_CUT_ALPHA", GPU_BLEND_CUT_ALPHA );
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "BlendMode", constants );
+	script.SetProperty( "Normal", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL ), constants );
+	script.SetProperty( "PremultipliedAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_PREMULTIPLIED_ALPHA ), constants );
+	script.SetProperty( "Multiply", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_MULTIPLY ), constants );
+	script.SetProperty( "Add", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_ADD ), constants );
+	script.SetProperty( "Subtract", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SUBTRACT ), constants );
+	script.SetProperty( "ModAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_MOD_ALPHA ), constants );
+	script.SetProperty( "SetAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SET_ALPHA ), constants );
+	script.SetProperty( "Set", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SET ), constants );
+	script.SetProperty( "NormalKeepAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_KEEP_ALPHA ), constants );
+	script.SetProperty( "NormalAddAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_ADD_ALPHA ), constants );
+	script.SetProperty( "NormalFactorAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_FACTOR_ALPHA ), constants );
+	script.SetProperty( "CutAlpha", ArgValue( GPU_BLEND_CUT_ALPHA ), constants );
+	script.FreezeObject( constants );
 	
 	// properties
 	script.AddProperty<Application>
@@ -475,7 +476,7 @@ void Application::InitClass() {
 		}
 		// read file
 		string path;
-		const char* buf = ReadFile( filename.c_str(), "json", NULL, NULL, &path, NULL );
+		const char* buf = ReadFile( filename.c_str(), "json", NULL, &path, NULL );
 		if ( !buf ) {
 			script.ReportError( "JSON.load: file '%s' not found", filename.c_str() );
 			return false;
@@ -536,7 +537,7 @@ void Application::InitClass() {
 		}
 		
 		// save to file
-		sa.ReturnBool( SaveFile( ret.value.stringValue->c_str(), ret.value.stringValue->length(), filename.c_str(), "json", NULL ) );
+		sa.ReturnBool( SaveFile( ret.value.stringValue->c_str(), ret.value.stringValue->length(), filename.c_str(), "json" ) );
 		
 		// all good
 		return true;
@@ -567,7 +568,6 @@ void Application::InitClass() {
 			script.ReportError( "usage: include( String scriptResource, [ Object thisObject ] )" );
 			return false;
 		}
-		
 		ArgValue ret;
 		script.Execute( app.scriptManager.Get( path.c_str() ), thisObj ? thisObj : sa.GetThis(), &ret );
 		sa.ReturnValue( ret );
@@ -576,11 +576,11 @@ void Application::InitClass() {
 	
 	// global toInit serializer
 	script.DefineGlobalFunction
-	( "toInit",
+	( "wrap",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
 		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: toInit( Object object )" );
+			script.ReportError( "usage: wrap( Object object )" );
 			return false;
 		}
 		ArgValue ret( initObj );
@@ -591,11 +591,11 @@ void Application::InitClass() {
 	
 	// global init deserializer
 	script.DefineGlobalFunction
-	( "init",
+	( "unwrap",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
 		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: init( Object initObject )" );
+			script.ReportError( "usage: unwrap( Object initObject )" );
 			return false;
 		}
 		ArgValue ret( script.InitObject( initObj ) );
@@ -611,20 +611,6 @@ void Application::InitClass() {
 		return true;
 	}) );
 
-	// stops current event
-	script.DefineGlobalFunction
-	( "stopEvent",
-	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
-		// stop current / last event
-		if ( Event::eventStack.size() ) {
-			Event::eventStack.back()->stopped = true;
-			sa.ReturnBool( true );
-		} else {
-			sa.ReturnBool( false );
-		}
-		return true;
-	}) );
-	
 	script.DefineGlobalFunction
 	( "quit",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
@@ -736,7 +722,8 @@ void Application::GameLoop() {
 
 			// update
 			event.name = EVENT_UPDATE;
-			event.scriptParams.AddFloatArgument( deltaTime );
+			event.scriptParams.ResizeArguments( 0 );
+			event.scriptParams.AddFloatArgument( this->deltaTime );
 			scene->DispatchEvent( event, true );
 		}
 		
@@ -787,32 +774,126 @@ void Application::GameLoop() {
 /* MARK:	-				Global funcs ( from common.h )
  -------------------------------------------------------------------- */
 
-/// read file from path, returns buffer on success, or NULL. Call free(buf) after using
-/// tries to read from working directory / requiredSubpath if given / filepath, then directory / requiredSubpath if given / optionalSubpath / filepath before giving up
-/// if filepath starts with /, ignores subPaths
-const char* ReadFile( const char* filepath, const char* ext, const char* requiredSubPath, const char* optionalSubPath, string* finalPath, size_t *fileSize ) {
+/// if filepath starts with . uses current script location as start point, otherwise, app currentDirectory
+/// if filepath starts with /, ignores optionalSubPath
+/// otherwise if optionalSubPath specified, checks is startingPath/optionalSubPath/file/path exists & returns it
+/// if not, returns startingPath/file/path
+string ResolvePath( const char* filepath, const char* ext, const char* optionalSubPath ) {
+	
+	bool startsWithSlash = ( filepath[ 0 ] == '/' );
+	bool startsWithDot = ( filepath[ 0 ] == '.' );
+	string startingPath = app.currentDirectory;
+	if ( script.currentScript && startsWithDot ) {
+		// remove filename from current script
+		vector<string> parts = Resource::splitString( script.currentScript->path, "/" );
+		parts.pop_back();
+		startingPath = Resource::concatStrings( parts, "/" );
+	}
 	
 	// split path into chunks
-	string key( filepath );
-	bool startsWithSlash = ( filepath[ 0 ] == '/' );
-	vector<string> parts = Resource::splitString( key, string( "/" ) );
+	string fileKey( filepath );
+	if ( startsWithDot ) fileKey = fileKey.substr( 1 );
+	vector<string> parts = Resource::splitString( fileKey, string( "/" ) );
 	
-	// get file extension
+	// append file extension, if missing
 	string::size_type extPos = parts[ parts.size() - 1 ].find_last_of( '.' );
+	if ( extPos == string::npos && extPos > 0 && ext ) fileKey += string( "." ) + ext;
 	
-	// filename without extension?
-	if ( extPos == string::npos ) key += string( "." ) + ext;
+	// ensure first / is stripped
+	if ( fileKey.c_str()[ 0 ] == '/' ) fileKey = fileKey.substr( 1 );
 	
-	// check if exists
-	string path = app.currentDirectory + ( startsWithSlash ? "" : ( requiredSubPath ? requiredSubPath : "/" ) ) + key;
-	if ( access( path.c_str(), R_OK ) == -1 ) {
-		if ( optionalSubPath ) {
-			path = app.currentDirectory + string(optionalSubPath) + key;
-			if ( access( path.c_str(), R_OK ) != -1 ) {
-				return NULL;
-			}
-		} else return NULL;
+	string path = startingPath;
+	
+	// if given optionalSubpath
+	if ( optionalSubPath && !startsWithSlash && !startsWithDot ) {
+		path += optionalSubPath + fileKey;
+		if ( access( path.c_str(), R_OK ) == 0 ) return path;
+		// no? reset
+		path = startingPath;
 	}
+	
+	// done
+	return path + string( "/" ) + fileKey;
+}
+
+string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, string& extension, const char* optionalSubPath ) {
+	
+	bool startsWithSlash = ( filepath[ 0 ] == '/' );
+	bool startsWithDot = ( filepath[ 0 ] == '.' );
+	string startingPath = app.currentDirectory;
+	if ( script.currentScript && startsWithDot ) {
+		// remove filename from current script
+		vector<string> parts = Resource::splitString( script.currentScript->path, "/" );
+		parts.pop_back();
+		startingPath = Resource::concatStrings( parts, "/" );
+	}
+	
+	// split path into chunks
+	string fileKey( filepath );
+	if ( startsWithDot ) fileKey = fileKey.substr( 1 );
+	vector<string> parts = Resource::splitString( fileKey, string( "/" ) );
+	
+	// ensure first / is stripped
+	if ( fileKey.c_str()[ 0 ] == '/' ) fileKey = fileKey.substr( 1 );
+
+	// given set of extensions
+	vector<string> extensions = Resource::splitString( string( commaSeparatedExtensions ), "," );
+	size_t startIndex = 0;
+	
+	// if already have extension
+	string::size_type extPos = parts.back().find_last_of( '.' );
+	if ( extPos != string::npos ) {
+		// set start index to it
+		vector<string>::iterator it = find( extensions.begin(), extensions.end(), parts.back().substr( extPos + 1 ) );
+		startIndex = ( it == extensions.end() ? 0 : ( it - extensions.begin() ) );
+		// strip it
+		parts.back() = parts.back().substr( 0, extPos );
+		fileKey = Resource::concatStrings( parts, "/" );
+	}
+	
+	// try each extension
+	string path;
+	for ( size_t i = startIndex, ne = extensions.size(); i < ne; i++ ) {
+		extension = extensions[ i ];
+		if ( optionalSubPath && !startsWithSlash && !startsWithDot ) {
+			path = startingPath + optionalSubPath + fileKey + string( "." ) + extension;
+			if ( access( path.c_str(), R_OK ) == 0 ) return path;
+		}
+
+		path = startingPath + string( "/" ) + fileKey + string( "." ) + extension;
+		if ( access( path.c_str(), R_OK ) == 0 ) return path;
+	}
+	
+	return path;
+}
+
+const char* ReadFile( const char* absoluteFilepath, size_t *fileSize ) {
+	
+	// load file
+	FILE *f = fopen( absoluteFilepath, "r" );
+	size_t fsize = 0;
+	char *buf = NULL;
+	if ( f != NULL ) {
+		// get file size
+		fseek( f, 0, SEEK_END );
+		fsize = (size_t) ftell( f );
+		fseek( f, 0, SEEK_SET );
+		// read file in
+		buf = (char*) malloc( sizeof( char ) * fsize + 1 );
+		buf[ fsize ] = 0;
+		fread(buf, sizeof(char), fsize, f );
+		fclose( f );
+	} else return NULL;
+	
+	if ( fileSize != NULL ) *fileSize = fsize;
+	return buf;
+	
+}
+
+/// read file from path, returns buffer on success, or NULL. Call free(buf) after using
+const char* ReadFile( const char* filepath, const char* ext, const char* optionalSubPath, string* finalPath, size_t *fileSize ) {
+	
+	string path = ResolvePath( filepath, ext, optionalSubPath );
 	
 	// load file
 	FILE *f = fopen( (char*) path.c_str(), "r" );
@@ -838,24 +919,13 @@ const char* ReadFile( const char* filepath, const char* ext, const char* require
 
 /// saves file to "optional/path/to/filename.optionalExt". If subPath is provided, start path is working directory / subPath / filepath, otherwise, start point is working directory
 /// if filepath starts with /, ignores subPath
-bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext, const char* subPath ) {
-	
-	// split path into chunks
-	string key( filepath );
-	bool startsWithSlash = ( filepath[ 0 ] == '/' );
-	vector<string> parts = Resource::splitString( key, string( "/" ) );
-	
-	// get file extension
-	string::size_type extPos = parts[ parts.size() - 1 ].find_last_of( '.' );
-	
-	// filename without extension?
-	if ( extPos == string::npos ) key += string( "." ) + ext;
+bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext ) {
 	
 	// path
-	string path = app.currentDirectory + ( startsWithSlash ? "" : ( subPath ? subPath : "/" ) ) + key;
+	string path = ResolvePath( filepath, ext, NULL );
 	
 	// create subfolders leading up to file
-	parts = Resource::splitString( path, string( "/" ) );
+	vector<string> parts = Resource::splitString( path, string( "/" ) );
 	string subDir;
 	for ( int i = 0; i < parts.size() - 1; i++ ) {
 		subDir = "/" + parts[ i ];

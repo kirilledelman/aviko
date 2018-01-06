@@ -56,9 +56,12 @@ void RigidBodyBehavior::InitClass() {
 	
 	// constants
 	
-	script.SetGlobalConstant( "BODY_DYNAMIC", (int) b2BodyType::b2_dynamicBody );
-	script.SetGlobalConstant( "BODY_STATIC", (int) b2BodyType::b2_staticBody );
-	script.SetGlobalConstant( "BODY_KINEMATIC", (int) b2BodyType::b2_kinematicBody );
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "BodyType", constants );
+	script.SetProperty( "Dynamic", ArgValue( (int) b2BodyType::b2_dynamicBody ), constants );
+	script.SetProperty( "Static", ArgValue( (int) b2BodyType::b2_staticBody ), constants );
+	script.SetProperty( "Kinematic", ArgValue( (int) b2BodyType::b2_kinematicBody ), constants );
+	script.FreezeObject( constants );
 	
 	// properties
 	

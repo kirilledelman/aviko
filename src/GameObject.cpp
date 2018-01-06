@@ -479,9 +479,10 @@ void GameObject::InitClass() {
 	("addChild", // ( GameObject child [, int position ] ) -> GameObject child
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: addChild( [ GameObject obj [,Int desiredPosition ] ] )";
+		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition ] ] )";
 		int pos = -1;
 		void* obj = NULL;
+		string scriptName;
 		GameObject* other = NULL;
 		
 		// read args
@@ -492,7 +493,11 @@ void GameObject::InitClass() {
 				other = new GameObject( NULL );
 			} else {
 				other = script.GetInstance<GameObject>( obj );
-			}
+			}		
+		} else if ( sa.ReadArguments( 0, TypeString, &scriptName, TypeInt, &pos ) ){
+			// make new game object
+			other = new GameObject( NULL );
+			script.SetProperty( "script", ArgValue( scriptName.c_str() ), other->scriptObject );
 		}
 		
 		// validate
@@ -564,6 +569,9 @@ void GameObject::InitClass() {
 			return false;
 		}
 		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "x" );
+		
 		// make tween
 		Tween* t = new Tween( NULL );
 		t->target = self->scriptObject;
@@ -599,6 +607,9 @@ void GameObject::InitClass() {
 			script.ReportError( error );
 			return false;
 		}
+		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "x" );
 		
 		// make tween
 		Tween* t = new Tween( NULL );
@@ -636,6 +647,9 @@ void GameObject::InitClass() {
 			return false;
 		}
 		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "angle" );
+		
 		// make tween
 		Tween* t = new Tween( NULL );
 		t->target = self->scriptObject;
@@ -668,6 +682,9 @@ void GameObject::InitClass() {
 			script.ReportError( error );
 			return false;
 		}
+		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "angle" );
 		
 		// make tween
 		Tween* t = new Tween( NULL );
@@ -702,6 +719,9 @@ void GameObject::InitClass() {
 			return false;
 		}
 		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "scale" );
+		
 		// make tween
 		Tween* t = new Tween( NULL );
 		t->target = self->scriptObject;
@@ -735,6 +755,9 @@ void GameObject::InitClass() {
 			return false;
 		}
 		
+		// stop tweens
+		Tween::StopTweens( self->scriptObject, "scale" );
+		
 		// make tween
 		Tween* t = new Tween( NULL );
 		t->target = self->scriptObject;
@@ -753,17 +776,69 @@ void GameObject::InitClass() {
 	}));
 	
 	script.DefineFunction<GameObject>
+	( "fadeTo",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		const char* error = "usage: fadeTo( Number opacity[, Float duration[, Int easeType[, Int easeFunc ] )";
+		float a, dur = 1;
+		int etype = (int) Tween::EaseInOut, efunc = (int) Tween::EaseSine;
+		GameObject* self = (GameObject*) go;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeFloat, &a, TypeFloat, &dur, TypeInt, &etype, TypeInt, &efunc ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// stop opacity tweens
+		Tween::StopTweens( self->scriptObject, "opacity" );
+		
+		// make tween
+		Tween* t = new Tween( NULL );
+		t->target = self->scriptObject;
+		t->properties.resize( 1 );
+		t->properties[ 0 ] = "opacity";
+		t->startValues.resize( 1 );
+		t->startValues[ 0 ] = self->opacity;
+		t->endValues.resize( 1 );
+		t->endValues[ 0 ] = a;
+		t->duration = max( 0.0f, dur );
+		t->easeType = (Tween::EasingType) etype;
+		t->easeFunc = (Tween::EasingFunc) efunc;
+		t->active( true );
+		sa.ReturnObject( t->scriptObject );
+		return true;
+	}));
+
+	script.DefineFunction<GameObject>
 	( "stopMotion",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		GameObject* self = (GameObject*) go;
-		unordered_set<Tween*>::iterator it = Tween::activeTweens->begin();
-		while( it != Tween::activeTweens->end() ) {
-			if ( (*it)->target == self->scriptObject ) {
-				Tween* t = *it;
-				it = Tween::activeTweens->erase( it );
-				t->active( false );
-			} else it++;
+		Tween::StopTweens( self->scriptObject );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	( "dispatch", // like fire, but for hierarchy
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		const char* error = "usage: dispatch( String eventName [, arguments... ] )";
+		string eventName;
+		
+		// validate
+		if ( !sa.ReadArguments( 1, TypeString, &eventName ) || !eventName.length() ) {
+			script.ReportError( error );
+			return false;
 		}
+		
+		// make event with additional arguments
+		Event event( eventName.c_str() );
+		for ( size_t i = 1, np = sa.args.size(); i < np; i++ ) {
+			event.scriptParams.AddArgument( sa.args[ i ] );
+		}
+		// dispatch
+		GameObject* self = (GameObject*) go;
+		self->DispatchEvent( event, true );
 		return true;
 	}));
 	
@@ -795,9 +870,6 @@ void GameObject::InitClass() {
 /// calls event handlers on each behavior, then script event listeners on gameObject. Recurses to active children.
 void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallback *forEachGameObject ) {
 	
-	// reset flag for reused events
-	event.stopped = false;
-	
 	// if a lambda callback is provided, call it
 	if ( forEachGameObject != NULL ) (*forEachGameObject)( this );
 	
@@ -806,9 +878,6 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		this->CallEvent( event );
 	}
 	
-	// if event is stopped, skip
-	if ( event.stopped ) return;
-	
 	// for each child
 	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
 		GameObject* obj = (GameObject*) this->children[ i ];
@@ -816,12 +885,10 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		if ( obj->active() && obj != event.skipObject ) {
 			obj->DispatchEvent( event, true, forEachGameObject );
 		}
-		// if event was stopped, abort
-		if ( event.stopped ) return;
 	}
 	
 	// if bubbling, call on self after children
-	if ( event.bubbles && callOnSelf && !event.stopped ) {
+	if ( event.bubbles && callOnSelf ) {
 		this->CallEvent( event );
 	}
 }
@@ -840,9 +907,6 @@ void GameObject::CallEvent( Event &event ) {
 		
 		// process event
 		behavior->CallEventCallback( event );
-		
-		// if event was stopped, abort
-		if ( event.stopped ) break;
 	}
 	
 	// dispatches script events on this object
@@ -1800,17 +1864,12 @@ void GameObject::Render( Event& event ) {
 		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
 	}
 	
-	// if render isn't cancelled by behavior
-	if ( !event.stopped ) {
-		
-		// descend into children
-		int numChildren = (int) this->children.size();
-		for( int i = numChildren - 1; i >= 0; i-- ) {
-			GameObject* obj = this->children[ i ];
-			// recurse if render behavior didn't ask to skip it
-			if ( obj->active() && obj != event.skipObject ) obj->Render( event );
-		}
-		
+	// descend into children
+	int numChildren = (int) this->children.size();
+	for( int i = numChildren - 1; i >= 0; i-- ) {
+		GameObject* obj = this->children[ i ];
+		// recurse if render behavior didn't ask to skip it
+		if ( obj->active() && obj != event.skipObject ) obj->Render( event );
 	}
 	
 	// pop matrices

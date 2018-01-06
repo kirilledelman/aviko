@@ -41,8 +41,10 @@ public:
 	void AdjustUseCount( int increment );
 	bool CanUnload();
 	
+	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
+	
 	// init, destroy
-	ImageResource( const char* ckey );
+	ImageResource( const char* originalKey, string& path, string& ext );
 	~ImageResource();
 	
 };

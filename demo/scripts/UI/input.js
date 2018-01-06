@@ -1,11 +1,15 @@
-// include Style.js
-include( 'UI/Style' );
-
-/**
-@param {GameObject} gameObject
-@return {GameObject}
+/*
+ Basic text field
+ 
+ usage:
+ var myTextField = app.scene.addChild( 'ui/input.js' );
+ myTextField.text = "Some text";
+ 
+ 
 */
-(function TextInput( gameObject ) {
+
+include( './style' );
+(function(gameObject) {
 	// create components
 	var rt = gameObject.render = new RenderText();
 	var ui = gameObject.ui = new UI();
@@ -172,7 +176,8 @@ include( 'UI/Style' );
 				rt.text = rt.text.substr( 0, prevCaretIndex ) + rt.text.substr( caretIndex );
 				caretPosition--;
 			}
-		// input
+ 
+		// normal character
 	    } else {
 			// selection
 			if ( replacingSelection ) {
@@ -195,6 +200,7 @@ include( 'UI/Style' );
 
 	}
 
+	// key down
 	ui.keyDown = function ( code, shift, ctrl, alt ) {
 		// ready
 		ui.dragSelect = false;
@@ -304,7 +310,7 @@ include( 'UI/Style' );
 
 	}
 	
-})( this );
+})(this);
 
 
 
