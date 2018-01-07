@@ -57,27 +57,48 @@ public:
 	/// defines how this behavior lays our its children
 	LayoutType layoutType = LayoutType::Anchors;
 	
-	// anchors
+	// anchors ( 0 = this edge, 1 = opposite edge, -1 = disabled (use width, height)
 	float anchorLeft = 0;
 	float anchorRight = 0;
 	float anchorTop = 0;
 	float anchorBottom = 0;
 	
-	//
+	// offsets from anchor
 	float left = 0;
 	float right = 0;
 	float top = 0;
 	float bottom = 0;
 	
+	// limits on width and height
 	float minWidth = 0;
 	float maxWidth = 9999;
 	float minHeight = 0;
 	float maxHeight = 9999;
 	
-	// if layoutType = none (or no ui parent), these are set, otherwise, computed
-	float width = 0;
-	float height = 0;
-	void UpdatePosition( float& x, float& y, float& w, float& h );
+	// values are computed during layout, unless object is not positioned (all anchors are -1)
+	float layoutWidth = 0;
+	float layoutHeight = 0;
+	float layoutX = 0, layoutY = 0;
+	
+	// for horizontal and vertical - expands opposite axis to fill container
+	bool layoutExpandCrossAxis = true;
+	
+	// reduces available w/h inside for layout of children
+	float padTop = 0;
+	float padBottom = 0;
+	float padLeft = 0;
+	float padRight = 0;
+	
+	// affects placing / sizing this UI during layout
+	float marginTop = 0;
+	float marginBottom = 0;
+	float marginLeft = 0;
+	float marginRight = 0;
+	
+	// float SetWidth( float w );
+	// float SetHeight( float h );
+	
+	void GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h );
 	
 	// UI events
 	static void MouseMove( UIBehavior* behavior, void*, Event* event);

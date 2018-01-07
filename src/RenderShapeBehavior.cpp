@@ -166,7 +166,6 @@ void RenderShapeBehavior::InitClass() {
 	script.SetProperty( "Chain", ArgValue( (int) ShapeType::Chain ), constants );
 	script.FreezeObject( constants );
 	
-	
 	// properties
 	
 	script.AddProperty<RenderShapeBehavior>
@@ -199,6 +198,16 @@ void RenderShapeBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->y; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->y = val ); }) );
 
+	script.AddProperty<RenderShapeBehavior>
+	( "width",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->x; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->x = val ); }) );
+	
+	script.AddProperty<RenderShapeBehavior>
+	( "height",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->y; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->y = val ); }) );
+	
 	script.AddProperty<RenderShapeBehavior>
 	( "x1",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->x1; }),

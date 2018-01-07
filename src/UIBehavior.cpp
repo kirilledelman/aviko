@@ -5,6 +5,18 @@
 #include "Image.hpp"
 #include "Scene.hpp"
 
+/*
+ 
+ Layout notes:
+ 
+	set layout type, anchors, offsets, paddings/margins etc
+	add ui.layout event listener, which receives ( x, y, w, h ), and should update gameObject + render
+	ui without parent (gameObject.parent.ui is null), uses gameObject's x, y, and ui.width, height as start point
+ 
+ */
+
+
+
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
 
@@ -39,6 +51,11 @@ UIBehavior::UIBehavior() {
 	
 	// flag
 	this->isUIBehavior = true;
+	
+	// reset layout props
+	this->layoutX = nanf(NULL);
+	this->layoutY = nanf(NULL);
+	
 }
 
 // destructor
@@ -64,8 +81,8 @@ void UIBehavior::InitClass() {
 	script.AddGlobalNamedObject( "Layout", constants );
 	script.SetProperty( "None", ArgValue( (int) LayoutType::None ), constants );
 	script.SetProperty( "Anchors", ArgValue( (int) LayoutType::Anchors ), constants );
-	script.SetProperty( "Vertical", ArgValue( (int) LayoutType::Horizontal ), constants );
-	script.SetProperty( "Horizontal", ArgValue( (int) LayoutType::Vertical ), constants );
+	script.SetProperty( "Vertical", ArgValue( (int) LayoutType::Vertical ), constants );
+	script.SetProperty( "Horizontal", ArgValue( (int) LayoutType::Horizontal ), constants );
 	script.SetProperty( "Grid", ArgValue( (int) LayoutType::Grid ), constants );
 	script.FreezeObject( constants );
 	
@@ -96,7 +113,7 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
-	( "navigationLeft",
+	( "focusLeft",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationLeft ? ui->navigationLeft : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -110,7 +127,7 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
-	( "navigationRight",
+	( "focusRight",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationRight ? ui->navigationRight : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -124,7 +141,7 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
-	( "navigationUp",
+	( "focusUp",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationUp ? ui->navigationUp : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -138,7 +155,7 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
-	( "navigationDown",
+	( "focusDown",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationDown ? ui->navigationDown : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -217,17 +234,17 @@ void UIBehavior::InitClass() {
 	
 	script.AddProperty<UIBehavior>
 	( "width", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->width; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->width = val;
+		((UIBehavior*) b)->layoutWidth = val;
 		return val;
 	}));
 	
 	script.AddProperty<UIBehavior>
 	( "height", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->height; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->height = val;
+		((UIBehavior*) b)->layoutHeight = val;
 		return val;
 	}));
 	
@@ -268,6 +285,113 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->layoutType; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((UIBehavior*) b)->layoutType = (LayoutType) val ); }) );
 	
+	script.AddProperty<UIBehavior>
+	( "expandCrossAxis",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->layoutExpandCrossAxis; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return (((UIBehavior*) b)->layoutExpandCrossAxis = val); }));
+
+	script.AddProperty<UIBehavior>
+	( "pad",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		ArgValue v;
+		v.type = TypeArray;
+		v.value.arrayValue = new ArgValueVector();
+		v.value.arrayValue->emplace_back( ArgValue( ui->padTop ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->padRight ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->padBottom ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->padLeft ) );
+		return v;
+	 }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		float sameVal = 0;
+		if ( val.type == TypeArray ) {
+			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->padTop ) ) {
+				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->padRight ) ) {
+					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->padBottom ) ) {
+						if ( val.value.arrayValue->size() >= 4 )
+							val.value.arrayValue->at( 0 ).toNumber( ui->padLeft );
+					}
+				}
+			}
+		} else if ( val.toNumber( sameVal ) ) {
+			ui->padTop = ui->padRight = ui->padBottom = ui->padLeft = sameVal;
+		}
+		return val;
+	}), PROP_ENUMERABLE | PROP_NOSTORE );
+	
+	script.AddProperty<UIBehavior>
+	( "padTop", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padTop; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padTop = val ); }));
+	
+	script.AddProperty<UIBehavior>
+	( "padRight", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padRight; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padRight = val ); }));
+
+	script.AddProperty<UIBehavior>
+	( "padBottom", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padBottom; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padBottom = val ); }));
+
+	script.AddProperty<UIBehavior>
+	( "padLeft", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padLeft; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padLeft = val ); }));
+
+	script.AddProperty<UIBehavior>
+	( "margin",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		ArgValue v;
+		v.type = TypeArray;
+		v.value.arrayValue = new ArgValueVector();
+		v.value.arrayValue->emplace_back( ArgValue( ui->marginTop ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->marginRight ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->marginBottom ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->marginLeft ) );
+		return v;
+	}),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		float sameVal = 0;
+		if ( val.type == TypeArray ) {
+			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->marginTop ) ) {
+				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->marginRight ) ) {
+					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->marginBottom ) ) {
+						if ( val.value.arrayValue->size() >= 4 )
+							val.value.arrayValue->at( 0 ).toNumber( ui->marginLeft );
+					}
+				}
+			}
+		} else if ( val.toNumber( sameVal ) ) {
+			ui->marginTop = ui->marginRight = ui->marginBottom = ui->marginLeft = sameVal;
+		}
+		return val;
+	}), PROP_ENUMERABLE | PROP_NOSTORE  );
+	
+	script.AddProperty<UIBehavior>
+	( "marginTop", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginTop; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginTop = val ); }));
+	
+	script.AddProperty<UIBehavior>
+	( "marginRight", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginRight; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginRight = val ); }));
+	
+	script.AddProperty<UIBehavior>
+	( "marginBottom", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginBottom; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginBottom = val ); }));
+	
+	script.AddProperty<UIBehavior>
+	( "marginLeft", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginLeft; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginLeft = val ); }));
+	
 	// functions
 	
 	script.DefineFunction<UIBehavior>
@@ -286,16 +410,25 @@ void UIBehavior::InitClass() {
 	} ));
 	
 	script.DefineFunction<UIBehavior>
-	("navigate",
+	("moveFocus",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
 		UIBehavior* self = (UIBehavior*) p;
-		int dir = 0;
-		if ( !sa.ReadArguments( 1, TypeInt, &dir ) ) {
-			script.ReportError( "usage: navigate( Int direction )" );
+		int dirX = 0, dirY = 0;
+		if ( !sa.ReadArguments( 1, TypeInt, &dirX, TypeInt, &dirY ) ) {
+			script.ReportError( "usage: navigate( Int directionX, [ Int directionY ] )" );
 			return false;
 		}
-		// 
-		return self->Navigate( dir, 0 ) || self->Navigate( 0, dir );
+		// two args?
+		if ( sa.args.size() > 1 ) {
+			
+			sa.ReturnBool( self->Navigate( dirX, dirY ) );
+			
+		// one? try both direction
+		} else {
+		
+			sa.ReturnBool( self->Navigate( dirX, 0 ) || self->Navigate( 0, dirX ) );
+		}
+		return true;
 	} ));
 
 }
@@ -303,6 +436,7 @@ void UIBehavior::InitClass() {
 
 /* MARK:	-				Focus and navigation
  -------------------------------------------------------------------- */
+
 
 bool UIBehavior::Focus() {
 	
@@ -436,125 +570,206 @@ bool UIBehavior::Navigate( float x, float y ) {
 /* MARK:	-				Layout
  -------------------------------------------------------------------- */
 
-
+/// layout type defines how this UI lays out its children
+/// this function is called after parentUI has already this UI's width and height
+/// * call this behavior's script layout event handler with x, y, w, h
+/// * compute children's desired positions and sizes
+/// * Behavior Layout event will propagate to each child after function ends
 void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 
 	if ( !behavior->gameObject ) return;
 	
-	float x, y, w, h;
-	behavior->UpdatePosition( x, y, w, h );
+	// if this behavior doesn't have a parentUI / x, y are undefined
+	if ( isnan( behavior->layoutX ) || !behavior->gameObject->parent || !behavior->gameObject->parent->ui ) {
+		// copy from gameObject
+		behavior->layoutX = behavior->gameObject->GetX();
+		behavior->layoutY = behavior->gameObject->GetY();
+	}
 	
-	behavior->gameObject->SetX( x );
-	behavior->gameObject->SetY( y );
-	behavior->width = w;
-	behavior->height = h;
+	// constrain size
+	behavior->layoutWidth = fmax( behavior->minWidth, fmin( behavior->maxWidth, behavior->layoutWidth ) );
+	behavior->layoutHeight = fmax( behavior->minHeight, fmin( behavior->maxHeight, behavior->layoutHeight ) );
 	
-	// dispatch event on component
+	// collect children with UI component
+	vector<UIBehavior*> childUIs;
+	for ( size_t i = 0, nc = behavior->gameObject->children.size(); i < nc; i++ ){
+		UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
+		if ( ui != NULL ) childUIs.push_back( ui );
+	}
+	
+	// for each child ui
+	float curX = behavior->padLeft;
+	float curY = behavior->padTop;
+	float maxSize = 0;
+	float innerWidth = behavior->layoutWidth - ( behavior->padLeft + behavior->padRight );
+	float innerHeight = behavior->layoutHeight - ( behavior->padTop + behavior->padBottom );
+	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
+		
+		UIBehavior* childUI = childUIs[ i ];
+		float x = 0, y = 0, w = 0, h = 0;
+		
+		// anchor - based layout
+		if ( behavior->layoutType == LayoutType::Anchors ) {
+			
+			childUI->GetAnchoredPosition( behavior, x, y, w, h );
+			
+		} else if ( behavior->layoutType == LayoutType::Vertical ) {
+			
+			x = behavior->padLeft;
+			y = curY + childUI->marginTop;
+			h = childUI->layoutHeight;
+			w = behavior->layoutExpandCrossAxis ? innerWidth : childUI->layoutWidth;
+			curY += h + childUI->marginTop + childUI->marginBottom;
+			
+		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
+			
+			x = curX + childUI->marginLeft;
+			y = behavior->padTop;
+			w = childUI->layoutWidth;
+			h = behavior->layoutExpandCrossAxis ? innerHeight : childUI->layoutHeight;
+			curX += w;
+			
+		} else if ( behavior->layoutType == LayoutType::Grid ) {
+			
+			w = childUI->layoutWidth;
+			h = childUI->layoutHeight;
+			
+			// new row?
+			if ( curX + w + childUI->marginLeft + childUI->marginRight >= innerWidth ) {
+				
+				curX = behavior->padLeft;
+				curY += maxSize;
+				maxSize = h + childUI->marginTop + childUI->marginBottom;
+				
+			} else maxSize = fmax( maxSize, h + childUI->marginTop + childUI->marginBottom );
+			
+			x = curX + childUI->marginLeft;
+			y = curY + childUI->marginTop;
+			curX += w + childUI->marginLeft + childUI->marginRight;
+			
+		} else if ( behavior->layoutType == LayoutType::None ){
+		
+			x = childUI->gameObject->GetX();
+			y = childUI->gameObject->GetY();
+			w = childUI->layoutWidth;
+			h = childUI->layoutHeight;
+			
+		}
+		
+		// store,
+		childUI->layoutX = x;
+		childUI->layoutY = y;
+		childUI->layoutWidth = w;
+		childUI->layoutHeight = h;
+		
+	}
+	
+	// dispatch layout event on this component
 	Event e ( EVENT_LAYOUT );
-	e.scriptParams.AddFloatArgument( x );
-	e.scriptParams.AddFloatArgument( y );
-	e.scriptParams.AddFloatArgument( w );
-	e.scriptParams.AddFloatArgument( h );
+	e.scriptParams.AddFloatArgument( behavior->layoutX );
+	e.scriptParams.AddFloatArgument( behavior->layoutY );
+	e.scriptParams.AddFloatArgument( behavior->layoutWidth );
+	e.scriptParams.AddFloatArgument( behavior->layoutHeight );
 	behavior->CallEvent( e );
 	
 }
 
-void UIBehavior::UpdatePosition( float& x, float& y, float& w, float& h ) {
+void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h ) {
 	
-	if ( !this->gameObject ) return;
-	UIBehavior* parentUI = gameObject->parent ? gameObject->parent->ui : NULL;
-	
-	x = gameObject->GetX();
-	y = gameObject->GetY();
-	w = width;
-	h = height;
+	// use previous / default
+	x = layoutX;
+	y = layoutY;
+	w = layoutWidth;
+	h = layoutHeight;
 	
 	if ( parentUI ) {
 	
-		float parentWidth = parentUI->width;
-		float parentHeight = parentUI->height;
+		float parentWidth = parentUI->layoutWidth - ( parentUI->padLeft + parentUI->padRight );
+		float parentHeight = parentUI->layoutHeight - ( parentUI->padTop + parentUI->padBottom );
 		
 		// anchors
-		if ( layoutType == LayoutType::Anchors ) {
-			
-			float thisSide = 0;
-			float otherSide = 0;
-			
-			// left is measured from start edge
-			if ( anchorLeft == 0 ) {
-				thisSide = left;
-			// left is measured from opposite edge
-			} else if ( anchorLeft == 1 ) {
-				thisSide = parentWidth - left;
-			// left is measured from middle
-			} else if ( anchorLeft > 0 ){
-				thisSide = parentWidth * anchorLeft + left;
-			}
-			// right is measured from start edge
-			if ( anchorRight == 0 ) {
-				otherSide = parentWidth - right;
-			// right is measured from opposite edge
-			} else if ( anchorRight == 1 ) {
-				otherSide = right;
-			// right is measured from middle
-			} else if ( anchorRight > 0 ){
-				otherSide = parentWidth * ( 1 - anchorRight ) + right;
-			}
-			
-			// apply
-			if ( anchorLeft >= 0 || anchorRight >= 0 ) {
-				// start anchor is disabled
-				if ( anchorLeft < 0 ) {
-					x = otherSide - w;
-				// end anchor is disabled
-				} else if ( anchorRight < 0 ) {
-					x = thisSide;
-				} else {
-					x = thisSide;
-					w = otherSide - thisSide;
-				}
-			}
-			
-			
-			// top is measured from start edge
-			if ( anchorTop == 0 ) {
-				thisSide = top;
-			// top is measured from opposite edge
-			} else if ( anchorTop == 1 ) {
-				thisSide = parentHeight - top;
-			// top is measured from middle
-			} else if ( anchorTop > 0 ){
-				thisSide = parentHeight * anchorTop + top;
-			}
-			// bottom is measured from start edge
-			if ( anchorBottom == 0 ) {
-				otherSide = parentHeight - bottom;
-			// right is measured from opposite edge
-			} else if ( anchorBottom == 1 ) {
-				otherSide = bottom;
-				// right is measured from middle
-			} else if ( anchorBottom > 0 ){
-				otherSide = parentHeight * ( 1 - anchorBottom ) + bottom;
-			}
-			
-			if ( anchorTop >= 0 || anchorBottom >= 0 ) {
-				// start anchor is disabled
-				if ( anchorTop < 0 ) {
-					y = otherSide - h;
-				// end anchor is disabled
-				} else if ( anchorBottom < 0 ) {
-					y = thisSide;
-				} else {
-					y = thisSide;
-					h = otherSide - thisSide;
-				}
-			}
 		
-			w = fmax( minWidth, fmin( maxWidth, w ) );
-			h = fmax( minHeight, fmin( maxHeight, h ) );
+		float thisSide = 0;
+		float otherSide = 0;
 		
-			
+		// left is measured from start edge
+		if ( anchorLeft == 0 ) {
+			thisSide = left;
+		// left is measured from opposite edge
+		} else if ( anchorLeft == 1 ) {
+			thisSide = parentWidth - left;
+		// left is measured from middle
+		} else if ( anchorLeft > 0 ){
+			thisSide = parentWidth * anchorLeft + left;
 		}
+		// right is measured from start edge
+		if ( anchorRight == 0 ) {
+			otherSide = parentWidth - right;
+		// right is measured from opposite edge
+		} else if ( anchorRight == 1 ) {
+			otherSide = right;
+		// right is measured from middle
+		} else if ( anchorRight > 0 ){
+			otherSide = parentWidth * ( 1 - anchorRight ) + right;
+		}
+		
+		// apply
+		if ( anchorLeft >= 0 || anchorRight >= 0 ) {
+			// start anchor is disabled
+			if ( anchorLeft < 0 ) {
+				x = otherSide - w;
+			// end anchor is disabled
+			} else if ( anchorRight < 0 ) {
+				x = thisSide;
+			} else {
+				x = thisSide;
+				w = otherSide - thisSide;
+			}
+		}
+		
+		// top is measured from start edge
+		if ( anchorTop == 0 ) {
+			thisSide = top;
+		// top is measured from opposite edge
+		} else if ( anchorTop == 1 ) {
+			thisSide = parentHeight - top;
+		// top is measured from middle
+		} else if ( anchorTop > 0 ){
+			thisSide = parentHeight * anchorTop + top;
+		}
+		// bottom is measured from start edge
+		if ( anchorBottom == 0 ) {
+			otherSide = parentHeight - bottom;
+		// right is measured from opposite edge
+		} else if ( anchorBottom == 1 ) {
+			otherSide = bottom;
+			// right is measured from middle
+		} else if ( anchorBottom > 0 ){
+			otherSide = parentHeight * ( 1 - anchorBottom ) + bottom;
+		}
+		
+		if ( anchorTop >= 0 || anchorBottom >= 0 ) {
+			// start anchor is disabled
+			if ( anchorTop < 0 ) {
+				y = otherSide - h;
+			// end anchor is disabled
+			} else if ( anchorBottom < 0 ) {
+				y = thisSide;
+			} else {
+				y = thisSide;
+				h = otherSide - thisSide;
+			}
+		}
+		
+		// add parents' padding
+		x += parentUI->padLeft;
+		y += parentUI->padTop;
+		
+		// add margins
+		x += this->marginLeft;
+		w -= this->marginLeft + this->marginRight;
+		y += this->marginTop;
+		h -= this->marginTop + this->marginBottom;
 		
 	}
 	

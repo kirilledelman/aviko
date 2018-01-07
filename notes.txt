@@ -1,12 +1,6 @@
-Layout - addition to UI component
-	.anchorLeft, anchorRight, anchorTop, anchorBottom: 0 = start, 0.5 = center, 1 = opposite side
-	.left, .right, .top, .bottom
+Layout - trigger layout before render on properties change?
 
 
-	scene/component layout event
-
-
-		dispatch 'layout' event x, y, w, h
 
 
 
@@ -35,6 +29,7 @@ Demo project
 
 
 Normalize error messages
+Remove unnecessary printfs
 
 
 =============================================
@@ -50,6 +45,10 @@ modify query and rayTrace for non-physics based queries
 Transplant from parent to parent, maintain transform (only need to do anything if no body)
 
 Add logging level - none, normal, verbose
+
+
+RenderShape
+	Add Shape.Points
 
 
 BodyShape
