@@ -44,6 +44,7 @@ protected:
 	struct RenderTextLine {
 		float width = 0;
         float x = 0, y = 0;
+		int firstCharacterPos = 0;
 		vector<RenderTextCharacter> characters;
 	};
 	
@@ -86,6 +87,12 @@ public:
 	
 	/// text alignment ( 0 - left, 1 - center, 2 - right )
 	int align = 0;
+	
+	/// base text color
+	Color *textColor = NULL;
+	
+	/// selection color
+	Color *selectionColor = NULL;
 	
 	///
 	Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };

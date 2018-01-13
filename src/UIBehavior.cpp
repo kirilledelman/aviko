@@ -113,6 +113,11 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
+	( "autoMoveFocus",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->autoNavigate; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return (((UIBehavior*) b)->autoNavigate = val); }));
+	
+	script.AddProperty<UIBehavior>
 	( "focusLeft",
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){ UIBehavior* ui = (UIBehavior*) b; return ui->navigationLeft ? ui->navigationLeft : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
@@ -172,7 +177,11 @@ void UIBehavior::InitClass() {
 	( "anchorLeft", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorLeft; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->anchorLeft = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			ui->anchorLeft = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -180,7 +189,11 @@ void UIBehavior::InitClass() {
 	( "anchorRight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorRight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->anchorRight = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorRight != val ) {
+			ui->anchorRight = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -188,7 +201,11 @@ void UIBehavior::InitClass() {
 	( "anchorTop", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorTop; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->anchorTop = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorTop != val ) {
+			ui->anchorTop = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -196,7 +213,11 @@ void UIBehavior::InitClass() {
 	( "anchorBottom", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->anchorBottom; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->anchorBottom = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorBottom != val ) {
+			ui->anchorBottom = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -204,7 +225,11 @@ void UIBehavior::InitClass() {
 	( "left", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->left; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->left = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->left != val ) {
+			ui->left = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -212,7 +237,11 @@ void UIBehavior::InitClass() {
 	( "right", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->right; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->right = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->right != val ) {
+			ui->right = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -220,7 +249,11 @@ void UIBehavior::InitClass() {
 	( "top", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->top; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->top = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->top != val ) {
+			ui->top = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -228,7 +261,11 @@ void UIBehavior::InitClass() {
 	( "bottom", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->bottom; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->bottom = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->bottom != val ) {
+			ui->bottom = val;
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -236,7 +273,11 @@ void UIBehavior::InitClass() {
 	( "width", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->layoutWidth = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutWidth != val ) {
+			val = ui->layoutWidth = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -244,7 +285,11 @@ void UIBehavior::InitClass() {
 	( "height", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->layoutHeight = val;
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			val = ui->layoutHeight = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -252,7 +297,11 @@ void UIBehavior::InitClass() {
 	( "minWidth", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->minWidth = fmax( 0, val );
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			val = ui->minWidth = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -260,7 +309,11 @@ void UIBehavior::InitClass() {
 	( "maxWidth", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->maxWidth = fmax( 0, val );
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			val = ui->maxWidth = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -268,7 +321,11 @@ void UIBehavior::InitClass() {
 	( "minHeight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->minHeight = fmax( 0, val );
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			val = ui->minHeight = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
@@ -276,19 +333,37 @@ void UIBehavior::InitClass() {
 	( "maxHeight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
-		((UIBehavior*) b)->maxHeight = fmax( 0, val );
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->anchorLeft != val ) {
+			val = ui->maxHeight = fmax( 0, val );
+			ui->RequestParentLayout();
+		}
 		return val;
 	}));
 	
 	script.AddProperty<UIBehavior>
 	( "layoutType",
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->layoutType; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((UIBehavior*) b)->layoutType = (LayoutType) val ); }) );
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutType != val ) {
+			ui->layoutType = (LayoutType) val;
+			ui->RequestLayout();
+		}
+		return ui->layoutType;
+	}) );
 	
 	script.AddProperty<UIBehavior>
 	( "expandCrossAxis",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->layoutExpandCrossAxis; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return (((UIBehavior*) b)->layoutExpandCrossAxis = val); }));
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutExpandCrossAxis != val ) {
+			ui->layoutExpandCrossAxis = val;
+			ui->RequestLayout();
+		}
+		return ui->layoutExpandCrossAxis;
+	 }));
 
 	script.AddProperty<UIBehavior>
 	( "pad",
@@ -318,28 +393,57 @@ void UIBehavior::InitClass() {
 		} else if ( val.toNumber( sameVal ) ) {
 			ui->padTop = ui->padRight = ui->padBottom = ui->padLeft = sameVal;
 		}
+		ui->RequestLayout();
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE );
 	
 	script.AddProperty<UIBehavior>
 	( "padTop", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padTop; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padTop = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->padTop != val ) {
+			ui->padTop = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
 	
 	script.AddProperty<UIBehavior>
 	( "padRight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padRight; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padRight = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->padRight != val ) {
+			ui->padRight = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
 
 	script.AddProperty<UIBehavior>
 	( "padBottom", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padBottom; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padBottom = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->padBottom != val ) {
+			ui->padBottom = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
 
 	script.AddProperty<UIBehavior>
 	( "padLeft", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->padLeft; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->padLeft = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->padLeft != val ) {
+			ui->padLeft = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
 
 	script.AddProperty<UIBehavior>
 	( "margin",
@@ -369,28 +473,57 @@ void UIBehavior::InitClass() {
 		} else if ( val.toNumber( sameVal ) ) {
 			ui->marginTop = ui->marginRight = ui->marginBottom = ui->marginLeft = sameVal;
 		}
+		ui->RequestParentLayout();
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE  );
 	
 	script.AddProperty<UIBehavior>
 	( "marginTop", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginTop; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginTop = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->marginTop != val ) {
+			ui->marginTop = val;
+			ui->RequestParentLayout();
+		}
+		return val;
+	}));
 	
 	script.AddProperty<UIBehavior>
 	( "marginRight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginRight; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginRight = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->marginRight != val ) {
+			ui->marginRight = val;
+			ui->RequestParentLayout();
+		}
+		return val;
+	}));
 	
 	script.AddProperty<UIBehavior>
 	( "marginBottom", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginBottom; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginBottom = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->marginBottom != val ) {
+			ui->marginBottom = val;
+			ui->RequestParentLayout();
+		}
+		return val;
+	}));
 	
 	script.AddProperty<UIBehavior>
 	( "marginLeft", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->marginLeft; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return (((UIBehavior*) b)->marginLeft = val ); }));
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->marginLeft != val ) {
+			ui->marginLeft = val;
+			ui->RequestParentLayout();
+		}
+		return val;
+	}));
 	
 	// functions
 	
@@ -415,7 +548,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* self = (UIBehavior*) p;
 		int dirX = 0, dirY = 0;
 		if ( !sa.ReadArguments( 1, TypeInt, &dirX, TypeInt, &dirY ) ) {
-			script.ReportError( "usage: navigate( Int directionX, [ Int directionY ] )" );
+			script.ReportError( "usage: moveFocus( Int directionX, [ Int directionY ] )" );
 			return false;
 		}
 		// two args?
@@ -499,7 +632,7 @@ bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* 
 
 /// change focus to focusable UI that's in the direction x, y from this control
 bool UIBehavior::Navigate( float x, float y ) {
-	
+		
 	// normalize direction
 	Uint8 dir = ( y < 0 ? 0 :
 				 ( y > 0 ? 2 :
@@ -607,6 +740,8 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 		
 		UIBehavior* childUI = childUIs[ i ];
 		float x = 0, y = 0, w = 0, h = 0;
+		
+		if ( !childUI->Behavior::active() || !childUI->gameObject->active() ) continue;
 		
 		// anchor - based layout
 		if ( behavior->layoutType == LayoutType::Anchors ) {
@@ -776,6 +911,32 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 }
 
 
+void UIBehavior::RequestParentLayout() {
+
+	// TODO - dont request if theres layout event waiting for any gameobject in hierarchy above this one
+	
+	GameObject* parentGameObject = this->gameObject ? this->gameObject->parent : this->gameObject;
+	if ( parentGameObject ) {
+		
+		app.AddLateEvent( parentGameObject, EVENT_LAYOUT, true );
+		
+	}
+	
+}
+
+void UIBehavior::RequestLayout() {
+	
+	// TODO - dont request if theres layout event waiting for any gameobject in hierarchy above this one
+	
+	if ( this->gameObject ) {
+		
+		app.AddLateEvent( this->gameObject, EVENT_LAYOUT, true );
+		
+	}
+	
+}
+
+
 /* MARK:	-				Clipping
  -------------------------------------------------------------------- */
 
@@ -912,7 +1073,7 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 
 void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 	// if focused
-	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
+	if ( behavior->scene && behavior->scene->focusedUI == behavior && behavior->autoNavigate ) {
 		
 		// get name and direction
 		string axisName = *e->scriptParams.args[ 0 ].value.stringValue;

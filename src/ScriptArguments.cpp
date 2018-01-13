@@ -1,8 +1,10 @@
 #include "ScriptArguments.hpp"
 #include "ScriptHost.hpp"
 
+
 /* MARK:	-				ScriptFunction
  -------------------------------------------------------------------- */
+
 
 /// constructor
 ScriptFunctionObject::ScriptFunctionObject( void* scriptFunc, bool once ) : callOnce( once ) {

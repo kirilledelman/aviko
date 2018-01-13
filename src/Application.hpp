@@ -102,6 +102,27 @@ public:
 	/// unloads unused resources and calls garbage collector in script 
 	void GarbageCollect();
 
+// event queue
+	
+	// late events are run right before render (layout changes, dispatchLate )
+	typedef unordered_map<string,Event> ObjectEventMap;
+	typedef unordered_map<ScriptableClass*, ObjectEventMap> LateEventMap;
+	
+	bool lateEventsLocked = false;
+	LateEventMap lateEvents;
+	
+	/// true while InitObject is in progress
+	bool isUnserializing = false;
+	
+	/// add / replace event to run right before render
+	Event* AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch=false );
+	
+	/// remove late events for object (on destruction)
+	void RemoveLateEvents( ScriptableClass* obj );
+	
+	// runs late events
+	void RunLateEvents();
+	
 // running
 	
 	/// time scaling factor

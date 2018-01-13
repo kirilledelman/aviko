@@ -11,6 +11,7 @@
 		7129EE5D1FF412EF00BCF1F7 /* ScriptHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */; };
 		713D46BF1FF0276A00BBAEFF /* RigidBodyJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */; };
 		71766D7E1FEFFAB200E13A92 /* RigidBodyShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */; };
+		71A077F72003D9230074D54A /* ScriptableClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A077F62003D9230074D54A /* ScriptableClass.cpp */; };
 		71D3CB681FEB3E9E006F7678 /* Box2D.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F4846D1F814B9300AF17EA /* Box2D.h */; };
 		71D3CB691FEB3E9E006F7678 /* b2BroadPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484701F814B9300AF17EA /* b2BroadPhase.cpp */; };
 		71D3CB6A1FEB3E9E006F7678 /* b2BroadPhase.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F484711F814B9300AF17EA /* b2BroadPhase.h */; };
@@ -240,6 +241,7 @@
 		7194130D1F48887B0066EF3D /* notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = notes.txt; sourceTree = "<group>"; };
 		719F542F1F77E2E600E5F39F /* ScriptArguments.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptArguments.cpp; path = src/ScriptArguments.cpp; sourceTree = "<group>"; };
 		719F54301F77E2E600E5F39F /* ScriptArguments.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptArguments.hpp; path = src/ScriptArguments.hpp; sourceTree = "<group>"; };
+		71A077F62003D9230074D54A /* ScriptableClass.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptableClass.cpp; path = src/ScriptableClass.cpp; sourceTree = "<group>"; };
 		71A09F201F9BC785005ED838 /* FontResource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FontResource.cpp; path = src/FontResource.cpp; sourceTree = "<group>"; };
 		71A09F211F9BC785005ED838 /* FontResource.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = FontResource.hpp; path = src/FontResource.hpp; sourceTree = "<group>"; };
 		71A460D91FEB3E3500129194 /* aviko */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = aviko; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -443,6 +445,7 @@
 				719F54301F77E2E600E5F39F /* ScriptArguments.hpp */,
 				719F542F1F77E2E600E5F39F /* ScriptArguments.cpp */,
 				715EEE571F7555DD000B99AE /* ScriptableClass.hpp */,
+				71A077F62003D9230074D54A /* ScriptableClass.cpp */,
 			);
 			name = Scripting;
 			sourceTree = "<group>";
@@ -893,6 +896,7 @@
 				71D3CBBB1FEB3E9E006F7678 /* b2Joint.h in Sources */,
 				71D3CBBC1FEB3E9E006F7678 /* b2MotorJoint.cpp in Sources */,
 				71D3CBBD1FEB3E9E006F7678 /* b2MotorJoint.h in Sources */,
+				71A077F72003D9230074D54A /* ScriptableClass.cpp in Sources */,
 				71D3CBBE1FEB3E9E006F7678 /* b2MouseJoint.cpp in Sources */,
 				71D3CBBF1FEB3E9E006F7678 /* b2MouseJoint.h in Sources */,
 				71D3CBC01FEB3E9E006F7678 /* b2PrismaticJoint.cpp in Sources */,

@@ -147,14 +147,38 @@ void RenderSpriteBehavior::InitClass() {
 	
 	script.AddProperty<RenderSpriteBehavior>
 	( "width", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->width; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->width = val ); }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		if ( rs->imageInstance ) rs->width = rs->imageInstance->width;
+		return rs->width;
+	}),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		rs->width = val;
+		if ( rs->imageInstance ) {
+			rs->imageInstance->width = val;
+			rs->imageInstance->_sizeDirty = true;
+		}
+		return rs->width;
+	 }),
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_LATE );
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "height", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->height; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->height = val ); }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		if ( rs->imageInstance ) rs->height = rs->imageInstance->height;
+		return rs->height;
+	 }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		rs->height = val;
+		if ( rs->imageInstance ) {
+			rs->imageInstance->height = val;
+			rs->imageInstance->_sizeDirty = true;
+		}
+		return rs->height;
+	 }),
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_LATE );
 
 	script.AddProperty<RenderSpriteBehavior>
@@ -167,6 +191,36 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->flipY; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderSpriteBehavior*) b)->flipY = val ); }) );
 
+	script.AddProperty<RenderSpriteBehavior>
+	( "slice",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		ArgValue v;
+		v.type = TypeArray;
+		v.value.arrayValue = new ArgValueVector();
+		v.value.arrayValue->emplace_back( ArgValue( rs->slice.x ) );
+		v.value.arrayValue->emplace_back( ArgValue( rs->slice.y ) );
+		v.value.arrayValue->emplace_back( ArgValue( rs->slice.w ) );
+		v.value.arrayValue->emplace_back( ArgValue( rs->slice.h ) );
+		return v;
+	}),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		float sameVal = 0;
+		if ( val.type == TypeArray ) {
+			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( rs->slice.x ) ) {
+				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( rs->slice.y ) ) {
+					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( rs->slice.w ) ) {
+						if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 0 ).toNumber( rs->slice.h );
+					}
+				}
+			}
+		} else if ( val.toNumber( sameVal ) ) {
+			rs->slice.x = rs->slice.y = rs->slice.w = rs->slice.h = sameVal;
+		}
+		return val;
+	}), PROP_ENUMERABLE | PROP_NOSTORE  );
+	
 	script.AddProperty<RenderSpriteBehavior>
 	( "sliceTop", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.x; }),
@@ -251,14 +305,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	      srcRect.w / image->base_w,
 		  srcRect.h / image->base_h );
 		
-		cx += frame->trimOffsetX * sx;
+		if ( !sliced ) cx += frame->trimOffsetX * sx;
 		
 		// draw rotated
 		if ( rotated ) {
 			
 			sy = behavior->width / frame->actualWidth;
 			sx = behavior->height / frame->actualHeight;
-			cy += (frame->trimOffsetY + frame->locationOnTexture.w) * sx;
+			cy += (( sliced ? frame->trimOffsetY : 0 ) + frame->locationOnTexture.w) * sx;
 			r = -90;
 	
 		// normal
@@ -266,7 +320,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			
 			sx = behavior->width / frame->actualWidth;
 			sy = behavior->height / frame->actualHeight;
-			cy += frame->trimOffsetY * sy;
+			if ( !sliced ) cy += frame->trimOffsetY * sy;
 			
 		}
 				
@@ -488,7 +542,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].rect.w = left;
 			slices[ i ].rect.h = midY;
 			slices[ i ].x = cx;
-			slices[ i ].y = top;
+			slices[ i ].y = cy + top;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = sliceMidY / midY;
 			
@@ -523,7 +577,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].rect.w = left;
 			slices[ i ].rect.h = bottom;
 			slices[ i ].x = cx;
-			slices[ i ].y = top + sliceMidY;
+			slices[ i ].y = cy + top + sliceMidY;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = 1;
 			

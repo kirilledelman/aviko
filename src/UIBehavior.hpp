@@ -29,7 +29,7 @@ public:
 	
 	bool mouseOver = false;
 	bool mouseDown[4] = { false, false, false, false }; // which button was down
-	bool focusable = true;
+	bool focusable = false;
 	
 	//
 	bool IsScreenPointInBounds( float x, float y, float* localX, float* localY );
@@ -48,6 +48,7 @@ public:
 	UIBehavior* navigationRight = NULL;
 	UIBehavior* navigationUp = NULL;
 	UIBehavior* navigationDown = NULL;
+	bool autoNavigate = true;
 	
 	/// overridden
 	bool active( bool a );
@@ -95,8 +96,9 @@ public:
 	float marginLeft = 0;
 	float marginRight = 0;
 	
-	// float SetWidth( float w );
-	// float SetHeight( float h );
+	/// requests late layout event to parent gameObject
+	void RequestParentLayout();
+	void RequestLayout();
 	
 	void GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h );
 	

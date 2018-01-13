@@ -343,6 +343,11 @@ void GameObject::InitClass() {
 						JS_ReportPendingException( script.js );
 					return ArgValue();
 				} else {
+					// if not unserializing, call awake
+					if ( !app.isUnserializing ) {
+						Event event( EVENT_AWAKE );
+						self->CallEvent( event );
+					}
 					return in;
 				}
 			}
@@ -510,6 +515,9 @@ void GameObject::InitClass() {
 		GameObject* self = (GameObject*) go;
 		other->SetParent( self, pos );
 		
+		// schedule layout
+		if ( self->ui ) self->ui->RequestParentLayout();
+		
 		// return added object
 		sa.ReturnObject( other->scriptObject );
 		return true;
@@ -549,6 +557,10 @@ void GameObject::InitClass() {
 		
 		// unparent
 		other->SetParent( NULL );
+		
+		// schedule layout
+		if ( self->ui ) self->ui->RequestLayout();
+		
 		return true;
 	}));
 	
@@ -843,6 +855,30 @@ void GameObject::InitClass() {
 	}));
 	
 	script.DefineFunction<GameObject>
+	( "dispatchLate",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		const char* error = "usage: dispatchLate( String eventName [, arguments... ] )";
+		string eventName;
+		
+		// validate
+		if ( !sa.ReadArguments( 1, TypeString, &eventName ) || !eventName.length() ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// add to late events
+		GameObject* self = (GameObject*) go;
+		Event *lateEvent = app.AddLateEvent( self, eventName.c_str(), true );
+		if ( lateEvent ) {
+			lateEvent->scriptParams.ResizeArguments( 0 );
+			for ( size_t i = 1, np = sa.args.size(); i < np; i++ ) {
+				lateEvent->scriptParams.AddArgument( sa.args[ i ] );
+			}
+		}
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
 	( "toString",
 	 static_cast<ScriptFunctionCallback>([]( void* o, ScriptArguments& sa ) {
 		static char buf[512];
@@ -851,9 +887,9 @@ void GameObject::InitClass() {
 		if ( !self ) {
 			sprintf( buf, "[GameObject prototype]" );
 		} else if ( self->scriptResource ) {
-			sprintf( buf, "[GameObject (%s)]", self->scriptResource->key.c_str() );
+			sprintf( buf, "[GameObject (%s) %p]", self->scriptResource->key.c_str(), self );
 		} else if ( self->name.size() ) {
-			sprintf( buf, "[GameObject \"%s\"]", self->name.c_str() );
+			sprintf( buf, "[GameObject \"%s\" %p]", self->name.c_str(), self );
 		} else sprintf( buf, "[GameObject %p]", self );
 		
 		sa.ReturnString( buf );
@@ -1089,8 +1125,10 @@ ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 	size_t nc = in->size();
 	for ( size_t i = 0; i < nc; i++ ){
 		ArgValue &val = (*in)[ i ];
-		GameObject* go = script.GetInstance<GameObject>( val.value.objectValue );
-		if ( go ) go->SetParent( this );
+		if ( val.type == TypeObject ) {
+			GameObject* go = script.GetInstance<GameObject>( val.value.objectValue );
+			if ( go ) go->SetParent( this );
+		}
 	}
 	return in;
 }

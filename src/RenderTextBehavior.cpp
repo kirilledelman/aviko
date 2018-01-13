@@ -19,8 +19,17 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	color->SetInts( 0, 0, 0, 0 );
 	script.SetProperty( "backgroundColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
+	// create text color object
+	color = new Color( NULL );
+	script.SetProperty( "textColor", ArgValue( color->scriptObject ), this->scriptObject );
+	
+	// create text selection color object
+	color = new Color( NULL );
+	color->SetInt( 0x0070B0, false );
+	script.SetProperty( "selectionColor", ArgValue( color->scriptObject ), this->scriptObject );
+	
 	// create ^0 - ^9 colors
-	int defaultColors[ 10 ] = { 0xFFFFFF, 0x3333FF, 0xFF3333, 0xFF33FF, 0x33FF33, 0x33FFFF, 0xFFFF33, 0x0, 0xFFFF33, 0x666666 };
+	int defaultColors[ 10 ] = { 0x0, 0x3333FF, 0xFF3333, 0xFF33FF, 0x33FF33, 0x33FFFF, 0xFFFF33, 0xFFFFFF, 0xAAAAAA, 0x666666 };
 	for ( int i = 0; i < 10; i++ ) {
 		colors[ i ] = new Color( NULL );
 		colors[ i ]->SetInt( defaultColors[ i ], false );
@@ -112,6 +121,38 @@ void RenderTextBehavior::InitClass() {
 		}
 		rs->_dirty = true;
 		return rs->backgroundColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "textColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		return ArgValue(((RenderTextBehavior*) b)->textColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->textColor = other;
+		} else {
+			rs->textColor->Set( val );
+		}
+		rs->_dirty = true;
+		return rs->textColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "selectionColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		return ArgValue(((RenderTextBehavior*) b)->selectionColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->selectionColor = other;
+		} else {
+			rs->selectionColor->Set( val );
+		}
+		rs->_dirty = true;
+		return rs->selectionColor->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
@@ -669,7 +710,7 @@ int RenderTextBehavior::GetCaretPositionAt( float localX, float localY ) {
 	localY += this->height * pivotY;
 	
     // locate character
-	int nc;
+	int nc = 0;
     size_t lineIndex = 0;
 	size_t totalLines = lines.size();
     int lineHeight = ceil( TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing );
@@ -679,25 +720,29 @@ int RenderTextBehavior::GetCaretPositionAt( float localX, float localY ) {
         // on line
         if ( currentLine->y <= localY && currentLine->y + lineHeight > localY ) {
 			nc = (int) currentLine->characters.size();
-			if ( nc == 0 ) { lineIndex++; continue; }
-			// if before current line
-			if ( currentLine->x > localX ) {
-				// return before first char
-				return (int) currentLine->characters[ 0 ].pos;
-			// after current line
-			} else if( localX > currentLine->x + currentLine->width ) {
-				return (int) currentLine->characters[ nc - 1 ].pos + 1;
+			// if line is blank
+			if ( nc == 0 || !currentLine->characters[ 0 ].value ) {
+				return currentLine->firstCharacterPos;
+			} else {
+				// if before current line
+				if ( currentLine->x > localX ) {
+					// return before first char
+					return (int) currentLine->characters[ 0 ].pos;
+				// after current line
+				} else if( localX > currentLine->x + currentLine->width ) {
+					return (int) currentLine->characters[ nc - 1 ].pos + 1;
+				}
+				// check each character
+				for( size_t i = 0; i < nc; i++ ){
+					RenderTextCharacter* character = &currentLine->characters[ i ];
+					float x0 = character->x + currentLine->x;
+					float x1 = x0 + character->width;
+					float w = ( x1 - x0 ) * 0.5;
+					if ( localX >= x0 && localX <= x1 ) {
+						return ( localX < x0 + w ? (int) character->pos : (int) ( character->pos + 1 ) );
+					}
+				}
 			}
-			// check each character
-            for( size_t i = 0; i < nc; i++ ){
-                RenderTextCharacter* character = &currentLine->characters[ i ];
-                float x0 = character->x + currentLine->x;
-                float x1 = x0 + character->width;
-                float w = ( x1 - x0 ) * 0.5;
-                if ( localX >= x0 && localX <= x1 ) {
-                    return ( localX < x0 + w ? (int) character->pos : (int) ( character->pos + 1 ) );
-                }
-            }
         }
         lineIndex++;
     }
@@ -760,7 +805,7 @@ void RenderTextBehavior::Repaint() {
 		const unsigned char *current = (unsigned char*) this->text.c_str();
 		Uint16 character = 0;
 		size_t characterPos = 0;
-		SDL_Color currentColor = { 255, 255, 255, 255 };
+		SDL_Color currentColor = this->textColor->rgba;
 		scrollWidth = scrollHeight = 0;
 		bool currentBold = this->bold;
 		bool currentItalic = this->italic;
@@ -822,6 +867,7 @@ void RenderTextBehavior::Repaint() {
 				// start new line
 				lines.emplace_back();
 				currentLine = &lines.back();
+				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;
 				
 			// character is special sequence
@@ -846,6 +892,9 @@ void RenderTextBehavior::Repaint() {
 					skipTwo = true;
 				} else if ( nextChar == 'n' || nextChar == 'N' ) {
 					currentItalic = currentBold = false;
+					skipTwo = true;
+				} else if ( nextChar == 'c' ) {
+					currentColor = this->textColor->rgba;
 					skipTwo = true;
 				} else if ( nextChar >= '0' && nextChar <= '9' ) {
 					currentColor = this->colors[ nextChar - '0' ]->rgba;
@@ -887,6 +936,7 @@ void RenderTextBehavior::Repaint() {
 				// start new line
 				lines.emplace_back();
 				currentLine = &lines.back();
+				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;
 			}
 			
@@ -943,7 +993,7 @@ void RenderTextBehavior::Repaint() {
 		SDL_FillRect( textSurface, &temp, bgColorVal );
 		
 		// for each line
-		SDL_Color selColor = this->colors[ 9 ]->rgba;
+		SDL_Color selColor = this->selectionColor->rgba;
 		Uint32 selColorVal = SDL_MapRGBA( textSurface->format, selColor.r, selColor.g, selColor.b, selColor.a );
 		while ( lineIndex < totalLines ) {
 			currentLine = &this->lines[ lineIndex ];
@@ -970,6 +1020,7 @@ void RenderTextBehavior::Repaint() {
 				thisCharacter.value = 0;
 				thisCharacter.pos = this->caretPosition;
 				thisCharacter.x = 0;
+				thisCharacter.color = currentColor;
 				currentLine->characters.push_back( thisCharacter );
 			}
 			

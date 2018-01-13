@@ -46,6 +46,7 @@ using namespace std;
 
 // Spidermonkey Javascript
 #include <jsapi.h>
+#include <jsdbgapi.h>
 using namespace JS;
 
 // global funcs (defined at the end of Application.cpp)
@@ -60,6 +61,7 @@ bool SaveFile( const char* data, size_t numBytes, const char* filepath, const ch
 bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensions, string &outExtension );
 string HexStr( Uint32 w, size_t hex_len );
 int StringPositionToIndex( const char* str, int pos );
+int StringIndexToPosition( const char* str, int index );
 int StringPositionLength( const char* str );
 
 /// built-in event types

@@ -1,5 +1,6 @@
 #include "ScriptHost.hpp"
 #include "ScriptableClass.hpp"
+#include "Application.hpp"
 
 
 /* MARK:	-				Serialization
@@ -95,7 +96,10 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		ArgValue prop;
 		while ( p != end ) {
 			prop = this->GetProperty( p->c_str(), obj );
-			SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized ), init );
+			// skip functions
+			if ( prop.type != TypeFunction ) {
+				SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized ), init );
+			}
 			p++;
 		}
 		
@@ -115,6 +119,11 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 	JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) obj );
 	jsval propVal;
 	jsid propId;
+	// first, see if there's serializeMask prop
+	JSObject* serializeMask = NULL;
+	if ( JS_GetProperty( this->js, (JSObject*) obj, "serializeMask", &propVal ) ) {
+		JS_ValueToObject( this->js, propVal, &serializeMask );
+	}
 	while( JS_NextProperty( this->js, iterator, &propId ) && propId != JSID_VOID ) {
 		// convert each property to string
 		if ( JS_IdToValue( this->js, propId, &propVal ) ) {
@@ -122,6 +131,15 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 			char *buf = JS_EncodeString( this->js, str );
 			unsigned attrs = 0;
 			JSBool found = false;
+			// check if it's in serializeMask
+			if ( serializeMask ) {
+				ArgValue check = this->GetProperty( buf, serializeMask );
+				if ( check.toBool() ) {
+					// skip
+					JS_free( this->js, buf );
+					continue;
+				}
+			}
 			// if property isn't read-only
 			if ( JS_GetPropertyAttributes( this->js, (JSObject*) obj, buf, &attrs, &found) && found && !( attrs & JSPROP_READONLY ) ) {
 				// add it to end of list
@@ -165,6 +183,7 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 /// unserialize obj using initObject
 void* ScriptHost::InitObject( void* initObj ) {
 	JSAutoRequest r( this->js );
+	app.isUnserializing = true;
 	
 	// populate this object
 	unordered_map<string, void*> map;
@@ -206,6 +225,7 @@ void* ScriptHost::InitObject( void* initObj ) {
 		event.scriptParams.AddObjectArgument( instance->scriptObject );
 		instance->CallEvent( event );
 	}
+	app.isUnserializing = false;
 	
 	return obj;
 	
@@ -298,6 +318,9 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 		
 		// get value
 		ArgValue val = isArray ? GetElement( propIndex, initObj ) : GetProperty( propName, initObj );
+		
+		// skip functions
+		if ( val.type == TypeFunction ) continue;
 		
 		// check for early property
 		bool isEarlyProp = false;

@@ -174,7 +174,7 @@ public:
 	
 	/// false, if object is the descendent of scene, true, if part of an orphaned tree
 	bool orphan = true;
-	
+		
 	/// reference to parent object
 	GameObject* parent = NULL;
 	

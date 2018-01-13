@@ -334,6 +334,10 @@ void Application::InitClass() {
 		return v;
 	}));
 	
+	script.AddProperty<Application>
+	("isUnserializing",
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.isUnserializing; }));
+	
 	// functions
 	
 	script.DefineFunction<Application>
@@ -458,6 +462,21 @@ void Application::InitClass() {
 	}));
 	
 	script.DefineClassFunction
+	( "String", "indexToPosition", false,
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
+		int pos;
+		string *str = ((ArgValue*) p)->value.stringValue;
+		if ( !sa.ReadArguments( 1, TypeInt, &pos ) ) {
+			script.ReportError( "usage: indexToPosition( Int index )" );
+			return false;
+		}
+		
+		// return character position
+		sa.ReturnInt( StringIndexToPosition( str->c_str(), pos ) );
+		return true;
+	}));
+	
+	script.DefineClassFunction
 	( "String", "positionLength", false,
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
 		string *str = ((ArgValue*) p)->value.stringValue;
@@ -576,11 +595,11 @@ void Application::InitClass() {
 	
 	// global toInit serializer
 	script.DefineGlobalFunction
-	( "wrap",
+	( "serialize",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
 		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: wrap( Object object )" );
+			script.ReportError( "usage: serialize( Object object )" );
 			return false;
 		}
 		ArgValue ret( initObj );
@@ -591,11 +610,11 @@ void Application::InitClass() {
 	
 	// global init deserializer
 	script.DefineGlobalFunction
-	( "unwrap",
+	( "unserialize",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
 		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: unwrap( Object initObject )" );
+			script.ReportError( "usage: unserialize( Object initObject )" );
 			return false;
 		}
 		ArgValue ret( script.InitObject( initObj ) );
@@ -603,6 +622,23 @@ void Application::InitClass() {
 		return true;
 	}) );
 
+	// global toInit serializer
+	script.DefineGlobalFunction
+	( "clone",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		void* initObj = NULL;
+		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
+			script.ReportError( "usage: clone( Object object )" );
+			return false;
+		}
+		ArgValue ret( initObj );
+		ret = script.MakeInitObject( ret );
+		void *def = ret.value.objectValue;
+		ret.value.objectValue = script.InitObject( def );
+		sa.ReturnValue( ret );
+		return true;
+	}) );
+	
 	// global clean up call
 	script.DefineGlobalFunction
 	( "gc",
@@ -617,6 +653,23 @@ void Application::InitClass() {
 		app.run = false;
 		return true;
 	}) );
+	
+	// intern all strings
+	const char* interns[] = {
+		EVENT_SCENECHANGED, EVENT_UPDATE, EVENT_LATE_UPDATE, EVENT_ADDED,
+		EVENT_REMOVED, EVENT_ADDED_TO_SCENE, EVENT_REMOVED_FROM_SCENE, EVENT_ACTIVE_CHANGED,
+		EVENT_ATTACHED, EVENT_DETACHED, EVENT_RENDER, EVENT_KEYDOWN, EVENT_KEYUP,
+		EVENT_KEYPRESS, EVENT_MOUSEDOWN, EVENT_MOUSEUP, EVENT_MOUSEMOVE, EVENT_MOUSEWHEEL,
+		EVENT_CONTROLLERADDED, EVENT_CONTROLLERREMOVED,
+		EVENT_JOYDOWN, EVENT_JOYUP, EVENT_JOYAXIS, EVENT_JOYHAT,
+		EVENT_MOUSEOVER, EVENT_MOUSEOUT, EVENT_CLICK, EVENT_MOUSEUPOUTSIDE,
+		EVENT_FOCUSCHANGED, EVENT_NAVIGATION, EVENT_TOUCH, EVENT_UNTOUCH,
+		EVENT_FINISHED, EVENT_RESIZED, EVENT_AWAKE, EVENT_LAYOUT,
+		NULL
+	};
+	for ( size_t i = 0; interns[ i ] != NULL; i++ ) {
+		script.InternString( interns[ i ] );
+	}
 	
 	// call registration functions for all classes
 	input.InitClass(); // single instance
@@ -750,7 +803,13 @@ void Application::GameLoop() {
 			// late update
 			event.name = EVENT_LATE_UPDATE;
 			scene->DispatchEvent( event, true );
-			
+		}
+		
+		// late events
+		RunLateEvents();
+		
+		// continue
+		if ( scene ) {
 			// render to backscreen
 			event.name = EVENT_RENDER;
 			event.behaviorParam = this->backScreen->target;
@@ -770,6 +829,66 @@ void Application::GameLoop() {
 	// exit requested
 }
 
+/* MARK:	-				Late events
+ -------------------------------------------------------------------- */
+
+
+/// add / replace event to run right before render
+Event* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch ) {
+	// can't add late events while running late events callbacks
+	if ( lateEventsLocked ) return NULL;
+	Event* event = NULL;
+	
+	// find existing for this object
+	string ename( eventName );
+	ObjectEventMap& eventMap = lateEvents[ obj ];
+	ObjectEventMap::iterator it = eventMap.find( ename );
+	
+	// found existing, return it
+	if ( it != eventMap.end() ) {
+		event = &(it->second);
+	} else {
+		// otherwise emplace new
+		auto p = eventMap.emplace( ename, eventName );
+		event = &(p.first->second);
+	}
+	
+	// return result
+	event->lateDispatch = dispatch;
+	return event;
+	
+}
+
+
+/// remove late events for object (on destruction)
+void Application::RemoveLateEvents( ScriptableClass* obj ) {
+	LateEventMap::iterator it = lateEvents.find( obj );
+	if ( it != lateEvents.end() ) lateEvents.erase( it );
+}
+
+// runs late events
+void Application::RunLateEvents() {
+	lateEventsLocked = true;
+	LateEventMap::iterator oit = lateEvents.begin(), oend = lateEvents.end();
+	while ( oit != oend ) {
+		ScriptableClass* obj = oit->first;
+		ObjectEventMap& objMap = oit->second;
+		ObjectEventMap::iterator it = objMap.begin(), end = objMap.end();
+		while ( it != end ) {
+			Event& event = it->second;
+			if ( event.lateDispatch ) {
+				GameObject* go = (GameObject*) obj;
+				if ( go ) go->DispatchEvent( event );
+			} else {
+				obj->CallEvent( event );
+			}
+			it++;
+		}
+		oit++;
+	}
+	lateEventsLocked = false;
+	lateEvents.clear();
+}
 
 /* MARK:	-				Global funcs ( from common.h )
  -------------------------------------------------------------------- */
@@ -782,17 +901,33 @@ string ResolvePath( const char* filepath, const char* ext, const char* optionalS
 	
 	bool startsWithSlash = ( filepath[ 0 ] == '/' );
 	bool startsWithDot = ( filepath[ 0 ] == '.' );
+	bool startsWithTwoDots = ( filepath[ 1 ] == '.' );
 	string startingPath = app.currentDirectory;
-	if ( script.currentScript && startsWithDot ) {
-		// remove filename from current script
-		vector<string> parts = Resource::splitString( script.currentScript->path, "/" );
-		parts.pop_back();
-		startingPath = Resource::concatStrings( parts, "/" );
+	if ( startsWithDot ) {
+		// get current script
+		unsigned lineNumber = 0;
+		JSScript* curScript = NULL;
+		if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
+			const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+			// find script
+			unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
+			while ( it != app.scriptManager.map.end() ) {
+				if ( it->second->path.compare( scriptPath ) == 0 ) {
+					// remove filename from current script
+					vector<string> parts = Resource::splitString( it->second->path, "/" );
+					parts.pop_back();
+					if ( startsWithTwoDots ) parts.pop_back();
+					startingPath = Resource::concatStrings( parts, "/" );
+					break;
+				}
+				it++;
+			}
+		}
 	}
 	
 	// split path into chunks
 	string fileKey( filepath );
-	if ( startsWithDot ) fileKey = fileKey.substr( 1 );
+	if ( startsWithDot ) fileKey = fileKey.substr( startsWithTwoDots ? 2 : 1 );
 	vector<string> parts = Resource::splitString( fileKey, string( "/" ) );
 	
 	// append file extension, if missing
@@ -820,17 +955,33 @@ string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, 
 	
 	bool startsWithSlash = ( filepath[ 0 ] == '/' );
 	bool startsWithDot = ( filepath[ 0 ] == '.' );
+	bool startsWithTwoDots = ( filepath[ 1 ] == '.' );
 	string startingPath = app.currentDirectory;
-	if ( script.currentScript && startsWithDot ) {
-		// remove filename from current script
-		vector<string> parts = Resource::splitString( script.currentScript->path, "/" );
-		parts.pop_back();
-		startingPath = Resource::concatStrings( parts, "/" );
+	if ( startsWithDot ) {
+		// get current script
+		unsigned lineNumber = 0;
+		JSScript* curScript = NULL;
+		if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
+			const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+			// find script
+			unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
+			while ( it != app.scriptManager.map.end() ) {
+				if ( it->second->path.compare( scriptPath ) == 0 ) {
+					// remove filename from current script
+					vector<string> parts = Resource::splitString( it->second->path, "/" );
+					parts.pop_back();
+					if ( startsWithTwoDots ) parts.pop_back();
+					startingPath = Resource::concatStrings( parts, "/" );
+					break;
+				}
+				it++;
+			}
+		}
 	}
 	
 	// split path into chunks
 	string fileKey( filepath );
-	if ( startsWithDot ) fileKey = fileKey.substr( 1 );
+	if ( startsWithDot ) fileKey = fileKey.substr( startsWithTwoDots ? 2 : 1 );
 	vector<string> parts = Resource::splitString( fileKey, string( "/" ) );
 	
 	// ensure first / is stripped
@@ -1035,6 +1186,42 @@ int StringPositionToIndex( const char* str, int pos ) {
 	}
 	return (int)( current - str );
 	
+}
+
+// converts index to position
+int StringIndexToPosition( const char* str, int index ) {
+	
+	if ( index < 0 ) return 0;
+	
+	const char *current = str;
+	size_t characterPos = 0;
+	size_t characterIndex = 0;
+	
+	while ( *current != 0 ) {
+		
+		// decode utf-8
+		if ( (*current & 0x80) != 0 ) {
+			if ( (*current & 0xE0) == 0xC0 ) {
+				current += 1;
+			} else if ( (*current & 0xF0) == 0xE0 ) {
+				current += 2;
+			} else if ( (*current & 0xF8) == 0xF0 ) {
+				current += 3;
+			} else if ( (*current & 0xFC) == 0xF8 ) {
+				current += 4;
+			} else if ( (*current & 0xFE) == 0xFC ) {
+				current += 5;
+			}
+			// ascii
+		}
+		characterIndex = current - str;
+		if ( characterIndex >= index ) return (int) characterPos;
+		current++;
+		characterPos++;
+		
+	}
+	return (int) characterPos;
+
 }
 
 int StringPositionLength( const char* str ) {

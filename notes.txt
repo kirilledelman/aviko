@@ -1,5 +1,12 @@
-Layout - trigger layout before render on properties change?
+tabbing doesn't quite work.
 
+includeOnce or require
+
+RenderSprite with trim, scaling messes w trim ( need to pre-subtract from w,h it or something)
+
+add convenience
+	
+	anchor/placement methods
 
 
 
@@ -7,21 +14,20 @@ Layout - trigger layout before render on properties change?
 
 
 UI:
+	input
+
+	scrollable
+	Label
+	Image
 	Button
 	Checkbox
-	Scrollable
 	List
 	Dropdown
-	TextInput - finish keyboard support (home, end, ctrl+jump)
 
 
+add clone() method - serialize+unser
 
-
-
-
-
-
-Intern all built-in-event strings
+Tab up doesn't tab to closest
 
 Demo project
 	Controller configurator
@@ -37,6 +43,19 @@ Remove unnecessary printfs
 Nice to have
 
 =============================================
+
+RenderBehavior
+	.renderAfterChildren
+
+Supplant String with .substrPosition, etc methods for utf chars
+
+Add Color.Red, Blue, etc. constants
+
+Replace RenderText color0 - 9 with ObjectVector<Color> object
+
+Debugging api!
+
+ui/input - ctrl+z, ctrl+shift+z or ctrl+y (.clearUndoOnBlur)
 
 Add the rest of joint types
 

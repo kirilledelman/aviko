@@ -497,10 +497,14 @@ private:
 		for ( int i = 0; i < argc; i++ ) {
 			jsval val = args.get( i );
 			RootedString str( cx, JS_ValueToString( cx, val ) );
-			char* buf = JS_EncodeString( cx, str );
-			bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
-			printf( ( isArray ? "[%s]%s" : "%s%s" ), buf, (i == argc - 1 ? "\n" : " ") );
-			JS_free( cx, buf );
+			if ( val.isObject() && JS_ObjectIsCallable(cx, JSVAL_TO_OBJECT( val ) ) ) {
+				printf( "[Function %p]%s", JSVAL_TO_OBJECT( val ), (i == argc - 1 ? "\n" : " ") );
+			} else {
+				char* buf = JS_EncodeString( cx, str );
+				bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
+				printf( ( isArray ? "[%s]%s" : "%s%s" ), buf, (i == argc - 1 ? "\n" : " ") );
+				JS_free( cx, buf );
+			}
 		}
 		return true;
 	}
@@ -1005,6 +1009,11 @@ public:
 		jsval val = value.toValue();
 		JS_SetProperty( this->js, this->global_object, propName, &val );
 		JSBool f; JS_SetPropertyAttributes( this->js, this->global_object, propName, JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_ENUMERATE, &f );
+	}
+	
+	/// adds a string that's protected from GC and automatically shared with other code that needs a string with the same value.
+	void InternString( const char* s ) {
+		JS_InternString( this->js, s );
 	}
 	
 	/// adds global property propName referencing obj

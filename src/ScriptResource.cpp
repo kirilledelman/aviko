@@ -15,7 +15,7 @@ ScriptResource::ScriptResource( const char* originalKey, string& path, string& e
 	}
 	
 	// compile
-	this->compiledScript = JS_CompileScript( script.js, script.global_object, buf, fsize, path.c_str(), 0 );
+	this->compiledScript = JS_CompileScript( script.js, script.global_object, buf, fsize, path.c_str(), 0 );	
 	if ( this->compiledScript ) {
 		// protect
 		JS_AddNamedScriptRoot( script.js, &this->compiledScript, originalKey );
@@ -35,7 +35,7 @@ string ScriptResource::ResolveKey(const char *ckey, string &fullpath, string &ex
 
 ScriptResource::~ScriptResource() {
 
-	// printf( "Unloading script %s\n", this->key.c_str() );
+	//printf( "Unloading script %s\n", this->key.c_str() );
 
 	// clean up
 	if ( this->compiledScript && script.js ) {
