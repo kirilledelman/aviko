@@ -540,6 +540,9 @@ void RigidBodyJoint::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	if ( this->body ) protectedObjects.push_back( &this->body->scriptObject );
 	if ( this->otherBody ) protectedObjects.push_back( &this->otherBody->scriptObject );
 	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
+	
 }
 
 

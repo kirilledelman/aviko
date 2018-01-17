@@ -409,6 +409,10 @@ void RigidBodyBehavior::TraceProtectedObjects( vector<void**> &protectedObjects 
 	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
 		protectedObjects.push_back( &otherJoints[ i ]->scriptObject );
 	}
+	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
+	
 }
 
 

@@ -302,7 +302,7 @@ void RenderBehavior::InitShaders() {
 				vec2 coord = texCoord;\n\
 			%s\n\
 				src = src * color;\n\
-				if ( src.a == 0.0f ) discard;\n\
+				if ( src.a == 0.0 ) discard;\n\
 				gl_FragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 		} else {
@@ -318,7 +318,7 @@ void RenderBehavior::InitShaders() {
 				vec2 coord = texCoord;\n\
 			%s\n\
 				src = src * color;\n\
-				if ( src.a == 0.0f ) discard;\n\
+				if ( src.a == 0.0 ) discard;\n\
 				fragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 	

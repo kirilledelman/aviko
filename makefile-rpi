@@ -50,4 +50,7 @@ obj/%.o: Box2D/Rope/%.cpp
 clean:
 	rm obj/*.o ./aviko
 
+install:
+	cp ./aviko /usr/local/bin
+
 

@@ -265,6 +265,9 @@ void RenderShapeBehavior::TraceProtectedObjects( vector<void**> &protectedObject
 	// points vector
 	protectedObjects.push_back( &this->polyPoints->scriptObject );
 	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
+	
 }
 
 /* MARK:	-				UI

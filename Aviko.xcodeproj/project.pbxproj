@@ -186,6 +186,7 @@
 		71D3CC181FEB3F40006F7678 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A6B1FEADDDB00995D61 /* libz.tbd */; };
 		71E28C401FF00A6300637B80 /* BodyBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */; };
 		71E626F81FF935D9001A203F /* aviko in CopyFiles */ = {isa = PBXBuildFile; fileRef = 71A460D91FEB3E3500129194 /* aviko */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		71E6FBB3200D3234006653A0 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71E6FBB2200D3234006653A0 /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -272,6 +273,7 @@
 		71E694641F5318E9001EB381 /* SampleBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SampleBehavior.hpp; path = src/SampleBehavior.hpp; sourceTree = "<group>"; };
 		71E694651F5318E9001EB381 /* Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Scene.cpp; path = src/Scene.cpp; sourceTree = "<group>"; };
 		71E694661F5318E9001EB381 /* Scene.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Scene.hpp; path = src/Scene.hpp; sourceTree = "<group>"; };
+		71E6FBB2200D3234006653A0 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		71E793901FC47DAD0026ABCB /* Image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Image.cpp; path = src/Image.cpp; sourceTree = "<group>"; };
 		71E793911FC47DAD0026ABCB /* Image.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Image.hpp; path = src/Image.hpp; sourceTree = "<group>"; };
 		71EB81A61F803BDF0087F25B /* makefile-opi */ = {isa = PBXFileReference; lastKnownFileType = text; path = "makefile-opi"; sourceTree = "<group>"; };
@@ -406,6 +408,7 @@
 				71D3CC141FEB3EC6006F7678 /* SDL2_net.framework in Frameworks */,
 				71D3CC151FEB3EC6006F7678 /* SDL2_ttf.framework in Frameworks */,
 				71D3CC161FEB3EC6006F7678 /* SDL2.framework in Frameworks */,
+				71E6FBB3200D3234006653A0 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -490,6 +493,7 @@
 		717C0CAC1F40FBC400AA54E7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				71E6FBB2200D3234006653A0 /* OpenGL.framework */,
 				71019AE61FEDD7A300A7F08C /* SDL2_gpu.framework */,
 				71339A6B1FEADDDB00995D61 /* libz.tbd */,
 				71339A691FEADBFF00995D61 /* libmozjs-24.0.a */,

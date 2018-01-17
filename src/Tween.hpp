@@ -99,6 +99,8 @@ public:
 	
 	static void InitClass();
 	
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
+	
 };
 
 SCRIPT_CLASS_NAME( Tween, "Tween" );

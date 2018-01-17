@@ -165,8 +165,10 @@ void Tween::InitClass() {
 		void* f = NULL;
 		if ( val.type == TypeFunction ) {
 			f = val.value.objectValue;
-			t->callback.SetFunc( f );
+			t->callback.funcObject = f;
 			t->callback.thisObject = t->scriptObject;
+		} else {
+			t->callback.funcObject = NULL;
 		}
 		return ArgValue( f );
 	}), PROP_ENUMERABLE );
@@ -277,6 +279,13 @@ void Tween::InitClass() {
 bool Tween::_canRun() {
 	return this->target != NULL && duration > 0 &&
 		( ( properties.size() && endValues.size() ) || ( callback.funcObject != NULL ) );
+}
+
+void Tween::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	
+	if ( this->callback.funcObject ){
+		protectedObjects.push_back( &this->callback.funcObject );
+	}
 }
 
 

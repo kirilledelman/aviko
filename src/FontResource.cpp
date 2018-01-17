@@ -46,7 +46,9 @@ string FontResource::ResolveKey(const char *ckey, string &fullpath, string &exte
 	string okey = ckey;
 	vector<string> parts = Resource::splitString( okey, "/" );
 	string::size_type commaPos = parts.back().find_last_of( ',' );
+	string sizeSpec = "";
 	if ( commaPos != string::npos ) {
+		sizeSpec = parts.back().substr( commaPos );
 		parts.back() = parts.back().substr( 0, commaPos );
 	}
 	okey = Resource::concatStrings( parts, "/" );
@@ -54,7 +56,7 @@ string FontResource::ResolveKey(const char *ckey, string &fullpath, string &exte
 	// get ttf
 	extension = "ttf";
 	fullpath = ResolvePath( okey.c_str(), "ttf", app.fontsDirectory.c_str() );
-	return fullpath.substr( app.currentDirectory.length() );
+	return fullpath.substr( app.currentDirectory.length() ) + sizeSpec;
 	
 }
 

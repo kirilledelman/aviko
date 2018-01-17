@@ -32,6 +32,8 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
+	printf( "~GameObject\n" );
+	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
 	
@@ -992,6 +994,9 @@ void GameObject::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 	}
 	// parent
 	if ( this->parent ) protectedObjects.push_back( &parent->scriptObject );
+	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
 }
 
 
@@ -1908,7 +1913,7 @@ void GameObject::Render( Event& event ) {
 		GameObject* obj = this->children[ i ];
 		// recurse if render behavior didn't ask to skip it
 		if ( obj->active() && obj != event.skipObject ) obj->Render( event );
-	}
+	}	
 	
 	// pop matrices
 	GPU_MatrixMode( GPU_MODELVIEW );

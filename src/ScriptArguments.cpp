@@ -7,29 +7,13 @@
 
 
 /// constructor
-ScriptFunctionObject::ScriptFunctionObject( void* scriptFunc, bool once ) : callOnce( once ) {
-	this->SetFunc( scriptFunc );
+ScriptFunctionObject::ScriptFunctionObject( void* scriptFunc, bool once ) : funcObject(scriptFunc), callOnce( once ) {
 }
 
 /// destructor
 ScriptFunctionObject::~ScriptFunctionObject() {
-	if ( script.js && this->funcObject ) {
-		JS_RemoveObjectRoot( script.js, &this->funcObject );
-	}
 }
 
-/// replace
-void ScriptFunctionObject::SetFunc( void* newFunc ) {
-	if ( this->funcObject != newFunc ) {
-		if ( this->funcObject ) {
-			JS_RemoveObjectRoot( script.js, &this->funcObject );
-		}
-		this->funcObject = (JSObject*) newFunc;
-		if ( newFunc ) {
-			JS_AddObjectRoot( script.js, &this->funcObject );
-		}
-	}
-}
 
 /// invoke function with arguments
 void ScriptFunctionObject::Invoke( ScriptArguments &args ){

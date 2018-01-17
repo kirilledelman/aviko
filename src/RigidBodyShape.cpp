@@ -192,6 +192,9 @@ void RigidBodyShape::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	
 	// points vector
 	protectedObjects.push_back( &this->polyPoints->scriptObject );
+
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
 	
 }
 

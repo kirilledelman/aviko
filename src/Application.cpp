@@ -180,6 +180,9 @@ void Application::UpdateBackscreen() {
 	GPU_SetDepthWrite( this->backScreen->target, true );
 	this->backScreen->target->camera.z_near = -65535;
 	this->backScreen->target->camera.z_far = 65535;
+#ifdef __MACOSX__
+	glDepthFunc( GL_LEQUAL );
+#endif
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -715,6 +718,35 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	for ( size_t i = 0, ns = this->sceneStack.size(); i < ns; i++ ){
 		protectedObjects.push_back( &sceneStack[ i ]->scriptObject );
 	}
+	
+	// add debouncers and asyncs
+	AsyncMap::iterator it = scheduledAsyncs->begin();
+	while ( it != scheduledAsyncs->end() ) {
+		ScheduledCallList &list = it->second;
+		ScheduledCallList::iterator lit = list.begin();
+		while ( lit != list.end() ) {
+			ScheduledCall& sched = *lit;
+			protectedObjects.push_back( &sched.func.funcObject );
+			if ( sched.func.thisObject ) protectedObjects.push_back( &sched.func.thisObject );
+			lit++;
+		}
+		it++;
+	}
+	DebouncerMap::iterator dit = scheduledDebouncers->begin();
+	while( dit != scheduledDebouncers->end() ) {
+		unordered_map<string, ScheduledCall> &debouncers = dit->second;
+		unordered_map<string, ScheduledCall>::iterator dbit = debouncers.begin();
+		while ( dbit != debouncers.end() ) {
+			ScheduledCall& sched = dbit->second;
+			protectedObjects.push_back( &sched.func.funcObject );
+			if ( sched.func.thisObject ) protectedObjects.push_back( &sched.func.thisObject );
+			dbit++;
+		}
+		dit++;
+	}
+	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
 }
 
 
@@ -724,6 +756,14 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 
 /// main application loop
 void Application::GameLoop() {
+	
+	//
+	this->run = true;
+	Uint32 _time = 0, _timeFps = 0;
+	Uint32 _quitPressedTime = 0;
+	Event event;
+	SDL_Event e;
+	Scene* scene = NULL;
 	
 	// load and run "main.js" script
 	if ( !script.Execute( scriptManager.Get( "/main.js" ) ) ){
@@ -737,12 +777,6 @@ void Application::GameLoop() {
 	this->UpdateBackscreen();
 	
 	// main loop
-	run = true;
-	Uint32 _time, _timeFps = 0;
-	Event event;
-	SDL_Event e;
-	Scene* scene;
-
 	while( run ) {
 		
 		// get current scene
@@ -761,7 +795,7 @@ void Application::GameLoop() {
 			_timeFps = _time;
 		}
 		
-		// perform asyncs
+		// perform asyncs & debounce calls
 		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
 		
 		// advance tweens
@@ -780,15 +814,27 @@ void Application::GameLoop() {
 			scene->DispatchEvent( event, true );
 		}
 		
+		// update joysticks state
 		SDL_JoystickUpdate();
 		
 		// handle system events
 		while( SDL_PollEvent( &e ) != 0 ){
+			
 			// let input handle events
 			input.HandleEvent( e );
 			
-			// Exit on escape
-			if ( e.type == SDL_QUIT || ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE && e.key.repeat > 0 ) ) { run = false; break; }
+			// exit
+			if ( e.type == SDL_QUIT ) {
+				run = false; break;
+				
+			// escape key down for 2+ sec
+			} else if ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE ) {
+				if ( e.key.repeat == 0 ) {
+					_quitPressedTime = _time;
+				} else if ( e.key.repeat && ( _time - _quitPressedTime ) > 2000 ) {
+					run = false; break;
+				}
+			}
 
 			// window events
 			else if ( e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ) {
@@ -805,10 +851,10 @@ void Application::GameLoop() {
 			scene->DispatchEvent( event, true );
 		}
 		
-		// late events
+		// late events (scheduled by `fireLate` and `dispatchLate` / Application::AddLateEvent )
 		RunLateEvents();
 		
-		// continue
+		// render scene graph
 		if ( scene ) {
 			// render to backscreen
 			event.name = EVENT_RENDER;
@@ -1076,18 +1122,18 @@ bool SaveFile( const char* data, size_t numBytes, const char* filepath, const ch
 	string path = ResolvePath( filepath, ext, NULL );
 	
 	// create subfolders leading up to file
-	vector<string> parts = Resource::splitString( path, string( "/" ) );
+	/*vector<string> parts = Resource::splitString( path.substr( app.currentDirectory.length() + 1 ), string( "/" ) );
 	string subDir;
-	for ( int i = 0; i < parts.size() - 1; i++ ) {
+	for ( int i = 1; i < parts.size() - 1; i++ ) {
 		subDir = "/" + parts[ i ];
 		if ( access( path.c_str(), R_OK ) == -1 ) {
 			// try to make directory
-			if ( mkdir( subDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) == -1 ){
+			if ( mkdir( app.currentDirectory + subDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) == -1 ){
 				printf( "Unable to create directory %s for saving.\n", subDir.c_str() );
 				return false;
 			}
 		}
-	}
+	}*/
 	
 	// create and save file
 	FILE *f = fopen( (char*) path.c_str(), "w+" );

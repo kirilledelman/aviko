@@ -930,7 +930,6 @@ public:
 		int argc;
 		jsval* params = args.GetFunctionArguments( &argc );
 		if ( JS_IsExceptionPending( this->js ) ){
-			printf( "Whaat!" );
 			return;
 		}
 		JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval );

@@ -107,9 +107,7 @@ public:
 // events
 	
 	typedef vector<ScriptFunctionObject> EventListeners;
-	typedef vector<ScriptFunctionObject>::iterator EventListenersIterator;
 	typedef unordered_map<string, EventListeners> EventListenersMap;
-	typedef unordered_map<string, EventListeners>::iterator EventListenersMapIterator;
 	
 	/// eventName -> vector of script function callbacks
 	EventListenersMap eventListeners;
@@ -123,7 +121,7 @@ public:
 		EventListeners* list = &this->eventListeners[ event.name ];
 		
 		// call each
-		EventListenersIterator it = list->begin();
+		EventListeners::iterator it = list->begin();
 		while ( it != list->end() ){
 			ScriptFunctionObject *fobj = &(*it);
 			fobj->thisObject = this->scriptObject;
@@ -149,6 +147,21 @@ public:
 	
 	virtual void TraceProtectedObjects( vector<void**> &protectedObjects ) {
 		// push &scriptObject of each child object that needs to be protected on vector
+		
+		// add event listeners function objects
+		EventListenersMap::iterator it = eventListeners.begin(), end = eventListeners.end();
+		while ( it != end ) {
+			EventListeners& listeners = it->second;
+			EventListeners::iterator lit = listeners.begin(), lend = listeners.end();
+			while ( lit != lend ) {
+				ScriptFunctionObject &sf = *lit;
+				protectedObjects.push_back( &sf.funcObject );
+				if ( sf.thisObject ) protectedObjects.push_back( &sf.thisObject );
+				lit++;
+			}
+			it++;
+		}
+		
 	}
 
 	// async, debounce
@@ -224,7 +237,7 @@ public:
 		// already exists
 		if ( it != debouncers.end() ){
 			ScheduledCall &sched = it->second;
-			sched.func.SetFunc( func );
+			sched.func.funcObject = func;
 			// delay specified? update to new delay
 			if ( delay > 0 ) {
 				sched.timeSet = sched.timeLeft = delay;
@@ -235,7 +248,7 @@ public:
 		// new
 		} else {
 			ScheduledCall &sched = debouncers[ name ];
-			sched.func.SetFunc( func );
+			sched.func.funcObject = func;
 			sched.func.thisObject = obj;
 			sched.timeLeft = sched.timeSet = delay;
 		}

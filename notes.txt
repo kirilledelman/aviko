@@ -1,20 +1,14 @@
-tabbing doesn't quite work.
+implement UIBehavior fitChildren
 
-includeOnce or require
+test addChild override
 
-RenderSprite with trim, scaling messes w trim ( need to pre-subtract from w,h it or something)
-
-add convenience
-	
-	anchor/placement methods
-
-
-
-
+tabbing up doesn't quite work.
+Tab up doesn't tab to closest
 
 
 UI:
 	input
+	panel
 
 	scrollable
 	Label
@@ -24,25 +18,32 @@ UI:
 	List
 	Dropdown
 
+Raspberry Pi - pressing Alt disrupts subseq text entry
 
-add clone() method - serialize+unser
-
-Tab up doesn't tab to closest
 
 Demo project
 	Controller configurator
-	UI: skinned buttons, dropdowns, checkboxes, scrollable panels
+	UI
+
+add convenience
+	anchor/placement methods
 
 
 Normalize error messages
 Remove unnecessary printfs
 
+SaveFile - fix create subfolders
+	Controller.save - something's up w save dir
 
 =============================================
 
 Nice to have
 
 =============================================
+
+Demo - ui components share many ui layout props - move to ui/ui?
+
+Application 'quit' event - dispatched right before exiting.
 
 RenderBehavior
 	.renderAfterChildren
@@ -57,17 +58,15 @@ Debugging api!
 
 ui/input - ctrl+z, ctrl+shift+z or ctrl+y (.clearUndoOnBlur)
 
-Add the rest of joint types
+Physics:
+	Add collision exclusion/inclusion lists? Always collide/never collide? Object removal implications.
+	Add the rest of joint types
 
 modify query and rayTrace for non-physics based queries
 
 Transplant from parent to parent, maintain transform (only need to do anything if no body)
 
 Add logging level - none, normal, verbose
-
-
-RenderShape
-	Add Shape.Points
 
 
 BodyShape
@@ -107,15 +106,9 @@ can extend later to filter by properties
 
 detect circular parenting
 
-
-
-
-Layout class + subclasses
-anchors
-min/max width, height
-
-
 RenderTileMap
+
+RenderParticles - Liquidfun ParticleSystem , or series of points render behavior
 
 RenderSprite
 	displace shader?
@@ -138,7 +131,6 @@ Input should be able to read retroarch config
 
 
 
-ParticleSystem render behavior
 
 Promise-like interface?
 
@@ -173,6 +165,8 @@ ORi/RPi:
 	CMakeLists.txt - disable all but OpenGL 1 base and OpenGLES 2.x renderer
 	cmake -G "Unix Makefiles"
 	make
+	sudo make install
+
 
 
 ---------------------------------------------

@@ -173,14 +173,14 @@ void Controller::InitClass() {
 	// load / save
 	
 	script.DefineFunction<Controller>
-	("saveConfig",
+	("save",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa){
 		((Controller*) p)->SaveConfig();
 		return true;
 	 }));
 	
 	script.DefineFunction<Controller>
-	("loadConfig",
+	("load",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa){
 		sa.ReturnBool( ((Controller*) p)->LoadConfig() );
 		return true;

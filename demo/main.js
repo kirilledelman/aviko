@@ -10,47 +10,40 @@ input.controllerAdded = function ( kb ) {
 	kb.bindAxis( '+vertical', Key.Down );
 	kb.bind( 'accept', Key.Enter );
 	kb.bind( 'cancel', Key.Escape );
+	kb.save();
 };
+
 
 app.scene = new Scene();
 
-// resized top container
-var obj = app.scene.addChild();
-obj.render = new RenderShape( Shape.Rectangle );
-obj.name = 'Obj1';
-obj.x = 10; obj.y = 10;
-obj.ui = new UI();
-obj.ui.width = 200;
-obj.ui.height = 100;
-obj.ui.layoutType = Layout.Vertical;
-obj.ui.pad = 8;
+var panel = app.scene.addChild( 'ui/panel' );
+panel.x = 10; panel.y = 10;
+panel.width = 200; panel.height = 100;
+panel.layoutType = Layout.Vertical;
+panel.fitChildren = true;
+panel.pad = 8;
+
 input.mouseMove = function ( x, y ) {
 	
 	if ( !app.scene.currentFocus && input.get( Key.MouseButton ) ) {
-		this.ui.width = x - this.x;
-		this.ui.height = y - this.y;
+		this.width = x - this.x;
+		this.height = y - this.y;
 	}
 	
-}.bind( obj );
-obj.ui.on( 'layout', function ( x, y, w, h ) {
-	this.gameObject.x = x;
-	this.gameObject.y = y;
-    this.gameObject.render.width = w;
-    this.gameObject.render.height = h;
-});
+}.bind( panel );
 
 
-var label = obj.addChild( 'ui/input');
+var label;
+for ( var i = 0; i < 2; i++ ) {
 
-input.mouseDown = function ( btn, x, y ) {
-	if ( btn == 3 ) {
-
-		label = obj.addChild( clone( label ) );
-
+	label = panel.addChild( 'ui/input' );
+	label.text = "Input " + i;
+	label.accept = function ( txt ) {
+		this.size = parseFloat( txt );
+		this.parent.dispatch( 'layout' );
 	}
+
 }
-
-
 
 
 

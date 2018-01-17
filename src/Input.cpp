@@ -414,6 +414,8 @@ void Input::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 		protectedObjects.push_back( &it->second->scriptObject );
 		it++;
 	}
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );	
 }
 
 

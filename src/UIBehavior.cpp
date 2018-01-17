@@ -53,14 +53,14 @@ UIBehavior::UIBehavior() {
 	this->isUIBehavior = true;
 	
 	// reset layout props
-	this->layoutX = nanf(NULL);
-	this->layoutY = nanf(NULL);
+	this->layoutX = FLT_MAX;
+	this->layoutY = FLT_MAX;
 	
 }
 
 // destructor
 UIBehavior::~UIBehavior() {
-	
+	printf( "~UIBehavior\n" );
 }
 
 
@@ -124,6 +124,10 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
 		if ( !other && val ) {
+			GameObject *go = script.GetInstance<GameObject>( val );
+			if ( go ) other = go->ui;
+		}
+		if ( !other && val ) {
 			script.ReportError( ".navigationLeft can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
@@ -137,6 +141,10 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
 		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			GameObject *go = script.GetInstance<GameObject>( val );
+			if ( go ) other = go->ui;
+		}
 		if ( !other && val ) {
 			script.ReportError( ".navigationRight can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
@@ -152,6 +160,10 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
 		if ( !other && val ) {
+			GameObject *go = script.GetInstance<GameObject>( val );
+			if ( go ) other = go->ui;
+		}
+		if ( !other && val ) {
 			script.ReportError( ".navigationUp can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
@@ -165,6 +177,10 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptObjectCallback>([](void *b, void* val ){
 		UIBehavior* ui = (UIBehavior*) b;
 		UIBehavior* other = val ? script.GetInstance<UIBehavior>( val ) : NULL;
+		if ( !other && val ) {
+			GameObject *go = script.GetInstance<GameObject>( val );
+			if ( go ) other = go->ui;
+		}
 		if ( !other && val ) {
 			script.ReportError( ".navigationDown can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
@@ -354,7 +370,7 @@ void UIBehavior::InitClass() {
 	}) );
 	
 	script.AddProperty<UIBehavior>
-	( "expandCrossAxis",
+	( "expandChildren",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->layoutExpandCrossAxis; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -364,6 +380,18 @@ void UIBehavior::InitClass() {
 		}
 		return ui->layoutExpandCrossAxis;
 	 }));
+	
+	script.AddProperty<UIBehavior>
+	( "fitChildren",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->fitChildren; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->fitChildren != val ) {
+			ui->fitChildren = val;
+			ui->RequestLayout();
+		}
+		return ui->fitChildren;
+	}));
 
 	script.AddProperty<UIBehavior>
 	( "pad",
@@ -525,7 +553,67 @@ void UIBehavior::InitClass() {
 		return val;
 	}));
 	
+	script.AddProperty<UIBehavior>
+	( "spacing",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		ArgValue v;
+		v.type = TypeArray;
+		v.value.arrayValue = new ArgValueVector();
+		v.value.arrayValue->emplace_back( ArgValue( ui->spacingX ) );
+		v.value.arrayValue->emplace_back( ArgValue( ui->spacingY ) );
+		return v;
+	}),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		float sameVal = 0;
+		if ( val.type == TypeArray ) {
+			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->spacingX ) ) {
+				if ( val.value.arrayValue->size() >= 2 ) {
+					val.value.arrayValue->at( 1 ).toNumber( ui->spacingY );
+				}
+			}
+		} else if ( val.toNumber( sameVal ) ) {
+			ui->spacingX = ui->spacingX = sameVal;
+		}
+		ui->RequestParentLayout();
+		return val;
+	}), PROP_ENUMERABLE | PROP_NOSTORE  );
+	
+	script.AddProperty<UIBehavior>
+	( "spacingX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->spacingX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->spacingX != val ) {
+			ui->spacingX = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "spacingY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->spacingY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->spacingY != val ) {
+			ui->spacingY = val;
+			ui->RequestLayout();
+		}
+		return val;
+	}));
+	
 	// functions
+	
+	/*script.DefineFunction<UIBehavior>
+	("triggerLayout",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		UIBehavior* self = (UIBehavior*) p;
+		Event e(EVENT_LAYOUT);
+		self->
+		return self->Focus();
+	} ));*/
 	
 	script.DefineFunction<UIBehavior>
 	("focus",
@@ -713,7 +801,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	if ( !behavior->gameObject ) return;
 	
 	// if this behavior doesn't have a parentUI / x, y are undefined
-	if ( isnan( behavior->layoutX ) || !behavior->gameObject->parent || !behavior->gameObject->parent->ui ) {
+	if ( behavior->layoutX == FLT_MAX || !behavior->gameObject->parent || !behavior->gameObject->parent->ui ) {
 		// copy from gameObject
 		behavior->layoutX = behavior->gameObject->GetX();
 		behavior->layoutY = behavior->gameObject->GetY();
@@ -754,7 +842,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			y = curY + childUI->marginTop;
 			h = childUI->layoutHeight;
 			w = behavior->layoutExpandCrossAxis ? innerWidth : childUI->layoutWidth;
-			curY += h + childUI->marginTop + childUI->marginBottom;
+			curY += h + childUI->marginTop + childUI->marginBottom + behavior->spacingY;
 			
 		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
 			
@@ -762,7 +850,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			y = behavior->padTop;
 			w = childUI->layoutWidth;
 			h = behavior->layoutExpandCrossAxis ? innerHeight : childUI->layoutHeight;
-			curX += w;
+			curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
 			
 		} else if ( behavior->layoutType == LayoutType::Grid ) {
 			
@@ -770,17 +858,17 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			h = childUI->layoutHeight;
 			
 			// new row?
-			if ( curX + w + childUI->marginLeft + childUI->marginRight >= innerWidth ) {
+			if ( curX + w + childUI->marginLeft + childUI->marginRight + behavior->spacingX >= innerWidth ) {
 				
 				curX = behavior->padLeft;
-				curY += maxSize;
+				curY += maxSize + behavior->spacingY;
 				maxSize = h + childUI->marginTop + childUI->marginBottom;
 				
 			} else maxSize = fmax( maxSize, h + childUI->marginTop + childUI->marginBottom );
 			
 			x = curX + childUI->marginLeft;
 			y = curY + childUI->marginTop;
-			curX += w + childUI->marginLeft + childUI->marginRight;
+			curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
 			
 		} else if ( behavior->layoutType == LayoutType::None ){
 		

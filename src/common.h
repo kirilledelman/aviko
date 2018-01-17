@@ -25,13 +25,13 @@ using namespace std;
 #include <SDL2_mixer/SDL_mixer.h>
 #include <SDL2_net/SDL_net.h>
 #include <SDL2_gpu.framework/Headers/SDL_gpu.h>
+#include <OpenGL/gl.h>
 #else
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_gpu.h>
-#include "SDL_opengles2_gl2.h"
 #endif
 
 // physics library

@@ -84,6 +84,9 @@ public:
 	// for horizontal and vertical - expands opposite axis to fill container
 	bool layoutExpandCrossAxis = true;
 	
+	// adjust own size after layout to fit children
+	bool fitChildren = false;
+	
 	// reduces available w/h inside for layout of children
 	float padTop = 0;
 	float padBottom = 0;
@@ -95,6 +98,10 @@ public:
 	float marginBottom = 0;
 	float marginLeft = 0;
 	float marginRight = 0;
+	
+	// extra spacing between items for Horizontal, Vertical, Grid layouts
+	float spacingX = 0;
+	float spacingY = 0;
 	
 	/// requests late layout event to parent gameObject
 	void RequestParentLayout();
