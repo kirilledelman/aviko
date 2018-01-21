@@ -10,6 +10,10 @@ look at mappedProps in source code below for additional properties
 
 Events:
 	'change' - when field changes (as you type)
+	'focus' - when control is focused
+	'blur' - when control lost focus
+	'editStart' - when control begin text edit
+	'editEnd' - when control ended text edit
 	'accept' - on blur, if contents changed
 	'cancel' - on blur, if contents didn't change
 	'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.clipboard )
@@ -22,7 +26,7 @@ include( './ui' );
 (function(go) {
 
 	// inner props
-	var ui, tc, rt, bg;
+	var ui = new UI(), tc, rt, bg, shp;
 	var tabEnabled = false;
 	var disabled = false;
 	var selectable = true;
@@ -30,11 +34,19 @@ include( './ui' );
 	var formatting = false;
 	var mouseDownTime = null;
 	var selectAllOnFocus = false;
+	var acceptToEdit = false;
+	var cancelToBlur = true;
+	var editing = false;
+	var touched = false;
+	var offBackground = false;
+	var focusBackground= false;
+	var disabledBackground= false;
+	go.serializeMask = {};
 
 	// API functions
 
-	// set input focus to the control
-	go[ 'focus' ] = function () { ui.focus(); }
+	// set input focus to the control. forceEdit param = true, will begin editing even if acceptToEdit = true
+	go[ 'focus' ] = function ( forceEdit ) { ui.focus(); if ( forceEdit && !disabled ) go.editing = true; }
 
 	// remove input focus from control
 	go[ 'blur' ] = function () { ui.blur(); }
@@ -58,29 +70,103 @@ include( './ui' );
 		// (Number) current height of the control
 		[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; go.scrollCaretToView(); } ],
 
+		// (Boolean) requires user to press Enter (or 'accept' controller button) to begin editing
+		[ 'acceptToEdit',  function (){ return acceptToEdit; }, function ( ae ){
+			acceptToEdit = ae;
+			ui.focusable = !disabled || acceptToEdit;
+		} ],
+
+		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
+		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+
+		// (Boolean) turns display of caret and selection on and off (used by focus system)
+		[ 'editing',  function (){ return editing; }, function ( e ){
+			if ( e != editing ) {
+				editing = e;
+				if ( e ) {
+					// first time editing
+					if ( !touched ) {
+						// set caret to end
+						rt.caretPosition = rt.text.positionLength();
+						touched = true;
+					}
+					rt.showCaret = true;
+				    rt.showSelection = selectable;
+				    rt.formatting = false;
+					resetText = rt.text;
+					if ( selectAllOnFocus && selectable ) {
+					    rt.selectionStart = 0; rt.selectionEnd = rt.text.positionLength();
+				    }
+					go.fire( 'editStart' );
+				} else {
+					rt.showCaret = rt.showSelection = ui.dragSelect = false;
+				    rt.formatting = formatting;
+				    rt.scrollLeft = 0;
+					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
+					go.fire( 'editEnd' );
+				}
+			}
+		} ],
+
 		// (string) font name
 		[ 'font',  function (){ return rt.font; }, function ( f ){
 			rt.font = f;
-			go.dispatchLate( 'layout' ); // dispatchLate is like debounce but for events
 			go.scrollCaretToView();
 		} ],
 
 		// (Number) font size
 		[ 'size',  function (){ return rt.size; }, function ( s ){
 			rt.size = s;
-			if ( !rt.multiLine ) ui.height = rt.size + ui.padTop + ui.padBottom;
-			go.dispatchLate( 'layout' ); // dispatchLate is like debounce but for events
-			go.scrollCaretToView();
+			ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
+			if ( !rt.multiLine ) ui.height = ui.minHeight;
+			if ( go.scene ) go.scene.dispatchLate( 'layout' );
 		} ],
+
+		// (Boolean) returns or sets whether control has focus
+		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; go.scrollCaretToView(); } ],
 
 		// (Number) extra spacing between characters
 		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; go.scrollCaretToView(); } ],
 
-		// (Boolean) text wrapping enabled
-		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; go.scrollCaretToView(); } ],
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
+		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
 
-		// (Boolean) display background or not
-		[ 'background',  function (){ return bg.active; }, function ( b ){ bg.active = b; } ],
+		// (Number) texture slice top
+		[ 'sliceTop',  function (){ return bg.sliceTop; }, function ( v ){ bg.sliceTop = v; }, true ],
+
+		// (Number) texture slice right
+		[ 'sliceRight',  function (){ return bg.sliceRight; }, function ( v ){ bg.sliceRight = v; }, true ],
+
+		// (Number) texture slice bottom
+		[ 'sliceBottom',  function (){ return bg.sliceBottom; }, function ( v ){ bg.sliceBottom = v; }, true ],
+
+		// (Number) texture slice left
+		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
+		[ 'background',  function (){ return offBackground; }, function ( b ){
+			offBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
+		[ 'focusBackground',  function (){ return focusBackground; }, function ( b ){
+			focusBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
+		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( b ){
+			disabledBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (Number) corner roundness when background is solid color
+		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
+			shp.radius = b;
+			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
+			go.updateBackground();
+		} ],
 
 		// (Boolean) multiple line input
 		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){ rt.multiLine = v; go.fire( 'layout' ); go.scrollCaretToView(); } ],
@@ -109,11 +195,11 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			ui.focusable = !(disabled = v);
-			if ( v && ui.focused ) ui.blur();
-			bg.texture = UI.style.texturesFolder + (disabled ? UI.style.inputDisabled : (ui.focused ? UI.style.inputFocus : UI.style.input));
-			rt.opacity = v ? 0.8 : 1;
-			go.fire( 'layout' );
+			 ui.focusable = !(disabled = v) || acceptToEdit;
+			 if ( v && ui.focused ) ui.blur();
+			 go.updateBackground();
+			 tc.opacity = v ? 0.6 : 1;
+			 go.fire( 'layout' );
 		 } ],
 
 		// (Boolean) enable display ^code formatting (while not editing)
@@ -155,34 +241,35 @@ include( './ui' );
 		// (Number) or (Color) ^9 color
 		[ 'color9',  function (){ return rt.color9; }, function ( v ){ rt.color9 = v; } ],
 	];
-	UI.base.addSharedProperties( go ); // add common UI properties (ui.js)
+	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	for ( var i = 0; i < mappedProps.length; i++ ) {
 		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
 			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
 		} );
+		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
 	}
 
 	// create components
 
 	// background
-	bg = new RenderSprite( UI.style.texturesFolder + UI.style.input );
-	bg.slice = UI.style.inputSlice;
+	bg = new RenderSprite( offBackground );
+	shp = new RenderShape( Shape.Rectangle );
+	shp.radius = 0; shp.centered = false;
+	shp.filled = true;
 
 	// text container
 	tc = new GameObject();
-	rt = new RenderText( UI.style.font, UI.style.baseSize );
+	rt = new RenderText();
 	tc.render = rt; tc.z = 1;
-	rt.textColor = UI.style.textColor;
-	rt.selectionColor = UI.style.selectionColor;
 
 	// UI
-	ui = new UI();
 	ui.autoMoveFocus = false;
-	ui.pad = UI.style.inputPadding;
-	ui.minWidth = UI.style.inputPadding[ 3 ] + UI.style.inputPadding[ 1 ];
-	ui.minHeight = UI.style.baseSize + UI.style.inputPadding[ 0 ] + UI.style.inputPadding[ 2 ];
 	ui.layoutType = Layout.Anchors;
 	ui.focusable = true;
+
+	// don't serialize components/properties
+	go.serializeMask = { 'ui':1, 'render':1 };
+	tc.serialized = false;
 
 	// components are added after component is awake
 	go.awake = function () {
@@ -194,8 +281,8 @@ include( './ui' );
 	// layout components
 	ui.layout = function ( x, y, w, h ) {
 		go.setTransform( x, y );
-		if ( !rt.multiLine ) h = rt.size + ui.padTop + ui.padBottom;
-		bg.width = w; bg.height = h;
+		if ( !rt.multiLine ) ui.minHeight = h = rt.lineHeight + ui.padTop + ui.padBottom;
+		bg.width = shp.width = w; bg.height = shp.height = h;
 		tc.setTransform( ui.padLeft, ui.padTop );
 		rt.width = w - ( ui.padLeft + ui.padRight );
 		rt.height = Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) );
@@ -203,26 +290,59 @@ include( './ui' );
 
 	// focus changed
 	ui.focusChanged = function ( newFocus ) {
-		// show caret
+		// focused
 	    if ( newFocus == ui ) {
-	        rt.showCaret = true;
-		    rt.showSelection = selectable;
-		    rt.formatting = false;
-			bg.texture = UI.style.texturesFolder + UI.style.inputFocus;
-		    resetText = rt.text;
-		    if ( selectAllOnFocus && selectable ) {
-			    rt.selectionStart = 0; rt.selectionEnd = rt.text.positionLength();
-		    }
-	    // hide
+			go.fire( 'focus' );
+		    ui.autoMoveFocus = false;
+	        go.editing = !acceptToEdit;
+		    go.updateBackground();
+		    go.scrollIntoView();
+	    // blurred
 	    } else {
-		    go.scrollCaretToView();
-	        rt.showCaret = rt.showSelection = ui.dragSelect = false;
-		    rt.formatting = formatting;
-		    rt.scrollLeft = 0;
-			bg.texture = UI.style.texturesFolder + (disabled ? UI.style.inputDisabled : UI.style.input);
-		    go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
+			go.fire( 'blur' );
+		    ui.autoMoveFocus = acceptToEdit;
+	        go.editing = false;
+		    go.updateBackground();
 	    }
 		go.fire( 'layout' );
+	}
+
+	// navigation event
+	ui.navigation = function ( name, value ) {
+
+		stopEvent();
+
+		// editing
+		if ( editing ) {
+
+			if ( name == 'accept' && !rt.multiLine ) go.editing = false;
+			else if ( name == 'cancel' ) {
+				// blur, or stop editing
+				if( cancelToBlur ) ui.blur();
+				else go.editing = false;
+			}
+
+		// focused but not editing
+		} else {
+
+			// enter = begin editing
+			if ( name == 'accept' ) {
+
+				if ( acceptToEdit && !disabled ) go.editing = true;
+
+			// escape = blur
+			} else if ( name == 'cancel' ) {
+
+				if ( cancelToBlur ) ui.blur();
+
+			// directional - move focus
+			} else {
+				var dx = 0, dy = 0;
+				if ( name == 'horizontal' ) dx = value;
+				else dy = value;
+				ui.moveFocus( dx, dy );
+			}
+		}
 	}
 
 	// scrolling
@@ -230,16 +350,21 @@ include( './ui' );
 		// ignore if not focused
 		if ( !rt.multiLine && !ui.focused ) return;
 
+		var st = rt.scrollTop, sl = rt.scrollLeft;
+
 		// scroll vertically
 		if ( wy != 0 && rt.scrollHeight > rt.height ) {
 			rt.scrollTop =
-			Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop - wy ) ); // wy * rt.lineHeight
+			Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop - wy ) );
 		}
 		// scroll horizontally
 		if ( wx != 0 && rt.scrollWidth > rt.width ){
 			rt.scrollLeft =
-			Math.max( 0, Math.min( rt.scrollWidth - rt.width, rt.scrollLeft + wx ) ); // 0.1 * wx * rt.lineHeight
+			Math.max( 0, Math.min( rt.scrollWidth - rt.width, rt.scrollLeft + wx ) );
 		}
+
+		// stop event if scrolled
+		if ( sl != rt.scrollLeft || st != rt.scrollTop ) stopEvent();
 	}
 
 	// helper for selection
@@ -262,8 +387,14 @@ include( './ui' );
 
 	// mouse down
 	ui.mouseDown = function ( btn, x, y ) {
-		// ignore
+		// focus
+	    ui.focus();
+
+		// ignore if disabled
 		if ( disabled ) return;
+
+		// mouse always starts editing
+		go.editing = true;
 
 		// offset by padding
 		x -= ui.padLeft; y -= ui.padTop;
@@ -276,8 +407,6 @@ include( './ui' );
 			// set cursor
 		    rt.selectionStart = rt.selectionEnd = rt.caretPosition = rt.caretPositionAt( x, y );
 		}
-		// focus
-	    ui.focus();
 
 		// double clicked word
 		var newMouseDownTime = new Date();
@@ -322,6 +451,10 @@ include( './ui' );
 
 	// key press
 	ui.keyPress = function ( key, direction ) {
+
+		// if not editing, ignore
+		if ( !editing ) return;
+
 		// get ready
 		var caretPosition = rt.caretPosition;
 	    var caretIndex = rt.text.positionToIndex( caretPosition );
@@ -375,6 +508,10 @@ include( './ui' );
 
 	// key down
 	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
+
+		// if not editing, ignore all except Tab
+		if ( !editing && code != Key.Tab ) code = 0;
+
 		// ready
 		ui.dragSelect = false;
 		var txt = rt.text;
@@ -394,16 +531,22 @@ include( './ui' );
 			        ui.keyPress( "\t" );
 	            } else {
 			        ui.moveFocus( shift ? -1 : 1 );
+				    stopEvent();
 			    }
 				break;
 
 	        case Key.Return:
 		        if ( rt.multiLine ) {
-			        ui.keyPress( "\n" );
+			        ui.keyPress( "\n" ); // newline in multiline box
 		        } else {
+			        // text changed?
 			        if ( txt != resetText ) go.fire( 'change' );
-			        ui.blur();
 		        }
+	            break;
+
+		    case Key.Escape:
+		        // if single line text field, reset text
+				if ( !rt.multiLine ) { rt.text = resetText; rt.caretPosition = resetText.positionLength(); }
 	            break;
 
 	        case Key.Backspace:
@@ -483,12 +626,6 @@ include( './ui' );
 				go.scrollCaretToView();
 				break;
 
-		    case Key.Escape:
-		        // if single line text field, reset text
-				if ( !rt.multiLine ) rt.text = resetText;
-				ui.blur();
-	            break;
-
 			case Key.A:
 			    // select all
 				if ( selectable && ( meta || ctrl ) ) {
@@ -526,11 +663,37 @@ include( './ui' );
 		}
 	}
 
+	// sets current background based on state
+	go.updateBackground = function () {
+
+		// determine state
+		var prop;
+		if ( ui.focused ) {
+			prop = focusBackground;
+		} else if ( disabled ) {
+			prop = disabledBackground;
+		} else {
+			prop = offBackground;
+		}
+
+		// set look
+		if ( prop === null || prop === false ) {
+			go.render = null;
+		} else if ( typeof( prop ) == 'string' ) {
+			bg.texture = prop;
+			go.render = bg;
+		} else {
+			shp.color = prop;
+			go.render = shp;
+		}
+
+	}
+
 	// makes sure caret is inside visible area
 	go.scrollCaretToView = function (){
 
 		// only when focused
-		if ( !ui.focused ) return;
+		if ( !ui.focused || !editing) return;
 
 		// vertical
 		if ( rt.caretY < 0 ) rt.scrollTop += rt.caretY;
@@ -547,7 +710,10 @@ include( './ui' );
 		rt.scrollLeft = Math.max( 0, Math.min( rt.scrollWidth - rt.width + 8, rt.scrollLeft ));
 		rt.scrollTop = Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop ));
 	}
-	
+
+	// apply defaults
+	if ( UI.style && UI.style.input ) for ( var p in UI.style.input ) go[ p ] = UI.style.input[ p ];
+
 })(this);
 
 

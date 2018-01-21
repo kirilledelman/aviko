@@ -85,7 +85,7 @@ public:
 	bool layoutExpandCrossAxis = true;
 	
 	// adjust own size after layout to fit children
-	bool fitChildren = false;
+	bool fitChildren = true;
 	
 	// reduces available w/h inside for layout of children
 	float padTop = 0;
@@ -103,8 +103,7 @@ public:
 	float spacingX = 0;
 	float spacingY = 0;
 	
-	/// requests late layout event to parent gameObject
-	void RequestParentLayout();
+	/// requests late layout event (scene)
 	void RequestLayout();
 	
 	void GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h );

@@ -69,8 +69,8 @@ struct Event {
 	// used during render event
 	Scene* scene = NULL;
 	
-	// used by late event
-	bool lateDispatch = false;
+	// true to stop processing
+	bool stopped = false;
 	
 	/// param passed to behaviors
 	void* behaviorParam = NULL;
@@ -78,14 +78,16 @@ struct Event {
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;
 	
+	static vector<Event*> eventStack;
+	
 	// constructor
-	Event(){};
+	Event(){ eventStack.push_back( this ); };
 	/// construct event with scriptObject as first script parameter
 	Event( void* scriptObject ) : Event::Event() { if ( scriptObject != NULL ) { this->scriptParams.ResizeArguments( 0 ); this->scriptParams.AddObjectArgument( scriptObject ); } }
 	/// construct named event with scriptObject as first script parameter, if provided
 	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->name =  name; }
 	// destructor
-	~Event(){}
+	~Event(){ eventStack.pop_back(); }
 	
 };
 
@@ -120,17 +122,6 @@ public:
 		// event listeners array
 		EventListeners* list = &this->eventListeners[ event.name ];
 		
-		// call each
-		EventListeners::iterator it = list->begin();
-		while ( it != list->end() ){
-			ScriptFunctionObject *fobj = &(*it);
-			fobj->thisObject = this->scriptObject;
-			fobj->Invoke( event.scriptParams );
-			if ( fobj->callOnce ) {
-				it = list->erase( it );
-			} else it++;
-		}
-		
 		// some objects will dispatch events to functions with the same name, for ease of use
 		if ( this->dispatchEventsToPropertyFunctions ) {
 			// check if we have a callback with the same name as property
@@ -139,6 +130,21 @@ public:
 				// call function
 				script.CallFunction( funcObject.value.objectValue, this->scriptObject, event.scriptParams );
 			}
+		}
+		
+		// if event was stopped, exit
+		if ( event.stopped ) return;
+		
+		// call on all listeners
+		EventListeners::iterator it = list->begin();
+		while ( it != list->end() ){
+			ScriptFunctionObject *fobj = &(*it);
+			fobj->thisObject = this->scriptObject;
+			fobj->Invoke( event.scriptParams );
+			if ( fobj->callOnce ) {
+				it = list->erase( it );
+			} else it++;
+			if ( event.stopped ) return;
 		}
 		
 	}

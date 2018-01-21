@@ -285,6 +285,7 @@ void Image::Save( const char *filename ) {
 
 /// helper to make image and set flags
 GPU_Image* Image::_MakeImage() {
+	if ( this->width <= 0 || this->height <= 0 ) return NULL;
 	GPU_Image* img = GPU_CreateImage( this->width, this->height, GPU_FORMAT_RGBA );
 	if ( !img ) {
 		script.ReportError( "Failed to create Image with dimensions %d, %d", this->width, this->height );
@@ -350,7 +351,7 @@ void Image::Draw( GameObject* go ) {
 	
 	// if autodraw, clear
 	if ( this->autoDraw ) {
-		SDL_Color clr = { 0, 0, 0, 20 };
+		SDL_Color clr = { 0, 0, 0, 0 };
 		GPU_ClearColor( this->image->target, clr );
 	}
 	
@@ -371,8 +372,6 @@ void Image::Draw( GameObject* go ) {
 	GPU_PushMatrix();
 	GPU_MatrixIdentity( mat );
 	GPU_MatrixCopy( GPU_GetCurrentMatrix(), mat );
-	
-	// GPU_FlushBlitBuffer(); // without this, child transform affects parent
 	
 	// invoke render
 	Event renderEvent;

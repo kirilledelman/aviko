@@ -153,6 +153,14 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 		event.scriptParams.AddIntArgument( newWidth );
 		event.scriptParams.AddIntArgument( newHeight );
 		this->CallEvent( event );
+		
+		// and send layout event to scene
+		if ( sceneStack.size() ) {
+			event.name = EVENT_LAYOUT;
+			event.stopped = false;
+			event.scriptParams.ResizeArguments( 0 );
+			sceneStack.back()->DispatchEvent( event );
+		}
 
 	}
 }
@@ -567,6 +575,54 @@ void Application::InitClass() {
 	
 	// eval( string, thisObj )
 	script.DefineGlobalFunction
+	( "stopEvent",
+	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
+		string evtName;
+		if ( !sa.ReadArguments( 0, TypeString, &evtName ) ){
+			script.ReportError( "usage: stopEvent( [ String eventName ] )" );
+			return false;
+		}
+		
+		// find event
+		Event* event = NULL;
+		if ( evtName.length() ) {
+			for ( size_t i = Event::eventStack.size(); i > 0; i-- ) {
+				// find by name
+				if ( evtName.compare( Event::eventStack[ i - 1 ]->name ) == 0 ){
+					event = Event::eventStack[ i - 1 ];
+					break;
+				}
+			}
+			// not found?
+			if ( !event ) {
+				sa.ReturnBool( false );
+				return true;
+			}
+		// no name specified - top of stack
+		} else {
+			event = Event::eventStack.back();
+		}
+		
+		// stop event
+		event->stopped = true;
+		
+		// return stopped event name
+		sa.ReturnString( string( event->name ) );
+		return true;
+	}) );
+	
+	// stops all events on stack (used for input/ui)
+	script.DefineGlobalFunction
+	( "stopAllEvents",
+	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
+		for ( size_t i = 0; i < Event::eventStack.size(); i++ ) {
+			Event::eventStack[ i ]->stopped = true;
+		}
+		return true;
+	}) );
+	
+	// eval( string, thisObj )
+	script.DefineGlobalFunction
 	( "eval",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* thisObj = NULL;
@@ -660,7 +716,8 @@ void Application::InitClass() {
 	// intern all strings
 	const char* interns[] = {
 		EVENT_SCENECHANGED, EVENT_UPDATE, EVENT_LATE_UPDATE, EVENT_ADDED,
-		EVENT_REMOVED, EVENT_ADDED_TO_SCENE, EVENT_REMOVED_FROM_SCENE, EVENT_ACTIVE_CHANGED,
+		EVENT_REMOVED, EVENT_ADDED_TO_SCENE, EVENT_REMOVED_FROM_SCENE,
+		EVENT_CHILDADDED, EVENT_CHILDREMOVED, EVENT_ACTIVE_CHANGED,
 		EVENT_ATTACHED, EVENT_DETACHED, EVENT_RENDER, EVENT_KEYDOWN, EVENT_KEYUP,
 		EVENT_KEYPRESS, EVENT_MOUSEDOWN, EVENT_MOUSEUP, EVENT_MOUSEMOVE, EVENT_MOUSEWHEEL,
 		EVENT_CONTROLLERADDED, EVENT_CONTROLLERREMOVED,
@@ -745,6 +802,26 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 		dit++;
 	}
 	
+	// protect params of late events
+	LateEventMap::iterator oit = lateEvents.begin(), oend = lateEvents.end();
+	while ( oit != oend ) {
+		ScriptableClass* obj = oit->first;
+		ObjectEventMap& objMap = oit->second;
+		ObjectEventMap::iterator it = objMap.begin(), end = objMap.end();
+		protectedObjects.push_back( &obj->scriptObject );
+		while ( it != end ) {
+			LateEvent& le = it->second;
+			for ( size_t i = 0, np = le.params.size(); i < np; i++ ) {
+				// no arrays of object, but whatever, TODO? recursive add to protect?
+				if ( le.params[ i ].type == TypeObject || le.params[ i ].type == TypeFunction ) {
+					protectedObjects.push_back( &( le.params[ i ].value.objectValue ) );
+				}
+			}
+			it++;
+		}
+		oit++;
+	}
+	
 	// call super
 	ScriptableClass::TraceProtectedObjects( protectedObjects );
 }
@@ -812,6 +889,7 @@ void Application::GameLoop() {
 			event.scriptParams.ResizeArguments( 0 );
 			event.scriptParams.AddFloatArgument( this->deltaTime );
 			scene->DispatchEvent( event, true );
+			event.stopped = false; // reused
 		}
 		
 		// update joysticks state
@@ -849,6 +927,7 @@ void Application::GameLoop() {
 			// late update
 			event.name = EVENT_LATE_UPDATE;
 			scene->DispatchEvent( event, true );
+			event.stopped = false; // reused
 		}
 		
 		// late events (scheduled by `fireLate` and `dispatchLate` / Application::AddLateEvent )
@@ -861,7 +940,7 @@ void Application::GameLoop() {
 			event.behaviorParam = this->backScreen->target;
 			scene->Render( event );
 			event.behaviorParam = NULL;
-			
+			event.stopped = false; // reused
 		}
 		
 		// copy to main screen and flip
@@ -879,11 +958,11 @@ void Application::GameLoop() {
  -------------------------------------------------------------------- */
 
 
-/// add / replace event to run right before render
-Event* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch ) {
+/// add / replace event to run right before render, returns params member of LateEvent struct
+ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch ) {
 	// can't add late events while running late events callbacks
 	if ( lateEventsLocked ) return NULL;
-	Event* event = NULL;
+	LateEvent* event = NULL;
 	
 	// find existing for this object
 	string ename( eventName );
@@ -893,15 +972,15 @@ Event* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, b
 	// found existing, return it
 	if ( it != eventMap.end() ) {
 		event = &(it->second);
+		event->lateDispatch = dispatch;
 	} else {
 		// otherwise emplace new
-		auto p = eventMap.emplace( ename, eventName );
+		auto p = eventMap.emplace( ename, dispatch );
 		event = &(p.first->second);
 	}
 	
 	// return result
-	event->lateDispatch = dispatch;
-	return event;
+	return &event->params;
 	
 }
 
@@ -921,8 +1000,9 @@ void Application::RunLateEvents() {
 		ObjectEventMap& objMap = oit->second;
 		ObjectEventMap::iterator it = objMap.begin(), end = objMap.end();
 		while ( it != end ) {
-			Event& event = it->second;
-			if ( event.lateDispatch ) {
+			LateEvent& le = it->second;
+			Event event( it->first.c_str() );
+			if ( le.lateDispatch ) {
 				GameObject* go = (GameObject*) obj;
 				if ( go ) go->DispatchEvent( event );
 			} else {

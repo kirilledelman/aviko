@@ -16,36 +16,38 @@ input.controllerAdded = function ( kb ) {
 
 app.scene = new Scene();
 
-var panel = app.scene.addChild( 'ui/panel' );
+var panel = app.scene.addChild( 'ui/scrollable' );
 panel.x = 10; panel.y = 10;
-panel.width = 200; panel.height = 100;
+panel.width = 200; panel.height = 200;
 panel.layoutType = Layout.Vertical;
-panel.fitChildren = true;
-panel.pad = 8;
 
-input.mouseMove = function ( x, y ) {
-	
+
+/*input.mouseMove = function ( x, y ) {
+
 	if ( !app.scene.currentFocus && input.get( Key.MouseButton ) ) {
-		this.width = x - this.x;
-		this.height = y - this.y;
+		var ww = Math.round(x) - this.x;
+		var hh = Math.round(y) - this.y;
+		this.width = ww;
+		this.height = hh;
 	}
-	
-}.bind( panel );
+
+}.bind( panel );*/
 
 
 var label;
-for ( var i = 0; i < 2; i++ ) {
+for ( var i = 0; i < 16; i++ ) {
 
 	label = panel.addChild( 'ui/input' );
-	label.text = "Input " + i;
+	label.name = label.text = label.lineHeight + " : " + i;
+	label.acceptToEdit = true;
+	label.selectAllOnFocus = true;
+	if ( i == 2 ) { label.disabled = true; }
 	label.accept = function ( txt ) {
-		this.size = parseFloat( txt );
-		this.parent.dispatch( 'layout' );
+		var a = parseFloat( txt );
+		this.size = a ? Math.max( 10, a ) : this.size;
 	}
 
 }
-
-
 
 
 

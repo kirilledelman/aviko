@@ -26,6 +26,9 @@ public:
 	// send repeated keydowns while holding down a key
 	bool repeatKeyEnabled = true;
 	
+	// multiply mouse wheel by this val
+	float mouseWheelScale = 4.0;
+	
 	// Joystick info 
 	typedef unordered_map<SDL_JoystickID, Controller*> JoystickMap;
 	JoystickMap joysticks;

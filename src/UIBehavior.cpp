@@ -196,7 +196,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->anchorLeft != val ) {
 			ui->anchorLeft = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -208,7 +208,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->anchorRight != val ) {
 			ui->anchorRight = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -220,7 +220,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->anchorTop != val ) {
 			ui->anchorTop = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -232,7 +232,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->anchorBottom != val ) {
 			ui->anchorBottom = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -244,7 +244,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->left != val ) {
 			ui->left = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -256,7 +256,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->right != val ) {
 			ui->right = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -268,7 +268,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->top != val ) {
 			ui->top = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -280,7 +280,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->bottom != val ) {
 			ui->bottom = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -292,7 +292,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->layoutWidth != val ) {
 			val = ui->layoutWidth = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -302,9 +302,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
-		if ( ui->anchorLeft != val ) {
+		if ( ui->layoutHeight != val ) {
 			val = ui->layoutHeight = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -314,9 +314,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
-		if ( ui->anchorLeft != val ) {
+		if ( ui->minWidth != val ) {
 			val = ui->minWidth = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -326,9 +326,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
-		if ( ui->anchorLeft != val ) {
+		if ( ui->maxWidth != val ) {
 			val = ui->maxWidth = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -338,9 +338,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->minHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
-		if ( ui->anchorLeft != val ) {
+		if ( ui->minHeight != val ) {
 			val = ui->minHeight = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -350,9 +350,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->maxHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
-		if ( ui->anchorLeft != val ) {
+		if ( ui->maxHeight != val ) {
 			val = ui->maxHeight = fmax( 0, val );
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -501,7 +501,7 @@ void UIBehavior::InitClass() {
 		} else if ( val.toNumber( sameVal ) ) {
 			ui->marginTop = ui->marginRight = ui->marginBottom = ui->marginLeft = sameVal;
 		}
-		ui->RequestParentLayout();
+		ui->RequestLayout();
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE  );
 	
@@ -512,7 +512,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->marginTop != val ) {
 			ui->marginTop = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -524,7 +524,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->marginRight != val ) {
 			ui->marginRight = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -536,7 +536,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->marginBottom != val ) {
 			ui->marginBottom = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -548,7 +548,7 @@ void UIBehavior::InitClass() {
 		UIBehavior* ui = (UIBehavior*) b;
 		if ( ui->marginLeft != val ) {
 			ui->marginLeft = val;
-			ui->RequestParentLayout();
+			ui->RequestLayout();
 		}
 		return val;
 	}));
@@ -574,9 +574,9 @@ void UIBehavior::InitClass() {
 				}
 			}
 		} else if ( val.toNumber( sameVal ) ) {
-			ui->spacingX = ui->spacingX = sameVal;
+			ui->spacingX = ui->spacingY = sameVal;
 		}
-		ui->RequestParentLayout();
+		ui->RequestLayout();
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE  );
 	
@@ -711,8 +711,13 @@ void UIBehavior::Blur( bool sendEvent ) {
 
 bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* localY ) {
 	// ask gameObject's RenderBehavior if screen point is inside object
-	if ( this->gameObject != NULL && this->gameObject->render != NULL ) {
-		return this->gameObject->render->IsScreenPointInside( x, y, localX, localY );
+	if ( this->gameObject != NULL ) {
+		if ( this->gameObject->render != NULL ) {
+			return this->gameObject->render->IsScreenPointInside( x, y, localX, localY );
+		} else {
+			this->gameObject->ConvertPoint( x, y, *localX, *localY, false );
+			return (*localX >= 0 && *localX < this->layoutWidth ) && (*localY >= 0 && *localY < this->layoutHeight );
+		}
 	}
 	return false;
 }
@@ -780,7 +785,9 @@ bool UIBehavior::Navigate( float x, float y ) {
 	}
 	
 	// if candidate is found, focus on it
-	if ( other ) { other->Focus(); return true; }
+	if ( other ) {
+		other->Focus(); return true;
+	}
 	
 	// nothing found
 	return false;
@@ -838,18 +845,18 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			
 		} else if ( behavior->layoutType == LayoutType::Vertical ) {
 			
-			x = behavior->padLeft;
+			x = behavior->padLeft + childUI->marginLeft;
 			y = curY + childUI->marginTop;
 			h = childUI->layoutHeight;
-			w = behavior->layoutExpandCrossAxis ? innerWidth : childUI->layoutWidth;
+			w = behavior->layoutExpandCrossAxis ? (innerWidth - childUI->marginLeft - childUI->marginRight) : childUI->layoutWidth;
 			curY += h + childUI->marginTop + childUI->marginBottom + behavior->spacingY;
 			
 		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
 			
 			x = curX + childUI->marginLeft;
-			y = behavior->padTop;
+			y = behavior->padTop + childUI->marginTop;
 			w = childUI->layoutWidth;
-			h = behavior->layoutExpandCrossAxis ? innerHeight : childUI->layoutHeight;
+			h = behavior->layoutExpandCrossAxis ? (innerHeight - childUI->marginTop - childUI->marginBottom) : childUI->layoutHeight;
 			curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
 			
 		} else if ( behavior->layoutType == LayoutType::Grid ) {
@@ -887,6 +894,15 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 		
 	}
 	
+	// if fit children is set
+	if ( behavior->fitChildren ) {
+		if ( behavior->layoutType == LayoutType::Grid || behavior->layoutType == LayoutType::Vertical ) {
+			behavior->layoutHeight = curY + behavior->padBottom;
+		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
+			behavior->layoutWidth = curX + behavior->padRight;
+		}
+	}
+	
 	// dispatch layout event on this component
 	Event e ( EVENT_LAYOUT );
 	e.scriptParams.AddFloatArgument( behavior->layoutX );
@@ -902,8 +918,8 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 	// use previous / default
 	x = layoutX;
 	y = layoutY;
-	w = layoutWidth;
-	h = layoutHeight;
+	w = fmax( layoutWidth, minWidth );
+	h = fmax( layoutHeight, minHeight );
 	
 	if ( parentUI ) {
 	
@@ -999,30 +1015,13 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 }
 
 
-void UIBehavior::RequestParentLayout() {
-
-	// TODO - dont request if theres layout event waiting for any gameobject in hierarchy above this one
-	
-	GameObject* parentGameObject = this->gameObject ? this->gameObject->parent : this->gameObject;
-	if ( parentGameObject ) {
-		
-		app.AddLateEvent( parentGameObject, EVENT_LAYOUT, true );
-		
-	}
-	
-}
-
 void UIBehavior::RequestLayout() {
-	
-	// TODO - dont request if theres layout event waiting for any gameobject in hierarchy above this one
-	
-	if ( this->gameObject ) {
-		
-		app.AddLateEvent( this->gameObject, EVENT_LAYOUT, true );
-		
-	}
+
+	Scene* scene = this->gameObject ? this->gameObject->GetScene() : NULL;
+	if ( scene ) app.AddLateEvent( scene, EVENT_LAYOUT, true );
 	
 }
+
 
 
 /* MARK:	-				Clipping
@@ -1161,7 +1160,7 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 
 void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 	// if focused
-	if ( behavior->scene && behavior->scene->focusedUI == behavior && behavior->autoNavigate ) {
+	if ( behavior->scene && behavior->scene->focusedUI == behavior ) {
 		
 		// get name and direction
 		string axisName = *e->scriptParams.args[ 0 ].value.stringValue;
@@ -1176,22 +1175,26 @@ void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 		// dispatch event to this behavior
 		behavior->CallEvent( *e );
 		
-		// if it's a directional event, and focus didn't change
-		if ( behavior->scene->focusedUI == behavior && ( x != 0 || y != 0 ) ) {
-		
-			// determine new focus
-			behavior->Navigate( x, y );
+		// behavior wants system to handle navigation
+		if ( behavior->autoNavigate ) {
 			
-		// if it's accept
-		} else if ( axisName.compare( app.input.navigationAccept ) == 0 ) {
-		
-			// generate 'click' event
-			Event event( EVENT_CLICK );
-			event.scriptParams.AddIntArgument( 0 );
-			event.scriptParams.AddFloatArgument( 0 );
-			event.scriptParams.AddFloatArgument( 0 );
-			behavior->CallEvent( event );
+			// if it's a directional event, and focus didn't change
+			if ( behavior->scene->focusedUI == behavior && ( x != 0 || y != 0 ) ) {
 			
+				// determine new focus
+				behavior->Navigate( x, y );
+				
+			// if it's accept
+			} /* else if ( axisName.compare( app.input.navigationAccept ) == 0 ) {
+			
+				// generate 'click' event
+				Event event( EVENT_CLICK );
+				event.scriptParams.AddIntArgument( 0 );
+				event.scriptParams.AddFloatArgument( 0 );
+				event.scriptParams.AddFloatArgument( 0 );
+				behavior->CallEvent( event );
+				
+			} */
 		}
 	}
 }
@@ -1211,13 +1214,20 @@ void UIBehavior::KeyPress( UIBehavior* behavior, void* param, Event* e){
 }
 
 void UIBehavior::ActiveChanged( UIBehavior* behavior, GameObject* topObject, Event* e ){
-	// if now belong to inactivated object hierarchy
-	if ( topObject && !topObject->active() ) {
-		// blur
-		behavior->Blur();
-		// clear mouse flags
-		behavior->mouseOver = false;
-		behavior->mouseDown[ 0 ] = behavior->mouseDown[ 1 ] = behavior->mouseDown[ 2 ] = behavior->mouseDown[ 3 ] = false;
+	if ( topObject ) {
+		// activated
+		if ( topObject->active() ) {
+			// request layout
+			topObject = topObject->parent ? topObject->parent : topObject;
+			app.AddLateEvent( topObject, EVENT_LAYOUT );
+		// if now belong to inactivated object hierarchy
+		} else {
+			// blur
+			behavior->Blur();
+			// clear mouse flags
+			behavior->mouseOver = false;
+			behavior->mouseDown[ 0 ] = behavior->mouseDown[ 1 ] = behavior->mouseDown[ 2 ] = behavior->mouseDown[ 3 ] = false;
+		}
 	}
 }
 

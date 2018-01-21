@@ -221,6 +221,14 @@ void Input::InitClass() {
 	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return SDL_GetMouseState( NULL, NULL ) & SDL_BUTTON(SDL_BUTTON_RIGHT); }));
 
 	script.AddProperty<Input>
+	( "mouseWheelScale",
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->mouseWheelScale; }),
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){
+		((Input*) inp)->mouseWheelScale = val;
+		return val;
+	}));
+	
+	script.AddProperty<Input>
 	( "numJoysticks",
 	 static_cast<ScriptIntCallback>([](void* inp, int val){ return SDL_NumJoysticks(); }));
 	
@@ -490,8 +498,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.name = EVENT_MOUSEWHEEL;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
-		event.scriptParams.AddFloatArgument( e.wheel.y );
-		event.scriptParams.AddFloatArgument( e.wheel.x );
+		event.scriptParams.AddFloatArgument( e.wheel.y * mouseWheelScale );
+		event.scriptParams.AddFloatArgument( e.wheel.x * mouseWheelScale );
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_JOYDEVICEADDED ) {
@@ -565,7 +573,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 
 
 void Input::UIEvent( Event &event ) {
-	if ( !app.sceneStack.size() ) return;
+	if ( !app.sceneStack.size() || event.stopped ) return;
 	Scene* scene = app.sceneStack.back();
 	event.behaviorParam = &event;
 	scene->DispatchEvent( event );

@@ -2,6 +2,9 @@
 #include "Application.hpp"
 
 
+/// static event stack
+vector<Event*> Event::eventStack;
+
 // destructor
 ScriptableClass::~ScriptableClass() {
 	
@@ -228,11 +231,10 @@ void ScriptableClass::InitClass() {
 		
 		// add to late events
 		ScriptableClass* self = (ScriptableClass*) go;
-		Event *lateEvent = app.AddLateEvent( self, eventName.c_str() );
+		ArgValueVector *lateEvent = app.AddLateEvent( self, eventName.c_str() );
 		if ( lateEvent ) {
-			lateEvent->scriptParams.ResizeArguments( 0 );
 			for ( size_t i = 1, np = sa.args.size(); i < np; i++ ) {
-				lateEvent->scriptParams.AddArgument( sa.args[ i ] );
+				lateEvent->push_back( sa.args[ i ] );
 			}
 		}
 		return true;

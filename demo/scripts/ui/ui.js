@@ -9,37 +9,77 @@
 
 UI.style = UI.style ? UI.style : {
 
-	// font size and name
-	baseSize: 16,
-	font: 'Arial',
+	// defaults are applied automatically at creation, can be overridden
 
-	// text and text selection color
-	textColor: 0x0,
-	selectionColor: 0x0073b9,
-	
-	// textures folder (path relative to this file)
-	texturesFolder: './textures/ui:', // prepended to each texture's name, ':' is sliced texture frame selector
+	// basic container panel
+	panel: {
 
-	// container panel
-	panel: 'gradient', // set panel.fill = 'sprite' for sprite background (default)
-	panelSlice: 0,
-	panelBackgroundColor: 0xd7d7d7, // set panel.fill = 'color' for solid color
-	panelPadding: [ 8, 8, 8, 8 ], // top, right, bottom, left
-	panelSpacing: [ 4, 4 ], // horizontal, vertical
+		background: './textures/ui:gradient', // background texture (String) or solid color (Color|Number)
+		slice: 0, // (Array[4]) or (Number) slicing for texture
 
-	// text input
-	input: 'input',
-	inputFocus: 'input-focus',
-	inputDisabled: 'input-disabled',
-	inputSlice: [ 8, 8, 8, 8 ], // top, right, bottom, left
-	inputPadding: [ 8, 8, 8, 8 ], // top, right, bottom, left
+		pad: 8, // [ top, right, bottom, left ] or (Number) padding
 
-	button: 'button',
-	buttonOver: 'button-over',
-	buttonDown: 'button-down',
-	buttonDisabled: 'button-disabled',
-	buttonSlice: [ 16, 16, 16, 16 ], // top, right, bottom, left
-	buttonPadding: [ 8, 8, 8, 8 ], // top, right, bottom, left
+		layoutType: Layout.Anchors, // default layout type
+		spacing: 4, // [ horizontal, vertical ] or (Number) default spacing for Horizontal, Vertical and Grid layout
+
+	},
+
+	// text input field
+	input: {
+
+		font: 'Arial', // font name
+		size: 16, // font size
+
+		textColor: 0x0, // text color
+		selectionColor: 0x0073b9, // selection color
+
+		slice: 8, // (Array[4]) or (Number) slicing for texture
+		pad: 8, // [ top, right, bottom, left ] or (Number) padding
+
+		background: './textures/ui:input', // background texture (String) or solid color (Color|Number)
+		focusBackground: './textures/ui:input-focus', // focused background texture (String) or solid color (Color|Number)
+		disabledBackground: './textures/ui:input-disabled', // disabled background texture (String) or solid color (Color|Number)
+
+	},
+
+	// scrollable container
+	scrollable: {
+
+		layoutType: Layout.Vertical, // default layout type
+		spacing: 4, // [ horizontal, vertical ] or (Number) default spacing for Horizontal, Vertical and Grid layout
+
+		scrollbars: 'auto' // (String) 'auto' | (Boolean)
+
+	},
+
+	// scrollable container
+	scrollbar: {
+
+		// both horizontal and vertical
+		both: {
+			background: 0xFFFFFF, // background texture (String) or solid color (Color|Number)
+			slice: 0, // (Array[4]) or (Number) slicing for texture
+			cornerRadius: 4, // corner roundness if background is solid color
+
+			handleBackground: 0xC0C0C0, // scroll handle background texture (String) or solid color (Color|Number)
+			handleSlice: 0, // (Array[4]) or (Number) scroll handle  slicing for texture
+			handleCornerRadius: 4, // scroll handle corner roundness if background is solid color
+
+			width: 16, // scrollbar width
+			height: 16, // scrollbar height
+
+			pad: 2 // [ top, right, bottom, left ] or (Number) padding
+		},
+
+		// apply to horizontal
+		horizontal: { },
+
+		// apply to vertical
+		vertical: { },
+
+	},
+
+
 
 };
 
@@ -47,106 +87,151 @@ UI.style = UI.style ? UI.style : {
 UI.base = UI.base ? UI.base : {
 
 	// shared between UI components
-	addSharedProperties: function( go ) {
+	addSharedProperties: function( go, ui, oui ) { // ui -
 
 		// create properties on gameObject
 		var mappedProps = [
 
 			// (Number) current width of the control
-			[ 'width',  function (){ return go.ui.width; }, function ( w ){ go.ui.width = w; } ],
+			[ 'width',  function (){ return ui.width; }, function ( w ){ ui.width = w; } ],
 
 			// (Number) current height of the control
-			[ 'height',  function (){ return go.ui.height; }, function ( h ){ go.ui.height = h; } ],
+			[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusLeft',  function (){ return go.ui.focusLeft; }, function ( f ){ go.ui.focusLeft = f; } ],
+			[ 'focusLeft',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusRight',  function (){ return go.ui.focusRight; }, function ( f ){ go.ui.focusRight = f; } ],
+			[ 'focusRight',  function (){ return ui.focusRight; }, function ( f ){ ui.focusRight = f; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusUp',  function (){ return go.ui.focusLeft; }, function ( f ){ go.ui.focusUp = f; } ],
+			[ 'focusUp',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusUp = f; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusDown',  function (){ return go.ui.focusLeft; }, function ( f ){ go.ui.focusDown = f; } ],
+			[ 'focusDown',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusDown = f; } ],
 
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
-			[ 'layoutType',  function (){ return go.ui.layoutType; }, function ( v ){ go.ui.layoutType = v; } ],
+			[ 'layoutType',  function (){ return ui.layoutType; }, function ( v ){ ui.layoutType = v; } ],
 
 			// (Boolean) for Horizontal and Vertical layout types, expand children to fill cross axis
-			[ 'expandChildren',  function (){ return go.ui.expandChildren; }, function ( v ){ go.ui.expandChildren = v; } ],
+			[ 'expandChildren',  function (){ return ui.expandChildren; }, function ( v ){ ui.expandChildren = v; } ],
 
 			// (Boolean) for Horizontal and Vertical layout types, adjust own height and width to fit all children
-			[ 'fitChildren',  function (){ return go.ui.expandChildren; }, function ( v ){ go.ui.expandChildren = v; } ],
+			[ 'fitChildren',  function (){ return ui.expandChildren; }, function ( v ){ ui.expandChildren = v; } ],
+
+			// (Number) minimum width allowed by layout
+			[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
+
+			// (Number) minimum height allowed by layout
+			[ 'minHeight',  function (){ return ui.minHeight; }, function ( v ){ ui.minHeight = v; } ],
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorLeft',  function (){ return go.ui.anchorLeft; }, function ( v ){ go.ui.anchorLeft = v; } ],
+			[ 'anchorLeft',  function (){ return ui.anchorLeft; }, function ( v ){ ui.anchorLeft = v; } ],
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorRight',  function (){ return go.ui.anchorRight; }, function ( v ){ go.ui.anchorRight = v; } ],
+			[ 'anchorRight',  function (){ return ui.anchorRight; }, function ( v ){ ui.anchorRight = v; } ],
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorTop',  function (){ return go.ui.anchorTop; }, function ( v ){ go.ui.anchorTop = v; } ],
+			[ 'anchorTop',  function (){ return ui.anchorTop; }, function ( v ){ ui.anchorTop = v; } ],
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorBottom',  function (){ return go.ui.anchorBottom; }, function ( v ){ go.ui.anchorBottom = v; } ],
+			[ 'anchorBottom',  function (){ return ui.anchorBottom; }, function ( v ){ ui.anchorBottom = v; } ],
 
 			// (Number) offset from anchorLeft
-			[ 'left',  function (){ return go.ui.left; }, function ( v ){ go.ui.left = v; } ],
+			[ 'left',  function (){ return ui.left; }, function ( v ){ ui.left = v; } ],
 
 			// (Number) offset from anchorLeft
-			[ 'right',  function (){ return go.ui.right; }, function ( v ){ go.ui.right = v; } ],
+			[ 'right',  function (){ return ui.right; }, function ( v ){ ui.right = v; } ],
 
 			// (Number) offset from anchorLeft
-			[ 'top',  function (){ return go.ui.top; }, function ( v ){ go.ui.top = v; } ],
+			[ 'top',  function (){ return ui.top; }, function ( v ){ ui.top = v; } ],
 
 			// (Number) offset from anchorLeft
-			[ 'bottom',  function (){ return go.ui.bottom; }, function ( v ){ go.ui.bottom = v; } ],
+			[ 'bottom',  function (){ return ui.bottom; }, function ( v ){ ui.bottom = v; } ],
 
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-			[ 'pad',  function (){ return go.ui.pad; }, function ( v ){ go.ui.pad = v; } ],
+			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v; } ],
 
 			// (Number) inner padding top
-			[ 'padTop',  function (){ return go.ui.padTop; }, function ( v ){ go.ui.padTop = v; } ],
+			[ 'padTop',  function (){ return ui.padTop; }, function ( v ){ ui.padTop = v; }, true ],
 
 			// (Number) inner padding right
-			[ 'padRight',  function (){ return go.ui.padRight; }, function ( v ){ go.ui.padRight = v; } ],
+			[ 'padRight',  function (){ return ui.padRight; }, function ( v ){ ui.padRight = v; }, true ],
 
 			// (Number) inner padding bottom
-			[ 'padBottom',  function (){ return go.ui.padBottom; }, function ( v ){ go.ui.padBottom = v; } ],
+			[ 'padBottom',  function (){ return ui.padBottom; }, function ( v ){ ui.padBottom = v; }, true ],
 
 			// (Number) inner padding left
-			[ 'padLeft',  function (){ return go.ui.padLeft; }, function ( v ){ go.ui.padLeft = v; } ],
+			[ 'padLeft',  function (){ return ui.padLeft; }, function ( v ){ ui.padLeft = v; }, true ],
 
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
-			[ 'margin',  function (){ return go.ui.margin; }, function ( v ){ go.ui.margin = v; } ],
+			[ 'margin',  function (){ return ui.margin; }, function ( v ){ ui.margin = v; } ],
 
 			// (Number) outer margin top
-			[ 'marginTop',  function (){ return go.ui.marginTop; }, function ( v ){ go.ui.marginTop = v; } ],
+			[ 'marginTop',  function (){ return ui.marginTop; }, function ( v ){ ui.marginTop = v; }, true ],
 
 			// (Number) outer margin right
-			[ 'marginRight',  function (){ return go.ui.marginRight; }, function ( v ){ go.ui.marginRight = v; } ],
+			[ 'marginRight',  function (){ return ui.marginRight; }, function ( v ){ ui.marginRight = v; }, true ],
 
 			// (Number) outer margin bottom
-			[ 'marginBottom',  function (){ return go.ui.marginBottom; }, function ( v ){ go.ui.marginBottom = v; } ],
+			[ 'marginBottom',  function (){ return ui.marginBottom; }, function ( v ){ ui.marginBottom = v; }, true ],
 
 			// (Number) outer margin left
-			[ 'marginLeft',  function (){ return go.ui.marginLeft; }, function ( v ){ go.ui.marginLeft = v; } ],
+			[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
 
 			// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-			[ 'spacing',  function (){ return go.ui.spacing; }, function ( v ){ go.ui.spacing = v; } ],
+			[ 'spacing',  function (){ return ui.spacing; }, function ( v ){ ui.spacing = v; }, true ],
 
 			// (Number) spacing between children when layoutType is Vertical
-			[ 'spacingX',  function (){ return go.ui.spacingX; }, function ( v ){ go.ui.spacingX = v; } ],
+			[ 'spacingX',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
 
 			// (Number) spacing between children when layoutType is Horizontal
-			[ 'spacingY',  function (){ return go.ui.spacingY; }, function ( v ){ go.ui.spacingY = v; } ]
+			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ]
 		];
 		// map them
 		for ( var i = 0; i < mappedProps.length; i++ ) {
 			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
 				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
 			} );
+			if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
+		}
+
+		// called from "focusChanged" to scroll this component into view
+		go.scrollIntoView = function() {
+			// find nearest scrollable
+			var p = this.parent;
+			var c = this;
+			var scrollable = null;
+			while( p ) {
+				if ( p.ui && p.render && p.render && p.render.image && p.render.image.autoDraw == c ){
+					scrollable = p;
+					break;
+				}
+				c = p;
+				p = p.parent;
+			}
+			if ( !scrollable || scrollable[ 'scrollTop' ] === undefined || scrollable[ 'scrollLeft' ] === undefined ) return;
+
+			// convert coordinate to scrollable's system
+			var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
+			var gp = this.localToGlobal( 0, 0 );
+			var lp = scrollable.globalToLocal( gp.x, gp.y );
+			var t = lp.y + scrollable.scrollTop,
+				b = t + this.height;
+			var l = lp.x + scrollable.scrollLeft,
+				r = l + this.width;
+
+			// make sure it's in view
+			if ( b > sy + scrollable.height ) { // bottom
+				scrollable.scrollTop = b - scrollable.height;
+			} else if ( t < sy ) { // top
+				scrollable.scrollTop = t;
+			}
+			if ( r > sx + scrollable.width ) { // right
+				scrollable.scrollLeft = r - scrollable.width;
+			} else if ( l < sx ) { // left
+				scrollable.scrollLeft = l;
+			}
 		}
 
 	}

@@ -100,6 +100,14 @@ void GameObject::InitClass() {
 	}), PROP_ENUMERABLE | PROP_NOSTORE );
 	
 	script.AddProperty<GameObject>
+	( "scene",
+	 static_cast<ScriptObjectCallback>([](void* go, void* p) {
+		GameObject* self = (GameObject*) go;
+		Scene* scene = self->GetScene();
+		return scene ? scene->scriptObject : NULL;
+	}), PROP_ENUMERABLE | PROP_NOSTORE );
+	
+	script.AddProperty<GameObject>
 	( "body",
 	 static_cast<ScriptObjectCallback>([](void* go, void* p) { GameObject* self = (GameObject*) go; return self->body ? self->body->scriptObject : NULL; }),
 	 static_cast<ScriptObjectCallback>([](void* go, void* p) {
@@ -518,7 +526,7 @@ void GameObject::InitClass() {
 		other->SetParent( self, pos );
 		
 		// schedule layout
-		if ( self->ui ) self->ui->RequestParentLayout();
+		if ( self->ui ) self->ui->RequestLayout();
 		
 		// return added object
 		sa.ReturnObject( other->scriptObject );
@@ -870,11 +878,10 @@ void GameObject::InitClass() {
 		
 		// add to late events
 		GameObject* self = (GameObject*) go;
-		Event *lateEvent = app.AddLateEvent( self, eventName.c_str(), true );
+		ArgValueVector *lateEvent = app.AddLateEvent( self, eventName.c_str(), true );
 		if ( lateEvent ) {
-			lateEvent->scriptParams.ResizeArguments( 0 );
 			for ( size_t i = 1, np = sa.args.size(); i < np; i++ ) {
-				lateEvent->scriptParams.AddArgument( sa.args[ i ] );
+				lateEvent->push_back( sa.args[ i ] );
 			}
 		}
 		return true;
@@ -914,6 +921,7 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 	// call on self first
 	if ( !event.bubbles && callOnSelf ) {
 		this->CallEvent( event );
+		if ( event.stopped ) return;
 	}
 	
 	// for each child
@@ -922,6 +930,7 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		// recurse, if event doesn't need to skip this object
 		if ( obj->active() && obj != event.skipObject ) {
 			obj->DispatchEvent( event, true, forEachGameObject );
+			if ( event.stopped ) return;
 		}
 	}
 	
@@ -948,7 +957,7 @@ void GameObject::CallEvent( Event &event ) {
 	}
 	
 	// dispatches script events on this object
-	ScriptableClass::CallEvent( event );
+	if ( !event.stopped ) ScriptableClass::CallEvent( event );
 }
 
 /// returns ArgValueVector with each behavior's scriptObject
@@ -1010,9 +1019,6 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 	// if parent is different
 	if ( newParent != this->parent ) {
 		
-		/// prepare event
-		Event event( this->scriptObject );
-		
 		// if had parent
 		GameObject* oldParent = this->parent;
 		if ( oldParent ) {
@@ -1029,11 +1035,19 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			this->parent = NULL;
 			
 			// call event on this object only
+			Event event( this->scriptObject );
 			event.name = EVENT_REMOVED;
 			event.behaviorParam = oldParent;
 			event.scriptParams.AddObjectArgument( oldParent->scriptObject );
 			this->CallEvent( event );
 			
+			// call child removed
+			event.stopped = false;
+			event.scriptParams.ResizeArguments( 0 );
+			event.name = EVENT_CHILDREMOVED;
+			event.behaviorParam = this;
+			event.scriptParams.AddObjectArgument( this->scriptObject );
+			oldParent->CallEvent( event );
 		}
 		
 		// set parent
@@ -1059,9 +1073,9 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			}
 			
 			// call event on this object only
+			Event event( this->scriptObject );
 			event.name = EVENT_ADDED;
 			event.behaviorParam = newParent;
-			event.scriptParams.ResizeArguments( 1 );
 			event.scriptParams.AddObjectArgument( newParent->scriptObject );
 			this->CallEvent( event );
 			
@@ -1069,8 +1083,8 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			if ( this->orphan != newParent->orphan ) {
 				
 				// orphan change via new parent
+				Event event( this->scriptObject );
 				event.behaviorParam = newParent;
-				event.scriptParams.ResizeArguments( 1 );
 				
 				// new parent is not on scene
 				if ( newParent->orphan ) {
@@ -1087,16 +1101,23 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 					this->DispatchEvent( event, true, &moveToScene );
 					
 				}
-				
 			}
+			
+			// call child added
+			event.stopped = false;
+			event.scriptParams.ResizeArguments( 0 );
+			event.name = EVENT_CHILDADDED;
+			event.behaviorParam = this;
+			event.scriptParams.AddObjectArgument( this->scriptObject );
+			newParent->CallEvent( event );
 			
 		// no new parent - means we've definitely been removed from scene
 		} else {
 			
 			// means this object has been removed from scene, dispatch event and make it orphan
+			Event event( this->scriptObject );
 			event.name = EVENT_REMOVED_FROM_SCENE;
 			event.behaviorParam = this;
-			event.scriptParams.AddObjectArgument( this->scriptObject );
 			this->DispatchEvent( event, true, &makeOrphan );
 			
 		}

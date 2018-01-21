@@ -164,6 +164,15 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 			GetterSetter& gs = iter->second;
 			// if property is serialized
 			if ( gs.flags & PROP_SERIALIZED & ~PROP_READONLY) {
+				// check if it's in serializeMask
+				if ( serializeMask ) {
+					ArgValue check = this->GetProperty( iter->first.c_str(), serializeMask );
+					if ( check.toBool() ) {
+						// skip
+						iter++;
+						continue;
+					}
+				}
 				ret.emplace( iter->first.c_str() );
 			}
 			iter++;

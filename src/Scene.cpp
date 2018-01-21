@@ -468,15 +468,17 @@ void Scene::BeginContact( b2Contact* contact ) {
 		event.scriptParams.AddFloatArgument( normal.y );
 		event.scriptParams.AddFloatArgument( separation );
 		shapeA->body->CallEvent( event );
-		event.scriptParams.ResizeArguments( 0 );
-		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
-		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
-		event.scriptParams.AddFloatArgument( point.x );
-		event.scriptParams.AddFloatArgument( point.y );
-		event.scriptParams.AddFloatArgument( normal.x );
-		event.scriptParams.AddFloatArgument( normal.y );
-		event.scriptParams.AddFloatArgument( separation );
-		shapeB->body->CallEvent( event );
+		if ( !event.stopped ) {
+			event.scriptParams.ResizeArguments( 0 );
+			event.scriptParams.AddObjectArgument( shapeB->scriptObject );
+			event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+			event.scriptParams.AddFloatArgument( point.x );
+			event.scriptParams.AddFloatArgument( point.y );
+			event.scriptParams.AddFloatArgument( normal.x );
+			event.scriptParams.AddFloatArgument( normal.y );
+			event.scriptParams.AddFloatArgument( separation );
+			shapeB->body->CallEvent( event );
+		}
 	}) );
 	
 }
@@ -495,10 +497,12 @@ void Scene::EndContact( b2Contact* contact ) {
 		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
 		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 		shapeA->body->CallEvent( event );
-		event.scriptParams.ResizeArguments( 0 );
-		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
-		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
-		shapeB->body->CallEvent( event );
+		if ( !event.stopped ) {
+			event.scriptParams.ResizeArguments( 0 );
+			event.scriptParams.AddObjectArgument( shapeB->scriptObject );
+			event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+			shapeB->body->CallEvent( event );
+		}
 	}) );
 }
 

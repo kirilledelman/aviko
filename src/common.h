@@ -72,6 +72,8 @@ int StringPositionLength( const char* str );
 #define EVENT_LATE_UPDATE "lateUpdate"
 #define EVENT_ADDED "added"
 #define EVENT_REMOVED "removed"
+#define EVENT_CHILDADDED "childAdded"
+#define EVENT_CHILDREMOVED "childRemoved"
 #define EVENT_ADDED_TO_SCENE "addedToScene"
 #define EVENT_REMOVED_FROM_SCENE "removedFromScene"
 #define EVENT_ACTIVE_CHANGED "activeChanged"

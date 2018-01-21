@@ -88,6 +88,7 @@ private:
 #define PROP_NOSTORE 	(1 << 4)
 #define PROP_EARLY	 	(1 << 5)
 #define PROP_LATE	 	(1 << 6)
+#define PROP_OVERRIDE 	(1 << 7)
 	
 	/// struct storing a getter and a setter for an class property
 	struct GetterSetter {
@@ -672,7 +673,7 @@ public:
 	void DefineFunction( const char *funcName, ScriptFunctionCallback callback ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, JSPROP_PERMANENT );
+		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, 0 );//JSPROP_PERMANENT
 		classDef->funcs[ string(funcName) ] = callback;
 	}
 	
@@ -701,7 +702,7 @@ public:
 	void AddProperty( const char *propName, ScriptValueCallback getter, ScriptValueCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeValue, flags ); gs.Init( &getter, &setter );
@@ -712,7 +713,7 @@ public:
 	void AddProperty( const char *propName, ScriptValueCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ((flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeValue, flags ); gs.Init( &getter );
@@ -723,7 +724,7 @@ public:
 	void AddProperty( const char *propName, ScriptIntCallback getter, ScriptIntCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
 		GetterSetter gs( TypeInt, flags ); gs.Init( &getter, &setter );
@@ -734,7 +735,7 @@ public:
 	void AddProperty( const char *propName, ScriptIntCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags);
 		GetterSetter gs( TypeInt, flags ); gs.Init( &getter );
@@ -745,7 +746,7 @@ public:
 	void AddProperty( const char *propName, ScriptFloatCallback getter, ScriptFloatCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
 		GetterSetter gs( TypeFloat, flags ); gs.Init( &getter, &setter );
@@ -756,7 +757,7 @@ public:
 	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
 		GetterSetter gs( TypeFloat, flags ); gs.Init( &getter );
@@ -767,7 +768,7 @@ public:
 	void AddProperty( const char *propName, ScriptBoolCallback getter, ScriptBoolCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_FALSE, NULL, NULL, jflags );
 		GetterSetter gs( TypeBool, flags ); gs.Init( &getter, &setter );
@@ -778,7 +779,7 @@ public:
 	void AddProperty( const char *propName, ScriptBoolCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_FALSE, NULL, NULL, jflags );
 		GetterSetter gs( TypeBool, flags ); gs.Init( &getter );
@@ -789,7 +790,7 @@ public:
 	void AddProperty( const char *propName, ScriptStringCallback getter, ScriptStringCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeString, flags ); gs.Init( &getter, &setter );
@@ -800,7 +801,7 @@ public:
 	void AddProperty( const char *propName, ScriptStringCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeString, flags ); gs.Init( &getter );
@@ -811,7 +812,7 @@ public:
 	void AddProperty( const char *propName, ScriptObjectCallback getter, ScriptObjectCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeObject, flags ); gs.Init( &getter, &setter );
@@ -822,7 +823,7 @@ public:
 	void AddProperty( const char *propName, ScriptObjectCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeObject, flags ); gs.Init( &getter );
@@ -833,7 +834,7 @@ public:
 	void AddProperty( const char *propName, ScriptArrayCallback getter, ScriptArrayCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
 		GetterSetter gs( TypeArray, flags ); gs.Init( &getter, &setter );
@@ -844,7 +845,7 @@ public:
 	void AddProperty( const char *propName, ScriptArrayCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | JSPROP_PERMANENT | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags);
 		GetterSetter gs( TypeArray, flags ); gs.Init( &getter );
