@@ -6,48 +6,6 @@
 
 /* MARK:	-				Scriptable class
  
- ScriptableClass is a parent class to any class wishing to be available for scripting.
- 
- To make your class visible in script:
- 
-	 class MyClass: public ScriptableClass {...} // inherit from ScriptableClass
- 
-	 SCRIPT_CLASS_NAME( MyClass, "ClassName" ); // add this macro to cpp file
-
- Add a static method InitClass, and call it during application init phase. Inside it:
- 
-	 script.RegisterClass<MyClass>(); // this creates MyClass script object
-	 script.AddProperty ...
-	 script.SetStaticProperty ...
-	 script.DefineFunction ...
- 
- For inheritance, give RegisterClass a string name of previously registered parent:
- property and function lookups will be dispatched to hierarchy as expected.
- 
- Your class must have a constructor of this form:
- 
-	 MyClass::MyClass( ScriptArguments* args ) {
-		 // must call
-		 script.NewScriptObject<MyClass>( this );
-	 }
-
- It's used when constructing MyClass from script via new MyClass(...) and NewScriptObject call
- attaches a Javascript object to your instance.
- 
- Scriptable class also provides functions for even handling
- to enable it in your class, define two functions:
- 
-	 // add event listener functions
-	 script.DefineFunction<MyClass>( "on", ScriptableClass::addEventListenerHandler() ); // ( String eventName, Function handler )
-	 script.DefineFunction<MyClass>( "off", ScriptableClass::removeEventListenerHandler() ); // ( String eventName, Function handler )
-
- Then in Javascript you can call myclass.on( 'eventname', callback ); and myclass.off( 'eventname', callback );
- to add and remove event handlers.
- 
- To dispatch events, make Event structure, SetName, and Add____Argument(s) to its scriptParams. Then
- call CallEvent. It will dispatch all event listeners attached to MyClass instance.
- 
- TODO - write about serialization 
  
  -------------------------------------------------------------------- */
 
@@ -135,7 +93,7 @@ public:
 		// if event was stopped, exit
 		if ( event.stopped ) return;
 		
-		// call on all listeners
+		// call on all listeners - note that listeners may be removed while dispatching
 		EventListeners::iterator it = list->begin();
 		while ( it != list->end() ){
 			ScriptFunctionObject *fobj = &(*it);

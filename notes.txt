@@ -1,9 +1,6 @@
-scrollable, scrollbar
-	events
-
-removing event handler from inside that handler causes crash
 
 Not sure if awake - adding late is necessary anymore
+
 
 
 input -
@@ -13,7 +10,6 @@ input -
 	.step (if < 1 allow floats otherwise integers)
 
 
-stopEvent should work with rollovers - ?
 
 UI:
 	input
@@ -30,15 +26,17 @@ UI:
 
 fix trim on sliced sprites
 
+UI moveFocus - add param to limit to same parent?
+
 Raspberry Pi - pressing Alt disrupts subseq text entry
 
+RenderText - add .revealLeft, .revealRight - floating point part = opacity of char on boundary
 
 Demo project
 	Controller configurator
 	UI
 
-add convenience
-	anchor/placement methods
+
 
 
 Normalize error messages
@@ -53,7 +51,12 @@ Nice to have
 
 =============================================
 
-UI moveFocus - add param to limit to same parent?
+stopEvent should work with ui events / rollovers - ?
+
+add convenience anchor/placement methods
+
+UIBehavior / setparent - to accelerate UI event dispatching - add a counter to gameobject - "numChildrenWithUI" or something and maintain it
+
 
 Application 'quit' event - dispatched right before exiting.
 

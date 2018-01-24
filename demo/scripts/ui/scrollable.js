@@ -1,8 +1,23 @@
 /*
 
-Scrollable container
+	Scrollable container
+
+	If scrollWidth / scrollHeight are bigger than control's width/height, control will
+	be scrollable to reveal its contents via mouse wheel, or scroll bars (automatically shown)
+
+	Usage:
+		var s = app.scene.addChild( 'ui/scrollable' );
+		s.layoutType = Layout.Vertical;
+		s.width = 80; s.height = 100;
+		s.addChild( .. );
+		s.addChild( .. );
 
 
+	look at mappedProps in source code below for additional properties
+	also has shared layout properties from ui/ui.js
+
+	Events:
+		'scroll' - when content scroll position has changed
 
 
 */
@@ -13,7 +28,7 @@ include( './ui' );
 	// internal props
 	var ui, spr, img, container = go.addChild();
 	container.ui = new UI();
-	go.serializeMask = {};
+	go.serializeMask = { 'ui':1, 'render':1 };
 	var scrollbars = false;
 	var vsb = null, hsb = null;
 
@@ -28,7 +43,7 @@ include( './ui' );
 		// (Number) current width of the control
 		[ 'scrollbars',  function (){ return scrollbars; }, function ( s ){
 			scrollbars = s;
-			go.updateScrollbars();
+			go.debounce( 'updateScrollbars', go.updateScrollbars );
 		} ],
 
 		// (Number) current width of the control
@@ -44,13 +59,13 @@ include( './ui' );
 		// (Number) width of the scrollable container area
 		[ 'scrollWidth',  function (){ return container.ui.width; }, function ( w ){
 			container.ui.width = w;
-			go.updateScrollbars();
+			go.debounce( 'updateScrollbars', go.updateScrollbars );
 		} ],
 
 		// (Number) height of the scrollable container area
 		[ 'scrollHeight',  function (){ return container.ui.height; }, function ( h ){
 			container.ui.height = h;
-			go.updateScrollbars();
+			go.debounce( 'updateScrollbars', go.updateScrollbars );
 		} ],
 
 		// (Number) current y scroll position
@@ -58,8 +73,8 @@ include( './ui' );
 			var py = container.y;
 			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), -t ) );
 			if ( py != container.y ) {
-				go.updateScrollbars();
 				go.fireLate( 'scroll' );
+				go.debounce( 'updateScrollbars', go.updateScrollbars );
 			}
 		} ],
 
@@ -69,7 +84,7 @@ include( './ui' );
 			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), -l ) );
 			if ( px != container.x ) {
 				go.fireLate( 'scroll' );
-				go.updateScrollbars();
+				go.debounce( 'updateScrollbars', go.updateScrollbars );
 			}
 		} ],
 
@@ -93,23 +108,16 @@ include( './ui' );
 	ui = new UI();
 	ui.layoutType = Layout.Anchors;
 	ui.focusable = false;
+	go.ui = ui;
 
 	// container
 	container.ui.focusable = false;
 
 	// image
 	img = new Image();
+	img.autoDraw = container;
 	spr = new RenderSprite( img );
-
-	// don't serialize components/properties
-	go.serializeMask = { 'ui':1, 'render':1 };
-
-	// components are added after component is awake
-	go.awake = function () {
-		go.ui = ui;
-		go.render = spr;
-		img.autoDraw = container;
-	};
+	go.render = spr;
 
 	// init / detach scrollbars
 	go.updateScrollbars = function () {
@@ -122,15 +130,27 @@ include( './ui' );
 			if ( !vsb ) {
 				// position to the right
 				vsb = new GameObject( './scrollbar' );
+				vsb.orientation = 'vertical';
 				vsb.parent = go;
 				vsb.anchorTop = vsb.anchorBottom = vsb.anchorRight = 0;
 				vsb.anchorLeft = -1;
 				vsb.right = -vsb.width;
 				vsb.scroll = function ( ny ) { go.scrollTop = ny; }
 			}
+			// horizontal
+			if ( !hsb ) {
+				// position to the right
+				hsb = new GameObject( './scrollbar' );
+				hsb.orientation = 'horizontal';
+				hsb.parent = go;
+				hsb.anchorLeft = hsb.anchorBottom = hsb.anchorRight = 0;
+				hsb.anchorTop = -1;
+				hsb.bottom = -hsb.height;
+				hsb.scroll = function ( nx ) { go.scrollLeft = nx; }
+			}
 		}
 
-		// update scrollbars params
+		// update vertical scrollbars params
 		if ( vsb ) {
 			vsb.totalSize = container.ui.height;
 			vsb.handleSize = ui.height;
@@ -139,6 +159,18 @@ include( './ui' );
 			var ac = (scrollbars == 'auto' ? (container.ui.height > ui.height) : scrollbars);
 			if ( ac != vsb.active ) {
 				vsb.active = ac;
+				if ( ac && go.parent ) go.parent.dispatchLate( 'layout' );
+			}
+		}
+		// update horizontal scrollbars params
+		if ( hsb ) {
+			hsb.totalSize = container.ui.width;
+			hsb.handleSize = ui.width;
+			hsb.position = -container.x;
+			// hide / show
+			var ac = (scrollbars == 'auto' ? (container.ui.width > ui.width) : scrollbars);
+			if ( ac != hsb.active ) {
+				hsb.active = ac;
 				if ( ac && go.parent ) go.parent.dispatchLate( 'layout' );
 			}
 		}
@@ -156,11 +188,9 @@ include( './ui' );
 		}
 		spr.width = img.width = w;
 		spr.height = img.height = h;
-
-		// set to current, to make sure scroll position is within limits
-		go.scrollLeft = go.scrollLeft;
-		go.scrollTop = go.scrollTop;
-		go.async( go.updateScrollbars, 0 );
+		go.scrollLeft = go.scrollLeft; // use setter to clip value
+		go.scrollTop = go.scrollTop; // use setter to clip value
+		go.debounce( 'updateScrollbars', go.updateScrollbars );
 	}
 
 	// scrolling

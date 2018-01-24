@@ -1104,6 +1104,9 @@ public:
 		return ArgValue( rval );
 	}
 	
+	// copies properties from src to dest, respecting property definition order (no recursion, or _InitObject like functionality)
+	void CopyProperties( void* src, void* dest );
+	
 
 /* MARK:	-				Instance and class lookup
  -------------------------------------------------------------------- */

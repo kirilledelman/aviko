@@ -1,24 +1,24 @@
 /*
  
-Text input field
+	Text input field
 
-Usage:
-	var textField = app.scene.addChild( 'ui/input' );
-	textField.text = "Some text";
+	Usage:
+		var textField = app.scene.addChild( 'ui/input' );
+		textField.text = "Some text";
 
-look at mappedProps in source code below for additional properties
+	look at mappedProps in source code below for additional properties,
+	also has shared layout properties from ui/ui.js
 
-Events:
-	'change' - when field changes (as you type)
-	'focus' - when control is focused
-	'blur' - when control lost focus
-	'editStart' - when control begin text edit
-	'editEnd' - when control ended text edit
-	'accept' - on blur, if contents changed
-	'cancel' - on blur, if contents didn't change
-	'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.clipboard )
-	'paste' - some text was pasted from UI.clipboard
-	'selectionChanged' - when selection changes ( event parameter is selected text )
+	Events:
+		'change' - when field changes (as you type)
+		'focusChanged' - when control focus is set or cleared (same as UI event)
+		'editStart' - when control begin text edit
+		'editEnd' - when control ended text edit
+		'accept' - on blur, if contents changed
+		'cancel' - on blur, if contents didn't change
+		'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.clipboard )
+		'paste' - some text was pasted from UI.clipboard
+		'selectionChanged' - when selection changes ( event parameter is selected text )
  
 */
 
@@ -41,20 +41,13 @@ include( './ui' );
 	var offBackground = false;
 	var focusBackground= false;
 	var disabledBackground= false;
-	go.serializeMask = {};
+	go.serializeMask = { 'ui':1, 'render':1 };
 
-	// API functions
-
-	// set input focus to the control. forceEdit param = true, will begin editing even if acceptToEdit = true
-	go[ 'focus' ] = function ( forceEdit ) { ui.focus(); if ( forceEdit && !disabled ) go.editing = true; }
-
-	// remove input focus from control
-	go[ 'blur' ] = function () { ui.blur(); }
 
 	// API properties
 	var mappedProps = [
 
-		// (string) input contents
+		// (String) input contents
 		[ 'text',   function (){ return rt.text; }, function( t ){
 			var pt = rt.text;
 			var ps0 = rt.selectionStart, ps1 = rt.selectionEnd;
@@ -122,11 +115,36 @@ include( './ui' );
 			if ( go.scene ) go.scene.dispatchLate( 'layout' );
 		} ],
 
-		// (Boolean) returns or sets whether control has focus
+		// (Boolean) word wrapping at control width enabled for multiline field
 		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; go.scrollCaretToView(); } ],
 
 		// (Number) extra spacing between characters
 		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; go.scrollCaretToView(); } ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
+		[ 'background',  function (){ return offBackground; }, function ( b ){
+			offBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when focused
+		[ 'focusBackground',  function (){ return focusBackground; }, function ( b ){
+			focusBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when disabled
+		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( b ){
+			disabledBackground = b;
+			go.updateBackground();
+		} ],
+
+		// (Number) corner roundness when background is solid color
+		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
+			shp.radius = b;
+			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
+			go.updateBackground();
+		} ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
 		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
@@ -142,31 +160,6 @@ include( './ui' );
 
 		// (Number) texture slice left
 		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'background',  function (){ return offBackground; }, function ( b ){
-			offBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'focusBackground',  function (){ return focusBackground; }, function ( b ){
-			focusBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( b ){
-			disabledBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (Number) corner roundness when background is solid color
-		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
-			shp.radius = b;
-			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-			go.updateBackground();
-		} ],
 
 		// (Boolean) multiple line input
 		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){ rt.multiLine = v; go.fire( 'layout' ); go.scrollCaretToView(); } ],
@@ -186,7 +179,7 @@ include( './ui' );
 		// (Boolean) allow text selection
 		[ 'selectable',  function (){ return selectable; }, function ( v ){ selectable = v; rt.showSelection = v; if ( !v ) rt.selectionStart = rt.selectionEnd; } ],
 
-		// (Boolean) display background or not
+		// (Boolean) select all text when control is first focused
 		[ 'selectAllOnFocus',  function (){ return selectAllOnFocus; }, function ( b ){ selectAllOnFocus = b; } ],
 
 		// (Boolean) allow typing in Tab character (as opposed to tabbing to another UI control)
@@ -249,6 +242,14 @@ include( './ui' );
 		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
 	}
 
+	// API functions
+
+	// set input focus to the control. forceEdit param = true, will begin editing even if acceptToEdit = true
+	go[ 'focus' ] = function ( forceEdit ) { ui.focus(); if ( forceEdit && !disabled ) go.editing = true; }
+
+	// remove input focus from control
+	go[ 'blur' ] = function () { ui.blur(); }
+
 	// create components
 
 	// background
@@ -256,25 +257,24 @@ include( './ui' );
 	shp = new RenderShape( Shape.Rectangle );
 	shp.radius = 0; shp.centered = false;
 	shp.filled = true;
+	go.render = bg;
 
 	// text container
 	tc = new GameObject();
 	rt = new RenderText();
 	tc.render = rt; tc.z = 1;
+	tc.serialized = false;
 
 	// UI
 	ui.autoMoveFocus = false;
 	ui.layoutType = Layout.Anchors;
+	ui.minWidth = 10; ui.minHeight = 10;
 	ui.focusable = true;
+	go.ui = ui;
 
-	// don't serialize components/properties
-	go.serializeMask = { 'ui':1, 'render':1 };
-	tc.serialized = false;
-
-	// components are added after component is awake
+	// children are added after component is awake,
+	// because component's children may be overwritten on unserialize
 	go.awake = function () {
-		go.ui = ui;
-		go.render = bg;
 		go.addChild( tc );
 	};
 
@@ -292,18 +292,17 @@ include( './ui' );
 	ui.focusChanged = function ( newFocus ) {
 		// focused
 	    if ( newFocus == ui ) {
-			go.fire( 'focus' );
 		    ui.autoMoveFocus = false;
 	        go.editing = !acceptToEdit;
 		    go.updateBackground();
 		    go.scrollIntoView();
 	    // blurred
 	    } else {
-			go.fire( 'blur' );
 		    ui.autoMoveFocus = acceptToEdit;
 	        go.editing = false;
 		    go.updateBackground();
 	    }
+		go.fire( 'focusChanged', newFocus );
 		go.fire( 'layout' );
 	}
 

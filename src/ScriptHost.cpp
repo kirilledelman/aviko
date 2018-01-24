@@ -484,3 +484,96 @@ void ScriptHost::_AddToAlreadyInitialized( void *obj, void* initObj, unordered_m
 		// printf( "%s added to map.\n", idName.c_str() );
 	}
 }
+
+//
+void ScriptHost::CopyProperties( void* src, void* dest ) {
+	
+	string stubName, className;
+	
+	// get ScriptableClass definition
+	JSClass* clp = JS_GetClass( (JSObject*) dest );
+	ClassDef* cdef = CDEF( string( clp->name ) );
+	
+	// start iterating over its properties
+	JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) src );
+	
+	// set up
+	jsid propId;
+	jsval propVal;
+	uint32_t propIndex = 0;
+	char *propName = NULL;
+	struct _SetVal {
+		string propName;
+		jsval value;
+		_SetVal( const char *prop, jsval& val ) : propName(prop), value(val) {};
+	};
+	list<_SetVal> setValues;
+	list<_SetVal> setLateValues;
+	
+	// read properties
+	while( true ) {
+
+			
+		// check end condition
+		if ( !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
+		
+		// convert property to string
+		if ( !JS_IdToValue( this->js, propId, &propVal ) ) continue;
+		
+		// convert property name to string
+		JSString* str = JS_ValueToString( this->js, propVal );
+		propName = JS_EncodeString( this->js, str );
+		size_t propLen = strlen( propName );
+		propIndex = 0;
+		// skip __special_properties__
+		if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
+		
+		// get value
+		ArgValue val = GetProperty( propName, src );
+		
+		// check for early property
+		bool isEarlyProp = false;
+		bool isLateProp = false;
+		if ( cdef ) {
+			GetterSetterMapIterator it = cdef->getterSetter.find( propName );
+			if ( it != cdef->getterSetter.end() ) {
+				isEarlyProp = (it->second.flags & PROP_EARLY);
+				isLateProp = (it->second.flags & PROP_LATE);
+			}
+		}
+		
+		// copy value
+		propVal = val.toValue();
+		
+		// propVal contains our value
+		
+		// array
+		if ( isEarlyProp ){
+			setValues.emplace_front( propName, propVal );
+			// late property?
+		} else if ( isLateProp ){
+			setLateValues.emplace_front( propName, propVal );
+			// normal
+		} else if( propName ){
+			setValues.emplace_back( propName, propVal );
+		}
+		
+		// release propName
+		if ( propName ) JS_free( this->js, propName );
+		
+	}
+	
+	// ready to set properties
+	list<_SetVal>::iterator it = setValues.begin(), end = setValues.end();
+	while( it != end ) {
+		JS_SetProperty( this->js, (JSObject*) dest, it->propName.c_str(), &it->value );
+		it++;
+		// end of setValues? go onto late values
+		if ( it == setValues.end() ) {
+			it = setLateValues.begin();
+			end = setLateValues.end();
+		}
+	}
+	
+}
+

@@ -172,21 +172,32 @@ void ScriptableClass::InitClass() {
 		// remove from event listeners
 		ScriptableClass* self = (ScriptableClass*) go;
 		EventListeners& list = self->eventListeners[ propName ];
-		
-		// is specified, find it
-		if ( handler ) {
-			for ( auto it = list.begin(); it != list.end(); it++ ) {
-				ScriptFunctionObject& fo = *it;
+		EventListeners::iterator it = list.begin();
+		while ( it != list.end() ) {
+			ScriptFunctionObject& fo = *it;
+			// is specified, find it
+			if ( handler ) {
 				// found?
 				if ( fo == handler ) {
-					// remove
-					list.erase( it );
+					// if executing, force it to be deleted after executing
+					if ( fo.executing ) {
+						fo.callOnce = true;
+					} else {
+						// remove
+						list.erase( it );
+					}
 					break;
 				}
+				it++;
+			} else {
+				if ( fo.executing ) {
+					fo.callOnce = true;
+					it++;
+				} else {
+					// remove
+					it = list.erase( it );
+				}
 			}
-			// not specified, clear all
-		} else {
-			list.clear();
 		}
 		
 		// for chaining

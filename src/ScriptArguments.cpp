@@ -18,12 +18,19 @@ ScriptFunctionObject::~ScriptFunctionObject() {
 /// invoke function with arguments
 void ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	
+	// safety first
 	if( !funcObject ) return;
+	
+	// helps with removing event listeners while dispatching
+	this->executing = true;
 	
 	jsval rval;
 	int argc;
 	jsval* params = args.GetFunctionArguments( &argc );
 	JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) this->funcObject, argc, params, &rval );
+	
+	// done
+	this->executing = false;
 }
 
 

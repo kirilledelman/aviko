@@ -831,6 +831,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	float maxSize = 0;
 	float innerWidth = behavior->layoutWidth - ( behavior->padLeft + behavior->padRight );
 	float innerHeight = behavior->layoutHeight - ( behavior->padTop + behavior->padBottom );
+	float maxX = 0, maxY = 0;
 	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
 		
 		UIBehavior* childUI = childUIs[ i ];
@@ -886,6 +887,10 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			
 		}
 		
+		// measure max
+		maxX = fmax( maxX, x + w + childUI->marginRight );
+		maxY = fmax( maxY, y + h + childUI->marginBottom );
+		
 		// store,
 		childUI->layoutX = x;
 		childUI->layoutY = y;
@@ -900,8 +905,15 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			behavior->layoutHeight = curY + behavior->padBottom;
 		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
 			behavior->layoutWidth = curX + behavior->padRight;
+		} else if ( behavior->layoutType == LayoutType::None ) {
+			behavior->layoutWidth = maxX;
+			behavior->layoutHeight = maxY;
 		}
 	}
+	
+	// enforce min
+	behavior->layoutWidth = fmax( behavior->layoutWidth, behavior->minWidth );
+	behavior->layoutHeight = fmax( behavior->layoutHeight, behavior->minHeight );
 	
 	// dispatch layout event on this component
 	Event e ( EVENT_LAYOUT );

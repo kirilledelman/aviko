@@ -171,6 +171,9 @@ public:
 	/// used by event dispatcher to remove this function from its list after a single call
 	bool callOnce = false;
 	
+	/// set to true while dispatching
+	bool executing = false;
+	
 	/// invoke this function with arguments
 	void Invoke( ScriptArguments& args );
 	

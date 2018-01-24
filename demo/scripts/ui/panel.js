@@ -1,8 +1,17 @@
 /*
 
-General container panel
+	General container panel
 
+	Used to help with controls arrangement, has background property
 
+	Usage:
+		var p = app.scene.addChild( 'ui/panel' );
+		s.background = 0x666666;
+		s.layoutType = Layout.Vertical;
+		s.addChild( .. );
+
+	look at mappedProps in source code below for additional properties
+	also has shared layout properties from ui/ui.js
 
 
 */
@@ -12,7 +21,7 @@ include( './ui' );
 
 	// internal props
 	var ui = new UI(), bg, shp, background = false;
-	go.serializeMask = {};
+	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
 	var mappedProps = [
@@ -63,6 +72,7 @@ include( './ui' );
 
 	// create components
 	bg = new RenderSprite( background );
+	go.render = bg;
 
 	// solid color background
 	shp = new RenderShape( Shape.Rectangle );
@@ -75,15 +85,7 @@ include( './ui' );
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Anchors;
 	ui.focusable = false;
-
-	// don't serialize components/properties
-	go.serializeMask = { 'ui':1, 'render':1 };
-
-	// components are added after component is awake
-	go.awake = function () {
-		go.ui = ui;
-		go.render = ( typeof( background ) == 'string' ? bg : shp );
-	};
+	go.ui = ui;
 
 	// lay out components
 	ui.layout = function( x, y, w, h ) {

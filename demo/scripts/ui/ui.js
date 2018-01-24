@@ -1,7 +1,10 @@
 /*
 
- Edit this file to change the appearance of Aviko ui components
- 
+	Edit UI.style structure below to change the default appearance of Aviko ui components.
+
+	These are just default properties set at creation and can be overridden. See components
+	source files for all available properties.
+
  
  
  
@@ -9,9 +12,7 @@
 
 UI.style = UI.style ? UI.style : {
 
-	// defaults are applied automatically at creation, can be overridden
-
-	// basic container panel
+	// basic container panel - ui/panel.js
 	panel: {
 
 		background: './textures/ui:gradient', // background texture (String) or solid color (Color|Number)
@@ -24,7 +25,7 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	// text input field
+	// text input field - ui/input.js
 	input: {
 
 		font: 'Arial', // font name
@@ -42,7 +43,7 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	// scrollable container
+	// scrollable container - ui/scrollable.js
 	scrollable: {
 
 		layoutType: Layout.Vertical, // default layout type
@@ -52,7 +53,7 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	// scrollable container
+	// scrollbar - ui/scrollbar.js
 	scrollbar: {
 
 		// both horizontal and vertical
@@ -71,10 +72,10 @@ UI.style = UI.style ? UI.style : {
 			pad: 2 // [ top, right, bottom, left ] or (Number) padding
 		},
 
-		// apply to horizontal
+		// apply only to horizontal
 		horizontal: { },
 
-		// apply to vertical
+		// apply only to vertical
 		vertical: { },
 
 	},
@@ -84,6 +85,11 @@ UI.style = UI.style ? UI.style : {
 };
 
 
+/*
+
+Shared functionality between Aviko ui components
+
+*/
 UI.base = UI.base ? UI.base : {
 
 	// shared between UI components
@@ -188,7 +194,8 @@ UI.base = UI.base ? UI.base : {
 			// (Number) spacing between children when layoutType is Horizontal
 			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ]
 		];
-		// map them
+		// map them to gameObject
+		go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		for ( var i = 0; i < mappedProps.length; i++ ) {
 			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
 				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
@@ -196,8 +203,16 @@ UI.base = UI.base ? UI.base : {
 			if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
 		}
 
+		// Shared API functions
+
+		// set focus to the control (if it accepts focus)
+		go[ 'focus' ] = function () { ui.focus(); }
+
+		// remove focus from control
+		go[ 'blur' ] = function () { ui.blur(); }
+
 		// called from "focusChanged" to scroll this component into view
-		go.scrollIntoView = function() {
+		go[ 'scrollIntoView' ] = function() {
 			// find nearest scrollable
 			var p = this.parent;
 			var c = this;

@@ -18,9 +18,12 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 	if ( args && args->args.size() >= 1) {
 		// string - script name
 		string scriptName;
-		if ( args->ReadArguments( 1, TypeString, &scriptName ) ) {
+		void *obj = NULL;
+		if ( args->ReadArguments( 1, TypeString, &scriptName, TypeObject, &obj ) ) {
 			script.SetProperty( "script", ArgValue( scriptName.c_str() ), this->scriptObject );
 		}
+		// if second param is an object, copy properties from it
+		if ( obj ) script.CopyProperties( obj, this->scriptObject );
 	}
 	
 }
