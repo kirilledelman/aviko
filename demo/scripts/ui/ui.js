@@ -18,15 +18,29 @@ UI.style = UI.style ? UI.style : {
 		background: './textures/ui:gradient', // background texture (String) or solid color (Color|Number)
 		slice: 0, // (Array[4]) or (Number) slicing for texture
 
-		pad: 8, // [ top, right, bottom, left ] or (Number) padding
-
 		layoutType: Layout.Anchors, // default layout type
+		pad: 8, // [ top, right, bottom, left ] or (Number) padding
 		spacing: 4, // [ horizontal, vertical ] or (Number) default spacing for Horizontal, Vertical and Grid layout
 
 	},
 
-	// text input field - ui/input.js
-	input: {
+	// text label - ui/text.js
+	text: {
+
+		font: 'Arial', // font name
+		size: 16, // font size
+		bold: true, // bold
+
+		multiLine: true, // multiple lines by default
+		autoGrow: true, // grow in size with multiple lines
+		textAlign: TextAlign.Left, // left aligned
+
+		textColor: 0xFFFFFF // text color
+
+	},
+
+	// text input field - ui/textfield.js
+	textfield: {
 
 		font: 'Arial', // font name
 		size: 16, // font size
@@ -92,8 +106,8 @@ Shared functionality between Aviko ui components
 */
 UI.base = UI.base ? UI.base : {
 
-	// shared between UI components
-	addSharedProperties: function( go, ui, oui ) { // ui -
+	// layout specific properties shared between UI components
+	addSharedProperties: function( go, ui ) {
 
 		// create properties on gameObject
 		var mappedProps = [
@@ -213,6 +227,12 @@ UI.base = UI.base ? UI.base : {
 
 		// called from "focusChanged" to scroll this component into view
 		go[ 'scrollIntoView' ] = function() {
+			var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
+			// params are used by input to scroll caret into view
+			if ( arguments.length != 0 ) {
+				lpx = arguments[ 0 ]; lpy = arguments[ 1 ];
+				lw = arguments[ 2 ]; lh = arguments[ 3 ];
+			}
 			// find nearest scrollable
 			var p = this.parent;
 			var c = this;
@@ -229,12 +249,12 @@ UI.base = UI.base ? UI.base : {
 
 			// convert coordinate to scrollable's system
 			var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
-			var gp = this.localToGlobal( 0, 0 );
+			var gp = this.localToGlobal( lpx, lpy );
 			var lp = scrollable.globalToLocal( gp.x, gp.y );
 			var t = lp.y + scrollable.scrollTop,
-				b = t + this.height;
+				b = t + lh;
 			var l = lp.x + scrollable.scrollLeft,
-				r = l + this.width;
+				r = l + lw;
 
 			// make sure it's in view
 			if ( b > sy + scrollable.height ) { // bottom

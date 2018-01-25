@@ -1029,8 +1029,11 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 
 void UIBehavior::RequestLayout() {
 
+	GameObject* top = NULL;
 	Scene* scene = this->gameObject ? this->gameObject->GetScene() : NULL;
-	if ( scene ) app.AddLateEvent( scene, EVENT_LAYOUT, true );
+	if ( scene ) top = scene;
+	else top = this->gameObject ? (this->gameObject->parent ? this->gameObject->parent : this->gameObject ) : NULL;
+	if ( top ) app.AddLateEvent( top, EVENT_LAYOUT, true );
 	
 }
 

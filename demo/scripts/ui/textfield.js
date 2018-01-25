@@ -36,11 +36,13 @@ include( './ui' );
 	var selectAllOnFocus = false;
 	var acceptToEdit = false;
 	var cancelToBlur = true;
+	var blurOnClickOutside = true;
 	var editing = false;
 	var touched = false;
 	var offBackground = false;
 	var focusBackground= false;
 	var disabledBackground= false;
+	var autoGrow = false;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 
@@ -71,6 +73,9 @@ include( './ui' );
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+
+		// (Boolean) clicking outside control will blur the control
+		[ 'blurOnClickOutside',  function (){ return blurOnClickOutside; }, function ( cb ){ blurOnClickOutside = cb; } ],
 
 		// (Boolean) turns display of caret and selection on and off (used by focus system)
 		[ 'editing',  function (){ return editing; }, function ( e ){
@@ -109,10 +114,15 @@ include( './ui' );
 
 		// (Number) font size
 		[ 'size',  function (){ return rt.size; }, function ( s ){
+			var nl = go.numLines;
 			rt.size = s;
 			ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
-			if ( !rt.multiLine ) ui.height = ui.minHeight;
-			if ( go.scene ) go.scene.dispatchLate( 'layout' );
+			if ( rt.multiLine ) {
+				go.numLines = nl;
+			} else {
+				ui.height = ui.minHeight;
+			}
+			go.fire( 'layout' );
 		} ],
 
 		// (Boolean) word wrapping at control width enabled for multiline field
@@ -162,10 +172,32 @@ include( './ui' );
 		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
 
 		// (Boolean) multiple line input
-		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){ rt.multiLine = v; go.fire( 'layout' ); go.scrollCaretToView(); } ],
+		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){
+			rt.multiLine = v;
+			go.fire( 'layout' );
+			go.scrollCaretToView(); } ],
+
+		// (Number) gets or sets number of visible lines in multiline control
+		[ 'numLines',  function (){ return rt.height / rt.lineHeight; }, function ( v ) {
+			if ( v != 1 ) rt.multiLine = true;
+			ui.minHeight = ui.padTop + ui.padBottom + v * rt.lineHeight;
+			go.scrollCaretToView();
+		}, true ],
+
+		// (Boolean) auto grow / shrink vertically multiline field
+		[ 'autoGrow',  function (){ return autoGrow; }, function ( v ){
+			rt.multiLine = rt.multiLine || v;
+			autoGrow = v;
+			go.fire( 'layout' );
+			go.scrollCaretToView();
+		} ],
 
 		// (Number) multiLine line spacing
-		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){ rt.lineSpacing = v; go.scrollCaretToView(); } ],
+		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){
+			rt.lineSpacing = v;
+			go.fire( 'layout' );
+			go.scrollCaretToView();
+		} ],
 
 		// (Number) returns line height - font size + line spacing
 		[ 'lineHeight',  function (){ return rt.lineHeight; } ],
@@ -281,11 +313,17 @@ include( './ui' );
 	// layout components
 	ui.layout = function ( x, y, w, h ) {
 		go.setTransform( x, y );
-		if ( !rt.multiLine ) ui.minHeight = h = rt.lineHeight + ui.padTop + ui.padBottom;
+		ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
+		if ( rt.multiLine ) {
+			if ( autoGrow ) ui.minHeight = ui.height = h = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
+		} else {
+			h = ui.minHeight;
+		}
 		bg.width = shp.width = w; bg.height = shp.height = h;
 		tc.setTransform( ui.padLeft, ui.padTop );
 		rt.width = w - ( ui.padLeft + ui.padRight );
 		rt.height = Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) );
+		go.scrollCaretToView();
 	}
 
 	// focus changed
@@ -296,11 +334,13 @@ include( './ui' );
 	        go.editing = !acceptToEdit;
 		    go.updateBackground();
 		    go.scrollIntoView();
+		    input.on( 'mouseDown', go.checkClickOutside );
 	    // blurred
 	    } else {
 		    ui.autoMoveFocus = acceptToEdit;
 	        go.editing = false;
 		    go.updateBackground();
+		    input.off( 'mouseDown', go.checkClickOutside );
 	    }
 		go.fire( 'focusChanged', newFocus );
 		go.fire( 'layout' );
@@ -498,6 +538,11 @@ include( './ui' );
 	    rt.caretPosition = caretPosition;
 		rt.selectionEnd = rt.selectionStart;
 
+		// autogrow
+		if ( autoGrow ) {
+			go.debounce( 'autoGrow', go.checkAutoGrow );
+		}
+
 		// make sure caret is in view
 		go.scrollCaretToView();
 
@@ -522,6 +567,9 @@ include( './ui' );
 			rt.selectionStart = rt.selectionEnd;
 			rt.selectionEnd = tmp;
 		}
+
+		// autogrow
+		if ( autoGrow ) go.debounce( 'autoGrow', go.checkAutoGrow );
 
 		// key
 	    switch ( code ) {
@@ -662,6 +710,25 @@ include( './ui' );
 		}
 	}
 
+	// checks if clicked outside
+	go.checkClickOutside = function ( btn, x, y ) {
+		if ( blurOnClickOutside && ui.focused ) {
+			lp = go.globalToLocal( x, y );
+			if ( lp.x < 0 || lp.x > go.width || lp.y < 0 || lp.y > go.height ) {
+				go.blur();
+			}
+		}
+	}
+
+	// auto resize text box vertically with text
+	go.checkAutoGrow = function () {
+		if ( autoGrow && rt.multiLine ) {
+			var h = ui.height;
+			ui.height = ui.minHeight = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
+			if ( h != ui.height ) go.async( go.scrollIntoView );
+		}
+	}
+
 	// sets current background based on state
 	go.updateBackground = function () {
 
@@ -708,10 +775,23 @@ include( './ui' );
 		// truncate scroll pos
 		rt.scrollLeft = Math.max( 0, Math.min( rt.scrollWidth - rt.width + 8, rt.scrollLeft ));
 		rt.scrollTop = Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop ));
+		// if autogrow, scroll box into view
+		go.scrollIntoView();
+	}
+
+	// called from "focusChanged" to scroll this component into view
+	go._scrollIntoView = go.scrollIntoView;
+	go[ 'scrollIntoView' ] = function() {
+		if ( editing ) {
+			// scroll to caret, if editing
+			go._scrollIntoView( rt.caretX, rt.caretY, 1 + ui.padLeft + ui.padRight, rt.lineHeight + ui.padTop + ui.padBottom );
+		} else {
+			go._scrollIntoView();
+		}
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.input ) for ( var p in UI.style.input ) go[ p ] = UI.style.input[ p ];
+	if ( UI.style && UI.style.textfield ) for ( var p in UI.style.textfield ) go[ p ] = UI.style.textfield[ p ];
 
 })(this);
 

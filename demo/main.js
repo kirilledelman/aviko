@@ -16,10 +16,11 @@ input.controllerAdded = function ( kb ) {
 
 app.scene = new Scene();
 
-var panel = app.scene.addChild( 'ui/scrollable' );
-panel.x = 10; panel.y = 10;
-panel.width = 100; panel.height = 40;
-panel.layoutType = Layout.None;
+var panel = app.scene.addChild( 'ui/scrollable', {
+	x: 10, y: 10,
+	width: 100, height: 100,
+	layoutType: Layout.Vertical
+} );
 
 /*var p = panel.addChild( new GameObject( 'ui/panel' ) );
 p.x = p.y = 0;
@@ -39,6 +40,7 @@ input.mouseMove = function ( x, y ) {
 
 }.bind( panel );
 
+
 input.keyDown = function ( k ) {
 
 	if ( k == Key.C ) {
@@ -50,19 +52,20 @@ input.keyDown = function ( k ) {
 
 }.bind( panel );
 
-var label;
-for ( var i = 0; i < 1; i++ ) {
+panel.addChild( 'ui/text', {
+	text: "Hello!\n^2This is a test.",
+	align: TextAlign.Center,
 
-	label = panel.addChild( 'ui/input' );
-	label.name = label.text = label.lineHeight + " : " + i;
-	label.acceptToEdit = true;
-	label.selectAllOnFocus = true;
-	label.width = 200;
-	if ( i == 2 ) { label.disabled = true; }
-	label.accept = function ( txt ) {
-		var a = parseFloat( txt );
-		this.size = a ? Math.max( 10, a ) : this.size;
-	}
+} );
+
+for ( var i = 0; i < 2; i++ ) {
+
+	panel.addChild( 'ui/textfield', {
+		text: "Приветик! " + i,
+		acceptToEdit: true,
+		selectAllOnFocus: true,
+		numLines: (i == 1 ? 3 : 1),
+	} );
 
 }
 

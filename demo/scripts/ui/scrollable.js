@@ -35,12 +35,12 @@ include( './ui' );
 	// API properties
 	var mappedProps = [
 
-		// (Array) - set child objects at once
+		// (Array) - set child objects at once - overrides built-in
 		[ 'children',  function (){ return container.children; }, function ( v ){
 			container.children = v; // overridden
 		}],
 
-		// (Number) current width of the control
+		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
 		[ 'scrollbars',  function (){ return scrollbars; }, function ( s ){
 			scrollbars = s;
 			go.debounce( 'updateScrollbars', go.updateScrollbars );
@@ -87,6 +87,12 @@ include( './ui' );
 				go.debounce( 'updateScrollbars', go.updateScrollbars );
 			}
 		} ],
+
+		// (ui/scrollbar.js) - returns vertical scrollbar instance
+		[ 'verticalScrollbar',  function (){ return vsb; } ],
+
+		// (ui/scrollbar.js) - returns horizontal scrollbar instance
+		[ 'horizontalScrollbar',  function (){ return hsb; } ],
 
 	];
 	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
@@ -190,8 +196,10 @@ include( './ui' );
 		spr.height = img.height = h;
 		go.scrollLeft = go.scrollLeft; // use setter to clip value
 		go.scrollTop = go.scrollTop; // use setter to clip value
-		go.debounce( 'updateScrollbars', go.updateScrollbars );
 	}
+
+	// container resizing should update scrollbars
+	container.ui.layout = function( x, y, w, h ) { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
 
 	// scrolling
 	ui.mouseWheel = function ( wy, wx ) {

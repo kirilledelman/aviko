@@ -1,7 +1,4 @@
 
-Not sure if awake - adding late is necessary anymore
-
-
 
 input -
 	.numeric

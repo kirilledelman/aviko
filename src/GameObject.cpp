@@ -497,14 +497,14 @@ void GameObject::InitClass() {
 	("addChild", // ( GameObject child [, int position ] ) -> GameObject child
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition ] ] )";
+		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition | Object initProperties ] ] )";
 		int pos = -1;
 		void* obj = NULL;
 		string scriptName;
 		GameObject* other = NULL;
 		
 		// read args
-		if ( sa.ReadArguments( 0, TypeObject, &obj, TypeInt, &pos ) ) {
+		if ( sa.ReadArguments( 0, TypeObject, &obj ) ) {
 			// no object?
 			if ( !obj ) {
 				// make new game object
@@ -512,10 +512,16 @@ void GameObject::InitClass() {
 			} else {
 				other = script.GetInstance<GameObject>( obj );
 			}		
-		} else if ( sa.ReadArguments( 0, TypeString, &scriptName, TypeInt, &pos ) ){
+		} else if ( sa.ReadArguments( 1, TypeString, &scriptName ) ){
 			// make new game object
 			other = new GameObject( NULL );
 			script.SetProperty( "script", ArgValue( scriptName.c_str() ), other->scriptObject );
+		}
+		
+		// either position or initObj
+		void *initObj = NULL;
+		if ( !sa.ReadArgumentsFrom( 1, 1, TypeObject, &initObj ) ){
+			sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
 		}
 		
 		// validate
@@ -527,6 +533,12 @@ void GameObject::InitClass() {
 		// all good
 		GameObject* self = (GameObject*) go;
 		other->SetParent( self, pos );
+		
+		// if second param was object
+		if ( initObj ) {
+			// copy properties from it
+			script.CopyProperties( initObj, other->scriptObject );
+		}
 		
 		// schedule layout
 		if ( self->ui ) self->ui->RequestLayout();
