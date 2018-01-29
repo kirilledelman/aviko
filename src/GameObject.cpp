@@ -14,15 +14,17 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 	// add scriptObject
 	script.NewScriptObject<GameObject>( this );
 	
-	// single string argument - attach script
+	// string argument - script name, obj argument - init object
 	if ( args && args->args.size() >= 1) {
 		// string - script name
 		string scriptName;
 		void *obj = NULL;
 		if ( args->ReadArguments( 1, TypeString, &scriptName, TypeObject, &obj ) ) {
 			script.SetProperty( "script", ArgValue( scriptName.c_str() ), this->scriptObject );
+		} else {
+			args->ReadArguments( 1, TypeObject, &obj );
 		}
-		// if second param is an object, copy properties from it
+		// if have object param, copy properties from it
 		if ( obj ) script.CopyProperties( obj, this->scriptObject );
 	}
 	

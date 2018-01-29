@@ -16,18 +16,10 @@ input.controllerAdded = function ( kb ) {
 
 app.scene = new Scene();
 
-var panel = app.scene.addChild( 'ui/scrollable', {
-	x: 10, y: 10,
-	width: 100, height: 100,
-	layoutType: Layout.Vertical
+var scrollable = app.scene.addChild( 'ui/scrollable', {
+	x: 50, y: 20,
+	width: 150, height: 200
 } );
-
-/*var p = panel.addChild( new GameObject( 'ui/panel' ) );
-p.x = p.y = 0;
-p.background = 'mom';
-p.width = 200;
-p.height = 40;
-*/
 
 input.mouseMove = function ( x, y ) {
 
@@ -38,36 +30,26 @@ input.mouseMove = function ( x, y ) {
 		this.height = hh;
 	}
 
-}.bind( panel );
+}.bind( scrollable );
 
+var panel = scrollable.addChild ( 'ui/panel', {
+	layoutType: Layout.Vertical,// background: null,
+	pad: 8, width: 150
+});
 
-input.keyDown = function ( k ) {
+panel.addChild( new GameObject( 'ui/text', { text: "^BTitle\n^bSubtitle", align: TextAlign.Center } ) );
 
-	if ( k == Key.C ) {
-		var copy = clone( panel );
-		copy.x = input.mouseX;
-		copy.y = input.mouseY;
-		app.scene.addChild( copy );
-	}
+for ( var i = 0; i < 1; i++ ) {
 
-}.bind( panel );
-
-panel.addChild( 'ui/text', {
-	text: "Hello!\n^2This is a test.",
-	align: TextAlign.Center,
-
-} );
-
-for ( var i = 0; i < 2; i++ ) {
-
-	panel.addChild( 'ui/textfield', {
-		text: "Приветик! " + i,
-		acceptToEdit: true,
-		selectAllOnFocus: true,
-		numLines: (i == 1 ? 3 : 1),
+	var f = new GameObject( 'ui/textfield', {
+		text: "Input " + i
 	} );
+	panel.addChild( f );
 
 }
 
+panel.addChild( new GameObject( 'ui/image', {
+	texture: 'mom'
+} ) );
 
 

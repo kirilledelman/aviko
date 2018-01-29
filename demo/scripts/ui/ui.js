@@ -31,6 +31,7 @@ UI.style = UI.style ? UI.style : {
 		size: 16, // font size
 		bold: true, // bold
 
+		wrap: true, // auto wrap
 		multiLine: true, // multiple lines by default
 		autoGrow: true, // grow in size with multiple lines
 		textAlign: TextAlign.Left, // left aligned
@@ -91,6 +92,27 @@ UI.style = UI.style ? UI.style : {
 
 		// apply only to vertical
 		vertical: { },
+
+	},
+
+	image: { }, // defaults for ui/image.js
+
+	button: {
+
+		background: './textures/ui:button',
+		focusBackground: './textures/ui:button-focus',
+		downBackground: './textures/ui:button-down',
+		disabledBackground: './textures/ui:button-disabled',
+
+		slice: 8, // (Array[4]) or (Number) slicing for texture
+		pad: 8, // [ top, right, bottom, left ] or (Number) padding
+
+		label: {
+
+		},
+
+		icon: { marginRight: 8 },
+
 
 	},
 

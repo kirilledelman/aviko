@@ -38,6 +38,12 @@ public:
 	/// save
 	void Save( const char* filename );
 	
+	/// gets base64 encoded png
+	bool ToDataURL( ArgValue& val );
+	
+	/// inits image from base64 encoded png
+	bool FromDataURL( string &s );
+	
 	/// returns updated image
 	GPU_Image* GetImage();
 	

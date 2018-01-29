@@ -125,6 +125,9 @@ include( './ui' );
 			go.fire( 'layout' );
 		} ],
 
+		// (Boolean) should text be antialiased
+		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
+
 		// (Boolean) word wrapping at control width enabled for multiline field
 		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; go.scrollCaretToView(); } ],
 
@@ -294,6 +297,7 @@ include( './ui' );
 	// text container
 	tc = new GameObject();
 	rt = new RenderText();
+	rt.autoResize = false;
 	tc.render = rt; tc.z = 1;
 	tc.serialized = false;
 
@@ -319,10 +323,10 @@ include( './ui' );
 		} else {
 			h = ui.minHeight;
 		}
-		bg.width = shp.width = w; bg.height = shp.height = h;
+		bg.setSize( w, h );
+		shp.setSize( w, h );
 		tc.setTransform( ui.padLeft, ui.padTop );
-		rt.width = w - ( ui.padLeft + ui.padRight );
-		rt.height = Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) );
+		rt.setSize( w - ( ui.padLeft + ui.padRight ), Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) ) );
 		go.scrollCaretToView();
 	}
 

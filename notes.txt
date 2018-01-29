@@ -1,5 +1,4 @@
 
-
 input -
 	.numeric
 	.minValue
@@ -20,8 +19,6 @@ UI:
 	Checkbox
 	List
 	Dropdown
-
-fix trim on sliced sprites
 
 UI moveFocus - add param to limit to same parent?
 
@@ -47,6 +44,10 @@ SaveFile - fix create subfolders
 Nice to have
 
 =============================================
+
+RenderSprite .texture = "base64://...", and "https://...."
+
+shader - dropshadow, outline
 
 stopEvent should work with ui events / rollovers - ?
 

@@ -258,6 +258,19 @@ void RenderShapeBehavior::InitClass() {
 	}),
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE );
 	
+	// functions
+	
+	script.DefineFunction<RenderShapeBehavior>
+	( "setSize", // setSize( Number width, Number height )
+	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
+		RenderShapeBehavior* self = (RenderShapeBehavior*) obj;
+		if ( !sa.ReadArguments( 2, TypeInt, &self->x, TypeInt, &self->y ) ) {
+			script.ReportError( "usage: setSize( Number width, Number height )" );
+			return false;
+		}
+		return true;
+	}));
+	
 }
 
 void RenderShapeBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {

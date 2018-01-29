@@ -41,10 +41,9 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	// with arguments
 	if ( args ) {
 		/// load font
-		string fname = app.defaultFontName, txt = "";
+		string fname = app.defaultFontName;
 		int size = this->fontSize;
-		if ( args->ReadArguments( 1, TypeString, &txt, TypeString, &fname, TypeInt, &size ) ) {
-			this->text = txt;
+		if ( args->ReadArguments( 1, TypeString, &fname, TypeInt, &size ) ) {
 			SetFont( fname.c_str(), size );
 			return;
 		}
@@ -397,6 +396,16 @@ void RenderTextBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<RenderTextBehavior>
+	( "autoResize",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->autoResize; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->autoResize = val;
+		rs->_dirty = true;
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
 	( "dirty",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->_dirty; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
@@ -636,6 +645,20 @@ void RenderTextBehavior::InitClass() {
 		rs->Repaint();
 		return true;
 	}));
+	
+	script.DefineFunction<RenderTextBehavior>
+	( "setSize", // setSize( Number width, Number height )
+	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
+		RenderTextBehavior* self = (RenderTextBehavior*) obj;
+		if ( !sa.ReadArguments( 2, TypeInt, &self->width, TypeInt, &self->height ) ) {
+			script.ReportError( "usage: setSize( Number width, Number height )" );
+			return false;
+		}
+		self->width = max( 0, self->width );
+		self->height = max( 0, self->height );
+		self->_dirty = true;
+		return true;
+	}));
 }
 
 
@@ -776,8 +799,13 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 		TTF_SetFontOutline( this->fontResource->font, this->outlineWidth );
 		TTF_SetFontHinting( this->fontResource->font, TTF_HINTING_LIGHT );
 		static SDL_Color white = { 255, 255, 255, 255 };
-		gi->surface = antialias ? TTF_RenderGlyph_Blended( this->fontResource->font, c, white ) :
-								  TTF_RenderGlyph_Solid( this->fontResource->font, c, white );
+		if ( antialias ) {
+			gi->surface = TTF_RenderGlyph_Blended( this->fontResource->font, c, white );
+		} else {
+			SDL_Surface *pal = TTF_RenderGlyph_Solid( this->fontResource->font, c, white );
+			gi->surface = SDL_ConvertSurfaceFormat( pal, SDL_PIXELFORMAT_RGBA32, 0 );
+			SDL_FreeSurface( pal );
+		}
 	}
 	
 	// done
@@ -983,8 +1011,14 @@ void RenderTextBehavior::Repaint() {
 		int selEnd = this->selectionEnd;
 		if ( selStart > selEnd ) { int tmp = selStart; selStart = selEnd; selEnd = tmp; }
 		
-		// create surface
+		// check size
+		if ( autoResize ) {
+			height = scrollHeight;
+			width = scrollWidth;
+		}
 		if ( width <= 0 || height <= 0 ) return;
+		
+		// create surface
 		textSurface = SDL_CreateRGBSurfaceWithFormat( 0, width, height, 32, SDL_PIXELFORMAT_RGBA32 );
 		if ( !textSurface ) return;
 		
@@ -1076,7 +1110,7 @@ void RenderTextBehavior::Repaint() {
 				}
 				
 				// draw
-				if ( drawCurrentLine && character->glyphInfo ) {
+				if ( drawCurrentLine && character->glyphInfo && character->glyphInfo->surface ) {
 					// set color
 					SDL_SetSurfaceColorMod( character->glyphInfo->surface, character->color.r, character->color.g, character->color.b );
 					// draw

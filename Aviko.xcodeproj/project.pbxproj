@@ -126,7 +126,6 @@
 		71D3CBD81FEB3E9E006F7678 /* b2Rope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484E61F814B9400AF17EA /* b2Rope.cpp */; };
 		71D3CBD91FEB3E9E006F7678 /* b2Rope.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F484E71F814B9400AF17EA /* b2Rope.h */; };
 		71D3CBDA1FEB3E9E006F7678 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 71E694551F5318E9001EB381 /* common.h */; };
-		71D3CBDB1FEB3E9E006F7678 /* json.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E6945C1F5318E9001EB381 /* json.hpp */; };
 		71D3CBDC1FEB3E9E006F7678 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E6945D1F5318E9001EB381 /* main.cpp */; };
 		71D3CBDD1FEB3E9E006F7678 /* Application.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694521F5318E9001EB381 /* Application.hpp */; };
 		71D3CBDE1FEB3E9E006F7678 /* Application.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694511F5318E9001EB381 /* Application.cpp */; };
@@ -262,7 +261,6 @@
 		71E694571F5318E9001EB381 /* GameObject.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = GameObject.hpp; path = src/GameObject.hpp; sourceTree = "<group>"; };
 		71E6945A1F5318E9001EB381 /* ImageResource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageResource.cpp; path = src/ImageResource.cpp; sourceTree = "<group>"; };
 		71E6945B1F5318E9001EB381 /* ImageResource.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ImageResource.hpp; path = src/ImageResource.hpp; sourceTree = "<group>"; };
-		71E6945C1F5318E9001EB381 /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = json.hpp; path = src/json.hpp; sourceTree = "<group>"; };
 		71E6945D1F5318E9001EB381 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = "<group>"; };
 		71E6945E1F5318E9001EB381 /* RenderShapeBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderShapeBehavior.cpp; path = src/RenderShapeBehavior.cpp; sourceTree = "<group>"; };
 		71E6945F1F5318E9001EB381 /* RenderShapeBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RenderShapeBehavior.hpp; path = src/RenderShapeBehavior.hpp; sourceTree = "<group>"; };
@@ -510,7 +508,6 @@
 			isa = PBXGroup;
 			children = (
 				71E694551F5318E9001EB381 /* common.h */,
-				71E6945C1F5318E9001EB381 /* json.hpp */,
 				71E6945D1F5318E9001EB381 /* main.cpp */,
 				71E694521F5318E9001EB381 /* Application.hpp */,
 				71E694511F5318E9001EB381 /* Application.cpp */,
@@ -930,7 +927,6 @@
 				71D3CBD81FEB3E9E006F7678 /* b2Rope.cpp in Sources */,
 				71D3CBD91FEB3E9E006F7678 /* b2Rope.h in Sources */,
 				71D3CBDA1FEB3E9E006F7678 /* common.h in Sources */,
-				71D3CBDB1FEB3E9E006F7678 /* json.hpp in Sources */,
 				71D3CBDC1FEB3E9E006F7678 /* main.cpp in Sources */,
 				71D3CBDD1FEB3E9E006F7678 /* Application.hpp in Sources */,
 				71D3CBDE1FEB3E9E006F7678 /* Application.cpp in Sources */,

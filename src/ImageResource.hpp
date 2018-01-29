@@ -16,7 +16,9 @@ typedef struct {
 	GPU_Rect locationOnTexture = { 0, 0, 0, 0 };
 	float trimOffsetX = 0, trimOffsetY = 0;
 	float actualWidth = 0, actualHeight = 0;
+	float trimWidth = 0, trimHeight = 0;
 	bool rotated = false;
+	bool trimmed = false;
 } ImageFrame;
 
 typedef unordered_map<string, ImageFrame> ImageFramesMap;

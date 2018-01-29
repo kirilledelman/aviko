@@ -547,14 +547,6 @@ bool Color::SetHex( const char* s ) {
 
 }
 
-int Color::GetInt( bool withAlpha ) {
-	if ( withAlpha ) {
-		return ( ((Uint32) this->rgba.r) << 24 ) + ( ((Uint32) this->rgba.g) << 16 ) + ( ((Uint32) this->rgba.b) << 8 ) + ((Uint32) this->rgba.a);
-	} else {
-		return ( ((Uint32) this->rgba.r) << 16 ) + ( ((Uint32) this->rgba.g) << 8 ) + ((Uint32) this->rgba.b);
-	}
-}
-
 string Color::GetHex( bool withAlpha ) {
 	char str[ 16 ];
 	unsigned int val =

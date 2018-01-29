@@ -106,6 +106,9 @@ public:
 	/// surface height
 	int height = 0;
 	
+	/// automatically assume text size
+	bool autoResize = true;
+	
     /// set to false to stop drawing instead
     bool wrap = false;
 	

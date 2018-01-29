@@ -63,6 +63,8 @@ string HexStr( Uint32 w, size_t hex_len );
 int StringPositionToIndex( const char* str, int pos );
 int StringIndexToPosition( const char* str, int index );
 int StringPositionLength( const char* str );
+string base64_encode( unsigned char const*, unsigned int len );
+string base64_decode( string const& s );
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

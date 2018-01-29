@@ -36,7 +36,7 @@ public:
 
 	/// flip vertically
 	bool flipY = false;
-	
+		
 // scripting
 	
 	/// registers class for scripting

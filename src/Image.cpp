@@ -15,13 +15,16 @@ Image::Image( ScriptArguments* args ) {
 	if ( args ) {
 		
 		int w = 0, h = 0;
+		string url;
 		if ( args->ReadArguments( 2, TypeInt, &w, TypeInt, &h ) ) {
 			this->width = max( 0, w );
 			this->height = max( 0, h );
 			this->image = this->_MakeImage();
+		} else if ( args->ReadArguments( 1, TypeString, &url ) ){
+			// try
+			this->FromDataURL( url );
 		}
-		// todo GameObject (later, when getBounds is available)
-		// todo "http://url"
+		
 	}
 	
 }
@@ -172,6 +175,25 @@ void Image::InitClass() {
 		return val;
 	}));
 	
+	script.AddProperty<Image>
+	( "base64",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		Image* img = (Image*) b;
+		ArgValue ret;
+		img->ToDataURL( ret );
+		return ret;
+	}),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		Image* img = (Image*) b;
+		ArgValue ret( false );
+		if ( val.type == TypeString ) {
+			ret.value.boolValue = img->FromDataURL( *val.value.stringValue );
+		}
+		return ret;
+	}), PROP_NOSTORE );
+	
+	// functions
+	
 	script.DefineFunction<Image>
 	( "setSize", // setSize( Int width, Int height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
@@ -268,14 +290,85 @@ void Image::InitClass() {
 		img->Save( filename.c_str() );
 		return true;
 	}));
-		
 
+
+}
+
+
+/* MARK:	-				Saving
+ -------------------------------------------------------------------- */
+
+size_t _ImageRWOpsWrite(SDL_RWops *context, const void *ptr, size_t size, size_t num) {
+	string* buf = (string*) context->hidden.unknown.data1;
+	if ( !buf ) {
+		buf = new string();
+		context->hidden.unknown.data1 = buf;
+	}
+	size_t prevPos = buf->length();
+	buf->resize( prevPos + num );
+	SDL_memcpy( (void*)( buf->data() + prevPos ), ptr, num );
+	return num;
+}
+
+int _ImageRWOpsClose( SDL_RWops *context ) {
+	if ( context->hidden.unknown.data1 ) {
+		delete ((string*) context->hidden.unknown.data1);
+	}
+	context->hidden.unknown.data1 = NULL;
+	SDL_FreeRW( context );
+	return 0;
+}
+
+bool Image::ToDataURL( ArgValue &val ) {
+	
+	// nothing to convert
+	if ( !this->image ) return false;
+
+	SDL_RWops* rwops = SDL_AllocRW();
+	rwops->hidden.unknown.data1 = NULL;
+	rwops->write = _ImageRWOpsWrite;
+	rwops->close = _ImageRWOpsClose;
+	bool res = GPU_SaveImage_RW( this->image, rwops, false, GPU_FileFormatEnum::GPU_FILE_PNG );
+	if ( !res || !rwops->hidden.unknown.data1 ) {
+		SDL_RWclose( rwops );
+		return false;
+	}
+	
+	// encode
+	val.type = TypeString;
+	val.value.stringValue = new string();
+	string *src = ( ( string* ) rwops->hidden.unknown.data1 );
+	*val.value.stringValue = base64_encode( (unsigned char const*) src->data(), (int) src->size() );
+	
+	// done
+	SDL_RWclose( rwops );
+	return true;
+}
+
+/// inits image from base64 encoded png
+bool Image::FromDataURL( string &s ) {
+	
+	// decode
+	string decoded = base64_decode( s );
+	printf( "%lu ... \n", decoded.size() );
+	SDL_RWops* rwops = SDL_RWFromMem( (void*) decoded.data(), (int) decoded.size() );
+	GPU_Image* img = GPU_LoadImage_RW( rwops, true );
+	if ( !img ) return false;
+	
+	// set
+	if ( this->image ) GPU_FreeImage( this->image );
+	this->image = img;
+	this->width = this->image->base_w;
+	this->height = this->image->base_h;
+	return true;
+	
 }
 
 
 void Image::Save( const char *filename ) {
 
-	// make surace
+	// make surface
+	//SaveFile(<#const char *data#>, <#size_t numBytes#>, <#const char *filepath#>, <#const char *ext#>)
 	
 }
 
@@ -302,6 +395,8 @@ GPU_Image* Image::_MakeImage() {
 		img->target->camera.z_far = 65535;
 		img->anchor_x = img->anchor_y = 0;
 		this->_sizeDirty = false;
+		//SDL_Color clr = { 0, 255, 0, 128 };
+		//GPU_ClearColor( img->target, clr );
 	}
 	return img;
 }

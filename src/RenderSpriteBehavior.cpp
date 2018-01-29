@@ -182,6 +182,24 @@ void RenderSpriteBehavior::InitClass() {
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_LATE );
 
 	script.AddProperty<RenderSpriteBehavior>
+	( "originalWidth", //
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		if ( rs->imageInstance ) return rs->imageInstance->width;
+		else if ( rs->imageResource ) return (int) rs->imageResource->frame.actualWidth;
+		return 0;
+	}));
+
+	script.AddProperty<RenderSpriteBehavior>
+	( "originalHeight", //
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
+		if ( rs->imageInstance ) return rs->imageInstance->height;
+		else if ( rs->imageResource ) return (int) rs->imageResource->frame.actualHeight;
+		return 0;
+	}));
+
+	script.AddProperty<RenderSpriteBehavior>
 	( "flipX",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->flipX; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderSpriteBehavior*) b)->flipX = val ); }) );
@@ -241,6 +259,25 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.h; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.h = val ); }) );
 
+	// functions
+	
+	script.DefineFunction<RenderSpriteBehavior>
+	( "setSize", // setSize( Number width, Number height )
+	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
+		RenderSpriteBehavior* self = (RenderSpriteBehavior*) obj;
+		if ( sa.ReadArguments( 2, TypeFloat, &self->width, TypeFloat, &self->height ) ) {
+			if ( self->imageInstance ) {
+				self->imageInstance->width = self->width;
+				self->imageInstance->height = self->height;
+				self->imageInstance->_sizeDirty = true;
+			}
+		} else {
+			script.ReportError( "usage: setSize( Number width, Number height )" );
+			return false;
+		}
+		return true;
+	}));
+	
 }
 
 
@@ -271,12 +308,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	GPU_Rect srcRect = { 0, 0, 0, 0 };
 	bool rotated = false;
 	float cx = 0, cy = 0, sx = 1, sy = 1, r = 0;
+	float effectiveWidth = behavior->width, effectiveHeight = behavior->height;
 	SDL_Color color = behavior->color->rgba;
 	color.a *= behavior->gameObject->combinedOpacity;
 	if ( color.a == 0.0 ) return;
 	
 	// slices
 	bool sliced = ( behavior->slice.x != 0 || behavior->slice.y != 0 || behavior->slice.w != 0 || behavior->slice.h != 0 );
+	bool trimmed = false;
 	struct RenderSlice {
 		GPU_Rect rect;
 		float x, y;
@@ -295,6 +334,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// current frame
 		srcRect = frame->locationOnTexture;
 		rotated = frame->rotated;
+		trimmed = frame->trimmed;
 		
 		// activate shader
 		behavior->SelectShader
@@ -305,22 +345,38 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	      srcRect.w / image->base_w,
 		  srcRect.h / image->base_h );
 		
-		if ( !sliced ) cx += frame->trimOffsetX * sx;
+		if ( sliced ) {
+			cx += frame->trimOffsetX;
+		} else {
+			cx += frame->trimOffsetX * sx;
+		}
+
+		// apply trim
+		effectiveWidth = fmax( 0, effectiveWidth - frame->trimWidth );
+		effectiveHeight = fmax( 0, effectiveHeight - frame->trimHeight );
 		
 		// draw rotated
 		if ( rotated ) {
 			
-			sy = behavior->width / frame->actualWidth;
-			sx = behavior->height / frame->actualHeight;
-			cy += (( sliced ? frame->trimOffsetY : 0 ) + frame->locationOnTexture.w) * sx;
+			sy = effectiveWidth / (frame->actualWidth - frame->trimWidth);
+			sx = effectiveHeight / (frame->actualHeight - frame->trimHeight);
+			if ( sliced ) {
+				cy += (frame->locationOnTexture.w) * sx + frame->trimOffsetY;
+			} else {
+				cy += (frame->locationOnTexture.w + frame->trimOffsetY) * sx;
+			}
 			r = -90;
 	
 		// normal
 		} else {
 			
-			sx = behavior->width / frame->actualWidth;
-			sy = behavior->height / frame->actualHeight;
-			if ( !sliced ) cy += frame->trimOffsetY * sy;
+			sx = effectiveWidth / (frame->actualWidth - frame->trimWidth);
+			sy = effectiveHeight / (frame->actualHeight - frame->trimHeight);
+			if ( sliced ) {
+				cy += frame->trimOffsetY;
+			} else {
+				cy += frame->trimOffsetY * sy;
+			}
 			
 		}
 				
@@ -379,8 +435,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			right = ( (behavior->slice.y < 1) ? (srcRect.h * behavior->slice.y) : behavior->slice.y );
 			midX = ( srcRect.w - (top + bottom) );
 			midY = ( srcRect.h - (left + right) );
-			sliceMidX = max( 0.0f, behavior->width - (left + right) );
-			sliceMidY = max( 0.0f, behavior->height - (top + bottom) );
+			sliceMidX = max( 0.0f, effectiveWidth - (left + right) );
+			sliceMidY = max( 0.0f, effectiveHeight - (top + bottom) );
 			
 			// clip
 			behavior->width = max( behavior->width, left + right + sliceMidX );
@@ -496,8 +552,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			right = ( (behavior->slice.y < 1) ? (srcRect.w * behavior->slice.y) : behavior->slice.y );
 			midX = ( srcRect.w - (left + right) );
 			midY = ( srcRect.h - (top + bottom) );
-			sliceMidX = max( 0.0f, behavior->width - (left + right) );
-			sliceMidY = max( 0.0f, behavior->height - (top + bottom) );
+			sliceMidX = max( 0.0f, effectiveWidth - (left + right) );
+			sliceMidY = max( 0.0f, effectiveHeight - (top + bottom) );
 			
 			// clip
 			behavior->width = max( behavior->width, left + right + sliceMidX );

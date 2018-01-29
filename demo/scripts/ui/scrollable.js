@@ -192,8 +192,8 @@ include( './ui' );
 		} else if ( container.ui.layoutType == Layout.Horizontal ) {
 			container.ui.height = h;
 		}
-		spr.width = img.width = w;
-		spr.height = img.height = h;
+		spr.setSize( w, h );
+		img.setSize( w, h );
 		go.scrollLeft = go.scrollLeft; // use setter to clip value
 		go.scrollTop = go.scrollTop; // use setter to clip value
 	}

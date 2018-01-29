@@ -81,8 +81,24 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 						ArgValue rotated = script.GetProperty( "rotated", frameObj.value.objectValue );
 						frameInfo.rotated = rotated.toBool();
 						
+						// .trimmed
+						ArgValue trimmed = script.GetProperty( "trimmed", frameObj.value.objectValue );
+						frameInfo.trimmed = trimmed.toBool();
+						
+						// .sourceSize
+						ArgValue subObj = script.GetProperty( "sourceSize", frameObj.value.objectValue );
+						if ( subObj.type == TypeObject ) {
+							ArgValue w = script.GetProperty( "w", subObj.value.objectValue );
+							ArgValue h = script.GetProperty( "h", subObj.value.objectValue );
+							w.toNumber( frameInfo.actualWidth );
+							h.toNumber( frameInfo.actualHeight );
+						} else {
+							printf( "Error while loading \"%s.json\"", path.c_str() );
+							break;
+						}
+
 						// .frame
-						ArgValue subObj = script.GetProperty( "frame", frameObj.value.objectValue );
+						subObj = script.GetProperty( "frame", frameObj.value.objectValue );
 						if ( subObj.type == TypeObject ) {
 							ArgValue x = script.GetProperty( "x", subObj.value.objectValue );
 							ArgValue y = script.GetProperty( "y", subObj.value.objectValue );
@@ -90,20 +106,19 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 							ArgValue h = script.GetProperty( "h", subObj.value.objectValue );
 							x.toNumber(frameInfo.locationOnTexture.x);
 							y.toNumber(frameInfo.locationOnTexture.y);
-							w.toNumber( frameInfo.rotated ? frameInfo.locationOnTexture.h : frameInfo.locationOnTexture.w );
-							h.toNumber( frameInfo.rotated ? frameInfo.locationOnTexture.w : frameInfo.locationOnTexture.h );
-						} else {
-							printf( "Error while loading \"%s.json\"", path.c_str() );
-							break;
-						}
-						
-						// .sourceSize
-						subObj = script.GetProperty( "sourceSize", frameObj.value.objectValue );
-						if ( subObj.type == TypeObject ) {
-							ArgValue w = script.GetProperty( "w", subObj.value.objectValue );
-							ArgValue h = script.GetProperty( "h", subObj.value.objectValue );
-							w.toNumber( frameInfo.actualWidth );
-							h.toNumber( frameInfo.actualHeight );
+							
+							if ( frameInfo.rotated ) {
+								w.toNumber( frameInfo.locationOnTexture.h );
+								h.toNumber( frameInfo.locationOnTexture.w );
+								frameInfo.trimWidth = frameInfo.actualWidth - frameInfo.locationOnTexture.h;
+								frameInfo.trimHeight = frameInfo.actualHeight - frameInfo.locationOnTexture.w;
+							} else {
+								w.toNumber( frameInfo.locationOnTexture.w );
+								h.toNumber( frameInfo.locationOnTexture.h );
+								frameInfo.trimWidth = frameInfo.actualWidth - frameInfo.locationOnTexture.w;
+								frameInfo.trimHeight = frameInfo.actualHeight - frameInfo.locationOnTexture.h;
+							}
+
 						} else {
 							printf( "Error while loading \"%s.json\"", path.c_str() );
 							break;

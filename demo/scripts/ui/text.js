@@ -43,6 +43,9 @@ include( './ui' );
 			go.fire( 'layout' );
 		} ],
 
+		// (Boolean) should text be antialiased
+		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
+
 		// (Number) - Align.Left | Align.Center | Align.Right - text alignment
 		[ 'align',  function (){ return rt.align; }, function ( w ){ rt.align = w; } ],
 
@@ -129,6 +132,7 @@ include( './ui' );
 	// text container
 	tc = new GameObject();
 	rt = new RenderText();
+	rt.autoResize = false;
 	tc.render = rt;
 	tc.serialized = false;
 

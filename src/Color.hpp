@@ -35,9 +35,6 @@ public:
 	/// set color as h, s, v
 	void SetHSV( float hue, float sat, float val );
 	
-	/// return 0xRRGGBB(AA) integer
-	int GetInt( bool withAlpha );
-	
 	/// sets color from integer
 	void SetInt( int clr, bool withAlpha );
 	
