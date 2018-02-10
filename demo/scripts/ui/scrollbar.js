@@ -40,10 +40,7 @@ include( './ui' );
 			if ( o != 'vertical' && o != 'horizontal' ) return;
 			orientation = o;
 			// apply defaults
-			if ( UI.style && UI.style.scrollbar && UI.style.scrollbar[ orientation ] ) {
-				for ( var p in UI.style.scrollbar[ orientation ] )
-					go[ p ] = UI.style.scrollbar[ orientation ][ p ];
-			}
+			UI.base.applyDefaults( go, UI.style.scrollbar[ orientation ] );
 			go.fireLate( 'layout' );
 		} ],
 
@@ -153,6 +150,9 @@ include( './ui' );
 
 	// create components
 
+	// set name
+	if ( !go.name ) go.name = "Scrollbar";
+
 	// background
 	bg = new RenderSprite();
 	shp = new RenderShape( Shape.Rectangle );
@@ -161,7 +161,7 @@ include( './ui' );
 	go.render = bg;
 
 	// handle
-	handle = new GameObject();
+	handle = new GameObject( { name: "Scrollbar.Handle" } );
 	handle.ui = new UI();
 	handle.ui.focusable = false;
 	handle.serialized = false;
@@ -181,7 +181,7 @@ include( './ui' );
 	go.ui = ui;
 
 	// lay out components
-	ui.layout = function( x, y, w, h ) {
+	ui.layout = function( w, h ) {
 		w = Math.max( w, ui.padLeft + ui.padRight );
 		h = Math.max( h, ui.padTop + ui.padBottom );
 		go.setTransform( x, y );
@@ -196,14 +196,14 @@ include( './ui' );
 			if ( orientation == 'vertical' ) {
 				var availSize = h - ui.padTop - ui.padBottom;
 				handle.x = ui.padLeft;
-				handle.render.width = w - ui.padLeft - ui.padRight;
-				handle.render.height = Math.round( ( handleSize / totalSize ) * availSize );
+				handle.ui.width = w - ui.padLeft - ui.padRight;
+				handle.ui.height = Math.round( ( handleSize / totalSize ) * availSize );
 				handle.y = ui.padTop + Math.round( ( position / totalSize ) * availSize );
 			} else {
 				var availSize = w - ui.padLeft - ui.padRight;
 				handle.y = ui.padTop;
-				handle.render.height = h - ui.padTop - ui.padBottom;
-				handle.render.width = Math.round( ( handleSize / totalSize ) * availSize );
+				handle.ui.height = h - ui.padTop - ui.padBottom;
+				handle.ui.width = Math.round( ( handleSize / totalSize ) * availSize );
 				handle.x = ui.padLeft + Math.round( ( position / totalSize ) * availSize );
 			}
 		}
@@ -239,16 +239,16 @@ include( './ui' );
 
 		// start drag
 		dragging = true;
-		input.on( 'mouseMove', handle.ui.mouseMoveGlobal );
-		input.on( 'mouseUp', handle.ui.mouseUpGlobal );
+		Input.on( 'mouseMove', handle.ui.mouseMoveGlobal );
+		Input.on( 'mouseUp', handle.ui.mouseUpGlobal );
 	}
 
 	// mouse up
 	handle.ui.mouseUpGlobal = function ( btn, x, y ) {
 		if ( dragging ) {
 			dragging = false;
-			input.off( 'mouseMove', handle.ui.mouseMoveGlobal );
-			input.off( 'mouseUp', handle.ui.mouseUpGlobal );
+			Input.off( 'mouseMove', handle.ui.mouseMoveGlobal );
+			Input.off( 'mouseUp', handle.ui.mouseUpGlobal );
 		}
 	}
 
@@ -257,7 +257,7 @@ include( './ui' );
 		if ( orientation == 'vertical' ) {
 			go.fire( 'scroll', position - wy );
 		} else {
-			go.fire( 'scroll', position - wx );
+			go.fire( 'scroll', position + wx );
 		}
 	}
 
@@ -272,10 +272,8 @@ include( './ui' );
 		handle.ui.mouseMoveGlobal( wx, wy );
 	}
 
-	// apply 'both' defaults
-	if ( UI.style && UI.style.scrollbar && UI.style.scrollbar.both ) {
-		for ( var p in UI.style.scrollbar.both ) go[ p ] = UI.style.scrollbar.both[ p ];
-	}
+	// apply defaults
+	UI.base.applyDefaults( go, UI.style.scrollbar );
 
 	// apply orientation
 	go.orientation = orientation;

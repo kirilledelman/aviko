@@ -1,33 +1,37 @@
 
-input -
-	.numeric
-	.minValue
-	.maxValue
-	.step (if < 1 allow floats otherwise integers)
 
+Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
 
+Enhance Vector class with slice etc., add ObjectVector, IntVector, etc.
+	Vector -
+		new Vector( type )
+			type - class, like Object, or GameObject, or Number
+			
 
 UI:
 	input
 	panel
 	scrollable
 	scrollbar
+	text
+	image
+	button
 
-	Label
-	Image
-	Button
-	Checkbox
-	List
-	Dropdown
+	checkbox
+	dropdown
+
+RenderText - better wrapping on word boundary
+
+autoTile, with special handling in sliced
 
 UI moveFocus - add param to limit to same parent?
 
 Raspberry Pi - pressing Alt disrupts subseq text entry
 
-RenderText - add .revealLeft, .revealRight - floating point part = opacity of char on boundary
 
 Demo project
 	Controller configurator
+	Percussion playground
 	UI
 
 
@@ -45,7 +49,10 @@ Nice to have
 
 =============================================
 
-RenderSprite .texture = "base64://...", and "https://...."
+
+RenderText - add .revealLeft, .revealRight - floating point part = opacity of char on boundary
+
+RenderSprite .texture = "https://...."
 
 shader - dropshadow, outline
 
@@ -77,6 +84,8 @@ Physics:
 
 modify query and rayTrace for non-physics based queries
 
+Sound generation - fill / edit / play buffer - Int vector?
+
 Transplant from parent to parent, maintain transform (only need to do anything if no body)
 
 Add logging level - none, normal, verbose
@@ -99,8 +108,6 @@ RenderSprite
 
 Image
 save( pngpath )in /textures by default
-.base64 <-> string
-
 
 
 Install MS Visual Studio in windows, look at how to compile on win.
@@ -213,6 +220,7 @@ USER_HEADER_SEARCH_PATHS = $(PROJECT_DIR)/sdl-gpu/lib/include /Library/Framework
 ==========================
 
 5" HDMI LCD on Raspberry Pi:
+
 max_usb_current=1
 hdmi_group=2
 hdmi_mode=87
@@ -231,11 +239,13 @@ gpu_mem_1024=512
 
 
 5" HDMI LCD on Orange Pi:
+
 cd /boot/
 cp /boot/script.bin /boot/bin/script.bin.backup
 
 //convert file
 bin2fex script.bin script.fex
+
 //edit file
 nano script.fex
 

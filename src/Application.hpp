@@ -113,8 +113,8 @@ public:
 	typedef unordered_map<string,LateEvent> ObjectEventMap;
 	typedef unordered_map<ScriptableClass*, ObjectEventMap> LateEventMap;
 	
-	bool lateEventsLocked = false;
 	LateEventMap lateEvents;
+	LateEventMap lateEventsProcessing; // used to allow adding late events while dispatching late events
 	
 	/// true while InitObject is in progress
 	bool isUnserializing = false;

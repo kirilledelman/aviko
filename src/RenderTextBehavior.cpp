@@ -43,8 +43,12 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 		/// load font
 		string fname = app.defaultFontName;
 		int size = this->fontSize;
+		void* initObj = NULL;
 		if ( args->ReadArguments( 1, TypeString, &fname, TypeInt, &size ) ) {
 			SetFont( fname.c_str(), size );
+			return;
+		} else if ( args->ReadArguments( 1, TypeObject, &initObj ) ) {
+			script.CopyProperties( initObj, this->scriptObject );
 			return;
 		}
 	}
@@ -52,7 +56,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	SetFont( app.defaultFontName.c_str(), this->fontSize );
 	
 	// set default width, height
-	this->width = this->fontSize * 10;
+	if ( !this->width ) this->width = this->fontSize * 10;
 	if ( this->fontResource && this->fontResource->font ) {
 		this->height = TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing;
 	}
@@ -639,24 +643,23 @@ void RenderTextBehavior::InitClass() {
     }));
     
 	script.DefineFunction<RenderTextBehavior>
-	( "repaint", //
+	( "measure", //
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		RenderTextBehavior* rs = (RenderTextBehavior*) obj;
-		rs->Repaint();
+		rs->Repaint( true );
 		return true;
 	}));
 	
 	script.DefineFunction<RenderTextBehavior>
-	( "setSize", // setSize( Number width, Number height )
+	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		RenderTextBehavior* self = (RenderTextBehavior*) obj;
-		if ( !sa.ReadArguments( 2, TypeInt, &self->width, TypeInt, &self->height ) ) {
-			script.ReportError( "usage: setSize( Number width, Number height )" );
+		int w = 0, h = 0;
+		if ( !sa.ReadArguments( 2, TypeInt, &w, TypeInt, &h ) ) {
+			script.ReportError( "usage: resize( Number width, Number height )" );
 			return false;
 		}
-		self->width = max( 0, self->width );
-		self->height = max( 0, self->height );
-		self->_dirty = true;
+		self->Resize( w, h );
 		return true;
 	}));
 }
@@ -772,6 +775,11 @@ int RenderTextBehavior::GetCaretPositionAt( float localX, float localY ) {
     return -1;
 }
 
+void RenderTextBehavior::Resize( float w, float h ) {
+	this->width = fmax( 0, w );
+	this->height = fmax( 0, h );
+	this->_dirty = true;
+}
 
 
 /* MARK:	-				Render
@@ -813,12 +821,12 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 }
 
 /// redraws surface
-void RenderTextBehavior::Repaint() {
+void RenderTextBehavior::Repaint( bool justMeasure ) {
 	
-	this->_dirty = false;
+	this->_dirty = ( justMeasure ? this->_dirty : false );
 	
 	// clear old image
-	if ( this->surface ) {
+	if ( this->surface && !justMeasure ) {
 		GPU_FreeImage( this->surface );
 		this->surface = NULL;
 	}
@@ -960,7 +968,7 @@ void RenderTextBehavior::Repaint() {
 			GlyphInfo* glyph = GetGlyph( character, currentBold, currentItalic );
 			
 			// check if line width will exceed max line width
-			if ( currentLine->width + glyph->advance >= this->width && this->wrap && this->multiLine ) {
+			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine && !autoResize ) {
 				// start new line
 				lines.emplace_back();
 				currentLine = &lines.back();
@@ -1009,6 +1017,8 @@ void RenderTextBehavior::Repaint() {
 		SDL_Rect rect;
 		int selStart = this->selectionStart;
 		int selEnd = this->selectionEnd;
+		Uint32 selColorVal = 0;
+		SDL_Color selColor = this->selectionColor->rgba;
 		if ( selStart > selEnd ) { int tmp = selStart; selStart = selEnd; selEnd = tmp; }
 		
 		// check size
@@ -1018,17 +1028,20 @@ void RenderTextBehavior::Repaint() {
 		}
 		if ( width <= 0 || height <= 0 ) return;
 		
-		// create surface
-		textSurface = SDL_CreateRGBSurfaceWithFormat( 0, width, height, 32, SDL_PIXELFORMAT_RGBA32 );
-		if ( !textSurface ) return;
-		
-		SDL_Rect temp = { 0, 0, width, height };
-		Uint32 bgColorVal = SDL_MapRGBA( textSurface->format, backgroundColor->rgba.r, backgroundColor->rgba.g, backgroundColor->rgba.b, backgroundColor->rgba.a );
-		SDL_FillRect( textSurface, &temp, bgColorVal );
+		if ( !justMeasure ) {
+			
+			// create surface
+			textSurface = SDL_CreateRGBSurfaceWithFormat( 0, width, height, 32, SDL_PIXELFORMAT_RGBA32 );
+			if ( !textSurface ) return;
+			
+			SDL_Rect temp = { 0, 0, width, height };
+			Uint32 bgColorVal = SDL_MapRGBA( textSurface->format, backgroundColor->rgba.r, backgroundColor->rgba.g, backgroundColor->rgba.b, backgroundColor->rgba.a );
+			SDL_FillRect( textSurface, &temp, bgColorVal );
+			
+			selColorVal = SDL_MapRGBA( textSurface->format, selColor.r, selColor.g, selColor.b, selColor.a );
+		}
 		
 		// for each line
-		SDL_Color selColor = this->selectionColor->rgba;
-		Uint32 selColorVal = SDL_MapRGBA( textSurface->format, selColor.r, selColor.g, selColor.b, selColor.a );
 		while ( lineIndex < totalLines ) {
 			currentLine = &this->lines[ lineIndex ];
             
@@ -1102,7 +1115,7 @@ void RenderTextBehavior::Repaint() {
 				}
 				
 				// do draw caret
-				if ( drawCaret ) {
+				if ( drawCaret && !justMeasure ) {
 					caretRect.y = y;
 					caretRect.h = lineHeight;
 					caretRect.w = max( 1.0f, this->fontSize * 0.1f );
@@ -1110,7 +1123,7 @@ void RenderTextBehavior::Repaint() {
 				}
 				
 				// draw
-				if ( drawCurrentLine && character->glyphInfo && character->glyphInfo->surface ) {
+				if ( drawCurrentLine && character->glyphInfo && character->glyphInfo->surface && !justMeasure ) {
 					// set color
 					SDL_SetSurfaceColorMod( character->glyphInfo->surface, character->color.r, character->color.g, character->color.b );
 					// draw
@@ -1125,6 +1138,9 @@ void RenderTextBehavior::Repaint() {
 			y += lineHeight;
 			lineIndex++;
 		}
+		
+		// done measuring
+		if ( justMeasure ) return;
 		
 		// convert to GPU_Image
 		this->surface = GPU_CopyImageFromSurface( textSurface );

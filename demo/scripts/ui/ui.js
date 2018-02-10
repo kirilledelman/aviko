@@ -29,13 +29,7 @@ UI.style = UI.style ? UI.style : {
 
 		font: 'Arial', // font name
 		size: 16, // font size
-		bold: true, // bold
-
-		wrap: true, // auto wrap
-		multiLine: true, // multiple lines by default
-		autoGrow: true, // grow in size with multiple lines
 		textAlign: TextAlign.Left, // left aligned
-
 		textColor: 0xFFFFFF // text color
 
 	},
@@ -56,6 +50,7 @@ UI.style = UI.style ? UI.style : {
 		focusBackground: './textures/ui:input-focus', // focused background texture (String) or solid color (Color|Number)
 		disabledBackground: './textures/ui:input-disabled', // disabled background texture (String) or solid color (Color|Number)
 
+		acceptToEdit: true, // when navigating to field via keys, must press Enter to start editing
 	},
 
 	// scrollable container - ui/scrollable.js
@@ -71,21 +66,19 @@ UI.style = UI.style ? UI.style : {
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
 
-		// both horizontal and vertical
-		both: {
-			background: 0xFFFFFF, // background texture (String) or solid color (Color|Number)
-			slice: 0, // (Array[4]) or (Number) slicing for texture
-			cornerRadius: 4, // corner roundness if background is solid color
+		// common properties
+		background: 0xFFFFFF, // background texture (String) or solid color (Color|Number)
+		slice: 0, // (Array[4]) or (Number) slicing for texture
+		cornerRadius: 4, // corner roundness if background is solid color
 
-			handleBackground: 0xC0C0C0, // scroll handle background texture (String) or solid color (Color|Number)
-			handleSlice: 0, // (Array[4]) or (Number) scroll handle  slicing for texture
-			handleCornerRadius: 4, // scroll handle corner roundness if background is solid color
+		handleBackground: 0xC0C0C0, // scroll handle background texture (String) or solid color (Color|Number)
+		handleSlice: 0, // (Array[4]) or (Number) scroll handle  slicing for texture
+		handleCornerRadius: 4, // scroll handle corner roundness if background is solid color
 
-			width: 16, // scrollbar width
-			height: 16, // scrollbar height
+		width: 16, // scrollbar width
+		height: 16, // scrollbar height
 
-			pad: 2 // [ top, right, bottom, left ] or (Number) padding
-		},
+		pad: 2, // [ top, right, bottom, left ] or (Number) padding
 
 		// apply only to horizontal
 		horizontal: { },
@@ -95,24 +88,29 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	image: { }, // defaults for ui/image.js
+	// image container - ui/image.js
+	image: { },
 
+	// button - ui/button.js
 	button: {
 
 		background: './textures/ui:button',
-		focusBackground: './textures/ui:button-focus',
+		overBackground: './textures/ui:button-over',
+		focusBackground: './textures/ui:button-over',
 		downBackground: './textures/ui:button-down',
 		disabledBackground: './textures/ui:button-disabled',
 
 		slice: 8, // (Array[4]) or (Number) slicing for texture
 		pad: 8, // [ top, right, bottom, left ] or (Number) padding
 
+		// apply to button's label (ui/text.js)
 		label: {
-
+			textColor: 0x0,
+			size: 14
 		},
 
-		icon: { marginRight: 8 },
-
+		// apply to icon image
+		image: {},
 
 	},
 
@@ -152,20 +150,35 @@ UI.base = UI.base ? UI.base : {
 			// (UI) or (GameObject) or null - object to focus to the left of this control
 			[ 'focusDown',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusDown = f; } ],
 
+			// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
+			[ 'focusGroup',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
+
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
 			[ 'layoutType',  function (){ return ui.layoutType; }, function ( v ){ ui.layoutType = v; } ],
 
-			// (Boolean) for Horizontal and Vertical layout types, expand children to fill cross axis
-			[ 'expandChildren',  function (){ return ui.expandChildren; }, function ( v ){ ui.expandChildren = v; } ],
+			// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on cross axis
+			[ 'layoutAlign',  function (){ return ui.layoutAlign; }, function ( v ){ ui.layoutAlign = v; } ],
 
-			// (Boolean) for Horizontal and Vertical layout types, adjust own height and width to fit all children
+			// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlign for this object
+			[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
+
+			// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
 			[ 'fitChildren',  function (){ return ui.expandChildren; }, function ( v ){ ui.expandChildren = v; } ],
+
+			// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
+			[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
 
 			// (Number) minimum width allowed by layout
 			[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
 
 			// (Number) minimum height allowed by layout
 			[ 'minHeight',  function (){ return ui.minHeight; }, function ( v ){ ui.minHeight = v; } ],
+
+			// (Number) maximum width allowed by layout
+			[ 'maxWidth',  function (){ return ui.maxWidth; }, function ( v ){ ui.maxWidth = v; } ],
+
+			// (Number) maximum height allowed by layout
+			[ 'maxHeight',  function (){ return ui.maxHeight; }, function ( v ){ ui.maxHeight = v; } ],
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
 			[ 'anchorLeft',  function (){ return ui.anchorLeft; }, function ( v ){ ui.anchorLeft = v; } ],
@@ -291,6 +304,21 @@ UI.base = UI.base ? UI.base : {
 			}
 		}
 
+	},
+
+	// sets defaults from UI.style
+	applyDefaults: function ( go, defaults ) {
+		if ( !defaults ) return;
+		for ( var p in defaults ) {
+			// object with same name?
+			if ( typeof( defaults[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' ) {
+				// apply properties to it
+				for ( var s in defaults[ p ] ) go[ p ][ s ] = defaults[ p ][ s ];
+			} else {
+				// just set property
+				go[ p ] = defaults[ p ];
+			}
+		}
 	}
 
 }

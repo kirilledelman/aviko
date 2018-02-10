@@ -27,6 +27,9 @@ public:
 	/// returns true if screen space point is inside this GameObject/RenderBehavior
 	virtual bool IsScreenPointInside( float x, float y, float* outLocalX, float* outLocalY );
 	
+	/// UIs without layout handler will call this on gameObject's render component
+	virtual void Resize( float w, float h ) {};
+	
 	/// color
 	Color *color = NULL;
 	Color *addColor = NULL;

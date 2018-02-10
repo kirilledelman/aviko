@@ -71,13 +71,19 @@ include( './ui' );
 	}
 
 	// create components
+
+	// set name
+	if ( !go.name ) go.name = "Panel";
+
 	bg = new RenderSprite( background );
 	go.render = bg;
 
 	// solid color background
-	shp = new RenderShape( Shape.Rectangle );
-	shp.radius = 0;
-	shp.filled = true; shp.centered = false;
+	shp = new RenderShape( Shape.Rectangle, {
+		radius: 0,
+		filled: true,
+		centered: false
+	});
 
 	// UI
 	ui.autoMoveFocus = false;
@@ -88,13 +94,12 @@ include( './ui' );
 	go.ui = ui;
 
 	// lay out components
-	ui.layout = function( x, y, w, h ) {
-		go.setTransform( x, y );
+	ui.layout = function( w, h ) {
 		shp.width = bg.width = w;
 		shp.height = bg.height = h;
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.panel ) for ( var p in UI.style.panel ) go[ p ] = UI.style.panel[ p ];
+	UI.base.applyDefaults( go, UI.style.panel );
 
 })(this);

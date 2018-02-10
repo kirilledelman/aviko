@@ -169,7 +169,7 @@ public:
 	bool SetFont( const char* face, int size );
 	
 	/// repaints current text, clears dirty flag
-	void Repaint();
+	void Repaint( bool justMeasure=false );
 	
 	/// destroys prerendered glyphs on font change
 	void ClearGlyphs();
@@ -179,6 +179,9 @@ public:
     
 	/// overridden from RenderBehavior
 	GPU_Rect GetBounds();
+	
+	/// UIs without layout handler will call this on gameObject's render component
+	void Resize( float w, float h );
 	
 	/// render callback
 	static void Render( RenderTextBehavior* behavior, GPU_Target* target, Event* event );

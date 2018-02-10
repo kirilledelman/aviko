@@ -188,9 +188,9 @@ void Application::UpdateBackscreen() {
 	GPU_SetDepthWrite( this->backScreen->target, true );
 	this->backScreen->target->camera.z_near = -65535;
 	this->backScreen->target->camera.z_far = 65535;
-#ifdef __MACOSX__
+	
+	// TODO - remove after SDL_gpu fixes it
 	glDepthFunc( GL_LEQUAL );
-#endif
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -453,7 +453,7 @@ void Application::InitClass() {
 	
 	// add to global namespace
 	script.NewScriptObject<Application>( this );
-	script.AddGlobalNamedObject( "app", this->scriptObject );
+	script.AddGlobalNamedObject( "App", this->scriptObject );
 	
 	// extensions
 	
@@ -573,7 +573,7 @@ void Application::InitClass() {
 		return true;
 	}));
 	
-	// eval( string, thisObj )
+	//
 	script.DefineGlobalFunction
 	( "stopEvent",
 	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
@@ -618,6 +618,16 @@ void Application::InitClass() {
 		for ( size_t i = 0; i < Event::eventStack.size(); i++ ) {
 			Event::eventStack[ i ]->stopped = true;
 		}
+		return true;
+	}) );
+	
+	script.DefineGlobalFunction
+	( "currentEventName",
+	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
+		
+		if ( Event::eventStack.size() ) sa.ReturnString( string( Event::eventStack.back()->name ) );
+		else sa.ReturnNull();
+		
 		return true;
 	}) );
 	
@@ -724,7 +734,7 @@ void Application::InitClass() {
 		EVENT_JOYDOWN, EVENT_JOYUP, EVENT_JOYAXIS, EVENT_JOYHAT,
 		EVENT_MOUSEOVER, EVENT_MOUSEOUT, EVENT_CLICK, EVENT_MOUSEUPOUTSIDE,
 		EVENT_FOCUSCHANGED, EVENT_NAVIGATION, EVENT_TOUCH, EVENT_UNTOUCH,
-		EVENT_FINISHED, EVENT_RESIZED, EVENT_AWAKE, EVENT_LAYOUT,
+		EVENT_FINISHED, EVENT_RESIZED, EVENT_AWAKE, EVENT_LAYOUT, EVENT_ERROR,
 		NULL
 	};
 	for ( size_t i = 0; interns[ i ] != NULL; i++ ) {
@@ -843,9 +853,9 @@ void Application::GameLoop() {
 	Scene* scene = NULL;
 	
 	// load and run "main.js" script
-	if ( !script.Execute( scriptManager.Get( "/main.js" ) ) ){
-		return;
-	}
+	ScriptResource* mainScript = scriptManager.Get( "/main.js" );
+	if ( mainScript->error ) return; // bail on compilation or not found error
+	script.Execute( mainScript );
 	
 	// add default "keyboard" controller to input
 	input.AddKeyboardController();
@@ -960,8 +970,6 @@ void Application::GameLoop() {
 
 /// add / replace event to run right before render, returns params member of LateEvent struct
 ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch ) {
-	// can't add late events while running late events callbacks
-	if ( lateEventsLocked ) return NULL;
 	LateEvent* event = NULL;
 	
 	// find existing for this object
@@ -993,8 +1001,9 @@ void Application::RemoveLateEvents( ScriptableClass* obj ) {
 
 // runs late events
 void Application::RunLateEvents() {
-	lateEventsLocked = true;
-	LateEventMap::iterator oit = lateEvents.begin(), oend = lateEvents.end();
+	lateEventsProcessing = lateEvents; // copy
+	lateEvents.clear();
+	LateEventMap::iterator oit = lateEventsProcessing.begin(), oend = lateEventsProcessing.end();
 	while ( oit != oend ) {
 		ScriptableClass* obj = oit->first;
 		ObjectEventMap& objMap = oit->second;
@@ -1002,6 +1011,9 @@ void Application::RunLateEvents() {
 		while ( it != end ) {
 			LateEvent& le = it->second;
 			Event event( it->first.c_str() );
+			// add params
+			for ( size_t i = 0, np = le.params.size(); i < np; i++ ) event.scriptParams.AddArgument( le.params[ i ] );
+			// call
 			if ( le.lateDispatch ) {
 				GameObject* go = (GameObject*) obj;
 				if ( go ) go->DispatchEvent( event );
@@ -1012,8 +1024,6 @@ void Application::RunLateEvents() {
 		}
 		oit++;
 	}
-	lateEventsLocked = false;
-	lateEvents.clear();
 }
 
 /* MARK:	-				Global funcs ( from common.h )
@@ -1241,6 +1251,19 @@ bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensio
 		}
 	}
 	return false;
+}
+
+/// returns currently executing script pathname:lineNumber
+string GetScriptNameAndLine() {
+	unsigned lineNumber = 0;
+	JSScript* curScript = NULL;
+	if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
+		const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+		char *buf = (char*) malloc( strlen( scriptPath ) + 32 );
+		sprintf( buf, "%s:%u", scriptPath, lineNumber );
+		return string( buf );
+	}
+	return "";
 }
 
 /// quick and simple hashing function

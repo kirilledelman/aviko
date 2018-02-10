@@ -40,9 +40,14 @@ include( './ui' );
 	var editing = false;
 	var touched = false;
 	var offBackground = false;
-	var focusBackground= false;
-	var disabledBackground= false;
+	var focusBackground = false;
+	var disabledBackground = false;
 	var autoGrow = false;
+	var numeric = false;
+	var integer = false;
+	var minValue = -Infinity;
+	var maxValue = Infinity;
+	var step = 1.0;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 
@@ -55,8 +60,24 @@ include( './ui' );
 			var ps0 = rt.selectionStart, ps1 = rt.selectionEnd;
 			rt.text = t;
 			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
-			if ( pt != t ) go.fire( 'change' );
+			if ( pt != t ) go.fire( 'change', go.value );
 			if ( ps0 != ps1 ) go.fire( 'selectionChanged' );
+		} ],
+
+		// (String) or (Number) depending on if .numeric is set
+		[ 'value',   function (){
+			var v = rt.text;
+			if ( numeric ) {
+				v = integer ? parseInt( rt.text ) : parseFloat( rt.text );
+				if ( isNaN ( v ) && resetText ) v = ( integer ? parseInt( resetText ) : parseFloat( resetText ) );
+			}
+			return v;
+		}, function( v ){
+			if ( numeric ) {
+				if ( integer ) v = Math.round( v );
+				v = Math.min( maxValue, Math.max( minValue, v ) );
+			}
+			go.text = v;
 		} ],
 
 		// (Number) current width of the control
@@ -124,6 +145,24 @@ include( './ui' );
 			}
 			go.fire( 'layout' );
 		} ],
+
+		// (Boolean) only accepts numbers
+		[ 'numeric',  function (){ return numeric; }, function ( n ){
+			numeric = n;
+			if ( n ) rt.multiLine = false;
+		} ],
+
+		// (Number) minimum value for numeric input
+		[ 'min',  function (){ return minValue; }, function ( v ){ minValue = v; } ],
+
+		// (Number) maximum value for numeric input
+		[ 'max',  function (){ return maxValue; }, function ( v ){ maxValue = v; } ],
+
+		// (Number) step by which to increment/decrement value, when using arrow keys in control
+		[ 'step',  function (){ return step; }, function ( v ){ step = v; } ],
+
+		// (Boolean) maximum value for numeric input
+		[ 'integer',  function (){ return integer; }, function ( v ){ integer = v; } ],
 
 		// (Boolean) should text be antialiased
 		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
@@ -287,6 +326,9 @@ include( './ui' );
 
 	// create components
 
+	// set name
+	if ( !go.name ) go.name = "Textfield";
+
 	// background
 	bg = new RenderSprite( offBackground );
 	shp = new RenderShape( Shape.Rectangle );
@@ -315,18 +357,17 @@ include( './ui' );
 	};
 
 	// layout components
-	ui.layout = function ( x, y, w, h ) {
-		go.setTransform( x, y );
+	ui.layout = function ( w, h ) {
 		ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
 		if ( rt.multiLine ) {
 			if ( autoGrow ) ui.minHeight = ui.height = h = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
 		} else {
 			h = ui.minHeight;
 		}
-		bg.setSize( w, h );
-		shp.setSize( w, h );
+		bg.resize( w, h );
+		shp.resize( w, h );
 		tc.setTransform( ui.padLeft, ui.padTop );
-		rt.setSize( w - ( ui.padLeft + ui.padRight ), Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) ) );
+		rt.resize( w - ( ui.padLeft + ui.padRight ), Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) ) );
 		go.scrollCaretToView();
 	}
 
@@ -338,13 +379,13 @@ include( './ui' );
 	        go.editing = !acceptToEdit;
 		    go.updateBackground();
 		    go.scrollIntoView();
-		    input.on( 'mouseDown', go.checkClickOutside );
+		    Input.on( 'mouseDown', go.checkClickOutside );
 	    // blurred
 	    } else {
 		    ui.autoMoveFocus = acceptToEdit;
 	        go.editing = false;
 		    go.updateBackground();
-		    input.off( 'mouseDown', go.checkClickOutside );
+		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
 		go.fire( 'focusChanged', newFocus );
 		go.fire( 'layout' );
@@ -390,6 +431,17 @@ include( './ui' );
 
 	// scrolling
 	ui.mouseWheel = function ( wy, wx ) {
+
+		// if numeric and focused
+		if ( numeric && wy && ui.focused ){
+			var val = wy < 0 ? -step : step;
+			log ( "go.value=", go.value, step, go.value + val );
+			go.value += val;
+			rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
+			stopEvent();
+			return;
+		}
+
 		// ignore if not focused
 		if ( !rt.multiLine && !ui.focused ) return;
 
@@ -443,7 +495,7 @@ include( './ui' );
 		x -= ui.padLeft; y -= ui.padTop;
 
 		// shift + down
-		if ( ( input.get( Key.LeftShift ) || input.get( Key.RightShift ) ) && selectable ) {
+		if ( ( Input.get( Key.LeftShift ) || Input.get( Key.RightShift ) ) && selectable ) {
 			rt.selectionStart = Math.min( rt.selectionStart, rt.caretPosition );
 			rt.selectionEnd = rt.caretPositionAt( x, y );
         } else {
@@ -469,14 +521,14 @@ include( './ui' );
 		// start selection drag
 		if ( selectable ) {
 			ui.dragSelect = true;
-			input.on( 'mouseMove', ui.mouseMoveGlobal );
+			Input.on( 'mouseMove', ui.mouseMoveGlobal );
 		}
 	}
 
 	// mouse release
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y ) {
 		ui.dragSelect = null;
-		input.off( 'mouseMove', ui.mouseMoveGlobal );
+		Input.off( 'mouseMove', ui.mouseMoveGlobal );
 	};
 
 	// mouse move while holding down
@@ -529,6 +581,22 @@ include( './ui' );
 
 		// normal character
 	    } else {
+		    // filter non-numeric
+		    if ( numeric ) {
+			    if ( integer && !key.match( /\d/) ) return;
+			    else if ( !key.match( /[0-9.\-]/ ) ) return;
+				// test new value
+			    var txt = rt.text;
+				if ( replacingSelection ) {
+					txt = rt.text.substr( 0, selStartIndex ) + key + rt.text.substr( selEndIndex );
+				} else {
+					txt = rt.text.substr( 0, caretIndex ) + key + rt.text.substr( caretIndex );
+				}
+			    if ( txt == '.' || txt == '-' ) txt += '0';
+			    if ( (integer && isNaN( parseInt( txt ) ) ) || isNaN( parseFloat( txt ) ) ) return;
+
+		    }
+
 			// selection
 			if ( replacingSelection ) {
 				rt.text = rt.text.substr( 0, selStartIndex ) + key + rt.text.substr( selEndIndex );
@@ -551,7 +619,7 @@ include( './ui' );
 		go.scrollCaretToView();
 
 		// change
-		go.fire( 'change' );
+		go.fire( 'change', go.value );
 	}
 
 	// key down
@@ -591,7 +659,7 @@ include( './ui' );
 			        ui.keyPress( "\n" ); // newline in multiline box
 		        } else {
 			        // text changed?
-			        if ( txt != resetText ) go.fire( 'change' );
+			        if ( txt != resetText ) go.fire( 'change', go.value );
 		        }
 	            break;
 
@@ -654,6 +722,13 @@ include( './ui' );
 
 			case Key.Up:
 			case Key.Down:
+				// numeric
+				if ( numeric ) {
+					go.value += ( code == Key.Up ? step : -step );
+					rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
+					return;
+				}
+
 				// starting selection
 				if ( shift && selectable ) {
 					if ( !haveSelection ) rt.selectionEnd = rt.selectionStart = caretPosition;
@@ -795,7 +870,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.textfield ) for ( var p in UI.style.textfield ) go[ p ] = UI.style.textfield[ p ];
+	UI.base.applyDefaults( go, UI.style.textfield );
 
 })(this);
 

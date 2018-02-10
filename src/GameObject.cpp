@@ -500,7 +500,6 @@ void GameObject::InitClass() {
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
 		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition | Object initProperties ] ] )";
-		int pos = -1;
 		void* obj = NULL;
 		string scriptName;
 		GameObject* other = NULL;
@@ -520,16 +519,17 @@ void GameObject::InitClass() {
 			script.SetProperty( "script", ArgValue( scriptName.c_str() ), other->scriptObject );
 		}
 		
-		// either position or initObj
-		void *initObj = NULL;
-		if ( !sa.ReadArgumentsFrom( 1, 1, TypeObject, &initObj ) ){
-			sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
-		}
-		
 		// validate
 		if ( !other ){
 			script.ReportError( error );
 			return false;
+		}
+		
+		// either position or initObj
+		void *initObj = NULL;
+		int pos = -1; //(int) other->children.size();
+		if ( !sa.ReadArgumentsFrom( 1, 1, TypeObject, &initObj, TypeInt, &pos ) ){
+			sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
 		}
 		
 		// all good
@@ -543,7 +543,7 @@ void GameObject::InitClass() {
 		}
 		
 		// schedule layout
-		if ( self->ui ) self->ui->RequestLayout();
+		if ( self->ui ) self->ui->RequestLayout( ArgValue( "addChild" ) );
 		
 		// return added object
 		sa.ReturnObject( other->scriptObject );
@@ -586,7 +586,7 @@ void GameObject::InitClass() {
 		other->SetParent( NULL );
 		
 		// schedule layout
-		if ( self->ui ) self->ui->RequestLayout();
+		if ( self->ui ) self->ui->RequestLayout( ArgValue( "removeChild" ) );
 		
 		return true;
 	}));
@@ -1081,12 +1081,12 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			// insert into children based on desired position
 			int numChildren = (int) newParent->children.size();
 			// convert negative pos
-			if ( desiredPosition < 0 ) desiredPosition = numChildren + desiredPosition;
+			if ( desiredPosition < 0 ) desiredPosition = numChildren + 1 + desiredPosition;
 			// insert at location
-			if ( desiredPosition >= numChildren - 1 ) {
-				newParent->children.push_back( this );
-			} else {
+			if ( desiredPosition <= numChildren ) {
 				newParent->children.insert( newParent->children.begin() + max( 0, desiredPosition ), this );
+			} else {
+				newParent->children.push_back( this );
 			}
 			
 			// call event on this object only

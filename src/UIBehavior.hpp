@@ -17,13 +17,21 @@ public:
 	
 	Scene* scene = NULL;
 	
-	typedef enum {
+	typedef enum class LayoutType {
 		None,
 		Anchors,
 		Horizontal,
 		Vertical,
 		Grid
 	} LayoutType;
+	
+	typedef enum class LayoutAlign {
+		Default,
+		Start,
+		Center,
+		End,
+		Stretch
+	} LayoutAlign;
 	
 	// UI
 	
@@ -48,6 +56,7 @@ public:
 	UIBehavior* navigationRight = NULL;
 	UIBehavior* navigationUp = NULL;
 	UIBehavior* navigationDown = NULL;
+	string navigationGroup;
 	bool autoNavigate = true;
 	
 	/// overridden
@@ -72,17 +81,22 @@ public:
 	
 	// limits on width and height
 	float minWidth = 0;
-	float maxWidth = 9999;
+	float maxWidth = 0;
 	float minHeight = 0;
-	float maxHeight = 9999;
+	float maxHeight = 0;
 	
-	// values are computed during layout, unless object is not positioned (all anchors are -1)
+	// layout size (including padding, but not margins)
 	float layoutWidth = 0;
 	float layoutHeight = 0;
-	float layoutX = 0, layoutY = 0;
 	
-	// for horizontal and vertical - expands opposite axis to fill container
-	bool layoutExpandCrossAxis = true;
+	// stretch this element to fill empty space in vertical and horizontal layouts, where fitChildren = false
+	float flex = 0;
+	
+	// for horizontal and vertical - how to align child on secondary axis
+	LayoutAlign crossAxisAlign = LayoutAlign::Stretch;
+	
+	// overrides parent
+	LayoutAlign selfAlign = LayoutAlign::Default;
 	
 	// adjust own size after layout to fit children
 	bool fitChildren = true;
@@ -104,7 +118,7 @@ public:
 	float spacingY = 0;
 	
 	/// requests late layout event (scene)
-	void RequestLayout();
+	void RequestLayout( ArgValue trigger );
 	
 	void GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h );
 	

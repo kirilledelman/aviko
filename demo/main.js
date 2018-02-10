@@ -1,9 +1,9 @@
 log( "Привет из main.js!" );
 
-app.setWindowSize( 800, 480, 2 );
-app.windowResizable = true;
+App.setWindowSize( 800, 480, 2 );
+App.windowResizable = true;
 
-input.controllerAdded = function ( kb ) {
+Input.controllerAdded = function ( kb ) {
 	kb.bindAxis( '-horizontal', Key.Left );
 	kb.bindAxis( '+horizontal', Key.Right );
 	kb.bindAxis( '-vertical', Key.Up );
@@ -13,43 +13,66 @@ input.controllerAdded = function ( kb ) {
 	kb.save();
 };
 
+App.scene = new Scene();
 
-app.scene = new Scene();
 
-var scrollable = app.scene.addChild( 'ui/scrollable', {
-	x: 50, y: 20,
-	width: 150, height: 200
-} );
+var panel = App.scene.addChild ( 'ui/scrollable', {
+	layoutType: Layout.Vertical,
+	x: 10, y: 10,
+	width: 150, height: 100,
+	layoutAlign: LayoutAlign.Stretch
+});
 
-input.mouseMove = function ( x, y ) {
 
-	if ( input.get( Key.MouseButton ) && input.get( Key.LeftShift ) ) {
+Input.mouseMove = function ( x, y ) {
+
+	if ( Input.get( Key.MouseButton ) && Input.get( Key.LeftShift ) ) {
 		var ww = Math.round( x ) - this.x;
 		var hh = Math.round( y ) - this.y;
 		this.width = ww;
 		this.height = hh;
 	}
 
-}.bind( scrollable );
+}.bind( panel );
 
-var panel = scrollable.addChild ( 'ui/panel', {
-	layoutType: Layout.Vertical,// background: null,
-	pad: 8, width: 150
-});
 
-panel.addChild( new GameObject( 'ui/text', { text: "^BTitle\n^bSubtitle", align: TextAlign.Center } ) );
+panel.addChild( 'ui/button', {
+	text: 'Tuba',
+	icon: 'tuba',
+	click: function () {
+		log( "hello" );
+	}
+} );
 
-for ( var i = 0; i < 1; i++ ) {
 
-	var f = new GameObject( 'ui/textfield', {
-		text: "Input " + i
-	} );
-	panel.addChild( f );
+panel.addChild( 'ui/text', {
+	// text: "^BTitle\n^bSubtitle\nSub-Subtitle",
+	text: "Label",
+	align: TextAlign.Left
+} );
 
-}
+panel.addChild( 'ui/textfield', {
+	text: "Input 1",
+	width: 90,
+	flex: 1
+} );
 
-panel.addChild( new GameObject( 'ui/image', {
-	texture: 'mom'
-} ) );
+panel.addChild( 'ui/text', {
+	text: "^BTitle\n^bSubtitle\nSub-Subtitle",
+	align: TextAlign.Left
+} );
 
+panel.addChild( 'ui/image', {
+	texture: 'tuba',
+} );
+
+panel.addChild( 'ui/textfield', {
+	value: 0,
+	numeric: true,
+	min: 0,
+	max: 1,
+	step: 0.1,
+	change: function ( v ) { log( v ); },
+	width: 60
+} );
 

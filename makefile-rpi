@@ -1,6 +1,6 @@
 CC=g++ -std=c++1y -O3 -Wno-invalid-offsetof -DRASPBERRY_PI -g \
 	-I./ -I/usr/include/mozjs-24 -I/usr/include/SDL2 \
-	-I/usr/local/include -I/usr/include
+	-I/usr/local/include -I/usr/include -I/opt/vc/include
 
 # Raspberry
 

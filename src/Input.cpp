@@ -7,9 +7,7 @@
 
 
 Input::Input() {
-	
 	SDL_StartTextInput();
-	
 }
 
 Input::Input( ScriptArguments* ) { script.ReportError( "Input can't be created using 'new'. Only one instance is available as global 'app.input' property." ); }
@@ -408,7 +406,7 @@ void Input::InitClass() {
 		
 	// spawn object
 	script.NewScriptObject<Input>( this );
-	script.AddGlobalNamedObject( "input", this->scriptObject );
+	script.AddGlobalNamedObject( "Input", this->scriptObject );
 
 	// set defaults
 	SDL_ShowCursor( this->showCursor );

@@ -23,6 +23,11 @@ RigidBodyBehavior::RigidBodyBehavior( ScriptArguments* args ) : RigidBodyBehavio
 	RigidBodyShape* shp = new RigidBodyShape( NULL );
 	shp->SetBody( this );
 	
+	// obj argument - init object
+	void *initObj = NULL;
+	if ( args && args->ReadArguments( 1, TypeObject, &initObj ) ) {
+		script.CopyProperties( initObj, this->scriptObject );
+	}
 }
 
 // init

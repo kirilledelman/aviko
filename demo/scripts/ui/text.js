@@ -3,12 +3,14 @@
 	Text box
 
 	Usage:
-		var textField = app.scene.addChild( 'ui/input' );
-		textField.text = "Some text";
+		var label = app.scene.addChild( 'ui/input' );
+		label.text = "Some text\nSecond line";
 
 	look at mappedProps in source code below for additional properties,
 	also has shared layout properties from ui/ui.js
 
+	setting .wrap = false will auto-size control to size of text, otherwise
+	width should be set manually, or be laid out by a container.
 
  */
 
@@ -17,14 +19,26 @@ include( './ui' );
 
 	// inner props
 	var ui = new UI(), tc, rt;
-	var autoGrow = false;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
 	var mappedProps = [
 
-		// (String) input contents
-		[ 'text',   function (){ return rt.text; }, function( t ){ rt.text = t; go.fire( 'layout' ); } ],
+		// (String) text
+		[ 'text',   function (){ return rt.text; }, function( t ){
+			if ( !rt.wrap || !ui.width ) {
+				rt.autoResize = true;
+				rt.text = t;
+				rt.measure();
+				ui.width = rt.width + ui.padLeft + ui.padRight;
+				ui.height = rt.height + ui.padTop + ui.padTop;
+				rt.autoResize = false;
+			} else {
+				rt.text = t;
+				ui.requestLayout( 'text' );
+			}
+
+		} ],
 
 		// (Number) current width of the control
 		[ 'width',  function (){ return ui.width; }, function ( w ){ ui.width = w; } ],
@@ -33,15 +47,10 @@ include( './ui' );
 		[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; } ],
 
 		// (string) font name
-		[ 'font',  function (){ return rt.font; }, function ( f ){ rt.font = f; } ],
+		[ 'font',  function (){ return rt.font; }, function ( f ){ rt.font = f; ui.requestLayout( 'font' ); } ],
 
 		// (Number) font size
-		[ 'size',  function (){ return rt.size; }, function ( s ){
-			rt.size = s;
-			ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
-			if ( !rt.multiLine ) ui.height = ui.minHeight;
-			go.fire( 'layout' );
-		} ],
+		[ 'size',  function (){ return rt.size; }, function ( s ){ rt.size = s; ui.requestLayout( 'size' ); } ],
 
 		// (Boolean) should text be antialiased
 		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
@@ -49,42 +58,26 @@ include( './ui' );
 		// (Number) - Align.Left | Align.Center | Align.Right - text alignment
 		[ 'align',  function (){ return rt.align; }, function ( w ){ rt.align = w; } ],
 
-		// (Boolean) word wrapping at control width enabled for multiline field
-		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; } ],
-
 		// (Number) extra spacing between characters
 		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; } ],
 
-		// (Boolean) multiple line input
-		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){ rt.multiLine = v; go.fire( 'layout' ); } ],
-
-		// (Number) gets or sets number of visible lines in multiline control
-		[ 'numLines',  function (){ return rt.height / rt.lineHeight; }, function ( v ) {
-			if ( v != 1 ) rt.multiLine = true;
-			ui.minHeight = ui.padTop + ui.padBottom + v * rt.lineHeight;
-		}, true ],
-
-		// (Boolean) auto grow / shrink vertically multiline field
-		[ 'autoGrow',  function (){ return autoGrow; }, function ( v ){
-			rt.multiLine = rt.multiLine || v;
-			autoGrow = v;
-			go.fire( 'layout' );
-		} ],
-
 		// (Number) multiLine line spacing
-		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){ rt.lineSpacing = v; } ],
+		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){ rt.lineSpacing = v; ui.requestLayout( 'lineSpacing' ); } ],
 
 		// (Number) returns line height - font size + line spacing
 		[ 'lineHeight',  function (){ return rt.lineHeight; } ],
 
 		// (Boolean) font bold
-		[ 'bold',  function (){ return rt.bold; }, function ( v ){ rt.bold = v; } ],
+		[ 'bold',  function (){ return rt.bold; }, function ( v ){ rt.bold = v; ui.requestLayout( 'bold' ); } ],
 
 		// (Boolean) font italic
-		[ 'italic',  function (){ return rt.italic; }, function ( v ){ rt.italic = v; } ],
+		[ 'italic',  function (){ return rt.italic; }, function ( v ){ rt.italic = v; ui.requestLayout( 'italic' ); } ],
+
+		// (Boolean) automatically wrap text
+		[ 'wrap',  function (){ return rt.wrap; }, function ( v ){ rt.wrap = v; ui.requestLayout( 'wrap' ); } ],
 
 		// (Boolean) enable display ^code formatting (while not editing)
-		[ 'formatting',  function (){ return rt.formatting; }, function ( v ){ rt.formatting = v; } ],
+		[ 'formatting',  function (){ return rt.formatting; }, function ( v ){ rt.formatting = v; ui.requestLayout( 'formatting' ); } ],
 
 		// (Number) or (Color) text color
 		[ 'textColor',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
@@ -129,10 +122,15 @@ include( './ui' );
 
 	// create components
 
+	// set name
+	if ( !go.name ) go.name = "Text";
+
 	// text container
 	tc = new GameObject();
 	rt = new RenderText();
 	rt.autoResize = false;
+	rt.multiLine = true;
+	rt.wrap = false;
 	tc.render = rt;
 	tc.serialized = false;
 
@@ -143,55 +141,21 @@ include( './ui' );
 	go.ui = ui;
 
 	// children are added after component is awake,
-	// because component's children may be overwritten on unserialize
+	// because component's component-children may be overwritten on unserialize
 	go.awake = function () {
 		go.addChild( tc );
 	};
 
 	// layout components
-	ui.layout = function ( x, y, w, h ) {
-		go.setTransform( x, y );
-		ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
-		if ( rt.multiLine ) {
-			if ( autoGrow ) ui.minHeight = ui.height = h = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
-		} else {
-			h = ui.minHeight;
-		}
+	ui.layout = function ( w, h ) {
 		tc.setTransform( ui.padLeft, ui.padTop );
 		rt.width = w - ( ui.padLeft + ui.padRight );
-		rt.height = Math.max( rt.lineHeight, h - ( ui.padTop + ui.padBottom ) );
-	}
-
-	// scrolling
-	ui.mouseWheel = function ( wy, wx ) {
-
-		var st = rt.scrollTop, sl = rt.scrollLeft;
-
-		// scroll vertically
-		if ( wy != 0 && rt.scrollHeight > rt.height ) {
-			rt.scrollTop =
-			Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop - wy ) );
-		}
-		// scroll horizontally
-		if ( wx != 0 && rt.scrollWidth > rt.width ){
-			rt.scrollLeft =
-			Math.max( 0, Math.min( rt.scrollWidth - rt.width, rt.scrollLeft + wx ) );
-		}
-
-		// stop event if scrolled
-		if ( sl != rt.scrollLeft || st != rt.scrollTop ) stopEvent();
-	}
-
-	// auto resize text box vertically with text
-	go.checkAutoGrow = function () {
-		if ( autoGrow && rt.multiLine ) {
-			var h = ui.height;
-			ui.height = ui.minHeight = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
-			if ( h != ui.height ) go.async( go.scrollIntoView );
-		}
+		rt.measure();
+		rt.height = rt.numLines * rt.lineHeight;
+		ui.minHeight = rt.height + ui.padTop + ui.padBottom;
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.text ) for ( var p in UI.style.text ) go[ p ] = UI.style.text[ p ];
+	UI.base.applyDefaults( go, UI.style.text );
 
 })(this);

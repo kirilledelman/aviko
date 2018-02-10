@@ -32,6 +32,7 @@ using namespace std;
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_gpu.h>
+#include <gles.h> // check OPi makefile 
 #endif
 
 // physics library
@@ -65,6 +66,7 @@ int StringIndexToPosition( const char* str, int index );
 int StringPositionLength( const char* str );
 string base64_encode( unsigned char const*, unsigned int len );
 string base64_decode( string const& s );
+string GetScriptNameAndLine();
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"
@@ -115,7 +117,6 @@ string base64_decode( string const& s );
 #define KEY_MOUSE_WHEEL (SDL_NUM_SCANCODES + 6)
 #define KEY_MOUSE_WHEEL_X (SDL_NUM_SCANCODES + 7)
 
-
 // Physics events
 #define EVENT_TOUCH "touch"
 #define EVENT_UNTOUCH "untouch"
@@ -125,6 +126,7 @@ string base64_decode( string const& s );
 #define EVENT_RESIZED "resized"
 #define EVENT_AWAKE "awake"
 #define EVENT_LAYOUT "layout"
+#define EVENT_ERROR "error"
 
 // additional blending mode
 #define GPU_BLEND_CUT_ALPHA 16

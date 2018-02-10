@@ -24,7 +24,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 		// locate needed frame
 		ImageFramesIterator it = this->mainResource->frames.find( frame );
 		if ( it == this->mainResource->frames.end() ) {
-			printf( "Frame %s not found.\n", originalKey );
+			printf( "%s - Frame %s not found.\n", GetScriptNameAndLine().c_str(), originalKey );
 			this->error = ERROR_NOT_FOUND;
 			return;
 		}
@@ -93,7 +93,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 							w.toNumber( frameInfo.actualWidth );
 							h.toNumber( frameInfo.actualHeight );
 						} else {
-							printf( "Error while loading \"%s.json\"", path.c_str() );
+							printf( "%s - Error while loading \"%s.json\"", GetScriptNameAndLine().c_str(), path.c_str() );
 							break;
 						}
 
@@ -120,7 +120,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 							}
 
 						} else {
-							printf( "Error while loading \"%s.json\"", path.c_str() );
+							printf( "%s - Error while loading \"%s.json\"", GetScriptNameAndLine().c_str(), path.c_str() );
 							break;
 						}
 						
@@ -132,7 +132,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 							x.toNumber( frameInfo.trimOffsetX );
 							y.toNumber( frameInfo.trimOffsetY );
 						} else {
-							printf( "Error while loading \"%s.json\"", path.c_str() );
+							printf( "%s - Error while loading \"%s.json\"", GetScriptNameAndLine().c_str(), path.c_str() );
 							break;
 						}
 						
@@ -142,11 +142,11 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 					}
 					
 				} else {
-					printf( "Error while loading \"%s.json\": object doesn't contain 'frames' property.\n", path.c_str() );
+					printf( "%s - Error while loading \"%s.json\": object doesn't contain 'frames' property.\n", GetScriptNameAndLine().c_str(), path.c_str() );
 				}
 				// failed to parse
 			} else {
-				printf( "Error while loading \"%s.json\": bad JSON\n", path.c_str() );
+				printf( "%s - Error while loading \"%s.json\": bad JSON\n", GetScriptNameAndLine().c_str(), path.c_str() );
 			}
 			
 		}
@@ -160,7 +160,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 	// load image
 	SDL_Surface* surface = IMG_Load( path.c_str() );
 	if ( surface == NULL ) {
-		printf( "%s was not found\n", path.c_str() );
+		printf( "%s - Texture %s was not found\n", GetScriptNameAndLine().c_str(), path.c_str() );
 		this->error = ERROR_NOT_FOUND;
 		return;
 	}

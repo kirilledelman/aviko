@@ -110,6 +110,9 @@ include( './ui' );
 
 	// create components
 
+	// set name
+	if ( !go.name ) go.name = "Scrollable";
+
 	// UI
 	ui = new UI();
 	ui.layoutType = Layout.Anchors;
@@ -117,6 +120,7 @@ include( './ui' );
 	go.ui = ui;
 
 	// container
+	container.name = 'Scrollable.Container';
 	container.ui.focusable = false;
 
 	// image
@@ -183,23 +187,22 @@ include( './ui' );
 	}
 
 	// lay out components
-	ui.layout = function( x, y, w, h ) {
-		go.setTransform( x, y );
+	ui.layout = function( w, h ) {
 
 		// auto-size container for lists
 		if ( container.ui.layoutType == Layout.Vertical || container.layoutType == Layout.Grid ) {
-			container.ui.width = w;
+			container.ui.width = Math.max( container.ui.minWidth, w );
 		} else if ( container.ui.layoutType == Layout.Horizontal ) {
-			container.ui.height = h;
+			container.ui.height = Math.max( container.ui.minHeight, h );
 		}
-		spr.setSize( w, h );
-		img.setSize( w, h );
+		spr.resize( w, h );
+		img.resize( w, h );
 		go.scrollLeft = go.scrollLeft; // use setter to clip value
 		go.scrollTop = go.scrollTop; // use setter to clip value
 	}
 
 	// container resizing should update scrollbars
-	container.ui.layout = function( x, y, w, h ) { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
+	container.ui.layout = function() { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
 
 	// scrolling
 	ui.mouseWheel = function ( wy, wx ) {
@@ -213,6 +216,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.scrollable ) for ( var p in UI.style.scrollable ) go[ p ] = UI.style.scrollable[ p ];
+	UI.base.applyDefaults( go, UI.style.scrollable );
 
 })(this);

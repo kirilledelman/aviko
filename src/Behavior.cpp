@@ -51,6 +51,23 @@ void Behavior::InitClass() {
 	
 	// functions
 	
+	script.DefineFunction<Behavior>
+	( "toString",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ) {
+		static char buf[512];
+		Behavior* self = (Behavior*) o;
+		
+		if ( !self ) {
+			sprintf( buf, "[Behavior prototype]" );
+		} else if ( self->gameObject && self->gameObject->name.size() ){
+			sprintf( buf, "[%s (%s) %p]", self->scriptClassName, self->gameObject->name.c_str(), self );
+		} else {
+			sprintf( buf, "[%s %p]", self->scriptClassName, self );
+		}
+		
+		sa.ReturnString( buf );
+		return true;
+	}));
 	
 }
 
@@ -129,7 +146,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 			// convert negative pos
 			if ( desiredPosition < 0 ) desiredPosition = numBehaviors + desiredPosition;
 			// insert at location
-			if ( desiredPosition >= numBehaviors - 1 ) {
+			if ( desiredPosition >= numBehaviors ) {
 				newGameObject->behaviors.push_back( this );
 			} else {
 				newGameObject->behaviors.insert( newGameObject->behaviors.begin() + max( 0, desiredPosition ), this );

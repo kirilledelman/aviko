@@ -181,15 +181,7 @@ private:
 	};
 
 	/// callback for Javascript errors
-	static void _PrintError ( JSContext *cx, const char *message, JSErrorReport *report ){
-		
-		printf( "%s:%u\n%s\n",
-			   report->filename ? report->filename : "[top]",
-			   (unsigned int) report->lineno,
-			   message);
-		//exit( 1 );
-		
-	}
+	static void ErrorReport ( JSContext *cx, const char *message, JSErrorReport *report );
 	
 	/// class name -> class definition struct
 	typedef unordered_map<string, ClassDef> ClassMap;
@@ -566,7 +558,7 @@ public:
 		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX );
 		
 		// set error handler
-		JS_SetErrorReporter( this->js, this->_PrintError );
+		JS_SetErrorReporter( this->js, this->ErrorReport );
 		
 		// scoped request
 		JSAutoRequest req( this->js );
@@ -1224,9 +1216,6 @@ public:
 /* MARK:	-				Script execution & JSON
  -------------------------------------------------------------------- */
 
-	/// used to resolve relative paths when including scripts
-	ScriptResource* currentScript = NULL;
-	
 	ArgValue Evaluate( const char *code, const char* filename=NULL, void* thisObj=NULL ) {
 		JSAutoRequest req( this->js );
 		RootedValue rval( this->js );
@@ -1251,15 +1240,6 @@ public:
 			return false;
 		}
 		
-		// set current script
-		ScriptResource* previousCurrent = this->currentScript;
-		bool prevNoUnload = false;
-		if ( previousCurrent ) {
-			prevNoUnload = previousCurrent->dontUnload;
-			previousCurrent->dontUnload = true;
-		}
-		this->currentScript = scriptResource;
-		
 		// context
 		JSObject* obj = thisObject ? (JSObject*) thisObject : this->global_object;
 		
@@ -1273,9 +1253,6 @@ public:
 		if ( success && out ) *out = ArgValue( *rval.address() );
 		JS_MaybeGC( this->js );
 		
-		// restore current
-		this->currentScript = previousCurrent;
-		if ( previousCurrent ) this->currentScript->dontUnload = prevNoUnload;
 		return success;
 	}
 	

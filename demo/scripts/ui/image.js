@@ -31,7 +31,7 @@ include( './ui' );
 		// (Image) instance of Image object (alternative to .texture property)
 		[ 'image',  function (){ return rs.image; }, function ( v ){ rs.image = v; go.updateParams(); } ],
 
-		// (String) 'icon', 'fit', 'fitx', 'fity', 'fill', or 'stretch'
+		// (String) 'icon', 'fit', 'fill', or 'stretch'
 		[ 'mode',  function (){ return mode; }, function ( v ){ mode = v; go.updateParams(); } ]
 
 	];
@@ -44,7 +44,12 @@ include( './ui' );
 	}
 
 	// create components
+
+	// set name
+	if ( !go.name ) go.name = "Image";
+
 	sc = go.addChild();
+	sc.name = "Image.Container";
 	sc.serialized = false;
 	rs = new RenderSprite();
 	rs.pivotX = rs.pivotY = 0.5;
@@ -53,46 +58,48 @@ include( './ui' );
 	// UI
 	ui.layoutType = Layout.Anchors;
 	ui.focusable = false;
+	ui.minWidth = ui.minHeight = 8;
 	go.ui = ui;
 
 	// lay out components
-	ui.layout = function( x, y, w, h ) {
+	ui.layout = function( w, h ) {
 
-		go.setTransform( x, y );
 		sc.setTransform( w * 0.5, h * 0.5 );
-		if ( !rs.texture ) return;
+		if ( !(rs.texture || rs.image ) ) return;
 
 		// mode
 		if ( mode == 'icon' ){
-			// nothing
+			// do nothing
 		} else if ( mode == 'fit' ) {
-			sc.scale = Math.min( w / rs.width, h / rs.height );
-		} else if ( mode == 'fitx' ) {
-			ui.height = h = w * ( rs.width / rs.height );
-			sc.scale = Math.min( w / rs.width, h / rs.height );
-		} else if ( mode == 'fity' ) {
-			ui.width = w = h / ( rs.width / rs.height );
+			if ( go.parent && go.parent.ui ) {
+				// parent is vertical list, fit-x
+				if ( go.parent.ui.layoutType == Layout.Vertical ) {
+					ui.height = h = w * ( rs.width / rs.height );
+				// parent is horizontal list, fit-y
+				} else if ( go.parent.ui.layoutType == Layout.Horizontal ) {
+					ui.width = w = h / ( rs.width / rs.height );
+				}
+			}
 			sc.scale = Math.min( w / rs.width, h / rs.height );
 		} else if ( mode == 'stretch' ) {
-			rs.setSize( w, h );
+			rs.resize( w, h );
 		} else if ( mode == 'fill' ) {
 			sc.scale = Math.max( w / rs.width, h / rs.height );
 		}
 		// image size
 		if ( go.render && (ri.width != w || ri.height != h) ) {
-			go.render.setSize( w, h );
+			go.render.resize( w, h );
 		}
 	}
 
 	// update after params change
 	go.updateParams = function () {
-
-		if ( mode == 'icon' ){
+		if ( mode == 'icon' && (rs.texture || rs.image) ){
 			// min size is set to icon size
-			ui.width = ui.minWidth = rs.width;
-			ui.height = ui.minHeight = rs.height;
+			ui.minWidth = rs.width;
+			ui.minHeight = rs.height;
 		}
-
+		// fill mode uses Image to crop
 		if ( mode == 'fill' ) {
 			if ( !ri ) {
 				ri = new Image( ui.width, ui.height );
@@ -103,11 +110,11 @@ include( './ui' );
 			// clear render image (cropping)
 			go.render = ri = null;
 		}
-
-		go.fireLate( 'layout' );
+		go.fire( 'layout' );
+		ui.requestLayout( 'image/updateParams' );
 	}
 
 	// apply defaults
-	if ( UI.style && UI.style.image ) for ( var p in UI.style.image ) go[ p ] = UI.style.image[ p ];
+	UI.base.applyDefaults( go, UI.style.image );
 
 })(this);

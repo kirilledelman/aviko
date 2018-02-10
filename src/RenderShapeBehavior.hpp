@@ -42,7 +42,7 @@ public:
 	ShapeType shapeType = Circle;
 	
 	/// fill shape
-	bool filled = false;
+	bool filled = true;
 	
 	/// center circles etc.
 	bool centered = true;
@@ -99,6 +99,8 @@ public:
 	/// overridden from RenderBehavior
 	bool IsScreenPointInside( float screenX, float screenY, float* outLocalX, float* outLocalY );
 	
+	/// UIs without layout handler will call this on gameObject's render component
+	void Resize( float w, float h );
 };
 
 float DistanceToLine( float px, float py, float x1, float y1, float x2, float y2 );

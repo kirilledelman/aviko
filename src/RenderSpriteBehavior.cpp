@@ -25,14 +25,17 @@ RenderSpriteBehavior::RenderSpriteBehavior( ScriptArguments* args ) : RenderSpri
 		if ( args->args[ 0 ].type == TypeString ) {
 			// texture
 			script.SetProperty( "texture", args->args[ 0 ], this->scriptObject );
-			
+			// if there was a second param, object
+			if ( args->args.size() > 1 && args->args[ 1 ].type == TypeObject && args->args[ 1 ].value.objectValue != NULL ) {
+				script.CopyProperties( args->args[ 1 ].value.objectValue, this->scriptObject );
+			}
 		// or Image object
 		} else if ( args->args[ 0 ].type == TypeObject && args->args[ 0 ].value.objectValue != NULL ) {
 			Image* img = script.GetInstance<Image>( args->args[ 0 ].value.objectValue );
 			if ( img ) {
 				script.SetProperty( "image", args->args[ 0 ], this->scriptObject );
 			} else {
-				script.ReportError( "RenderSprite constructor accepts String texture, or Image instance" );
+				script.CopyProperties( args->args[ 0 ].value.objectValue, this->scriptObject );
 			}
 		}
 	}
@@ -262,17 +265,14 @@ void RenderSpriteBehavior::InitClass() {
 	// functions
 	
 	script.DefineFunction<RenderSpriteBehavior>
-	( "setSize", // setSize( Number width, Number height )
+	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		RenderSpriteBehavior* self = (RenderSpriteBehavior*) obj;
-		if ( sa.ReadArguments( 2, TypeFloat, &self->width, TypeFloat, &self->height ) ) {
-			if ( self->imageInstance ) {
-				self->imageInstance->width = self->width;
-				self->imageInstance->height = self->height;
-				self->imageInstance->_sizeDirty = true;
-			}
+		float w = 0, h = 0;
+		if ( sa.ReadArguments( 2, TypeFloat, &w, TypeFloat, &h ) ) {
+			self->Resize( w, h );
 		} else {
-			script.ReportError( "usage: setSize( Number width, Number height )" );
+			script.ReportError( "usage: resize( Number width, Number height )" );
 			return false;
 		}
 		return true;
@@ -295,6 +295,15 @@ GPU_Rect RenderSpriteBehavior::GetBounds() {
 	return rect;
 }
 
+void RenderSpriteBehavior::Resize( float w, float h ) {
+	this->width = w;
+	this->height = h;
+	if ( this->imageInstance ) {
+		this->imageInstance->width = this->width;
+		this->imageInstance->height = this->height;
+		this->imageInstance->_sizeDirty = true;
+	}
+}
 
 /* MARK:	-				Render
  -------------------------------------------------------------------- */

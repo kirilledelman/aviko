@@ -195,13 +195,13 @@ void Image::InitClass() {
 	// functions
 	
 	script.DefineFunction<Image>
-	( "setSize", // setSize( Int width, Int height )
+	( "resize", // setSize( Int width, Int height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		Image* img = (Image*) obj;
 		if ( sa.ReadArguments( 2, TypeInt, &img->width, TypeInt, &img->height ) ) {
 			img->_sizeDirty = true;
 		} else {
-			script.ReportError( "usage: setSize( Int width, Int height )" );
+			script.ReportError( "usage: resize( Int width, Int height )" );
 			return false;
 		}
 		return true;

@@ -46,6 +46,9 @@ public:
 	
 	GPU_Rect GetBounds();
 	
+	/// UIs without layout handler will call this on gameObject's render component
+	void Resize( float w, float h );
+	
 // methods
 		
 	/// render callback

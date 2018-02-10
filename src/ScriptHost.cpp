@@ -577,3 +577,40 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 	
 }
 
+
+/* MARK:	-				Error reporting
+ -------------------------------------------------------------------- */
+
+/// callback for Javascript errors
+void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport *report ){
+	
+	// this error is handled
+	JS_ClearPendingException( cx );
+	
+	// determine if there's error handler registered
+	ScriptableClass::EventListenersMap::iterator hit = app.eventListeners.find( string( EVENT_ERROR ) );
+	bool hasHandler = ( hit != app.eventListeners.end() && hit->second.size() > 0 );
+	if ( !hasHandler ) {
+		ArgValue hval = script.GetProperty( EVENT_ERROR, app.scriptObject );
+		if ( hval.type == TypeUndefined ) {
+			// no handler - dump error and exit
+			printf( "%s:%u\n%s\n",
+				   report->filename ? report->filename : "[top]",
+				   (unsigned int) report->lineno,
+				   message);			
+			exit( 1 );
+			return;
+		}
+	}
+	
+	// there's a handler let it deal with error
+	Event e ( EVENT_ERROR );
+	e.scriptParams.AddStringArgument( message );
+	e.scriptParams.AddStringArgument( report->filename ? report->filename : "" );
+	e.scriptParams.AddIntArgument( report->lineno );
+	e.scriptParams.AddIntArgument( report->column );
+	e.scriptParams.AddIntArgument( report->flags );
+	app.CallEvent( e );
+	
+}
+

@@ -11,9 +11,6 @@ ScriptableClass::~ScriptableClass() {
 	// script
 	if ( this->scriptObject && script.js ) {
 		
-		// clean up late events
-		app.RemoveLateEvents( this );
-		
 		// remove from all scheduled calls
 		ScriptableClass::CancelAsync( this->scriptObject, -1 );
 		ScriptableClass::CancelDebouncer( this->scriptObject, "" );
@@ -22,6 +19,9 @@ ScriptableClass::~ScriptableClass() {
 		script.ProtectObject( &this->scriptObject, false );
 		JS_SetPrivate( (JSObject*) this->scriptObject, NULL );
 		this->scriptObject = NULL;
+		
+		// clean up late events
+		app.RemoveLateEvents( this );
 	}
 	
 }

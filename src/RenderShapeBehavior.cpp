@@ -24,103 +24,113 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	int pShape = 0;
 	vector<ArgValue>* pArray = NULL;
 	float p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0, p6 = 0;
+	void *initObj = NULL;
 	
 	// if arguments are given
 	if ( args &&
-		( args->ReadArguments( 1, TypeInt, &pShape, TypeFloat, &p1, TypeFloat, &p2, TypeFloat, &p3, TypeFloat, &p4, TypeFloat, &p5, TypeFloat, &p6 ) ||
+		( args->ReadArguments( 1, TypeInt, &pShape, TypeObject, &initObj ) ||
+		  args->ReadArguments( 1, TypeInt, &pShape, TypeFloat, &p1, TypeFloat, &p2, TypeFloat, &p3, TypeFloat, &p4, TypeFloat, &p5, TypeFloat, &p6 ) ||
 		  args->ReadArguments( 1, TypeInt, &pShape, TypeArray, &pArray ) ) ) {
+		
 		// first is shape
 		this->shapeType = (ShapeType) pShape;
 		size_t numArgs = args->args.size();
-		// extra arguments
-		if ( this->shapeType == Line ) { /// line from 0, 0 to x / y
-			this->x = this->y = 50;
-			if ( numArgs >= 3 ) {
-				this->x = p1; this->y = p2;
-			}
-		} else if ( this->shapeType == Arc ) { /// arc for a circle at x, y, radius, start->end angle
-			this->radius = 25;
-			this->startAngle = 0;
-			this->endAngle = 90;
-			if ( numArgs >= 3 ) {
-				this->x = p1;
-				this->y = p2;
-				if ( numArgs >= 4 ) {
-					this->radius = p3;
-					if ( numArgs == 5 ) {
-						this->endAngle = p4;
-					} else if ( numArgs >= 6 ) {
-						this->startAngle = p4;
-						this->endAngle = p5;
-					}
-				}
-			}
-		} else if ( this->shapeType == Circle ) { /// circle with radius
-			this->radius = 25;
-			if ( numArgs >= 2 ) {
-				this->radius = p1;
-			}
-		} else if ( this->shapeType == Ellipse ) { /// ellipse x wide, y tall
-			this->x = 50; this->y = 25;
-			if ( numArgs == 3 ) {
-				this->x = p1;
-				this->y = p2;
-			}
-		} else if ( this->shapeType == Sector ) { /// sector of a donut with radius, hole innerRadius, start->end angle
-			this->radius = 25;
-			this->innerRadius = 5;
-			this->startAngle = 0;
-			this->endAngle = 360;
-			if ( numArgs >= 2 ) {
-				this->radius = p1;
+		
+		// second was object?
+		if ( initObj ) {
+			
+			// use as init
+			script.CopyProperties( initObj, this->scriptObject );
+			
+		} else {
+			// extra arguments
+			if ( this->shapeType == Line ) { /// line from 0, 0 to x / y
+				this->x = this->y = 50;
 				if ( numArgs >= 3 ) {
-					this->innerRadius = p2;
-					if ( numArgs == 4 ) {
-						this->endAngle = p3;
-					} else if ( args->args.size() >= 5 ) {
-						this->startAngle = p3;
-						this->endAngle = p4;
+					this->x = p1; this->y = p2;
+				}
+			} else if ( this->shapeType == Arc ) { /// arc for a circle at x, y, radius, start->end angle
+				this->radius = 25;
+				this->startAngle = 0;
+				this->endAngle = 90;
+				if ( numArgs >= 3 ) {
+					this->x = p1;
+					this->y = p2;
+					if ( numArgs >= 4 ) {
+						this->radius = p3;
+						if ( numArgs == 5 ) {
+							this->endAngle = p4;
+						} else if ( numArgs >= 6 ) {
+							this->startAngle = p4;
+							this->endAngle = p5;
+						}
 					}
-				} else {
-					this->innerRadius = max( 0.f, this->radius - 10 );
 				}
-			}
-		} else if ( this->shapeType == Triangle ) { /// triangle between x,y,x1,y1,x2,y2
-			this->x = -10; this->y = 5;
-			this->x1 = 10; this->y1 = 5;
-			this->x2 = 0; this->y2 = -5;
-			if ( numArgs >= 7 ) {
-				this->x = p1;
-				this->y = p2;
-				this->x1 = p3;
-				this->y1 = p4;
-				this->x2 = p5;
-				this->y2 = p6;
-			}
-		} else if ( this->shapeType == Rectangle ) { /// rectangle x wide, y tall
-			this->x = 30; this->y = 20;
-			this->centered = false;
-			if ( numArgs >= 3 ) {
-				this->x = p1;
-				this->y = p2;
-			}
-		} else if ( this->shapeType == RoundedRectangle ) { /// rectangle x wide, y tall, radius corner
-			this->x = 30; this->y = 20;
-			if ( numArgs >= 3 ) {
-				this->x = p1;
-				this->y = p2;
-				if ( numArgs >= 4 ) {
-					this->radius = p3;
+			} else if ( this->shapeType == Circle ) { /// circle with radius
+				this->radius = 25;
+				if ( numArgs >= 2 ) {
+					this->radius = p1;
 				}
-			}
-		} else if ( this->shapeType == Polygon ) { /// polygon between polyPoints (x,y pairs)
-			if ( pArray ) {
-				this->polyPoints->Set( args->args[ 1 ] );
+			} else if ( this->shapeType == Ellipse ) { /// ellipse x wide, y tall
+				this->x = 50; this->y = 25;
+				if ( numArgs == 3 ) {
+					this->x = p1;
+					this->y = p2;
+				}
+			} else if ( this->shapeType == Sector ) { /// sector of a donut with radius, hole innerRadius, start->end angle
+				this->radius = 25;
+				this->innerRadius = 5;
+				this->startAngle = 0;
+				this->endAngle = 360;
+				if ( numArgs >= 2 ) {
+					this->radius = p1;
+					if ( numArgs >= 3 ) {
+						this->innerRadius = p2;
+						if ( numArgs == 4 ) {
+							this->endAngle = p3;
+						} else if ( args->args.size() >= 5 ) {
+							this->startAngle = p3;
+							this->endAngle = p4;
+						}
+					} else {
+						this->innerRadius = max( 0.f, this->radius - 10 );
+					}
+				}
+			} else if ( this->shapeType == Triangle ) { /// triangle between x,y,x1,y1,x2,y2
+				this->x = -10; this->y = 5;
+				this->x1 = 10; this->y1 = 5;
+				this->x2 = 0; this->y2 = -5;
+				if ( numArgs >= 7 ) {
+					this->x = p1;
+					this->y = p2;
+					this->x1 = p3;
+					this->y1 = p4;
+					this->x2 = p5;
+					this->y2 = p6;
+				}
+			} else if ( this->shapeType == Rectangle ) { /// rectangle x wide, y tall
+				this->x = 30; this->y = 20;
+				this->centered = false;
+				if ( numArgs >= 3 ) {
+					this->x = p1;
+					this->y = p2;
+				}
+			} else if ( this->shapeType == RoundedRectangle ) { /// rectangle x wide, y tall, radius corner
+				this->x = 30; this->y = 20;
+				if ( numArgs >= 3 ) {
+					this->x = p1;
+					this->y = p2;
+					if ( numArgs >= 4 ) {
+						this->radius = p3;
+					}
+				}
+			} else if ( this->shapeType == Polygon ) { /// polygon between polyPoints (x,y pairs)
+				if ( pArray ) {
+					this->polyPoints->Set( args->args[ 1 ] );
+				}
 			}
 		}
-		
 	}
-	
 }
 
 // init
@@ -261,13 +271,15 @@ void RenderShapeBehavior::InitClass() {
 	// functions
 	
 	script.DefineFunction<RenderShapeBehavior>
-	( "setSize", // setSize( Number width, Number height )
+	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		RenderShapeBehavior* self = (RenderShapeBehavior*) obj;
-		if ( !sa.ReadArguments( 2, TypeInt, &self->x, TypeInt, &self->y ) ) {
-			script.ReportError( "usage: setSize( Number width, Number height )" );
+		float x = 0, y = 0;
+		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y ) ) {
+			script.ReportError( "usage: resize( Number width, Number height )" );
 			return false;
 		}
+		self->Resize( x, y );
 		return true;
 	}));
 	
@@ -403,6 +415,12 @@ bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, flo
 	
 }
 
+void RenderShapeBehavior::Resize( float w, float h ) {
+	
+	// TODO - better resize for shapes
+	this->x = w; this->y = h;
+	
+}
 
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
