@@ -100,6 +100,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.panel );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.panel );
+	delete go.style;
 
 })(this);

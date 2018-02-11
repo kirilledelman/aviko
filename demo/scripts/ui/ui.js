@@ -5,8 +5,20 @@
 	These are just default properties set at creation and can be overridden. See components
 	source files for all available properties.
 
- 
- 
+    To further customize / use different "substyles" for differently styled components,
+    provide .style param. E.g:
+
+    var bigButtonStyle = { .... style properties to init button with .... };
+    var smallButtonStyle = { .... style properties to init button with .... };
+    container.addChild( 'ui/button', {
+        text: "Big Button",
+        style: bigButtonStyle
+    });
+    container.addChild( 'ui/button', {
+        text: "Small Button",
+        style: smallButtonStyle
+    });
+
  
 */
 
@@ -113,6 +125,43 @@ UI.style = UI.style ? UI.style : {
 		image: {},
 
 	},
+
+	// checkbox - ui/checkbox.js
+	checkbox: {
+
+		background: './textures/ui:checkbox',
+		overBackground: './textures/ui:checkbox-over',
+		focusBackground: './textures/ui:checkbox-over',
+		downBackground: './textures/ui:checkbox-over',
+		disabledBackground: './textures/ui:checkbox-disabled',
+
+		slice: 0, // (Array[4]) or (Number) slicing for background texture
+		pad: 0, // [ top, right, bottom, left ] or (Number) padding
+
+		// apply to checkbox label (ui/text.js)
+		label: {
+			textColor: 0x0,
+			size: 14
+		},
+
+		// "checkmark" image
+		image: {
+			texture: './textures/ui:checkbox-check', // to make solid color, set background: color instead, add margin if needed to position
+		},
+
+	},
+
+	// menu with items - ui/menu.js
+	menu: {
+
+
+	},
+
+	// select-style dropdown menu - ui/dropdown.js
+	dropdown: {
+
+
+	}
 
 
 

@@ -27,6 +27,7 @@ typedef enum {
 	TypeBool,
 	TypeInt,
 	TypeFloat,
+	TypeDouble,
 	TypeObject,
 	TypeString,
 	TypeArray,
@@ -47,6 +48,7 @@ struct ArgValue {
 		bool	boolValue;
 		int		intValue;
 		float 	floatValue;
+		double 	doubleValue;
 		void* 	objectValue;
 		ArgValueVector* arrayValue;
 		string* stringValue;
@@ -66,6 +68,7 @@ struct ArgValue {
 	ArgValue( bool val ){ type = TypeBool; value.boolValue = val; }
 	ArgValue( int val ){ type = TypeInt; value.intValue = val; }
 	ArgValue( float val ){ type = TypeFloat; value.floatValue = val; }
+	ArgValue( double val ){ type = TypeDouble; value.doubleValue = val; }
 	ArgValue( const char* val ){ type = TypeString; value.stringValue = new string( val ); }
 	ArgValue( void* val ){ type = TypeObject; value.objectValue = val; }
 	ArgValue( const ArgValue& copyFrom );
@@ -75,6 +78,7 @@ struct ArgValue {
 	
 	// value getters
 	bool toNumber( float& dest );
+	bool toNumber( double& dest );
 	bool toInt( int& dest );
 	bool toInt8( Uint8& dest );
 	bool toBool();
@@ -110,6 +114,7 @@ public:
 	void ReturnBool( bool val );
 	void ReturnInt( int val );
 	void ReturnFloat( float val );
+	void ReturnDouble( double val );
 	void ReturnString( string val );
 	void ReturnString( const char* val );
 	void ReturnObject( void* val );
@@ -121,6 +126,7 @@ public:
 	void AddIntArgument( int val );
 	void AddBoolArgument( bool val );
 	void AddFloatArgument( float val );
+	void AddDoubleArgument( double val );
 	void AddStringArgument( const char* val );
 	void AddObjectArgument( void* val );
 	void AddArgument( ArgValue val );

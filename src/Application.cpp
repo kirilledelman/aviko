@@ -1016,9 +1016,9 @@ void Application::RunLateEvents() {
 			// call
 			if ( le.lateDispatch ) {
 				GameObject* go = (GameObject*) obj;
-				if ( go ) go->DispatchEvent( event );
+				if ( go ) go->DispatchEvent( event, true );
 			} else {
-				obj->CallEvent( event );
+				obj->ScriptableClass::CallEvent( event );
 			}
 			it++;
 		}

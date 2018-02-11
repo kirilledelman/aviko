@@ -48,6 +48,7 @@ include( './ui' );
 	var minValue = -Infinity;
 	var maxValue = Infinity;
 	var step = 1.0;
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 
@@ -60,7 +61,7 @@ include( './ui' );
 			var ps0 = rt.selectionStart, ps1 = rt.selectionEnd;
 			rt.text = t;
 			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
-			if ( pt != t ) go.fire( 'change', go.value );
+			if ( pt != t && !constructing ) go.fire( 'change', go.value );
 			if ( ps0 != ps1 ) go.fire( 'selectionChanged' );
 		} ],
 
@@ -76,6 +77,10 @@ include( './ui' );
 			if ( numeric ) {
 				if ( integer ) v = Math.round( v );
 				v = Math.min( maxValue, Math.max( minValue, v ) );
+				if ( !integer ) {
+					v = v.toFixed( 3 ).replace( /(0+)$/, '' ).replace( /\.$/, '' ); // delete trailing zeros, and .
+
+				}
 			}
 			go.text = v;
 		} ],
@@ -143,7 +148,7 @@ include( './ui' );
 			} else {
 				ui.height = ui.minHeight;
 			}
-			go.fire( 'layout' );
+			go.dispatch( 'layout' );
 		} ],
 
 		// (Boolean) only accepts numbers
@@ -216,7 +221,7 @@ include( './ui' );
 		// (Boolean) multiple line input
 		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){
 			rt.multiLine = v;
-			go.fire( 'layout' );
+			go.dispatch( 'layout' );
 			go.scrollCaretToView(); } ],
 
 		// (Number) gets or sets number of visible lines in multiline control
@@ -230,14 +235,14 @@ include( './ui' );
 		[ 'autoGrow',  function (){ return autoGrow; }, function ( v ){
 			rt.multiLine = rt.multiLine || v;
 			autoGrow = v;
-			go.fire( 'layout' );
+			go.dispatch( 'layout' );
 			go.scrollCaretToView();
 		} ],
 
 		// (Number) multiLine line spacing
 		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){
 			rt.lineSpacing = v;
-			go.fire( 'layout' );
+			go.dispatch( 'layout' );
 			go.scrollCaretToView();
 		} ],
 
@@ -266,7 +271,7 @@ include( './ui' );
 			 if ( v && ui.focused ) ui.blur();
 			 go.updateBackground();
 			 tc.opacity = v ? 0.6 : 1;
-			 go.fire( 'layout' );
+			 go.dispatch( 'layout' );
 		 } ],
 
 		// (Boolean) enable display ^code formatting (while not editing)
@@ -388,7 +393,7 @@ include( './ui' );
 		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
 		go.fire( 'focusChanged', newFocus );
-		go.fire( 'layout' );
+		go.dispatch( 'layout' );
 	}
 
 	// navigation event
@@ -435,7 +440,6 @@ include( './ui' );
 		// if numeric and focused
 		if ( numeric && wy && ui.focused ){
 			var val = wy < 0 ? -step : step;
-			log ( "go.value=", go.value, step, go.value + val );
 			go.value += val;
 			rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 			stopEvent();
@@ -870,7 +874,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.textfield );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.textfield );
+	go.constructing = false;
+	delete go.style;
 
 })(this);
 

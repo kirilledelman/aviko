@@ -529,7 +529,7 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 		if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
 		
 		// get value
-		ArgValue val = GetProperty( propName, src );
+		JS_GetProperty( this->js, (JSObject*) src, propName, &propVal );
 		
 		// check for early property
 		bool isEarlyProp = false;
@@ -541,9 +541,6 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 				isLateProp = (it->second.flags & PROP_LATE);
 			}
 		}
-		
-		// copy value
-		propVal = val.toValue();
 		
 		// propVal contains our value
 		

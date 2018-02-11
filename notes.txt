@@ -1,12 +1,12 @@
 
-
 Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
 
 Enhance Vector class with slice etc., add ObjectVector, IntVector, etc.
 	Vector -
 		new Vector( type )
 			type - class, like Object, or GameObject, or Number
-			
+
+UIBehavior - add property to make parent skip this child from layout
 
 UI:
 	input

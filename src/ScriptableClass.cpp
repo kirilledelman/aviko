@@ -224,7 +224,7 @@ void ScriptableClass::InitClass() {
 		}
 		// dispatch
 		ScriptableClass* self = (ScriptableClass*) go;
-		self->CallEvent( event );
+		self->ScriptableClass::CallEvent( event );
 		return true;
 	}));
 	

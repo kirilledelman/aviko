@@ -25,6 +25,17 @@ include( './ui' );
 	// API properties
 	var mappedProps = [
 
+		// (Color) or (Number) or null - solid background for this control
+		[ 'background', function (){ return go.render ? go.render.color : null; },
+			function ( v ){
+				if ( v === null ) {
+					go.render = null;
+				} else {
+					if ( !go.render ) go.render = new RenderShape( Shape.Rectangle );
+					go.render.color = v;
+				}
+			} ],
+
 		// (String) texture path
 		[ 'texture', function (){ return rs.texture; }, function ( v ){ rs.texture = v; go.updateParams(); } ],
 
@@ -64,6 +75,10 @@ include( './ui' );
 	// lay out components
 	ui.layout = function( w, h ) {
 
+		// background
+		if ( go.render ) go.render.resize( w, h );
+
+		// center container
 		sc.setTransform( w * 0.5, h * 0.5 );
 		if ( !(rs.texture || rs.image ) ) return;
 
@@ -110,11 +125,12 @@ include( './ui' );
 			// clear render image (cropping)
 			go.render = ri = null;
 		}
-		go.fire( 'layout' );
+		go.dispatch( 'layout' );
 		ui.requestLayout( 'image/updateParams' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.image );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.image );
+	delete go.style;
 
 })(this);

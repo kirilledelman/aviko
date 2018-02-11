@@ -41,14 +41,14 @@ include( './ui' );
 			orientation = o;
 			// apply defaults
 			UI.base.applyDefaults( go, UI.style.scrollbar[ orientation ] );
-			go.fireLate( 'layout' );
+			go.dispatchLate( 'layout' );
 		} ],
 
 		// (Number) - position of the handle - 0 to (totalSize - handleSize)
 		[ 'position',  function (){ return position; }, function ( p ){
 			if ( p != position ) {
 				position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
-				go.fireLate( 'layout' );
+				go.dispatchLate( 'layout' );
 			}
 		}],
 
@@ -57,7 +57,7 @@ include( './ui' );
 			if ( v != totalSize ) {
 				totalSize = v;
 				handle.active = (v > 0);
-				go.fireLate( 'layout' );
+				go.dispatchLate( 'layout' );
 			}
 		}],
 
@@ -65,7 +65,7 @@ include( './ui' );
 		[ 'handleSize',  function (){ return totalSize; }, function ( v ){
 			if ( v != handleSize ) {
 				handleSize = v;
-				go.fireLate( 'layout' );
+				go.dispatchLate( 'layout' );
 			}
 		}],
 
@@ -273,7 +273,8 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.scrollbar );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.scrollbar );
+	delete go.style;
 
 	// apply orientation
 	go.orientation = orientation;

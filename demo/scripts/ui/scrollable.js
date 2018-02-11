@@ -216,6 +216,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.scrollable );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.scrollable );
+	delete go.style;
 
 })(this);

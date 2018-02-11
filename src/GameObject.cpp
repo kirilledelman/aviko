@@ -37,8 +37,6 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
-	printf( "~GameObject\n" );
-	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
 	

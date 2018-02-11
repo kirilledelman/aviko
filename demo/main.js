@@ -15,14 +15,12 @@ Input.controllerAdded = function ( kb ) {
 
 App.scene = new Scene();
 
-
 var panel = App.scene.addChild ( 'ui/scrollable', {
 	layoutType: Layout.Vertical,
 	x: 10, y: 10,
 	width: 150, height: 100,
 	layoutAlign: LayoutAlign.Stretch
 });
-
 
 Input.mouseMove = function ( x, y ) {
 
@@ -35,6 +33,23 @@ Input.mouseMove = function ( x, y ) {
 
 }.bind( panel );
 
+
+var grp = [];
+grp.push( panel.addChild( 'ui/checkbox', {
+	text: 'Option 1',
+	group: grp,
+	change: function ( v ) {
+		if ( v ) log( "option 1" );
+	}
+} ) );
+
+grp.push( panel.addChild( 'ui/checkbox', {
+	text: 'Option 2',
+	group: grp,
+	change: function ( v ) {
+		if ( v ) log( "option 2" );
+	}
+} ) );
 
 panel.addChild( 'ui/button', {
 	text: 'Tuba',

@@ -1436,6 +1436,8 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
 	}
 	
+	//printf( "MouseButton inBounds=%d,down=%d, %s.ui\n", inBounds, down, behavior->gameObject->name.c_str() );
+	
 	if ( inBounds ) {
 		// dispatch mousedown or mouseup
 		Event event( e->name );

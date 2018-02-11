@@ -44,6 +44,7 @@ void ScriptArguments::ReturnNull() { this->callArgs->rval().setNull(); }
 void ScriptArguments::ReturnBool( bool val ) { this->callArgs->rval().setBoolean( val ); }
 void ScriptArguments::ReturnInt( int val ) { this->callArgs->rval().setInt32( val ); }
 void ScriptArguments::ReturnFloat( float val ) { this->callArgs->rval().setDouble( val ); }
+void ScriptArguments::ReturnDouble( double val ) { this->callArgs->rval().setDouble( val ); }
 void ScriptArguments::ReturnString( string val ) { RootedString rs( script.js, JS_NewStringCopyZ( script.js, val.c_str() ) ); this->callArgs->rval().setString( rs ); }
 void ScriptArguments::ReturnString( const char* val ) { RootedString rs( script.js, JS_NewStringCopyZ( script.js, val ) ); this->callArgs->rval().setString( rs ); }
 void ScriptArguments::ReturnObject( void* val ) { this->callArgs->rval().setObjectOrNull( (JSObject*) val ); }
@@ -58,6 +59,7 @@ void ScriptArguments::ResizeArguments( int len ) {
 void ScriptArguments::AddIntArgument( int val ){ this->args.emplace_back( val ); jsval jv; jv.setInt32( val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddBoolArgument( bool val ){ this->args.emplace_back( val ); jsval jv; jv.setBoolean( val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddFloatArgument( float val ){ this->args.emplace_back( val ); jsval jv; jv.setDouble( (double) val ); this->funcArgs()->append( jv ); }
+void ScriptArguments::AddDoubleArgument( double val ){ this->args.emplace_back( val ); jsval jv; jv.setDouble( val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddObjectArgument( void* val ){ this->args.emplace_back( val ); jsval jv; jv.setObjectOrNull( (JSObject*) val ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddStringArgument( const char* val ){ this->args.emplace_back( val ); jsval jv; jv.setString( JS_NewStringCopyZ( script.js, val ) ); this->funcArgs()->append( jv ); }
 void ScriptArguments::AddArgument( ArgValue val ){ this->args.emplace_back( val ); this->funcArgs()->append( val.toValue() ); }
@@ -79,6 +81,8 @@ jsval ScriptArguments::ArrayToVal( vector<ArgValue> &arr ) {
 			values[ i ].setBoolean( v.value.boolValue );
 		} else if ( v.type == TypeFloat ) {
 			values[ i ].setDouble( v.value.floatValue );
+		} else if ( v.type == TypeDouble ) {
+			values[ i ].setDouble( v.value.doubleValue );
 		} else if ( v.type == TypeInt ) {
 			values[ i ].setInt32( v.value.intValue );
 		} else if ( v.type == TypeObject ) {
@@ -230,8 +234,8 @@ ArgValue& ArgValue::operator=( const jsval &val ) {
 		type = TypeInt;
 		value.intValue = val.toInt32();
 	} else if ( val.isDouble() ) {
-		type = TypeFloat;
-		value.floatValue = (float) val.toDouble();
+		type = TypeDouble;
+		value.doubleValue = val.toDouble();
 	} else if ( val.isString() ) {
 		type = TypeString;
 		char *buf = JS_EncodeString( script.js, val.toString() );
@@ -318,11 +322,19 @@ bool ArgValue::get( void *destination, ScriptType desiredType ) {
 		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.intValue; }
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.intValue != 0; }
 		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.intValue; }
+		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.intValue; }
 		else return false;
 	} else if ( this->type == TypeFloat ){
 		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.floatValue; }
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.floatValue != 0.0; }
 		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.floatValue; }
+		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.floatValue; }
+		else return false;
+	} else if ( this->type == TypeDouble ){
+		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.doubleValue; }
+		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.doubleValue != 0.0; }
+		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.doubleValue; }
+		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.doubleValue; }
 		else return false;
 	} else if ( this->type == TypeObject && desiredType == TypeObject ){
 		*((void**)destination) = this->value.objectValue;
@@ -348,6 +360,8 @@ jsval ArgValue::toValue() {
 		val.setInt32( this->value.intValue );
 	} else if ( this->type == TypeFloat ){
 		val.setDouble( this->value.floatValue );
+	} else if ( this->type == TypeDouble ){
+		val.setDouble( this->value.doubleValue );
 	} else if ( this->type == TypeObject || this->type == TypeFunction ){
 		val.setObjectOrNull( (JSObject*) this->value.objectValue );
 	} else if ( this->type == TypeString ){
@@ -366,6 +380,8 @@ bool ArgValue::toNumber( float &dest ) {
 		dest = this->value.boolValue ? 1.f : 0.f;
 	} else if ( this->type == TypeFloat ) {
 		dest = this->value.floatValue;
+	} else if ( this->type == TypeDouble ) {
+		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
 	} else {
@@ -380,6 +396,8 @@ bool ArgValue::toInt( int& dest ) {
 		dest = this->value.boolValue ? 1 : 0;
 	} else if ( this->type == TypeFloat ) {
 		dest = this->value.floatValue;
+	} else if ( this->type == TypeDouble ) {
+		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
 	} else {
@@ -391,6 +409,8 @@ bool ArgValue::toInt( int& dest ) {
 bool ArgValue::toInt8( Uint8& dest ) {
 	if ( this->type == TypeFloat ) {
 		dest = this->value.floatValue;
+	} else if ( this->type == TypeDouble ) {
+		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
 	} else {
@@ -405,6 +425,8 @@ bool ArgValue::toBool() {
 		return this->value.boolValue;
 	} else if ( this->type == TypeFloat ) {
 		return this->value.floatValue != 0.f;
+	} else if ( this->type == TypeDouble ) {
+		return this->value.doubleValue != 0.f;
 	} else if ( this->type == TypeInt ) {
 		return this->value.intValue != 0;
 	} else if ( this->type == TypeString ) {

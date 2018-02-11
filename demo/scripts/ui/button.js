@@ -90,7 +90,7 @@ include( './ui' );
 			 if ( v && ui.focused ) ui.blur();
 			 go.updateBackground();
 			 label.opacity = v ? 0.6 : 1;
-			 go.fire( 'layout' );
+			 go.dispatch( 'layout' );
 		 } ],
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
@@ -218,7 +218,7 @@ include( './ui' );
 		if ( name == 'accept' ) {
 
 			// simulated click
-			go.fire( 'click', 0, 0, 0, go.x, go.y );
+			ui.fire( 'click', 0, 0, 0, go.x, go.y );
 
 			// animate down / up
 			down = true; go.updateBackground();
@@ -239,7 +239,7 @@ include( './ui' );
 
 	}
 
-	// click - dispatch on gameObject
+	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
 		ui.focus();
@@ -250,7 +250,7 @@ include( './ui' );
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
 		down = true; go.updateBackground();
-		// redispatch on gameObject
+		// forward to gameObject
 		go.fire( 'mouseDown', btn, x, y, wx, wy );
 	}
 
@@ -310,6 +310,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.button );
+	UI.base.applyDefaults( go, go.style ? go.style : UI.style.button );
+	delete go.style;
 
 })(this);
