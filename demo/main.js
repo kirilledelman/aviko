@@ -15,7 +15,7 @@ Input.controllerAdded = function ( kb ) {
 
 App.scene = new Scene();
 
-var panel = App.scene.addChild ( 'ui/scrollable', {
+/*var panel = App.scene.addChild ( 'ui/scrollable', {
 	layoutType: Layout.Vertical,
 	x: 10, y: 10,
 	width: 150, height: 100,
@@ -90,4 +90,39 @@ panel.addChild( 'ui/textfield', {
 	change: function ( v ) { log( v ); },
 	width: 60
 } );
+*/
+
+var t = App.scene.addChild();
+t.x = 100; t.y = 150;
+var r = new RenderShape();
+r.filled = false;
+r.shape = Shape.Chain;
+r.lineThickness = 8;
+r.color = 0xFFFF00;
+r.points = [ 0,0, 150,0, 150,100, 0,100 ]; // sigma
+t.render = r;
+
+Input.mouseMove = function ( x, y ) {
+
+	if ( Input.get( Key.LeftShift ) ) {
+		var ww = Math.round( x ) - this.x;
+		var hh = Math.round( y ) - this.y;
+
+		r.points[ 2 ] = ww;
+		r.points[ 3 ] = hh;
+	}
+
+}.bind( t );
+
+Input.keyDown = function ( k ) {
+	
+	if ( k == Key.Space ) {
+		r.shape = (r.shape == Shape.Chain ? Shape.Polygon : Shape.Chain);
+		log( r.shape );
+	}
+}
+
+
+
+
 

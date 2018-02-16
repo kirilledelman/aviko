@@ -12,7 +12,10 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	script.NewScriptObject<RenderShapeBehavior>( this );
 	
 	// polypoints
-	this->polyPoints = new FloatVector( NULL );
+	this->polyPoints = new TypedVector( NULL );
+	ArgValue dv( "Float" );
+	this->polyPoints->InitWithType( dv );
+	this->polyPoints->callback = static_cast<TypedVectorCallback>([this](TypedVector* fv){ this->_renderPointsDirty = true; });
 	
 	// add defaults
 	RenderBehavior::AddDefaults();	
@@ -127,7 +130,10 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 			} else if ( this->shapeType == Polygon ) { /// polygon between polyPoints (x,y pairs)
 				if ( pArray ) {
 					this->polyPoints->Set( args->args[ 1 ] );
+					this->_renderPointsDirty = filled;
 				}
+			} else if ( this->shapeType == Chain ) { /// un-closed polygon between polyPoints (x,y pairs)
+				if ( pArray ) this->polyPoints->Set( args->args[ 1 ] );
 			}
 		}
 	}
@@ -181,12 +187,22 @@ void RenderShapeBehavior::InitClass() {
 	script.AddProperty<RenderShapeBehavior>
 	( "shape",
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderShapeBehavior*) b)->shapeType; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderShapeBehavior*) b)->shapeType = (ShapeType) val ); }) );
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderShapeBehavior* s = (RenderShapeBehavior*) b;
+		s->shapeType = (ShapeType) val;
+		s->_renderPointsDirty = ( val == Polygon && s->filled );
+		return val;
+	}) );
 	
 	script.AddProperty<RenderShapeBehavior>
 	( "filled",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderShapeBehavior*) b)->filled; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderShapeBehavior*) b)->filled = val ); }) );
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		RenderShapeBehavior* rb = (RenderShapeBehavior*) b;
+		rb->filled = val;
+		rb->_renderPointsDirty = ( val && rb->shapeType == Polygon );
+		return val;
+	}) );
 	
 	script.AddProperty<RenderShapeBehavior>
 	( "radius",
@@ -249,7 +265,7 @@ void RenderShapeBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->endAngle = val ); }) );
 
 	script.AddProperty<RenderShapeBehavior>
-	( "lineWidth",
+	( "lineThickness",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->lineThickness; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->lineThickness = val ); }) );
 
@@ -407,7 +423,8 @@ bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, flo
 		}
 	} else if ( shapeType == ShapeType::Polygon ) {
 	
-		return InsidePolygon( *outLocalX, *outLocalY, polyPoints->vec.Data(), (int) polyPoints->vec.GetLength() / 2 );
+		vector<float>* dv = polyPoints->ToFloatVector();
+		return InsidePolygon( *outLocalX, *outLocalY, dv->data(), polyPoints->GetLength() / 2 );
 		
 	}
 	
@@ -421,6 +438,20 @@ void RenderShapeBehavior::Resize( float w, float h ) {
 	this->x = w; this->y = h;
 	
 }
+
+/* MARK:	-				UpdatePoints
+ -------------------------------------------------------------------- */
+
+void RenderShapeBehavior::UpdatePoints() {
+
+	_renderPointsDirty = false;
+	if ( shapeType == Polygon && filled ) {
+		// points to triangle strip
+		// TODO
+	}
+	
+}
+
 
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
@@ -452,6 +483,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	
 	// draw based on type
 	GPU_Rect rect;
+	vector<unsigned short>* indexes;
+	vector<float>* points;
 	switch( behavior->shapeType ){
 		
 		case ShapeType::Line:
@@ -540,11 +573,26 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			}
 			break;
 			
+		case ShapeType::Chain: // line segments, not closed
 		case ShapeType::Polygon:
-			if ( behavior->filled ) {
-				GPU_PolygonFilled( target, (unsigned int) behavior->polyPoints->vec.GetLength() / 2, behavior->polyPoints->vec.Data(), color );
+			
+			if ( behavior->shapeType == Polygon && behavior->filled ) {
+				// decompose into triangle strip
+				if ( behavior->_renderPointsDirty ) behavior->UpdatePoints();
+				// setup
+				indexes = &behavior->renderPoints;
+				points = behavior->polyPoints->ToFloatVector();
+				// target->color = color;
+				target->use_color = true;
+				GPU_PrimitiveBatch( NULL, target,
+								   (behavior->shapeType == Chain ? GPU_LINE_STRIP : ( behavior->filled ? GPU_TRIANGLE_STRIP : GPU_LINE_LOOP ) ),
+								   (int) points->size() / 2, points->data(),
+								   (int) indexes->size(), indexes->data(), GPU_BATCH_XY );
+				target->color = { 255, 255, 255, 255 };
+				target->use_color = false;
 			} else {
-				GPU_Polygon( target, (unsigned int) behavior->polyPoints->vec.GetLength() / 2, behavior->polyPoints->vec.Data(), color );
+				vector<float>* fv = behavior->polyPoints->ToFloatVector();
+				GPU_Polygon2( target, (int) fv->size() / 2, fv->data(), behavior->color->rgba, ( behavior->shapeType == Polygon ) );
 			}
 			break;
 		

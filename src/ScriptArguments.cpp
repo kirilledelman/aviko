@@ -85,6 +85,8 @@ jsval ScriptArguments::ArrayToVal( vector<ArgValue> &arr ) {
 			values[ i ].setDouble( v.value.doubleValue );
 		} else if ( v.type == TypeInt ) {
 			values[ i ].setInt32( v.value.intValue );
+		} else if ( v.type == TypeChar ) {
+			values[ i ].setInt32( v.value.charValue );
 		} else if ( v.type == TypeObject ) {
 			values[ i ].setObjectOrNull( (JSObject*) v.value.objectValue );
 		} else if ( v.type == TypeString ){
@@ -319,19 +321,29 @@ bool ArgValue::get( void *destination, ScriptType desiredType ) {
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.boolValue; }
 		else return false;
 	} else if ( this->type == TypeInt ){
-		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.intValue; }
+		if ( desiredType == TypeChar ) { *((Uint8*)destination) = this->value.intValue; }
+		else if ( desiredType == TypeInt ) { *((int*)destination) = this->value.intValue; }
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.intValue != 0; }
 		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.intValue; }
 		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.intValue; }
 		else return false;
+	} else if ( this->type == TypeChar ){
+		if ( desiredType == TypeChar ) { *((Uint8*)destination) = this->value.charValue; }
+		else if ( desiredType == TypeInt ) { *((int*)destination) = this->value.charValue; }
+		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.charValue != 0; }
+		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.charValue; }
+		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.charValue; }
+		else return false;
 	} else if ( this->type == TypeFloat ){
-		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.floatValue; }
+		if ( desiredType == TypeChar ) { *((Uint8*)destination) = this->value.floatValue; }
+		else if ( desiredType == TypeInt ) { *((int*)destination) = this->value.floatValue; }
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.floatValue != 0.0; }
 		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.floatValue; }
 		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.floatValue; }
 		else return false;
 	} else if ( this->type == TypeDouble ){
-		if ( desiredType == TypeInt ) { *((int*)destination) = this->value.doubleValue; }
+		if ( desiredType == TypeChar ) { *((int*)destination) = this->value.doubleValue; }
+		else if ( desiredType == TypeInt ) { *((int*)destination) = this->value.doubleValue; }
 		else if ( desiredType == TypeBool ) { *((bool*)destination) = this->value.doubleValue != 0.0; }
 		else if ( desiredType == TypeFloat ) { *((float*)destination) = this->value.doubleValue; }
 		else if ( desiredType == TypeDouble ) { *((double*)destination) = this->value.doubleValue; }
@@ -356,6 +368,8 @@ jsval ArgValue::toValue() {
 	jsval val;
 	if ( this->type == TypeBool ){
 		val.setBoolean( this->value.boolValue );
+	} else if ( this->type == TypeChar ){
+		val.setInt32( this->value.charValue );
 	} else if ( this->type == TypeInt ){
 		val.setInt32( this->value.intValue );
 	} else if ( this->type == TypeFloat ){
@@ -374,6 +388,37 @@ jsval ArgValue::toValue() {
 	return val;
 }
 
+string ArgValue::toString() {
+	
+	static char buf[512];
+	if ( this->type == TypeBool ) {
+		return string( this->value.boolValue ? "true" : "false" );
+	} else if ( this->type == TypeChar ) {
+		sprintf( buf, "%u", this->value.charValue );
+		return string( buf );
+	} else if ( this->type == TypeInt ) {
+		sprintf( buf, "%d", this->value.intValue );
+		return string( buf );
+	} else if ( this->type == TypeFloat ) {
+		sprintf( buf, "%f", this->value.floatValue );
+		return string( buf );
+	} else if ( this->type == TypeDouble ) {
+		sprintf( buf, "%f", this->value.doubleValue );
+		return string( buf );
+	} else if ( this->type == TypeString ) {
+		return *this->value.stringValue;
+	} else if ( this->type == TypeObject || this->type == TypeArray ) {
+		JSString* s = JS_ValueToString( script.js, this->toValue() );
+		char *r = JS_EncodeString( script.js, s );
+		string ret( r );
+		JS_free( script.js, (void*) r );
+		return ret;
+	}
+	
+	return "";
+	
+}
+
 // easy convert bool, int, float to float, or return FALSE
 bool ArgValue::toNumber( float &dest ) {
 	if ( this->type == TypeBool ) {
@@ -384,6 +429,27 @@ bool ArgValue::toNumber( float &dest ) {
 		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
+	} else if ( this->type == TypeChar ) {
+		dest = (float) this->value.charValue;
+	} else {
+		return false;
+	}
+	
+	return true;
+}
+
+// easy convert bool, int, float to float, or return FALSE
+bool ArgValue::toNumber( double &dest ) {
+	if ( this->type == TypeBool ) {
+		dest = this->value.boolValue ? 1.f : 0.f;
+	} else if ( this->type == TypeFloat ) {
+		dest = this->value.floatValue;
+	} else if ( this->type == TypeDouble ) {
+		dest = this->value.doubleValue;
+	} else if ( this->type == TypeInt ) {
+		dest = (float) this->value.intValue;
+	} else if ( this->type == TypeChar ) {
+		dest = (float) this->value.charValue;
 	} else {
 		return false;
 	}
@@ -400,6 +466,8 @@ bool ArgValue::toInt( int& dest ) {
 		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
+	} else if ( this->type == TypeChar ) {
+		dest = (float) this->value.charValue;
 	} else {
 		return false;
 	}
@@ -407,12 +475,16 @@ bool ArgValue::toInt( int& dest ) {
 }
 
 bool ArgValue::toInt8( Uint8& dest ) {
-	if ( this->type == TypeFloat ) {
+	if ( this->type == TypeBool ) {
+		dest = this->value.boolValue ? 1 : 0;
+	} else if ( this->type == TypeFloat ) {
 		dest = this->value.floatValue;
 	} else if ( this->type == TypeDouble ) {
 		dest = this->value.doubleValue;
 	} else if ( this->type == TypeInt ) {
 		dest = (float) this->value.intValue;
+	} else if ( this->type == TypeChar ) {
+		dest = this->value.charValue;
 	} else {
 		return false;
 	}
@@ -429,6 +501,8 @@ bool ArgValue::toBool() {
 		return this->value.doubleValue != 0.f;
 	} else if ( this->type == TypeInt ) {
 		return this->value.intValue != 0;
+	} else if ( this->type == TypeChar ) {
+		return this->value.charValue != 0;
 	} else if ( this->type == TypeString ) {
 		return (this->value.stringValue->length() > 0);
 	} else if ( this->type == TypeObject ) {

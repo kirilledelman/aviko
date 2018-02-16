@@ -262,7 +262,8 @@ private:
 				}				
 			}
 			
-			return true;
+			// bail if exception in getter or setter
+			return !JS_IsExceptionPending( script.js );
 			
 		} else if ( cdef->parent ) {
 			
@@ -1134,6 +1135,42 @@ public:
 			return c->name;
 		}
 		return NULL;
+	}
+	
+	bool IsObjectDescendentOf( void* scriptObject, const char *className ) {
+		// null matches all
+		// classname is "Object" - matches any object
+		if ( !scriptObject || strcmp( className, "Object" ) == 0 ) return true;
+		// get class
+		JSClass* clp = JS_GetClass( (JSObject*) scriptObject );
+		do {
+			// class name matches - yes
+			if ( strcmp( clp->name, className ) == 0 ) return true;
+			
+			// if ScriptableClass, go up parent chain
+			ClassDef* cdef = CDEF( clp->name );
+			if ( cdef ) {
+				if ( cdef->parent ) {
+					clp = &cdef->parent->jsc;
+				} else {
+					clp = NULL;
+				}
+			// regular object
+			} else {
+				clp = NULL;
+				jsval vp;
+				if ( JS_GetProperty( this->js, (JSObject*) scriptObject, "prototype", &vp ) && vp.isObjectOrNull() ) {
+					scriptObject = vp.toObjectOrNull();
+					if ( scriptObject ) {
+						clp = JS_GetClass( (JSObject*) scriptObject );
+					}
+				}
+				
+			}
+			
+		} while( clp != NULL );
+			
+		return false;
 	}
 	
 	

@@ -4,6 +4,7 @@
 #include "common.h"
 #include "RenderBehavior.hpp"
 #include "Vector.hpp"
+#include "TypedVector.hpp"
 
 class RenderShapeBehavior: public RenderBehavior {
 public:
@@ -78,7 +79,14 @@ public:
 	float endAngle = 359.999;
 	
 	/// holds x,y point pairs for GPU_Polygon
-	FloatVector* polyPoints = NULL;
+	TypedVector* polyPoints = NULL;
+	
+	/// shadow points vertices container - used for drawing concave polys
+	vector<unsigned short> renderPoints;
+	bool _renderPointsDirty = false;
+	
+	/// called when renderPoints changes
+	void UpdatePoints();
 	
 	/// line thickness
 	float lineThickness = 2;

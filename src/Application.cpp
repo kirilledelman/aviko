@@ -5,6 +5,7 @@
 #include "UIBehavior.hpp"
 #include "SampleBehavior.hpp"
 #include "Vector.hpp"
+#include "TypedVector.hpp"
 
 // from ScriptableClass.hpp
 int ScriptableClass::asyncIndex = 0;
@@ -186,11 +187,9 @@ void Application::UpdateBackscreen() {
 	}
 	GPU_SetDepthTest( this->backScreen->target, true );
 	GPU_SetDepthWrite( this->backScreen->target, true );
+	GPU_SetDepthFunction( this->backScreen->target, GPU_ComparisonEnum::GPU_LEQUAL );
 	this->backScreen->target->camera.z_near = -65535;
 	this->backScreen->target->camera.z_far = 65535;
-	
-	// TODO - remove after SDL_gpu fixes it
-	glDepthFunc( GL_LEQUAL );
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -735,6 +734,7 @@ void Application::InitClass() {
 		EVENT_MOUSEOVER, EVENT_MOUSEOUT, EVENT_CLICK, EVENT_MOUSEUPOUTSIDE,
 		EVENT_FOCUSCHANGED, EVENT_NAVIGATION, EVENT_TOUCH, EVENT_UNTOUCH,
 		EVENT_FINISHED, EVENT_RESIZED, EVENT_AWAKE, EVENT_LAYOUT, EVENT_ERROR,
+		EVENT_CHANGE,
 		NULL
 	};
 	for ( size_t i = 0; interns[ i ] != NULL; i++ ) {
@@ -745,6 +745,7 @@ void Application::InitClass() {
 	input.InitClass(); // single instance
 	Controller::InitClass();
 	FloatVector::InitClass();
+	TypedVector::InitClass();
 	Color::InitClass();
 	Sound::InitClass();
 	Tween::InitClass();

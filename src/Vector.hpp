@@ -6,7 +6,7 @@
 
 /// base class for vector container
 template <class T>
-class TypedVector {
+class TVector {
 public:
 
 	vector<T> vec;
@@ -40,13 +40,13 @@ public:
 	//void Slice( int pos, int length, ArgValue& returned );
 	//void Concat( ScriptArguments& additions, ArgValue& returned );
 
-	void Copy( TypedVector<T>& other ) {
+	void Copy( TVector<T>& other ) {
 		vec = other.vec;
 	}
 	
 	// init/destroy
-	TypedVector() { };
-	~TypedVector() { };
+	TVector() { };
+	~TVector() { };
 	
 };
 
@@ -58,7 +58,7 @@ class FloatVector : public ScriptableClass {
 public:
 	
 	// container
-	TypedVector<float> vec;
+	TVector<float> vec;
 	
 	bool notify = false;
 	FloatVectorCallback callback = NULL;

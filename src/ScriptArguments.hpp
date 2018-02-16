@@ -25,6 +25,7 @@ typedef enum {
 	TypeUndefined,
 	
 	TypeBool,
+	TypeChar,
 	TypeInt,
 	TypeFloat,
 	TypeDouble,
@@ -46,6 +47,7 @@ struct ArgValue {
 	/// combines all possible value types
 	union ArgValueUnion {
 		bool	boolValue;
+		Uint8	charValue;
 		int		intValue;
 		float 	floatValue;
 		double 	doubleValue;
@@ -66,6 +68,7 @@ struct ArgValue {
 	// constructors
 	ArgValue(){}
 	ArgValue( bool val ){ type = TypeBool; value.boolValue = val; }
+	ArgValue( Uint8 val ){ type = TypeChar; value.charValue = val; }
 	ArgValue( int val ){ type = TypeInt; value.intValue = val; }
 	ArgValue( float val ){ type = TypeFloat; value.floatValue = val; }
 	ArgValue( double val ){ type = TypeDouble; value.doubleValue = val; }
@@ -83,6 +86,7 @@ struct ArgValue {
 	bool toInt8( Uint8& dest );
 	bool toBool();
 	bool isNull( bool strict=false );
+	string toString();
 	bool get( void* destination, ScriptType desiredType );
 	jsval toValue();
 		

@@ -7,9 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		71019AE71FEDD7A300A7F08C /* SDL2_gpu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71019AE61FEDD7A300A7F08C /* SDL2_gpu.framework */; };
 		7129EE5D1FF412EF00BCF1F7 /* ScriptHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */; };
 		713D46BF1FF0276A00BBAEFF /* RigidBodyJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */; };
+		7172A4A9203789FD00492B46 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A3203789FD00492B46 /* SDL2_image.framework */; };
+		7172A4AA203789FD00492B46 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A4203789FD00492B46 /* SDL2_mixer.framework */; };
+		7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A5203789FD00492B46 /* SDL2_net.framework */; };
+		7172A4AC203789FD00492B46 /* SDL2_ttf.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A6203789FD00492B46 /* SDL2_ttf.framework */; };
+		7172A4AD203789FD00492B46 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A7203789FD00492B46 /* SDL2.framework */; };
+		7172A4B020378D3500492B46 /* SDL2_gpu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4AF20378D3500492B46 /* SDL2_gpu.framework */; };
 		71766D7E1FEFFAB200E13A92 /* RigidBodyShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */; };
 		71A077F72003D9230074D54A /* ScriptableClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A077F62003D9230074D54A /* ScriptableClass.cpp */; };
 		71D3CB681FEB3E9E006F7678 /* Box2D.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F4846D1F814B9300AF17EA /* Box2D.h */; };
@@ -177,15 +182,10 @@
 		71D3CC0E1FEB3E9E006F7678 /* ScriptResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */; };
 		71D3CC0F1FEB3E9E006F7678 /* ResourceManager.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E694621F5318E9001EB381 /* ResourceManager.hpp */; };
 		71D3CC101FEB3EC6006F7678 /* libmozjs-24.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A691FEADBFF00995D61 /* libmozjs-24.0.a */; };
-		71D3CC121FEB3EC6006F7678 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A5D1FEAD57000995D61 /* SDL2_image.framework */; };
-		71D3CC131FEB3EC6006F7678 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A5E1FEAD57000995D61 /* SDL2_mixer.framework */; };
-		71D3CC141FEB3EC6006F7678 /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A5F1FEAD57000995D61 /* SDL2_net.framework */; };
-		71D3CC151FEB3EC6006F7678 /* SDL2_ttf.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A601FEAD57000995D61 /* SDL2_ttf.framework */; };
-		71D3CC161FEB3EC6006F7678 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A611FEAD57000995D61 /* SDL2.framework */; };
 		71D3CC181FEB3F40006F7678 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A6B1FEADDDB00995D61 /* libz.tbd */; };
+		71D9A14F20308AC4006E0FD3 /* TypedVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */; };
 		71E28C401FF00A6300637B80 /* BodyBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */; };
 		71E626F81FF935D9001A203F /* aviko in CopyFiles */ = {isa = PBXBuildFile; fileRef = 71A460D91FEB3E3500129194 /* aviko */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		71E6FBB3200D3234006653A0 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71E6FBB2200D3234006653A0 /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -202,7 +202,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		71019AE61FEDD7A300A7F08C /* SDL2_gpu.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_gpu.framework; path = lib/OSX/sdl/SDL2_gpu.framework; sourceTree = "<group>"; };
 		710A47351F7EB4F300A89171 /* Color.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Color.cpp; path = src/Color.cpp; sourceTree = "<group>"; };
 		710A47361F7EB4F300A89171 /* Color.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Color.hpp; path = src/Color.hpp; sourceTree = "<group>"; };
 		71130ED81F5494CD001D453E /* RigidBodyBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RigidBodyBehavior.cpp; path = src/RigidBodyBehavior.cpp; sourceTree = "<group>"; };
@@ -211,11 +210,6 @@
 		7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptResource.cpp; path = src/ScriptResource.cpp; sourceTree = "<group>"; };
 		7126DBBA1F8404B900BD4E44 /* ScriptResource.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptResource.hpp; path = src/ScriptResource.hpp; sourceTree = "<group>"; };
 		7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptHost.cpp; path = src/ScriptHost.cpp; sourceTree = "<group>"; };
-		71339A5D1FEAD57000995D61 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = lib/OSX/sdl/SDL2_image.framework; sourceTree = "<group>"; };
-		71339A5E1FEAD57000995D61 /* SDL2_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_mixer.framework; path = lib/OSX/sdl/SDL2_mixer.framework; sourceTree = "<group>"; };
-		71339A5F1FEAD57000995D61 /* SDL2_net.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_net.framework; path = lib/OSX/sdl/SDL2_net.framework; sourceTree = "<group>"; };
-		71339A601FEAD57000995D61 /* SDL2_ttf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_ttf.framework; path = lib/OSX/sdl/SDL2_ttf.framework; sourceTree = "<group>"; };
-		71339A611FEAD57000995D61 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = lib/OSX/sdl/SDL2.framework; sourceTree = "<group>"; };
 		71339A691FEADBFF00995D61 /* libmozjs-24.0.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libmozjs-24.0.a"; path = "lib/OSX/mozjs-24/lib/libmozjs-24.0.a"; sourceTree = "<group>"; };
 		71339A6B1FEADDDB00995D61 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RigidBodyJoint.cpp; path = src/RigidBodyJoint.cpp; sourceTree = "<group>"; };
@@ -228,6 +222,12 @@
 		713F33A41FE5B046001147CD /* Tween.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tween.hpp; path = src/Tween.hpp; sourceTree = "<group>"; };
 		71515BAC1F682EDB004ED8C0 /* ScriptHost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptHost.hpp; path = src/ScriptHost.hpp; sourceTree = "<group>"; };
 		715EEE571F7555DD000B99AE /* ScriptableClass.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptableClass.hpp; path = src/ScriptableClass.hpp; sourceTree = "<group>"; };
+		7172A4A3203789FD00492B46 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = ../../../../../Library/Frameworks/SDL2_image.framework; sourceTree = "<group>"; };
+		7172A4A4203789FD00492B46 /* SDL2_mixer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_mixer.framework; path = ../../../../../Library/Frameworks/SDL2_mixer.framework; sourceTree = "<group>"; };
+		7172A4A5203789FD00492B46 /* SDL2_net.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_net.framework; path = ../../../../../Library/Frameworks/SDL2_net.framework; sourceTree = "<group>"; };
+		7172A4A6203789FD00492B46 /* SDL2_ttf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_ttf.framework; path = ../../../../../Library/Frameworks/SDL2_ttf.framework; sourceTree = "<group>"; };
+		7172A4A7203789FD00492B46 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
+		7172A4AF20378D3500492B46 /* SDL2_gpu.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_gpu.framework; path = lib/OSX/sdl/SDL2_gpu.framework; sourceTree = "<group>"; };
 		71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RigidBodyShape.cpp; path = src/RigidBodyShape.cpp; sourceTree = "<group>"; };
 		71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RigidBodyShape.hpp; path = src/RigidBodyShape.hpp; sourceTree = "<group>"; };
 		7185331E1F9F92E60080B05A /* RenderTextBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderTextBehavior.cpp; path = src/RenderTextBehavior.cpp; sourceTree = "<group>"; };
@@ -250,6 +250,8 @@
 		71BD96471FFBF44400F3919E /* demo */ = {isa = PBXFileReference; lastKnownFileType = folder; path = demo; sourceTree = "<group>"; };
 		71D8D3A21FCC9640004DDE7E /* UIBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UIBehavior.cpp; path = src/UIBehavior.cpp; sourceTree = "<group>"; };
 		71D8D3A31FCC9640004DDE7E /* UIBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UIBehavior.hpp; path = src/UIBehavior.hpp; sourceTree = "<group>"; };
+		71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypedVector.cpp; path = src/TypedVector.cpp; sourceTree = "<group>"; };
+		71D9A14E20308AC4006E0FD3 /* TypedVector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = TypedVector.hpp; path = src/TypedVector.hpp; sourceTree = "<group>"; };
 		71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BodyBehavior.cpp; path = src/BodyBehavior.cpp; sourceTree = "<group>"; };
 		71E28C3F1FF00A6300637B80 /* BodyBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = BodyBehavior.hpp; path = src/BodyBehavior.hpp; sourceTree = "<group>"; };
 		71E694511F5318E9001EB381 /* Application.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Application.cpp; path = src/Application.cpp; sourceTree = "<group>"; };
@@ -271,7 +273,6 @@
 		71E694641F5318E9001EB381 /* SampleBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SampleBehavior.hpp; path = src/SampleBehavior.hpp; sourceTree = "<group>"; };
 		71E694651F5318E9001EB381 /* Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Scene.cpp; path = src/Scene.cpp; sourceTree = "<group>"; };
 		71E694661F5318E9001EB381 /* Scene.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Scene.hpp; path = src/Scene.hpp; sourceTree = "<group>"; };
-		71E6FBB2200D3234006653A0 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		71E793901FC47DAD0026ABCB /* Image.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Image.cpp; path = src/Image.cpp; sourceTree = "<group>"; };
 		71E793911FC47DAD0026ABCB /* Image.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Image.hpp; path = src/Image.hpp; sourceTree = "<group>"; };
 		71EB81A61F803BDF0087F25B /* makefile-opi */ = {isa = PBXFileReference; lastKnownFileType = text; path = "makefile-opi"; sourceTree = "<group>"; };
@@ -400,13 +401,12 @@
 			files = (
 				71D3CC181FEB3F40006F7678 /* libz.tbd in Frameworks */,
 				71D3CC101FEB3EC6006F7678 /* libmozjs-24.0.a in Frameworks */,
-				71019AE71FEDD7A300A7F08C /* SDL2_gpu.framework in Frameworks */,
-				71D3CC121FEB3EC6006F7678 /* SDL2_image.framework in Frameworks */,
-				71D3CC131FEB3EC6006F7678 /* SDL2_mixer.framework in Frameworks */,
-				71D3CC141FEB3EC6006F7678 /* SDL2_net.framework in Frameworks */,
-				71D3CC151FEB3EC6006F7678 /* SDL2_ttf.framework in Frameworks */,
-				71D3CC161FEB3EC6006F7678 /* SDL2.framework in Frameworks */,
-				71E6FBB3200D3234006653A0 /* OpenGL.framework in Frameworks */,
+				7172A4B020378D3500492B46 /* SDL2_gpu.framework in Frameworks */,
+				7172A4A9203789FD00492B46 /* SDL2_image.framework in Frameworks */,
+				7172A4AA203789FD00492B46 /* SDL2_mixer.framework in Frameworks */,
+				7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */,
+				7172A4AC203789FD00492B46 /* SDL2_ttf.framework in Frameworks */,
+				7172A4AD203789FD00492B46 /* SDL2.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -430,6 +430,8 @@
 				713F33A31FE5B046001147CD /* Tween.cpp */,
 				713F33A11FE596F0001147CD /* Vector.hpp */,
 				713F33A01FE596F0001147CD /* Vector.cpp */,
+				71D9A14E20308AC4006E0FD3 /* TypedVector.hpp */,
+				71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */,
 				718533251F9FF7B90080B05A /* Sound.hpp */,
 				718533241F9FF7B90080B05A /* Sound.cpp */,
 				71E793911FC47DAD0026ABCB /* Image.hpp */,
@@ -491,15 +493,14 @@
 		717C0CAC1F40FBC400AA54E7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				71E6FBB2200D3234006653A0 /* OpenGL.framework */,
-				71019AE61FEDD7A300A7F08C /* SDL2_gpu.framework */,
 				71339A6B1FEADDDB00995D61 /* libz.tbd */,
 				71339A691FEADBFF00995D61 /* libmozjs-24.0.a */,
-				71339A5D1FEAD57000995D61 /* SDL2_image.framework */,
-				71339A5E1FEAD57000995D61 /* SDL2_mixer.framework */,
-				71339A5F1FEAD57000995D61 /* SDL2_net.framework */,
-				71339A601FEAD57000995D61 /* SDL2_ttf.framework */,
-				71339A611FEAD57000995D61 /* SDL2.framework */,
+				7172A4AF20378D3500492B46 /* SDL2_gpu.framework */,
+				7172A4A3203789FD00492B46 /* SDL2_image.framework */,
+				7172A4A4203789FD00492B46 /* SDL2_mixer.framework */,
+				7172A4A5203789FD00492B46 /* SDL2_net.framework */,
+				7172A4A6203789FD00492B46 /* SDL2_ttf.framework */,
+				7172A4A7203789FD00492B46 /* SDL2.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -957,6 +958,7 @@
 				71D3CBF61FEB3E9E006F7678 /* Controller.cpp in Sources */,
 				71D3CBF71FEB3E9E006F7678 /* Color.hpp in Sources */,
 				71D3CBF81FEB3E9E006F7678 /* Color.cpp in Sources */,
+				71D9A14F20308AC4006E0FD3 /* TypedVector.cpp in Sources */,
 				71D3CBF91FEB3E9E006F7678 /* Tween.hpp in Sources */,
 				71D3CBFA1FEB3E9E006F7678 /* Tween.cpp in Sources */,
 				71D3CBFB1FEB3E9E006F7678 /* Vector.hpp in Sources */,
@@ -1016,6 +1018,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/lib/OSX/sdl",
+					/Library/Frameworks,
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1038,6 +1041,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/OSX/mozjs-24/lib",
+					/Library/Frameworks,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -1079,6 +1083,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/lib/OSX/sdl",
+					/Library/Frameworks,
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1095,6 +1100,7 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/OSX/mozjs-24/lib",
+					/Library/Frameworks,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -1108,6 +1114,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/OSX/sdl",
@@ -1122,6 +1132,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LOCAL_LIBRARY_DIR)/Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/lib/OSX/sdl",

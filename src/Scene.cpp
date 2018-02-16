@@ -549,7 +549,7 @@ void Scene::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color
 	clr.g = color.g * 255;
 	clr.b = color.b * 255;
 	clr.a = 128;
-	GPU_Polygon( app.backScreen->target, vertexCount, this->verts, clr);
+	GPU_Polygon2( app.backScreen->target, vertexCount, this->verts, clr, true );
 	
 }
 

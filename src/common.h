@@ -25,14 +25,14 @@ using namespace std;
 #include <SDL2_mixer/SDL_mixer.h>
 #include <SDL2_net/SDL_net.h>
 #include <SDL2_gpu.framework/Headers/SDL_gpu.h>
-#include <OpenGL/gl.h>
+// #include <OpenGL/gl.h>
 #else
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_gpu.h>
-#include <gles.h> // check OPi makefile 
+// #include <gles.h> // check OPi makefile
 #endif
 
 // physics library
@@ -127,6 +127,7 @@ string GetScriptNameAndLine();
 #define EVENT_AWAKE "awake"
 #define EVENT_LAYOUT "layout"
 #define EVENT_ERROR "error"
+#define EVENT_CHANGE "change"
 
 // additional blending mode
 #define GPU_BLEND_CUT_ALPHA 16
