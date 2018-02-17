@@ -14,7 +14,6 @@
 		7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A5203789FD00492B46 /* SDL2_net.framework */; };
 		7172A4AC203789FD00492B46 /* SDL2_ttf.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A6203789FD00492B46 /* SDL2_ttf.framework */; };
 		7172A4AD203789FD00492B46 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A7203789FD00492B46 /* SDL2.framework */; };
-		7172A4B020378D3500492B46 /* SDL2_gpu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4AF20378D3500492B46 /* SDL2_gpu.framework */; };
 		71766D7E1FEFFAB200E13A92 /* RigidBodyShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */; };
 		71A077F72003D9230074D54A /* ScriptableClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A077F62003D9230074D54A /* ScriptableClass.cpp */; };
 		71D3CB681FEB3E9E006F7678 /* Box2D.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F4846D1F814B9300AF17EA /* Box2D.h */; };
@@ -186,6 +185,7 @@
 		71D9A14F20308AC4006E0FD3 /* TypedVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */; };
 		71E28C401FF00A6300637B80 /* BodyBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */; };
 		71E626F81FF935D9001A203F /* aviko in CopyFiles */ = {isa = PBXBuildFile; fileRef = 71A460D91FEB3E3500129194 /* aviko */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		71F71A422038A83300FC66BB /* SDL2_gpu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71F71A412038A83300FC66BB /* SDL2_gpu.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -227,7 +227,6 @@
 		7172A4A5203789FD00492B46 /* SDL2_net.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_net.framework; path = ../../../../../Library/Frameworks/SDL2_net.framework; sourceTree = "<group>"; };
 		7172A4A6203789FD00492B46 /* SDL2_ttf.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_ttf.framework; path = ../../../../../Library/Frameworks/SDL2_ttf.framework; sourceTree = "<group>"; };
 		7172A4A7203789FD00492B46 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
-		7172A4AF20378D3500492B46 /* SDL2_gpu.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_gpu.framework; path = lib/OSX/sdl/SDL2_gpu.framework; sourceTree = "<group>"; };
 		71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RigidBodyShape.cpp; path = src/RigidBodyShape.cpp; sourceTree = "<group>"; };
 		71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RigidBodyShape.hpp; path = src/RigidBodyShape.hpp; sourceTree = "<group>"; };
 		7185331E1F9F92E60080B05A /* RenderTextBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderTextBehavior.cpp; path = src/RenderTextBehavior.cpp; sourceTree = "<group>"; };
@@ -392,6 +391,7 @@
 		71F484E41F814B9400AF17EA /* b2VoronoiDiagram.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = b2VoronoiDiagram.h; sourceTree = "<group>"; };
 		71F484E61F814B9400AF17EA /* b2Rope.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = b2Rope.cpp; sourceTree = "<group>"; };
 		71F484E71F814B9400AF17EA /* b2Rope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = b2Rope.h; sourceTree = "<group>"; };
+		71F71A412038A83300FC66BB /* SDL2_gpu.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_gpu.framework; path = lib/OSX/sdl/SDL2_gpu.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -401,7 +401,7 @@
 			files = (
 				71D3CC181FEB3F40006F7678 /* libz.tbd in Frameworks */,
 				71D3CC101FEB3EC6006F7678 /* libmozjs-24.0.a in Frameworks */,
-				7172A4B020378D3500492B46 /* SDL2_gpu.framework in Frameworks */,
+				71F71A422038A83300FC66BB /* SDL2_gpu.framework in Frameworks */,
 				7172A4A9203789FD00492B46 /* SDL2_image.framework in Frameworks */,
 				7172A4AA203789FD00492B46 /* SDL2_mixer.framework in Frameworks */,
 				7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */,
@@ -495,7 +495,7 @@
 			children = (
 				71339A6B1FEADDDB00995D61 /* libz.tbd */,
 				71339A691FEADBFF00995D61 /* libmozjs-24.0.a */,
-				7172A4AF20378D3500492B46 /* SDL2_gpu.framework */,
+				71F71A412038A83300FC66BB /* SDL2_gpu.framework */,
 				7172A4A3203789FD00492B46 /* SDL2_image.framework */,
 				7172A4A4203789FD00492B46 /* SDL2_mixer.framework */,
 				7172A4A5203789FD00492B46 /* SDL2_net.framework */,

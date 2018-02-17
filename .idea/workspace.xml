@@ -2,34 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/TypedVector.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/TypedVector.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sdl-gpu" afterPath="$PROJECT_DIR$/sdl-gpu" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.hpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_1.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_1.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_2.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_2.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_3.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_3.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1_BASE.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1_BASE.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_2.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_2.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_3.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_3.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_4.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_4.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.cpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.hpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Vector.hpp" afterPath="$PROJECT_DIR$/src/Vector.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
@@ -68,8 +45,8 @@
       <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.61142063">
-              <caret line="106" column="0" selection-start-line="106" selection-start-column="0" selection-end-line="106" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.6298883">
+              <caret line="108" column="0" selection-start-line="108" selection-start-column="0" selection-end-line="108" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -151,6 +128,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -248,7 +226,6 @@
         </subPane>
       </pane>
       <pane id="Scratches" />
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -317,19 +294,19 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25107297" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2546495" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32841823" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -346,6 +323,8 @@
   <component name="VcsManagerConfiguration">
     <ignored-roots>
       <path value="$PROJECT_DIR$/sdl-gpu" />
+      <path value="$PROJECT_DIR$/sdl-gpu-kirill/sdl-gpu" />
+      <path value="$PROJECT_DIR$/sdl-gpu-kirill local/sdl-gpu" />
     </ignored-roots>
   </component>
   <component name="XDebuggerManager">
@@ -706,8 +685,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.61142063">
-          <caret line="106" column="0" selection-start-line="106" selection-start-column="0" selection-end-line="106" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.6298883">
+          <caret line="108" column="0" selection-start-line="108" selection-start-column="0" selection-end-line="108" selection-end-column="0" />
           <folding />
         </state>
       </provider>
