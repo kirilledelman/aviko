@@ -53,6 +53,9 @@ public:
 	/// registers classes for scripting
 	static void InitClass();
 	
+	/// garbage collection callback
+	void TraceProtectedObjects( vector<void **> &protectedObjects );	
+	
 // events
 	
 	/// function pointers for event dispatcher

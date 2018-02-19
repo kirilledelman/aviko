@@ -605,6 +605,12 @@ public:
 
 	/// global object
 	JSObject *global_object;
+	
+	bool IsAboutToBeFinalized( void** obj ) {
+	
+		return JS_IsAboutToBeFinalized( (JSObject**) obj );
+		
+	}
 
 /* MARK:	-				Error reporting
  -------------------------------------------------------------------- */
@@ -876,8 +882,8 @@ public:
 	
 	/// returns property of script object
 	ArgValue GetProperty( const char *propName, void* obj ) {
-		if ( !obj ) return ArgValue(); // undefined
 		JSAutoRequest req( this->js );
+		if ( !obj ) return ArgValue(); // undefined
 		jsval val;
 		JS_GetProperty( this->js, (JSObject*) obj, propName, &val );
 		return ArgValue( val );

@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "21AF14968159F6A597243893E9252C54EC6061ED",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "21AF14968159F6A597243893E9252C54EC6061ED" : 9223372036854775807,
+    "CA270F51BB2DB037963F494C3D7FA7DC472092D8" : 9223372036854775807
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "2BDB3562-F76F-4193-8D2A-63C756FAA1A5",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "21AF14968159F6A597243893E9252C54EC6061ED" : "nikogame\/",
+    "CA270F51BB2DB037963F494C3D7FA7DC472092D8" : "nikogame\/sdl-gpu\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Aviko",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Aviko.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/kirilledelman\/aviko.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "21AF14968159F6A597243893E9252C54EC6061ED"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/kirilledelman\/sdl-gpu.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "CA270F51BB2DB037963F494C3D7FA7DC472092D8"
+    }
+  ]
+}

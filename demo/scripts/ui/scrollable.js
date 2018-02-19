@@ -94,14 +94,12 @@ include( './ui' );
 		// (ui/scrollbar.js) - returns horizontal scrollbar instance
 		[ 'horizontalScrollbar',  function (){ return hsb; } ],
 
+		// (GameObject) the actual container to which all children are added
+		[ 'container',  function (){ return container; } ],
+
 	];
 	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
-	for ( var i = 0; i < mappedProps.length; i++ ) {
-		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-		} );
-		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-	}
+	UI.base.addMappedProperties( go, mappedProps );
 
 	// remapped functions - forward calls to container
 	go.addChild = function() { return container.addChild.apply( container, arguments ); }
@@ -122,6 +120,7 @@ include( './ui' );
 	// container
 	container.name = 'Scrollable.Container';
 	container.ui.focusable = false;
+	container.ui.fixedPosition = true;
 
 	// image
 	img = new Image();
@@ -216,7 +215,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, go.style ? go.style : UI.style.scrollable );
-	delete go.style;
+	UI.base.applyDefaults( go, UI.style.scrollable );
 
 })(this);

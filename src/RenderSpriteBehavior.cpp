@@ -83,21 +83,24 @@ void RenderSpriteBehavior::InitClass() {
 	
 	script.AddProperty<RenderSpriteBehavior>
 	( "texture",
-	 static_cast<ScriptStringCallback>([](void *b, string val) {
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
-		if ( rs->imageResource ) return rs->imageResource->key;
-		return string("");
+		if ( rs->imageResource ) return ArgValue( rs->imageResource->key.c_str() );
+		return ArgValue( (void*) NULL );
 	 } ),
-	 static_cast<ScriptStringCallback>([](void *b, string val) {
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
 		ImageResource* img = NULL;
-		
-		// "texture" - make sure it exists
-		img = app.textureManager.Get( val.c_str() );
-		if ( img->error == ERROR_NONE ) {
-			rs->width = img->frame.actualWidth;
-			rs->height = img->frame.actualHeight;
-			img->AdjustUseCount( 1 );
+		if ( val.type == TypeString ) {
+			// "texture" - make sure it exists
+			img = app.textureManager.Get( val.value.stringValue->c_str() );
+			if ( img->error == ERROR_NONE ) {
+				rs->width = img->frame.actualWidth;
+				rs->height = img->frame.actualHeight;
+				img->AdjustUseCount( 1 );
+			} else {
+				img = NULL;
+			}
 		} else {
 			img = NULL;
 		}

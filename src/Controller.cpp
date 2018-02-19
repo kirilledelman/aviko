@@ -308,6 +308,22 @@ void Controller::InitClass() {
 		return true;
 	}));
 
+	script.DefineFunction<Controller>
+	( "toString",
+	 static_cast<ScriptFunctionCallback>([]( void* o, ScriptArguments& sa ) {
+		static char buf[512];
+		Controller* self = (Controller*) o;
+		
+		if ( !self ) {
+			sprintf( buf, "[Controller prototype]" );
+		} else if ( self->name.size() ) {
+			sprintf( buf, "[Controller \"%s\"]", self->name.c_str() );
+		} else sprintf( buf, "[Controller %p]", self );
+		
+		sa.ReturnString( buf );
+		return true;
+	}));
+	
 }
 
 

@@ -13,7 +13,6 @@ public:
 
 	// init, destroy
 	Scene( ScriptArguments* args );
-	Scene( const char* filename ); // load from file
 	Scene();
 	~Scene();
 	

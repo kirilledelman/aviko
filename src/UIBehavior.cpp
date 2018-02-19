@@ -62,7 +62,7 @@ UIBehavior::UIBehavior() {
 
 // destructor
 UIBehavior::~UIBehavior() {
-	printf( "~UIBehavior\n" );
+	// printf( "~UIBehavior\n" );
 }
 
 
@@ -452,6 +452,18 @@ void UIBehavior::InitClass() {
 	}));
 
 	script.AddProperty<UIBehavior>
+	( "fixedPosition",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->fixedPosition; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->fixedPosition != val ) {
+			ui->fixedPosition = val;
+			ui->RequestLayout( ArgValue( "fixedPosition" ) );
+		}
+		return ui->fixedPosition;
+	}));	
+	
+	script.AddProperty<UIBehavior>
 	( "pad",
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		UIBehavior* ui = (UIBehavior*) b;
@@ -748,12 +760,24 @@ bool UIBehavior::Focus() {
 	// set focus
 	this->scene->focusedUI = this;
 	
+	// if focus changed during a navigation event, cancel it
+	vector<Event*>::iterator e = Event::eventStack.begin();
+	string navEvent(EVENT_NAVIGATION);
+	while( e != Event::eventStack.end() ) {
+		if ( navEvent.compare( (*e)->name ) == 0 ) {
+			(*e)->stopped = true;
+			break;
+		}
+		e++;
+	}
+	
 	// dispatch event on previous and new focus
 	Event event( EVENT_FOCUSCHANGED );
 	event.scriptParams.AddObjectArgument( this->scriptObject );
 	this->CallEvent( event );
 	if ( current ) current->CallEvent( event );
 
+	
 	return true;
 }
 
@@ -927,7 +951,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	vector<UIBehavior*> childUIs;
 	for ( size_t i = 0, nc = behavior->gameObject->children.size(); i < nc; i++ ){
 		UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
-		if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() ) childUIs.push_back( ui );
+		if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() && !ui->fixedPosition ) childUIs.push_back( ui );
 	}
 	
 	// for each child ui
@@ -1507,23 +1531,15 @@ void UIBehavior::Navigation( UIBehavior* behavior, void* param, Event* e ){
 		// behavior wants system to handle navigation
 		if ( behavior->autoNavigate ) {
 			
+			if ( !behavior->scene ) behavior->scene = behavior->gameObject->GetScene();
+			
 			// if it's a directional event, and focus didn't change
-			if ( behavior->scene->focusedUI == behavior && ( x != 0 || y != 0 ) ) {
+			if ( behavior->scene && behavior->scene->focusedUI == behavior && ( x != 0 || y != 0 ) ) {
 			
 				// determine new focus
 				behavior->Navigate( x, y );
 				
-			// if it's accept
-			} /* else if ( axisName.compare( app.input.navigationAccept ) == 0 ) {
-			
-				// generate 'click' event
-				Event event( EVENT_CLICK );
-				event.scriptParams.AddIntArgument( 0 );
-				event.scriptParams.AddFloatArgument( 0 );
-				event.scriptParams.AddFloatArgument( 0 );
-				behavior->CallEvent( event );
-				
-			} */
+			}
 		}
 	}
 }

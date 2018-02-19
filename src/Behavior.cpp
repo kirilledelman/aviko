@@ -71,6 +71,18 @@ void Behavior::InitClass() {
 	
 }
 
+/// garbage collection callback
+void Behavior::TraceProtectedObjects( vector<void **> &protectedObjects ) {
+
+	// game object
+	if ( this->gameObject ) protectedObjects.push_back( &this->gameObject->scriptObject );
+		
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
+		
+}
+
+
 
 /* MARK:	-				Attachment
  -------------------------------------------------------------------- */

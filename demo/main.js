@@ -1,22 +1,23 @@
 log( "Привет из main.js!" );
 
-App.setWindowSize( 800, 480, 2 );
+App.setWindowSize( 400, 240, 2 );
 App.windowResizable = true;
 
 Input.controllerAdded = function ( kb ) {
-	kb.bindAxis( '-horizontal', Key.Left );
-	kb.bindAxis( '+horizontal', Key.Right );
-	kb.bindAxis( '-vertical', Key.Up );
-	kb.bindAxis( '+vertical', Key.Down );
-	kb.bind( 'accept', Key.Enter );
-	kb.bind( 'cancel', Key.Escape );
-	kb.save();
+	if ( kb.name == 'Keyboard' ) {
+		kb.bindAxis( '-horizontal', Key.Left );
+		kb.bindAxis( '+horizontal', Key.Right );
+		kb.bindAxis( '-vertical', Key.Up );
+		kb.bindAxis( '+vertical', Key.Down );
+		kb.bind( 'accept', Key.Enter );
+		kb.bind( 'cancel', Key.Escape );
+		kb.save();
+	}
 };
 
-App.scene = new Scene();
-
-/*var panel = App.scene.addChild ( 'ui/scrollable', {
+var panel = App.scene.addChild ( 'ui/scrollable', {
 	layoutType: Layout.Vertical,
+	name: "Main UI",
 	x: 10, y: 10,
 	width: 150, height: 100,
 	layoutAlign: LayoutAlign.Stretch
@@ -32,7 +33,6 @@ Input.mouseMove = function ( x, y ) {
 	}
 
 }.bind( panel );
-
 
 var grp = [];
 grp.push( panel.addChild( 'ui/checkbox', {
@@ -50,6 +50,20 @@ grp.push( panel.addChild( 'ui/checkbox', {
 		if ( v ) log( "option 2" );
 	}
 } ) );
+
+panel.addChild( 'ui/dropdown', {
+	items: [
+		{ value: "First", text: "Item 1", icon: "tuba" },
+		{ value: "Second", text: "Item 2", icon: "tuba" },
+		{ value: "Third", text: "Item 3", icon: "tuba" },
+		{ value: "Fourth", text: "Item 4", icon: "tuba" },
+		{ value: "Fifth", text: "Item 5", icon: "tuba", disabled: true },
+	],
+	value: "First",
+	change: function ( v ) {
+		log( "dropdown", v );
+	}
+} );
 
 panel.addChild( 'ui/button', {
 	text: 'Tuba',
@@ -90,39 +104,10 @@ panel.addChild( 'ui/textfield', {
 	change: function ( v ) { log( v ); },
 	width: 60
 } );
-*/
 
-var t = App.scene.addChild();
-t.x = 100; t.y = 150;
-var r = new RenderShape();
-r.filled = false;
-r.shape = Shape.Chain;
-r.lineThickness = 8;
-r.color = 0xFFFF00;
-r.points = [ 0,0, 150,0, 150,100, 0,100 ]; // sigma
-t.render = r;
 
-Input.mouseMove = function ( x, y ) {
+Input.mouseDown = function ( btn ) {
+	if ( btn == 3 ) {
 
-	if ( Input.get( Key.LeftShift ) ) {
-		var ww = Math.round( x ) - this.x;
-		var hh = Math.round( y ) - this.y;
-
-		r.points[ 2 ] = ww;
-		r.points[ 3 ] = hh;
-	}
-
-}.bind( t );
-
-Input.keyDown = function ( k ) {
-	
-	if ( k == Key.Space ) {
-		r.shape = (r.shape == Shape.Chain ? Shape.Polygon : Shape.Chain);
-		log( r.shape );
 	}
 }
-
-
-
-
-

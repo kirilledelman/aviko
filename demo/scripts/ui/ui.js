@@ -151,15 +151,40 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	// menu with items - ui/menu.js
-	menu: {
-
-
-	},
-
 	// select-style dropdown menu - ui/dropdown.js
 	dropdown: {
 
+		maxVisibleItems: 5, // max items visible in scrollable view when dropdown is open
+
+		pad: 4, // [ top, right, bottom, left ] or (Number) padding
+
+		// style applied to dropdown button itself (defaults to UI.style.button)
+		button: {
+			icon: './textures/ui:checkbox-check', // to make solid color, set background: color instead, add margin if needed to position
+		},
+
+		// image used for arrow on the right side of the dropdown
+		arrowImage: {
+			texture: './textures/ui:checkbox-check',
+		},
+
+		// scrollable container with items
+		menu: {
+			spacingY: 0
+		},
+
+		// look of ui/button that defines each individual item in the list
+		item: {
+			background: 0xFFFFFF,
+			focusBackground: 0xEEEEFF,
+			overBackground: 0xEEEEFF,
+			downBackground: 0xDDDDFF,
+			disabledBackground: 0xAAAAAA,
+			layoutAlign: LayoutAlign.Stretch,
+
+			pad: 2,
+
+		}
 
 	}
 
@@ -194,13 +219,13 @@ UI.base = UI.base ? UI.base : {
 			[ 'focusRight',  function (){ return ui.focusRight; }, function ( f ){ ui.focusRight = f; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusUp',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusUp = f; } ],
+			[ 'focusUp',  function (){ return ui.focusUp; }, function ( f ){ ui.focusUp = f; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusDown',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusDown = f; } ],
+			[ 'focusDown',  function (){ return ui.focusDown; }, function ( f ){ ui.focusDown = f; } ],
 
 			// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
-			[ 'focusGroup',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
+			[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){ ui.focusGroup = f; } ],
 
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
 			[ 'layoutType',  function (){ return ui.layoutType; }, function ( v ){ ui.layoutType = v; } ],
@@ -290,16 +315,14 @@ UI.base = UI.base ? UI.base : {
 			[ 'spacingX',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
 
 			// (Number) spacing between children when layoutType is Horizontal
-			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ]
+			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ],
+
+			// (Object) used to apply style (collection of properties) other than default after creating / during init
+			[ 'style',  function (){ return null; }, function ( v ){ UI.base.applyDefaults( go, v ); }, true ],
 		];
 		// map them to gameObject
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
-		for ( var i = 0; i < mappedProps.length; i++ ) {
-			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-			} );
-			if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-		}
+		this.addMappedProperties( go, mappedProps );
 
 		// Shared API functions
 
@@ -367,6 +390,16 @@ UI.base = UI.base ? UI.base : {
 				// just set property
 				go[ p ] = defaults[ p ];
 			}
+		}
+	},
+
+	// creates mapped properties
+	addMappedProperties: function ( go, mappedProps ) {
+		for ( var i = 0; i < mappedProps.length; i++ ) {
+			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
+				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
+			} );
+			if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
 		}
 	}
 

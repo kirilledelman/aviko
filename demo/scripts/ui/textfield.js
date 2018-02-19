@@ -314,12 +314,7 @@ include( './ui' );
 		[ 'color9',  function (){ return rt.color9; }, function ( v ){ rt.color9 = v; } ],
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	for ( var i = 0; i < mappedProps.length; i++ ) {
-		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-		} );
-		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-	}
+	UI.base.addMappedProperties( go, mappedProps );
 
 	// API functions
 
@@ -345,7 +340,7 @@ include( './ui' );
 	tc = new GameObject();
 	rt = new RenderText();
 	rt.autoResize = false;
-	tc.render = rt; tc.z = 1;
+	tc.render = rt;
 	tc.serialized = false;
 
 	// UI
@@ -874,9 +869,8 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, go.style ? go.style : UI.style.textfield );
+	UI.base.applyDefaults( go, UI.style.textfield );
 	go.constructing = false;
-	delete go.style;
 
 })(this);
 

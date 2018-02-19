@@ -37,20 +37,11 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
+	// printf( "~GameObject\n" );
+	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
-	
-	// unparent all children
-	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
-		GameObject* obj = (GameObject*) this->children[ i ];
-		obj->SetParent( NULL );
-	}
-	
-	// remove all behaviors
-	for ( int i = (int) this->behaviors.size() - 1; i >= 0; i-- ) {
-		Behavior* beh = (Behavior*) this->behaviors[ i ];
-		beh->SetGameObject( NULL );
-	}
+
 }
 
 
@@ -1945,7 +1936,7 @@ void GameObject::Render( Event& event ) {
 	
 	// descend into children
 	int numChildren = (int) this->children.size();
-	for( int i = numChildren - 1; i >= 0; i-- ) {
+	for( int i = 0; i < numChildren; i++ ) {
 		GameObject* obj = this->children[ i ];
 		// recurse if render behavior didn't ask to skip it
 		if ( obj->active() && obj != event.skipObject ) obj->Render( event );

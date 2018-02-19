@@ -148,12 +148,8 @@ include( './ui' );
 
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	for ( var i = 0; i < mappedProps.length; i++ ) {
-		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-		} );
-		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-	}
+	UI.base.addMappedProperties( go, mappedProps );
+
 
 	// create components
 
@@ -221,7 +217,7 @@ include( './ui' );
 	// navigation event
 	ui.navigation = function ( name, value ) {
 
-		stopEvent();
+		stopAllEvents();
 
 		// enter = click
 		if ( name == 'accept' ) {
@@ -321,8 +317,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, go.style ? go.style : UI.style.checkbox );
+	UI.base.applyDefaults( go, UI.style.checkbox );
 	constructing = false;
-	delete go.style;
 
 })(this);

@@ -1,7 +1,5 @@
-Vector
-	toString  - [Vector(type)]
-	change event
-	
+
+Controller - make it so if a Controller handled / found binding, the loop over joysticks should skip out
 
 Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
 
@@ -17,14 +15,14 @@ UI:
 	button
 	checkbox
 
-	menu
 	dropdown
+	resizable split pane (v / h)
+
 
 RenderText - better wrapping on word boundary
 
-autoTile, with special handling in sliced
-
-UI moveFocus - add param to limit to same parent?
+autoTile = true/false, uses tileX, tileY as multiples from current w/h
+	with special handling in sliced
 
 Raspberry Pi - pressing Alt disrupts subseq text entry, try diff keyboard?
 

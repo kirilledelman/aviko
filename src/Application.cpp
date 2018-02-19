@@ -151,8 +151,8 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 		
 		// send event
 		Event event( EVENT_RESIZED );
-		event.scriptParams.AddIntArgument( newWidth );
-		event.scriptParams.AddIntArgument( newHeight );
+		event.scriptParams.AddIntArgument( newWidth / app.windowScalingFactor );
+		event.scriptParams.AddIntArgument( newHeight / app.windowScalingFactor );
 		this->CallEvent( event );
 		
 		// and send layout event to scene
@@ -188,8 +188,8 @@ void Application::UpdateBackscreen() {
 	GPU_SetDepthTest( this->backScreen->target, true );
 	GPU_SetDepthWrite( this->backScreen->target, true );
 	GPU_SetDepthFunction( this->backScreen->target, GPU_ComparisonEnum::GPU_LEQUAL );
-	this->backScreen->target->camera.z_near = -65535;
-	this->backScreen->target->camera.z_far = 65535;
+	this->backScreen->target->camera.z_near = -1024;
+	this->backScreen->target->camera.z_far = 1024;
 	
 	// set up sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
@@ -331,10 +331,10 @@ void Application::InitClass() {
 	}));
 	
 	script.AddProperty<Application>
-	("windowWidth", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowWidth; }) );
+	("windowWidth", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowWidth / app.windowScalingFactor; }) );
 	
 	script.AddProperty<Application>
-	("windowHeight", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowHeight; }) );
+	("windowHeight", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowHeight / app.windowScalingFactor; }) );
 	
 	script.AddProperty<Application>
 	("fullScreen",
@@ -445,6 +445,8 @@ void Application::InitClass() {
 			return false;
 		}
 		app.windowScalingFactor = max( 0.1f, min( 8.0f, sc ) );
+		w *= app.windowScalingFactor;
+		h *= app.windowScalingFactor;
 		app.WindowResized( max( 320, min( 4096, w ) ), max( 320, min( 4096, h ) ) );
 		app.UpdateBackscreen();
 		return true;
@@ -614,9 +616,13 @@ void Application::InitClass() {
 	script.DefineGlobalFunction
 	( "stopAllEvents",
 	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
+		ArgValueVector* eventNames = new ArgValueVector();
 		for ( size_t i = 0; i < Event::eventStack.size(); i++ ) {
 			Event::eventStack[ i ]->stopped = true;
+			eventNames->emplace_back( Event::eventStack[ i ]->name );
 		}
+		sa.ReturnArray( *eventNames );
+		delete eventNames;
 		return true;
 	}) );
 	
@@ -853,6 +859,9 @@ void Application::GameLoop() {
 	SDL_Event e;
 	Scene* scene = NULL;
 	
+	// add default scene
+	app.sceneStack.push_back( new Scene( NULL ) );
+	
 	// load and run "main.js" script
 	ScriptResource* mainScript = scriptManager.Get( "/main.js" );
 	if ( mainScript->error ) return; // bail on compilation or not found error
@@ -961,6 +970,9 @@ void Application::GameLoop() {
 		GPU_Flip( this->screen );
 		
 	}
+	
+	sceneStack.clear();
+	script.GC();
 	
 	// exit requested
 }

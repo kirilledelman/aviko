@@ -141,12 +141,7 @@ include( './ui' );
 
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	for ( var i = 0; i < mappedProps.length; i++ ) {
-		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-		} );
-		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-	}
+	UI.base.addMappedProperties( go, mappedProps );
 
 	// create components
 
@@ -234,6 +229,8 @@ include( './ui' );
 
 	// mouse down on handle
 	handle.ui.mouseDown = function ( btn, x, y, wx, wy ) {
+		stopEvent();
+
 		// position of mouse on handle
 		grabX = x; grabY = y;
 
@@ -254,6 +251,7 @@ include( './ui' );
 
 	// wheel - just dispatch 'scroll' on gameObject
 	ui.mouseWheel = function ( wy, wx ) {
+		stopEvent();
 		if ( orientation == 'vertical' ) {
 			go.fire( 'scroll', position - wy );
 		} else {
@@ -273,8 +271,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, go.style ? go.style : UI.style.scrollbar );
-	delete go.style;
+	UI.base.applyDefaults( go, UI.style.scrollbar );
 
 	// apply orientation
 	go.orientation = orientation;

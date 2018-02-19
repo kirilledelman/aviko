@@ -77,6 +77,10 @@ public:
 
 	/// calls script event listeners on this ScriptableObject
 	virtual void CallEvent( Event& event ) {
+		
+		// ignore if finalizing
+		if ( script.IsAboutToBeFinalized( &this->scriptObject ) ) return;
+		
 		// event listeners array
 		EventListeners* list = &this->eventListeners[ event.name ];
 		

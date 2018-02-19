@@ -14,6 +14,7 @@
 	Events:
 		'click' - button clicked or activated with 'accept' event from controller
 		'focusChanged' - when control focus is set or cleared (same as UI event)
+		'navigation' - UI navigation event
 		'mouseOver' - mouse rolled over button
 		'mouseOut' - mouse left button
 		'mouseDown' - pressed down
@@ -45,14 +46,12 @@ include( './ui' );
 		[ 'text',  function (){ return label.text; }, function ( v ){
 			go.label.text = v;
 			go.label.active = !!v;
-			// ui.requestLayout( 'text' );
 		} ],
 
 		// (String) or null - texture on icon
 		[ 'icon',  function (){ return image.texture; }, function ( v ){
 			go.image.texture = v;
 			go.image.active = !!v;
-			// ui.requestLayout( 'icon' );
 		} ],
 
 		// (GameObject) instance of 'ui/text.js' used as label
@@ -150,12 +149,7 @@ include( './ui' );
 
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	for ( var i = 0; i < mappedProps.length; i++ ) {
-		Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-			get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
-		} );
-		if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
-	}
+	UI.base.addMappedProperties( go, mappedProps );
 
 	// create components
 
@@ -212,7 +206,7 @@ include( './ui' );
 	// navigation event
 	ui.navigation = function ( name, value ) {
 
-		stopEvent();
+		stopAllEvents();
 
 		// enter = click
 		if ( name == 'accept' ) {
@@ -231,16 +225,20 @@ include( './ui' );
 
 		// directional - move focus
 		} else {
-			var dx = 0, dy = 0;
+			/*var dx = 0, dy = 0;
 			if ( name == 'horizontal' ) dx = value;
 			else dy = value;
-			ui.moveFocus( dx, dy );
+			ui.moveFocus( dx, dy );*/
 		}
+
+		// rethrow
+		go.fire( 'navigation', name, value );
 
 	}
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
+		stopAllEvents();
 		if ( disabled ) return;
 		ui.focus();
 		go.fire( 'click', btn, x, y, wx, wy );
@@ -248,6 +246,7 @@ include( './ui' );
 
 	// mouse down/up state
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
+		stopAllEvents();
 		if ( disabled ) return;
 		down = true; go.updateBackground();
 		// forward to gameObject
@@ -256,6 +255,7 @@ include( './ui' );
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
+		stopAllEvents();
 		if ( disabled ) return;
 		down = false; go.updateBackground();
 		go.fire( currentEventName(), btn, x, y, wx, wy );
@@ -310,7 +310,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, go.style ? go.style : UI.style.button );
-	delete go.style;
+	UI.base.applyDefaults( go, UI.style.button );
 
 })(this);

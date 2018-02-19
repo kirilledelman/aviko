@@ -98,8 +98,11 @@ public:
 	// overrides parent
 	LayoutAlign selfAlign = LayoutAlign::Default;
 	
-	// adjust own size after layout to fit children
+	/// adjust own size after layout to fit children
 	bool fitChildren = true;
+	
+	/// if set to true, layout doesn't position this object
+	bool fixedPosition = false;
 	
 	// reduces available w/h inside for layout of children
 	float padTop = 0;

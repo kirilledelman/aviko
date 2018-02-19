@@ -28,7 +28,9 @@ void RenderBehavior::AddDefaults() {
 	
 }
 
-RenderBehavior::~RenderBehavior() { }
+RenderBehavior::~RenderBehavior() {
+	
+}
 
 
 /* MARK:	-				UI
