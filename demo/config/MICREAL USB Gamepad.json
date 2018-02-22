@@ -1,1 +1,1 @@
-{"__class__":"Controller","deadZone":0.20000000298023224,"bindings":null}
+{"__class__":"Controller","bindings":{"_517":[["horizontal",2,3],["vertical",2,4]],"_514":[["accept",0,0],["cancel",0,1]]},"deadZone":0.20000000298023224,"configured":true}

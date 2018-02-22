@@ -1,9 +1,11 @@
 
 Controller - make it so if a Controller handled / found binding, the loop over joysticks should skip out
 
+fading opacity of "ui/text" looks weird
+
 Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
 
-UIBehavior - add property to make parent skip this child from layout
+Add App.log callback
 
 UI:
 	input
@@ -25,6 +27,8 @@ autoTile = true/false, uses tileX, tileY as multiples from current w/h
 	with special handling in sliced
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
+
+In error handler, include offending line + ------------^
 
 Demo project
 	Controller configurator - wip

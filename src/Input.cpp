@@ -514,6 +514,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 	} else if ( etype == SDL_JOYDEVICEREMOVED ) {
 		JoystickMap::iterator it = this->joysticks.find( e.jdevice.which );
+		if ( it == this->joysticks.end() ) return;
 		Controller* joy = it->second;
 		this->joysticks.erase( it );
 		event.name = EVENT_CONTROLLERREMOVED;
@@ -522,7 +523,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYBUTTONDOWN ) {
-		Controller* joy = joysticks[ e.jbutton.which ];
+		JoystickMap::iterator it = joysticks.find( e.jbutton.which );
+		if ( it == joysticks.end() ) return;
+		Controller* joy = it->second;
 		event.name = EVENT_JOYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -530,7 +533,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYBUTTONUP ) {
-		Controller* joy = joysticks[ e.jbutton.which ];
+		JoystickMap::iterator it = joysticks.find( e.jbutton.which );
+		if ( it == joysticks.end() ) return;
+		Controller* joy = it->second;
 		event.name = EVENT_JOYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -538,7 +543,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYAXISMOTION ) {
-		Controller* joy = joysticks[ e.jaxis.which ];
+		JoystickMap::iterator it = joysticks.find( e.jaxis.which );
+		if ( it == joysticks.end() ) return;
+		Controller* joy = it->second;
 		event.name = EVENT_JOYAXIS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -549,7 +556,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYHATMOTION ) {
-		Controller* joy = joysticks[ e.jhat.which ];
+		JoystickMap::iterator it = joysticks.find( e.jhat.which );
+		if ( it == joysticks.end() ) return;
+		Controller* joy = it->second;
 		event.name = EVENT_JOYHAT;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );

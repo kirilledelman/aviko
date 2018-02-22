@@ -26,9 +26,20 @@ configurator.buttons = [
 		description: 'Fire / Cancel in menus'
 	},
 ];
+configurator.buttonsFirst = 1;
 configurator.controllerAdded = function ( controller ) {
-	log( controller );
-	return controller.name != 'Keyboard';
+	log( controller.name, "axis:", controller.numAxis, "buttons:", controller.numButtons, "hats:", controller.numHats );
+	// return controller.name != 'Keyboard';
+}
+configurator.ready = function ( controller ) {
+	var p = function ( a, b ) {
+		log ( this, " #", a, ":", b );
+	}
+	controller.on( 'horizontal', p );
+	controller.on( 'vertical', p );
+	controller.on( 'accept', p );
+	controller.on( 'cancel', p );
+
 }
 
 

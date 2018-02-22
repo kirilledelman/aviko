@@ -271,6 +271,7 @@ public:
 			}
 			while ( dbit != debouncers.end() ) {
 				ScheduledCall& sched = dbit->second;
+				//				printf( "Debouncer %s time %d\n", dbit->first.c_str(), sched.timeLeft );
 				if ( sched.TimePassed( dt ) ) {
 					dbit = debouncers.erase( dbit );
 				} else {
