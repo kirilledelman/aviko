@@ -1,9 +1,10 @@
 /*
  
-	Text input field
+	Editable text input field
 
 	Usage:
-		var textField = app.scene.addChild( 'ui/input' );
+
+		var textField = App.scene.addChild( 'ui/input' );
 		textField.text = "Some text";
 
 	look at mappedProps in source code below for additional properties,
@@ -278,7 +279,7 @@ include( './ui' );
 		[ 'formatting',  function (){ return formatting; }, function ( v ){ formatting = v; rt.formatting = ( formatting && !ui.focused ); } ],
 
 		// (Number) or (Color) text color
-		[ 'textColor',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
+		[ 'color',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
 
 		// (Number) or (Color) text selection color
 		[ 'selectionColor',  function (){ return rt.selectionColor; }, function ( v ){ rt.selectionColor = v; } ],

@@ -3,9 +3,11 @@
 	Button
 
 	Usage:
-		var btn = app.scene.addChild( 'ui/button' );
+
+		var btn = App.scene.addChild( 'ui/button' );
 		btn.text = "Click me";
 		btn.click = function () {
+			log( "Clicked:", this.text );
 		}
 
 	look at mappedProps in source code below for additional properties,

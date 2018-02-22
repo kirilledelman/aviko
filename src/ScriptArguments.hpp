@@ -86,6 +86,8 @@ struct ArgValue {
 	bool toInt8( Uint8& dest );
 	bool toBool();
 	bool isNull( bool strict=false );
+	bool isTrue() { return (type == TypeBool && value.boolValue == true); }
+	bool isFalse() { return (type == TypeBool && value.boolValue == false); }
 	string toString();
 	bool get( void* destination, ScriptType desiredType );
 	jsval toValue();
@@ -185,7 +187,7 @@ public:
 	bool executing = false;
 	
 	/// invoke this function with arguments
-	void Invoke( ScriptArguments& args );
+	ArgValue Invoke( ScriptArguments& args );
 	
 	// comparing to a pointer to a JSFunction, used when removing event listeners
 	bool operator==( void* jsfunc ) { return funcObject == jsfunc; };

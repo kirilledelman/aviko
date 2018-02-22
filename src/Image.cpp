@@ -391,12 +391,10 @@ GPU_Image* Image::_MakeImage() {
 		GPU_SetDepthTest( img->target, true );
 		GPU_SetDepthWrite( img->target, true );
 		GPU_AddDepthBuffer( img->target );
-		img->target->camera.z_near = -65535;
-		img->target->camera.z_far = 65535;
+		img->target->camera.z_near = -1024;
+		img->target->camera.z_far = 1024;
 		img->anchor_x = img->anchor_y = 0;
 		this->_sizeDirty = false;
-		//SDL_Color clr = { 0, 255, 0, 128 };
-		//GPU_ClearColor( img->target, clr );
 	}
 	return img;
 }
@@ -415,6 +413,7 @@ GPU_Image* Image::GetImage() {
 
 /// draws gameobject
 void Image::Draw( GameObject* go ) {
+	static SDL_Color clearColor = { 0, 0, 0, 0 };
 	
 	// make sure image exists
 	if ( !this->image ) {
@@ -436,6 +435,7 @@ void Image::Draw( GameObject* go ) {
 		}
 		
 		// copy old image to new
+		GPU_ClearColor( img->target, clearColor );
 		GPU_Rect srcRect = { 0, 0, (float) this->image->base_w, (float) this->image->base_h };
 		GPU_Blit( this->image, &srcRect, img->target, 0, 0 );
 		
@@ -446,8 +446,7 @@ void Image::Draw( GameObject* go ) {
 	
 	// if autodraw, clear
 	if ( this->autoDraw ) {
-		SDL_Color clr = { 0, 0, 0, 0 };
-		GPU_ClearColor( this->image->target, clr );
+		GPU_ClearColor( this->image->target, clearColor );
 	}
 	
 	// transform

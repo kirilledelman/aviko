@@ -717,7 +717,7 @@ void UIBehavior::InitClass() {
 	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		UIBehavior* self = (UIBehavior*) obj;
-		if ( !sa.ReadArguments( 2, TypeFloat, &self->layoutWidth, TypeFloat, &self->layoutWidth ) ) {
+		if ( !sa.ReadArguments( 2, TypeFloat, &self->layoutWidth, TypeFloat, &self->layoutHeight ) ) {
 			script.ReportError( "usage: resize( Number width, Number height )" );
 			return false;
 		}

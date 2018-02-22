@@ -30,7 +30,13 @@ Controller::Controller( SDL_Joystick* joy ){
 	
 }
 
-Controller::Controller( ScriptArguments* ){ script.ReportError( "Controller can't be created using 'new'. app.input creates controllers automatically when they're detected." ); };
+Controller::Controller( ScriptArguments* sa ){
+	
+	// add scriptObject, because this class isn't singleton / needs to be serializable
+	script.NewScriptObject<Controller>( this );
+	script.ReportError( "Controller can't be created using 'new'. app.input creates controllers automatically when they're detected." );
+
+};
 
 Controller::~Controller(){}
 
@@ -42,7 +48,7 @@ Controller::~Controller(){}
 void Controller::InitClass() {
 	
 	// register class
-	script.RegisterClass<Controller>( "ScriptableObject", true );
+	script.RegisterClass<Controller>( "ScriptableObject", false );
 
 	// props
 	
@@ -192,10 +198,12 @@ void Controller::InitClass() {
 	("reset",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa){
 		Controller* self = (Controller*) p;
+		// optionally delete config
+		bool deleteConfig = false;
+		sa.ReadArguments( 1, TypeBool, &deleteConfig );
+		if ( deleteConfig ) self->DeleteConfig();
 		// reset bindings
 		self->bindings.clear();
-		// remove event listeners
-		self->eventListeners.clear();
 		return true;
 	}));
 	
@@ -344,23 +352,8 @@ bool Controller::LoadConfig() {
 	ArgValue obj( script.CallClassFunction( "JSON", "parse", parseArgs ) );
 	if ( obj.type != TypeObject || !obj.value.objectValue ) return false;
 	
-	// init self by copying each prop
-	unordered_set<string> props;
-	script.GetPropertyNames( obj.value.objectValue, props );
-	unordered_set<string>::iterator pi = props.begin(), end = props.end();
-	while ( pi != end ) {
-		// for each propetry name
-		const string &propName = *pi;
-		const char* name = propName.c_str();
-		// if not a __reserved__ prop
-		if ( !( propName.length() >= 2 && name[ 0 ] == '_' && name[ 1 ] == '_' )) {
-			// copy it to self
-			ArgValue val = script.GetProperty( name, obj.value.objectValue );
-			script.SetProperty( name, val, this->scriptObject );
-		}
-		// next prop
-		pi++;
-	}
+	// init self
+	script.CopyProperties( obj.value.objectValue, this->scriptObject );
 	
 	return true;
 }
@@ -370,19 +363,22 @@ bool Controller::SaveConfig() {
 	// convert to initObject
 	ArgValue ret( this->scriptObject );
 	
-	// save as json
+	// call global stringify function
 	ScriptArguments parseArgs;
-	parseArgs.ResizeArguments( 0 ); // creates funcargs
 	parseArgs.AddObjectArgument( ret.value.objectValue );
-	parseArgs.AddObjectArgument( NULL );
-	parseArgs.AddStringArgument( "\t" );
-	// call JSON stringify function
-	ArgValue str = script.CallClassFunction( "JSON", "stringify", parseArgs );
+	ArgValue str = script.CallGlobalFunction( "stringify", parseArgs );
 	if ( str.type != TypeString ) return false;
 	
 	// save to file
 	string path = app.configDirectory + this->name;
 	return SaveFile( str.value.stringValue->c_str(), str.value.stringValue->length(), path.c_str(), "json" );
+}
+
+bool Controller::DeleteConfig() {
+
+	string path = app.configDirectory + this->name + ".json";
+	return DeleteFile( path.c_str() );
+	
 }
 
 /* MARK:	-				Controller actions

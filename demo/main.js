@@ -2,8 +2,37 @@ log( "Привет из main.js!" );
 
 App.setWindowSize( 400, 240, 2 );
 App.windowResizable = true;
+App.scene.name = "Main scene";
 
-Input.controllerAdded = function ( kb ) {
+var configurator = include( 'ui/controller-configurator' );
+configurator.axis = [
+	{
+		id: 'horizontal',
+		minus: 'Left',
+		plus:  'Right',
+		description: 'Player movement'
+	}, {
+		id: 'vertical',
+		minus: 'Up',
+		plus:  'Down',
+	}
+];
+configurator.buttons = [
+	{
+		id: 'accept',
+		description: 'Jump / Select in menus'
+	}, {
+		id: 'cancel',
+		description: 'Fire / Cancel in menus'
+	},
+];
+configurator.controllerAdded = function ( controller ) {
+	log( controller );
+	return controller.name != 'Keyboard';
+}
+
+
+/* Input.controllerAdded = function ( kb ) {
 	if ( kb.name == 'Keyboard' ) {
 		kb.bindAxis( '-horizontal', Key.Left );
 		kb.bindAxis( '+horizontal', Key.Right );
@@ -11,9 +40,11 @@ Input.controllerAdded = function ( kb ) {
 		kb.bindAxis( '+vertical', Key.Down );
 		kb.bind( 'accept', Key.Enter );
 		kb.bind( 'cancel', Key.Escape );
+
 		kb.save();
+
 	}
-};
+};*/
 
 var panel = App.scene.addChild ( 'ui/scrollable', {
 	layoutType: Layout.Vertical,
@@ -59,7 +90,7 @@ panel.addChild( 'ui/dropdown', {
 		{ value: "Fourth", text: "Item 4", icon: "tuba" },
 		{ value: "Fifth", text: "Item 5", icon: "tuba", disabled: true },
 	],
-	value: "First",
+	value: "Fourth",
 	change: function ( v ) {
 		log( "dropdown", v );
 	}

@@ -6,7 +6,7 @@
 	be scrollable to reveal its contents via mouse wheel, or scroll bars (automatically shown)
 
 	Usage:
-		var s = app.scene.addChild( 'ui/scrollable' );
+		var s = App.scene.addChild( 'ui/scrollable' );
 		s.layoutType = Layout.Vertical;
 		s.width = 80; s.height = 100;
 		s.addChild( .. );

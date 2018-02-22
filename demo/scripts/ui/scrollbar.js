@@ -3,12 +3,13 @@
 	Scrollbar
 
 	Usage:
-		var sb = app.scene.addChild( 'ui/scrollbar' );
+
+		var sb = App.scene.addChild( 'ui/scrollbar' );
 		sb.orientation = 'vertical';
 		sb.totalSize = 100;
 		sb.handleSize = 20;
 		sb.scroll = function ( scrollPos ) {
-			// called when scrolled
+			log( "Scrollbar position changed:", scrollPos );
 		}
 
 	look at mappedProps in source code below for additional properties

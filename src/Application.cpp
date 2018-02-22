@@ -70,6 +70,12 @@ Application::Application() {
 	// register classes
 	this->InitClass();
 	
+	// begin terminal capture
+	struct termios newt;
+	tcgetattr(STDIN_FILENO, &_savedTerminal);
+	memcpy( &newt, &_savedTerminal, sizeof(struct termios) );
+	newt.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
 }
 
 Application::Application( ScriptArguments* ) {
@@ -98,6 +104,9 @@ Application::~Application() {
 	delete ScriptableClass::scheduledAsyncs;
 	delete ScriptableClass::scheduledDebouncers;	
 	delete Tween::activeTweens;
+	
+	// stop terminal capture
+	tcsetattr( STDIN_FILENO, TCSANOW, &_savedTerminal );
 }
 
 
@@ -397,15 +406,15 @@ void Application::InitClass() {
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		// optional one argument
 		void* obj = NULL;
-		sa.ReadArguments( 1, TypeObject, &obj );
-		
-		// has to be scene
-		Scene* newScene = script.GetInstance<Scene>( obj );
-		if ( obj || !newScene ) {
-			script.ReportError( "usage: app.popScene( [ Scene popToScene ] )" );
-			return false;
+		Scene* newScene = NULL;
+		if ( sa.ReadArguments( 1, TypeObject, &obj ) ){
+			// has to be scene
+			newScene = script.GetInstance<Scene>( obj );
+			if ( obj || !newScene ) {
+				script.ReportError( "usage: app.popScene( [ Scene popToScene ] )" );
+				return false;
+			}
 		}
-		
 		Scene* oldScene = app.sceneStack.size() ? app.sceneStack.back() : NULL;
 		
 		// pop up to this scene
@@ -561,7 +570,7 @@ void Application::InitClass() {
 		parseArgs.AddObjectArgument( obj );
 		parseArgs.AddObjectArgument( NULL );
 		parseArgs.AddStringArgument( "\t" );
-		ArgValue ret = script.CallClassFunction( "JSON", "stringify", parseArgs );
+		ArgValue ret = script.CallGlobalFunction( "stringify", parseArgs );
 		if ( ret.type != TypeString ) {
 			sa.ReturnBool( false );
 			return true;
@@ -713,6 +722,81 @@ void Application::InitClass() {
 		return true;
 	}) );
 	
+	// schedule a call
+	script.DefineGlobalFunction
+	( "async",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+		// validate params
+		const char* error = "usage: async( Function handler [, Number delay ] )";
+		void* handler = NULL;
+		float delay = 0;
+		
+		// validate
+		if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		// schedule call
+		sa.ReturnInt( ScriptableClass::AddAsync( (void*) script.global_object, handler, delay ) );
+		return true;
+	}));
+	
+	// cancel a call
+	script.DefineGlobalFunction
+	( "cancelAsync",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+		// validate params
+		const char* error = "usage: cancelAsync( Int asyncId )";
+		int index = 0;
+		
+		// validate
+		if ( !sa.ReadArguments( 1, TypeInt, &index ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		// cancel scheduled call
+		sa.ReturnBool( ScriptableClass::CancelAsync( (void*) script.global_object, index ) );
+		return true;
+	}));
+	
+	// schedule a call
+	script.DefineGlobalFunction
+	( "debounce",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+		// validate params
+		const char* error = "usage: debounce( String debounceId, Function handler [, Number delay ] )";
+		void* handler = NULL;
+		string name;
+		float delay = 0;
+		
+		// validate
+		if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		// schedule call
+		ScriptableClass::AddDebouncer( (void*) script.global_object, name, handler, delay );
+		return true;
+	}));
+	
+	// cancel a call
+	script.DefineGlobalFunction
+	( "cancelDebouncer",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+		// validate params
+		const char* error = "usage: cancelDebouncer( String debounceId )";
+		string name;
+		
+		// validate
+		if ( !sa.ReadArguments( 1, TypeString, &name ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		// cancel scheduled call
+		sa.ReturnBool( ScriptableClass::CancelDebouncer( (void*) script.global_object, name ) );
+		return true;
+	}));
+	
 	// global clean up call
 	script.DefineGlobalFunction
 	( "gc",
@@ -851,13 +935,17 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 /// main application loop
 void Application::GameLoop() {
 	
-	//
+	// setup
 	this->run = true;
 	Uint32 _time = 0, _timeFps = 0;
 	Uint32 _quitPressedTime = 0;
 	Event event;
 	SDL_Event e;
 	Scene* scene = NULL;
+
+	// stdin capture
+	char pollChar = 0;
+	struct pollfd pollStruct = { .fd=STDIN_FILENO, .events=POLLIN|POLLRDBAND|POLLRDNORM|POLLPRI };
 	
 	// add default scene
 	app.sceneStack.push_back( new Scene( NULL ) );
@@ -941,6 +1029,9 @@ void Application::GameLoop() {
 			}
 		}
 		
+		// capture console input (RPi workaround)
+		if ( poll( &pollStruct, 1, 0 ) == 1 ) read( STDIN_FILENO, &pollChar, 1 );
+		
 		// continue
 		if ( scene ) {
 		
@@ -976,6 +1067,7 @@ void Application::GameLoop() {
 	
 	// exit requested
 }
+
 
 /* MARK:	-				Late events
  -------------------------------------------------------------------- */
@@ -1262,6 +1354,15 @@ bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensio
 			outExtension = "." + extArray[ i ];
 			return true;
 		}
+	}
+	return false;
+}
+
+bool DeleteFile( const char* filepath ) {
+	string path = ResolvePath( filepath, NULL, NULL );
+	if ( access( path.c_str(), R_OK ) != -1 ) {
+		unlink( path.c_str() );
+		return true;
 	}
 	return false;
 }

@@ -925,14 +925,29 @@ public:
 	
 	
 	/// calls function on object with params
-	void CallFunction( void* funcObject, void* thisObject, ScriptArguments &args ){
+	ArgValue CallFunction( void* funcObject, void* thisObject, ScriptArguments &args ){
 		jsval rval;
 		int argc;
 		jsval* params = args.GetFunctionArguments( &argc );
-		if ( JS_IsExceptionPending( this->js ) ){
-			return;
-		}
-		JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval );
+		/*if ( JS_IsExceptionPending( this->js ) ) {
+			return ArgValue();
+		}*/
+		if ( JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval ) ) {
+			return ArgValue( rval );
+		} else return ArgValue();
+	}
+	
+	/// calls global function with params
+	ArgValue CallGlobalFunction( const char* funcName, ScriptArguments &args ){
+		jsval rval;
+		int argc;
+		jsval* params = args.GetFunctionArguments( &argc );
+		/*if ( JS_IsExceptionPending( this->js ) ){
+			return ArgValue();
+		}*/
+		if ( JS_CallFunctionName( script.js, script.global_object, funcName, argc, params, &rval ) ) {
+			return ArgValue( rval );
+		} else return ArgValue();
 	}
 	
 	

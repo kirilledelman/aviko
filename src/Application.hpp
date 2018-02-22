@@ -14,6 +14,11 @@
 #include "Sound.hpp"
 #include "Image.hpp"
 
+// for input capture workaround on Pi
+#include <unistd.h>
+#include <termios.h>
+#include <poll.h>
+
 // Main application controller
 class Application : public ScriptableClass {
 public:
@@ -74,6 +79,8 @@ public:
 	
 	Input input;
 
+	struct termios _savedTerminal;
+	
 // resource managers
 	
 	/// full path to executable + resource directory

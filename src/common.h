@@ -59,6 +59,7 @@ string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, 
 const char* ReadFile( const char* filepath, const char* ext, const char* optionalSubPath, string* finalPath, size_t *fileSize );
 const char* ReadFile( const char* absoluteFilepath, size_t *fileSize );
 bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext );
+bool DeleteFile( const char* filepath );
 bool TryFileExtensions( const char* filePath, const char* commaSeparatedExtensions, string &outExtension );
 string HexStr( Uint32 w, size_t hex_len );
 int StringPositionToIndex( const char* str, int pos );

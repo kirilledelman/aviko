@@ -14,8 +14,8 @@ UI:
 	image
 	button
 	checkbox
-
 	dropdown
+
 	resizable split pane (v / h)
 
 
@@ -24,11 +24,10 @@ RenderText - better wrapping on word boundary
 autoTile = true/false, uses tileX, tileY as multiples from current w/h
 	with special handling in sliced
 
-Raspberry Pi - pressing Alt disrupts subseq text entry, try diff keyboard?
-
+A way to limit which controllers can interact with UI/focus/autonavigate etc.
 
 Demo project
-	Controller configurator
+	Controller configurator - wip
 	Percussion playground
 	UI
 
@@ -47,6 +46,8 @@ SaveFile - fix create subfolders
 Nice to have
 
 =============================================
+
+Raspberry Pi - pressing Alt disrupts subseq text entry
 
 
 RenderText - add .revealLeft, .revealRight - floating point part = opacity of char on boundary

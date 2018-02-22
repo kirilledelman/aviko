@@ -3,7 +3,8 @@
 	Text box
 
 	Usage:
-		var label = app.scene.addChild( 'ui/input' );
+
+		var label = App.scene.addChild( 'ui/input' );
 		label.text = "Some text\nSecond line";
 
 	look at mappedProps in source code below for additional properties,
@@ -80,7 +81,7 @@ include( './ui' );
 		[ 'formatting',  function (){ return rt.formatting; }, function ( v ){ rt.formatting = v; ui.requestLayout( 'formatting' ); } ],
 
 		// (Number) or (Color) text color
-		[ 'textColor',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
+		[ 'color',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
 
 		// (Number) or (Color) ^0 color
 		[ 'color0',  function (){ return rt.color0; }, function ( v ){ rt.color0 = v; } ],

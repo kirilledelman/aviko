@@ -3,9 +3,11 @@
 	Checkbox (or radio button)
 
 	Usage:
-		var chk = app.scene.addChild( 'ui/checkbox' );
-		btn.text = "Option";
-		btn.change = function ( val ) {
+
+		var chk = App.scene.addChild( 'ui/checkbox' );
+		chk.text = "Option";
+		chk.change = function ( val ) {
+			log( "Checked:", val );
 		}
 
 	look at mappedProps in source code below for additional properties,

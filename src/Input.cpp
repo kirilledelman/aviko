@@ -7,13 +7,13 @@
 
 
 Input::Input() {
-	SDL_StartTextInput();
+	// SDL_StartTextInput();
 }
 
 Input::Input( ScriptArguments* ) { script.ReportError( "Input can't be created using 'new'. Only one instance is available as global 'app.input' property." ); }
 
 Input::~Input() {
-	SDL_StopTextInput();
+	// SDL_StopTextInput();
 }
 
 void Input::AddKeyboardController () {
@@ -522,20 +522,23 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddObjectArgument( joy->scriptObject );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYBUTTONDOWN ) {
+		Controller* joy = joysticks[ e.jbutton.which ];
 		event.name = EVENT_JOYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.jbutton.button );
-		event.scriptParams.AddIntArgument( e.jbutton.which );
+		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYBUTTONUP ) {
+		Controller* joy = joysticks[ e.jbutton.which ];
 		event.name = EVENT_JOYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddIntArgument( e.jbutton.button );
-		event.scriptParams.AddIntArgument( e.jbutton.which );
+		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYAXISMOTION ) {
+		Controller* joy = joysticks[ e.jaxis.which ];
 		event.name = EVENT_JOYAXIS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -543,9 +546,10 @@ void Input::HandleEvent( SDL_Event& e ) {
 		float val = v ? ( v < 0 ? ( (float) v / 32768.0f ) : ( (float) v / 32767.0f ) ) : 0;
 		event.scriptParams.AddFloatArgument( val );
 		event.scriptParams.AddIntArgument( e.jaxis.axis );
-		event.scriptParams.AddIntArgument( e.jaxis.which );
+		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	} else if ( etype == SDL_JOYHATMOTION ) {
+		Controller* joy = joysticks[ e.jhat.which ];
 		event.name = EVENT_JOYHAT;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -555,7 +559,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( x );
 		event.scriptParams.AddFloatArgument( y );
 		event.scriptParams.AddIntArgument( e.jhat.hat );
-		event.scriptParams.AddIntArgument( e.jhat.which );
+		event.scriptParams.AddObjectArgument( joy ? joy->scriptObject : NULL );
 		CallEvent( event );
 	}
 	

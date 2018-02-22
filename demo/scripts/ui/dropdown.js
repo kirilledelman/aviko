@@ -6,14 +6,16 @@
 	Uses ui/button and ui/scrollable components for functionality.
 
 	Usage:
-		panel.addChild( 'ui/dropdown', {
+
+		App.scene.addChild( 'ui/dropdown', {
 		items: [
 			{ value: "First", text: "Item 1", icon: "optional_icon" },
 			{ value: "Second", text: "Item 2", icon: "optional_icon_2" },
+			{ value: "Third", text: "Item 3", icon: "optional_icon_3", disabled: true },
 		],
 		value: "Second",
 		change: function ( v ) {
-			log( "value changed", v );
+			log( "Value selected:", v );
 		}
 	} );
 

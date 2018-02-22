@@ -5,7 +5,8 @@
 	Used to help with controls arrangement, has background property
 
 	Usage:
-		var p = app.scene.addChild( 'ui/panel' );
+
+		var p = App.scene.addChild( 'ui/panel' );
 		s.background = 0x666666;
 		s.layoutType = Layout.Vertical;
 		s.addChild( .. );
@@ -26,11 +27,16 @@ include( './ui' );
 	// API properties
 	var mappedProps = [
 
-		// (String) or (Color) or (Number) or (null|false)- set background to sprite, or solid color, or nothing
+		// (String) or (Color) or (Number) or (Image) or (null|false) - set background to sprite, or solid color, or nothing
 		[ 'background',  function (){ return background; }, function ( v ){
 			background = v;
 			if ( typeof( v ) == 'string' ) {
+				bg.image = null;
 				bg.texture = v;
+				go.render = bg;
+			} else if ( typeof( v ) == 'object' && v.constructor == Image ){
+				bg.image = v;
+				bg.texture = null;
 				go.render = bg;
 			} else if ( v === false || v === null || v === undefined ){
 				go.render = null;
@@ -90,8 +96,8 @@ include( './ui' );
 
 	// lay out components
 	ui.layout = function( w, h ) {
-		shp.width = bg.width = w;
-		shp.height = bg.height = h;
+		shp.resize( w, h );
+		bg.resize( w, h );
 	}
 
 	// apply defaults

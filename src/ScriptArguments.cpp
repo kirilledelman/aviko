@@ -16,10 +16,10 @@ ScriptFunctionObject::~ScriptFunctionObject() {
 
 
 /// invoke function with arguments
-void ScriptFunctionObject::Invoke( ScriptArguments &args ){
+ArgValue ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	
 	// safety first
-	if( !funcObject ) return;
+	if( !funcObject ) return ArgValue();
 	
 	// helps with removing event listeners while dispatching
 	this->executing = true;
@@ -31,6 +31,9 @@ void ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	
 	// done
 	this->executing = false;
+	
+	// return value
+	return ArgValue( rval );
 }
 
 

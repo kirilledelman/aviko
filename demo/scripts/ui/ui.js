@@ -1,9 +1,10 @@
 /*
 
-	Edit UI.style structure below to change the default appearance of Aviko ui components.
+	Edit UI.style structure below to change the default appearance of Aviko UI components.
 
 	These are just default properties set at creation and can be overridden. See components
-	source files for all available properties.
+	source files for all available properties. Some shared properties are defined in this file
+	in "shared functionality" block.
 
     To further customize / use different "substyles" for differently styled components,
     provide .style param. E.g:
@@ -18,7 +19,6 @@
         text: "Small Button",
         style: smallButtonStyle
     });
-
  
 */
 
@@ -26,78 +26,59 @@ UI.style = UI.style ? UI.style : {
 
 	// basic container panel - ui/panel.js
 	panel: {
-
-		background: './textures/ui:gradient', // background texture (String) or solid color (Color|Number)
-		slice: 0, // (Array[4]) or (Number) slicing for texture
-
-		layoutType: Layout.Anchors, // default layout type
-		pad: 8, // [ top, right, bottom, left ] or (Number) padding
-		spacing: 4, // [ horizontal, vertical ] or (Number) default spacing for Horizontal, Vertical and Grid layout
-
+		background: './textures/ui:gradient',
+		slice: 0,
+		layoutType: Layout.Anchors,
+		pad: 8,
+		spacing: 4,
 	},
 
 	// text label - ui/text.js
 	text: {
-
-		font: 'Arial', // font name
-		size: 16, // font size
-		textAlign: TextAlign.Left, // left aligned
-		textColor: 0xFFFFFF // text color
-
+		font: 'Arial',
+		size: 16,
+		textAlign: TextAlign.Left,
+		color: 0xFFFFFF,
 	},
 
 	// text input field - ui/textfield.js
 	textfield: {
-
-		font: 'Arial', // font name
-		size: 16, // font size
-
-		textColor: 0x0, // text color
-		selectionColor: 0x0073b9, // selection color
-
-		slice: 8, // (Array[4]) or (Number) slicing for texture
-		pad: 8, // [ top, right, bottom, left ] or (Number) padding
-
-		background: './textures/ui:input', // background texture (String) or solid color (Color|Number)
-		focusBackground: './textures/ui:input-focus', // focused background texture (String) or solid color (Color|Number)
-		disabledBackground: './textures/ui:input-disabled', // disabled background texture (String) or solid color (Color|Number)
-
-		acceptToEdit: true, // when navigating to field via keys, must press Enter to start editing
+		font: 'Arial',
+		size: 16,
+		color: 0x0,
+		selectionColor: 0x0073b9,
+		slice: 8,
+		pad: 8,
+		background: './textures/ui:input',
+		focusBackground: './textures/ui:input-focus',
+		disabledBackground: './textures/ui:input-disabled',
+		acceptToEdit: true,
 	},
 
 	// scrollable container - ui/scrollable.js
 	scrollable: {
-
-		layoutType: Layout.Vertical, // default layout type
-		spacing: 4, // [ horizontal, vertical ] or (Number) default spacing for Horizontal, Vertical and Grid layout
-
-		scrollbars: 'auto' // (String) 'auto' | (Boolean)
-
+		layoutType: Layout.Vertical,
+		spacing: 4,
+		scrollbars: 'auto'
 	},
 
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
-
-		// common properties
-		background: 0xFFFFFF, // background texture (String) or solid color (Color|Number)
-		slice: 0, // (Array[4]) or (Number) slicing for texture
-		cornerRadius: 4, // corner roundness if background is solid color
-
-		handleBackground: 0xC0C0C0, // scroll handle background texture (String) or solid color (Color|Number)
-		handleSlice: 0, // (Array[4]) or (Number) scroll handle  slicing for texture
-		handleCornerRadius: 4, // scroll handle corner roundness if background is solid color
-
-		width: 16, // scrollbar width
-		height: 16, // scrollbar height
-
-		pad: 2, // [ top, right, bottom, left ] or (Number) padding
+		background: 0xFFFFFF,
+		slice: 0,
+		cornerRadius: 4,
+		handleBackground: 0xC0C0C0,
+		handleSlice: 0,
+		handleCornerRadius: 4,
+		width: 16,
+		height: 16,
+		pad: 2,
 
 		// apply only to horizontal
 		horizontal: { },
 
 		// apply only to vertical
 		vertical: { },
-
 	},
 
 	// image container - ui/image.js
@@ -105,25 +86,22 @@ UI.style = UI.style ? UI.style : {
 
 	// button - ui/button.js
 	button: {
-
 		background: './textures/ui:button',
 		overBackground: './textures/ui:button-over',
 		focusBackground: './textures/ui:button-over',
 		downBackground: './textures/ui:button-down',
 		disabledBackground: './textures/ui:button-disabled',
-
-		slice: 8, // (Array[4]) or (Number) slicing for texture
-		pad: 8, // [ top, right, bottom, left ] or (Number) padding
+		slice: 8,
+		pad: 8,
 
 		// apply to button's label (ui/text.js)
 		label: {
-			textColor: 0x0,
+			color: 0x0,
 			size: 14
 		},
 
 		// apply to icon image
 		image: {},
-
 	},
 
 	// checkbox - ui/checkbox.js
@@ -134,19 +112,18 @@ UI.style = UI.style ? UI.style : {
 		focusBackground: './textures/ui:checkbox-over',
 		downBackground: './textures/ui:checkbox-over',
 		disabledBackground: './textures/ui:checkbox-disabled',
-
-		slice: 0, // (Array[4]) or (Number) slicing for background texture
-		pad: 0, // [ top, right, bottom, left ] or (Number) padding
+		slice: 0,
+		pad: 0,
 
 		// apply to checkbox label (ui/text.js)
 		label: {
-			textColor: 0x0,
+			color: 0x0,
 			size: 14
 		},
 
-		// "checkmark" image
+		// "checkmark" image (ui/image.js)
 		image: {
-			texture: './textures/ui:checkbox-check', // to make solid color, set background: color instead, add margin if needed to position
+			texture: './textures/ui:checkbox-check',
 		},
 
 	},
@@ -154,26 +131,25 @@ UI.style = UI.style ? UI.style : {
 	// select-style dropdown menu - ui/dropdown.js
 	dropdown: {
 
-		maxVisibleItems: 5, // max items visible in scrollable view when dropdown is open
-
-		pad: 4, // [ top, right, bottom, left ] or (Number) padding
+		maxVisibleItems: 5,
+		pad: 4,
 
 		// style applied to dropdown button itself (defaults to UI.style.button)
 		button: {
-			icon: './textures/ui:checkbox-check', // to make solid color, set background: color instead, add margin if needed to position
+			icon: './textures/ui:checkbox-check',
 		},
 
-		// image used for arrow on the right side of the dropdown
+		// image used for arrow on the right side of the dropdown (ui/image.js)
 		arrowImage: {
 			texture: './textures/ui:checkbox-check',
 		},
 
-		// scrollable container with items
+		// scrollable container with items (ui/scrollable.js)
 		menu: {
 			spacingY: 0
 		},
 
-		// look of ui/button that defines each individual item in the list
+		// look of items in the dropdown list (ui/button.js)
 		item: {
 			background: 0xFFFFFF,
 			focusBackground: 0xEEEEFF,
@@ -181,9 +157,7 @@ UI.style = UI.style ? UI.style : {
 			downBackground: 0xDDDDFF,
 			disabledBackground: 0xAAAAAA,
 			layoutAlign: LayoutAlign.Stretch,
-
 			pad: 2,
-
 		}
 
 	}
@@ -198,6 +172,7 @@ UI.style = UI.style ? UI.style : {
 Shared functionality between Aviko ui components
 
 */
+
 UI.base = UI.base ? UI.base : {
 
 	// layout specific properties shared between UI components
@@ -332,6 +307,9 @@ UI.base = UI.base ? UI.base : {
 		// remove focus from control
 		go[ 'blur' ] = function () { ui.blur(); }
 
+		// resize control
+		go[ 'resize' ] = function ( w, h ) { ui.resize( w, h ); }
+
 		// called from "focusChanged" to scroll this component into view
 		go[ 'scrollIntoView' ] = function() {
 			var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
@@ -395,6 +373,7 @@ UI.base = UI.base ? UI.base : {
 
 	// creates mapped properties
 	addMappedProperties: function ( go, mappedProps ) {
+		go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		for ( var i = 0; i < mappedProps.length; i++ ) {
 			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
 				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true

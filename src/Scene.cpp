@@ -22,8 +22,9 @@ Scene::Scene( ScriptArguments* args ) : Scene() {
 	
 	// if have at least one argument
 	if ( args && args->args.size() >= 1 ) {
-		// 
-		if ( args->args[ 0 ].type == TypeString ) {
+		// type object - copy props
+		if ( args->args[ 0 ].type == TypeObject ) {
+			script.CopyProperties( args->args[ 0 ].value.objectValue, this->scriptObject );
 		}
 	}
 	
@@ -59,21 +60,7 @@ Scene::Scene() {
 // scene clean up
 Scene::~Scene() {
 	
-	printf( "Scene(%s) destructor on %p\n", this->name.c_str(), this );
-	
-	// remove all children before destroying world in Scene
-	
-	// unparent all children
-	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
-		GameObject* obj = (GameObject*) this->children[ i ];
-		obj->SetParent( NULL );
-	}
-	
-	// remove all behaviors
-	for ( int i = (int) this->behaviors.size() - 1; i >= 0; i-- ) {
-		Behavior* beh = (Behavior*) this->behaviors[ i ];
-		beh->SetGameObject( NULL );
-	}
+	// printf( "Scene(%s) destructor on %p\n", this->name.c_str(), this );
 	
 	// destroy world
 	delete this->world;

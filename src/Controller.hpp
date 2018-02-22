@@ -61,6 +61,9 @@ public:
 	/// saves config
 	bool SaveConfig();
 	
+	/// deletes config file
+	bool DeleteConfig();
+	
 	Controller( SDL_Joystick* joy );
 	Controller( ScriptArguments* );
 	~Controller();
