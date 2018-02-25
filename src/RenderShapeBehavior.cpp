@@ -592,7 +592,7 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 				target->use_color = false;
 			} else {
 				vector<float>* fv = behavior->polyPoints->ToFloatVector();
-				GPU_Polygon2( target, (int) fv->size() / 2, fv->data(), behavior->color->rgba, ( behavior->shapeType == Polygon ) );
+				GPU_Polyline( target, (int) fv->size() / 2, fv->data(), behavior->color->rgba, ( behavior->shapeType == Polygon ) );
 			}
 			break;
 		

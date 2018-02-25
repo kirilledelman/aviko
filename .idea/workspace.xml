@@ -2,12 +2,25 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/config/Keyboard.json" afterPath="" />
       <change type="DELETED" beforePath="$PROJECT_DIR$/demo/config/MICREAL USB Gamepad.json" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Input.cpp" afterPath="$PROJECT_DIR$/src/Input.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.hpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ResourceManager.hpp" afterPath="$PROJECT_DIR$/src/ResourceManager.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.cpp" afterPath="$PROJECT_DIR$/src/ScriptHost.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptResource.cpp" afterPath="$PROJECT_DIR$/src/ScriptResource.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptResource.hpp" afterPath="$PROJECT_DIR$/src/ScriptResource.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
@@ -32,12 +45,24 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.3122172">
-              <caret line="44" column="0" selection-start-line="44" selection-start-column="0" selection-end-line="44" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="153" column="0" selection-start-line="153" selection-start-column="0" selection-end-line="153" selection-end-column="0" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="controller-configurator.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.5821727">
+              <caret line="715" column="12" selection-start-line="715" selection-start-column="12" selection-end-line="715" selection-end-column="12" />
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -76,6 +101,7 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/text.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+        <option value="$PROJECT_DIR$/demo/config/Keyboard.json" />
         <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" />
       </list>
@@ -120,8 +146,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -210,6 +234,8 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -281,7 +307,7 @@
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2761087" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2832618" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -321,13 +347,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/scrollable.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -610,7 +629,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.18384402">
           <caret line="11" column="25" selection-start-line="11" selection-start-column="25" selection-end-line="11" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -649,38 +667,42 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.60167134">
-          <caret line="83" column="16" selection-start-line="83" selection-start-column="16" selection-end-line="83" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="119" column="17" selection-start-line="119" selection-start-column="12" selection-end-line="119" selection-end-column="17" />
-          <folding>
-            <element signature="n#!!doc" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js">
+    <entry file="file://$PROJECT_DIR$/demo/config/Keyboard.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.617945">
-          <caret line="717" column="30" selection-start-line="717" selection-start-column="30" selection-end-line="717" selection-end-column="30" />
-          <folding>
-            <element signature="n#!!doc" expanded="true" />
-          </folding>
+        <state vertical-scroll-proportion="0.8299712">
+          <caret line="48" column="1" selection-start-line="48" selection-start-column="1" selection-end-line="48" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33285093">
+          <caret line="79" column="25" selection-start-line="79" selection-start-column="24" selection-end-line="79" selection-end-column="25" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3122172">
-          <caret line="44" column="0" selection-start-line="44" selection-start-column="0" selection-end-line="44" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="153" column="0" selection-start-line="153" selection-start-column="0" selection-end-line="153" selection-end-column="0" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.5821727">
+          <caret line="715" column="12" selection-start-line="715" selection-start-column="12" selection-end-line="715" selection-end-column="12" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

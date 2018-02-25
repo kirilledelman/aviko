@@ -133,6 +133,16 @@ public:
 		
 	}
 	
+	RESOURCE_TYPE* FindByPath( const char* fullpath ) {
+		// find it
+		auto it = this->map.begin();
+		while( it != this->map.end() ) {
+			if ( it->second->path.compare( fullpath ) == 0 ) return it->second;
+			it++;
+		}
+		return NULL;
+	}
+	
 	// unload unused resources
 	void UnloadUnusedResources() {
 		auto it = this->map.begin();

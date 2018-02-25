@@ -16,7 +16,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	
 	// create background object
 	Color* color = new Color( NULL );
-	color->SetInts( 0, 0, 0, 0 );
+	color->SetInts( 255, 255, 255, 0 );
 	script.SetProperty( "backgroundColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// create text color object

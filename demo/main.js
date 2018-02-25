@@ -65,6 +65,7 @@ var panel = App.scene.addChild ( 'ui/scrollable', {
 	layoutAlign: LayoutAlign.Stretch
 });
 
+
 Input.mouseMove = function ( x, y ) {
 
 	if ( Input.get( Key.MouseButton ) && Input.get( Key.LeftShift ) ) {

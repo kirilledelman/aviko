@@ -574,12 +574,67 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 	
 }
 
+/* MARK:	-				Logging
+ -------------------------------------------------------------------- */
+
+/// tracing function
+bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
+	// scope
+	JSAutoRequest req( cx );
+	
+	// determine if there's log handler registered
+	ScriptableClass::EventListenersMap::iterator hit = app.eventListeners.find( string( EVENT_LOG ) );
+	bool hasHandler = ( hit != app.eventListeners.end() && hit->second.size() > 0 );
+	if ( !hasHandler ) {
+		ArgValue hval = script.GetProperty( EVENT_LOG, app.scriptObject );
+		hasHandler = ( hval.type == TypeFunction );
+	}
+	
+	// print each argument as string, followed by newline
+	CallArgs args = CallArgsFromVp( argc, vp );
+	string combinedString;
+	for ( int i = 0; i < argc; i++ ) {
+		jsval val = args.get( i );
+		RootedString str( cx, JS_ValueToString( cx, val ) );
+		if ( val.isObject() && JS_ObjectIsCallable(cx, JSVAL_TO_OBJECT( val ) ) ) {
+			static char cbuf[ 256 ];
+			sprintf( cbuf, "[Function %p]%s", JSVAL_TO_OBJECT( val ), (i == argc - 1 ? "" : " ") );
+			combinedString.append( cbuf );
+		} else {
+			char* buf = JS_EncodeString( cx, str );
+			bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
+			if ( isArray ) {
+				combinedString.append( "[" );
+				combinedString.append( buf );
+				combinedString.append( "]" );
+			} else {
+				combinedString.append( buf );
+			}
+			JS_free( cx, buf );
+		}
+		if (i < argc) combinedString.append( " " );
+	}
+	
+	// if there's a handler, use event
+	if ( hasHandler ) {
+		Event e ( EVENT_LOG );
+		e.scriptParams.AddStringArgument( combinedString.c_str() );
+		app.CallEvent( e );
+	} else {
+		// otherwise print to console
+		printf( "%s\n", combinedString.c_str() );
+	}
+	return true;
+}
+
 
 /* MARK:	-				Error reporting
  -------------------------------------------------------------------- */
 
 /// callback for Javascript errors
 void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport *report ){
+	// scope
+	JSAutoRequest req( cx );
 	
 	// this error is handled
 	JS_ClearPendingException( cx );
@@ -590,10 +645,30 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 	if ( !hasHandler ) {
 		ArgValue hval = script.GetProperty( EVENT_ERROR, app.scriptObject );
 		if ( hval.type == TypeUndefined ) {
+			// error preview
+			string preview;
+			ScriptResource* sr = NULL;
+			if ( report->linebuf ) {
+				preview = report->linebuf;
+			} else if ( (sr = app.scriptManager.FindByPath( report->filename ) ) != NULL ){
+				istringstream iss( sr->source );
+				int i = 0;
+				while ( i++ <= report->lineno ) getline( iss, preview );
+				preview.append( "\n" );
+			}
+			if ( preview.length() ) {
+				// add ~~~~^ for error column
+				for ( size_t i = 0; i < report->column; i++ ){
+					preview.append( preview[ i ] == '\t' ? "\t" : "~" );
+				}
+				preview.append( "^\n" );
+			}
+			
 			// no handler - dump error and exit
-			printf( "%s:%u\n%s\n",
+			printf( "%s:%u\n%s%s\n",
 				   report->filename ? report->filename : "[top]",
 				   (unsigned int) report->lineno,
+				   preview.c_str(),
 				   message);			
 			exit( 1 );
 			return;
@@ -606,6 +681,7 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 	e.scriptParams.AddStringArgument( report->filename ? report->filename : "" );
 	e.scriptParams.AddIntArgument( report->lineno );
 	e.scriptParams.AddIntArgument( report->column );
+	e.scriptParams.AddStringArgument( report->linebuf );
 	e.scriptParams.AddIntArgument( report->flags );
 	app.CallEvent( e );
 	

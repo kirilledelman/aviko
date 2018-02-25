@@ -434,7 +434,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 	Uint32 etype = e.type;
 	Event event;
 	event.bubbles = true;
+	Controller* joy = NULL;
 	if ( etype == SDL_KEYDOWN && ( repeatKeyEnabled || e.key.repeat == 0 ) ) {
+		joy = joysticks[ -9999 ];
 		event.name = EVENT_KEYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -447,6 +449,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_KEYUP ) {
+		joy = joysticks[ -9999 ];
 		event.name = EVENT_KEYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -458,13 +461,23 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 		UIEvent( event );
 	} else if ( etype == SDL_TEXTINPUT ) {
+		joy = joysticks[ -9999 ];
 		event.name = EVENT_KEYPRESS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddStringArgument( e.text.text );
 		CallEvent( event );
 		UIEvent( event );
-	} else if ( etype == SDL_MOUSEBUTTONDOWN ) {
+	} /*else if ( etype == SDL_TEXTEDITING ) {
+		joy = joysticks[ -9999 ];
+		printf( "SDL_TEXTEDITING %s\n", e.edit.text );
+		event.name = EVENT_KEYPRESS;
+		event.behaviorParam = &e;
+		event.scriptParams.ResizeArguments( 0 );
+		event.scriptParams.AddStringArgument( e.text.text );
+		CallEvent( event );
+		UIEvent( event );
+	} */ else if ( etype == SDL_MOUSEBUTTONDOWN ) {
 		event.name = EVENT_MOUSEDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -504,7 +517,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		// add to joysticks
 		SDL_Joystick* jck = SDL_JoystickOpen( e.jdevice.which );
 		SDL_JoystickID jid = SDL_JoystickInstanceID( jck );
-		Controller* joy = new Controller( jck );
+		joy = new Controller( jck );
 		this->joysticks[ jid ] = joy;
 		// fire event
 		event.name = EVENT_CONTROLLERADDED;
@@ -515,7 +528,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	} else if ( etype == SDL_JOYDEVICEREMOVED ) {
 		JoystickMap::iterator it = this->joysticks.find( e.jdevice.which );
 		if ( it == this->joysticks.end() ) return;
-		Controller* joy = it->second;
+		joy = it->second;
 		this->joysticks.erase( it );
 		event.name = EVENT_CONTROLLERREMOVED;
 		event.behaviorParam = &e;
@@ -525,7 +538,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	} else if ( etype == SDL_JOYBUTTONDOWN ) {
 		JoystickMap::iterator it = joysticks.find( e.jbutton.which );
 		if ( it == joysticks.end() ) return;
-		Controller* joy = it->second;
+		joy = it->second;
 		event.name = EVENT_JOYDOWN;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -535,7 +548,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	} else if ( etype == SDL_JOYBUTTONUP ) {
 		JoystickMap::iterator it = joysticks.find( e.jbutton.which );
 		if ( it == joysticks.end() ) return;
-		Controller* joy = it->second;
+		joy = it->second;
 		event.name = EVENT_JOYUP;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -545,7 +558,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	} else if ( etype == SDL_JOYAXISMOTION ) {
 		JoystickMap::iterator it = joysticks.find( e.jaxis.which );
 		if ( it == joysticks.end() ) return;
-		Controller* joy = it->second;
+		joy = it->second;
 		event.name = EVENT_JOYAXIS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -558,7 +571,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	} else if ( etype == SDL_JOYHATMOTION ) {
 		JoystickMap::iterator it = joysticks.find( e.jhat.which );
 		if ( it == joysticks.end() ) return;
-		Controller* joy = it->second;
+		joy = it->second;
 		event.name = EVENT_JOYHAT;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
@@ -572,9 +585,9 @@ void Input::HandleEvent( SDL_Event& e ) {
 		CallEvent( event );
 	}
 	
-	// pass to controllers
-	for ( JoystickMap::iterator it = this->joysticks.begin(), end = this->joysticks.end(); it != end; it++ ) {
-		(it->second)->HandleEvent( e );
+	// if controller was found, pass the event
+	if ( joy ) {
+		joy->HandleEvent( e );
 	}
 	
 }

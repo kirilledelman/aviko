@@ -481,28 +481,8 @@ private:
 	
 	
 	/// tracing function
-	static bool Log( JSContext *cx, unsigned argc, Value *vp ) {
-		// scope
-		JSAutoRequest req( cx );
-		
-		// print each argument as string, followed by newline
-		CallArgs args = CallArgsFromVp( argc, vp );
-		
-		for ( int i = 0; i < argc; i++ ) {
-			jsval val = args.get( i );
-			RootedString str( cx, JS_ValueToString( cx, val ) );
-			if ( val.isObject() && JS_ObjectIsCallable(cx, JSVAL_TO_OBJECT( val ) ) ) {
-				printf( "[Function %p]%s", JSVAL_TO_OBJECT( val ), (i == argc - 1 ? "\n" : " ") );
-			} else {
-				char* buf = JS_EncodeString( cx, str );
-				bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
-				printf( ( isArray ? "[%s]%s" : "%s%s" ), buf, (i == argc - 1 ? "\n" : " ") );
-				JS_free( cx, buf );
-			}
-		}
-		return true;
-	}
-
+	static bool Log( JSContext *cx, unsigned argc, Value *vp );
+	
 	
 /* MARK:	-				Object lifecycle callbacks
  -------------------------------------------------------------------- */

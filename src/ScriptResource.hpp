@@ -7,6 +7,7 @@ class ScriptResource : public Resource {
 public:
 	
 	JSScript* compiledScript = NULL;
+	string source;
 	
 	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
 	

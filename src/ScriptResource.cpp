@@ -14,6 +14,9 @@ ScriptResource::ScriptResource( const char* originalKey, string& path, string& e
 		return;
 	}
 	
+	// save source
+	this->source = buf;
+	
 	// compile
 	this->compiledScript = JS_CompileScript( script.js, script.global_object, buf, fsize, path.c_str(), 0 );	
 	if ( this->compiledScript ) {

@@ -50,7 +50,7 @@ public:
 	bool stippleAlpha = false;
 	
 	/// blend mode
-	Uint8 blendMode = GPU_BLEND_PREMULTIPLIED_ALPHA;
+	Uint8 blendMode = GPU_BLEND_NORMAL; //GPU_BLEND_PREMULTIPLIED_ALPHA;
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)
 	typedef struct {

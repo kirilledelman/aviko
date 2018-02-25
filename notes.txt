@@ -1,8 +1,4 @@
 
-Controller - make it so if a Controller handled / found binding, the loop over joysticks should skip out
-
-fading opacity of "ui/text" looks weird
-
 Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
 
 Add App.log callback

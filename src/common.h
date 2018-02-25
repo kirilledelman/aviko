@@ -128,6 +128,7 @@ string GetScriptNameAndLine();
 #define EVENT_AWAKE "awake"
 #define EVENT_LAYOUT "layout"
 #define EVENT_ERROR "error"
+#define EVENT_LOG "log"
 #define EVENT_CHANGE "change"
 
 // additional blending mode
