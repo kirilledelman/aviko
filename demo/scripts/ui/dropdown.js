@@ -149,7 +149,7 @@ include( './ui' );
 
 	// opens dropdown on click
 	button.click = function () {
-		go.showDropdown( !dropdown );
+		go.showDropdown( true );
 	}
 
 	// refire focus event on gameObject
@@ -168,7 +168,7 @@ include( './ui' );
 		if ( show ) {
 			go.scrollIntoView();
 			if ( !items || !items.length ) return;
-			var gp = button.localToGlobal( 0, 0 );
+			var gp = button.localToGlobal( 0, 0, true );
 			// scrollable container
 			dropdown = new GameObject( './scrollable', {
 				layoutType: Layout.Vertical,
@@ -179,6 +179,7 @@ include( './ui' );
 				x: gp.x, y: gp.y + button.height,
 				opacity: 0,
 				style: UI.style.dropdown.menu,
+				ignoreCamera: true,
 			} );
 			// add items
 			var item, selectedItem;
@@ -214,7 +215,7 @@ include( './ui' );
 	}
 
 	go.updateDropdownPosition = function () {
-		var gp = button.localToGlobal( 0, 0 );
+		var gp = button.localToGlobal( 0, 0, true );
 		var itemHeight = dropdown.getChild( 0 ).height;
 		var desiredHeight = Math.min( dropdown.scrollHeight, itemHeight * maxVisibleItems );
 		var buttonBottom = gp.y + button.height;
@@ -262,6 +263,7 @@ include( './ui' );
 		if ( x < dropdown.x || x > dropdown.x + ww ||
 			y < dropdown.y || y > dropdown.y + dropdown.height ) {
 			go.showDropdown( false );
+			stopAllEvents();
 		}
 	}
 

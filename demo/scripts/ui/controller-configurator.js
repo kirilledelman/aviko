@@ -83,7 +83,7 @@
  */
 
 include( './ui' );
-new (function(){
+new (function( params ){
 
 	var axis = [];
 	var buttons = [];
@@ -173,34 +173,11 @@ new (function(){
 
 	this[ 'configure' ] = configureController;
 
-	// handlers
+	// optional init parameter ( can pass as include( 'ui/controller-configurator', { ... init ... } ) )
 
-	Input.on( 'controllerAdded', function ( controller ) {
-		// if have callback
-		if ( callbacks.controllerAdded ) {
-			// ask if want to use this one
-			if ( callbacks.controllerAdded( controller ) === false ) return;
-		}
-		// configure
-		if ( !controller.configured ) {
-			async( function () { configureController( controller ); }, showDelay );
-		} else if ( callbacks.ready ) callbacks.ready( controller );
-	}.bind( this ));
+	if ( params != global ) UI.base.applyDefaults( this, params );
 
-	Input.on( 'controllerRemoved', function ( controller ) {
-		// currently configuring, do next without finishing
-		if ( currentlyConfiguring == controller ) {
-			nextController( false );
-		// remove from list
-		} else {
-			var index = controllersToConfigure.indexOf( controller );
-			if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
-		}
-		// callback
-		if ( callbacks.controllerRemoved ) callbacks.controllerRemoved( controller );
-	}.bind( this ));
-
-	// display elements
+	// display elements - feel free to modify, or adjust in willShow callback
 
 	// create container
 	container = new GameObject( './panel', {
@@ -274,7 +251,36 @@ new (function(){
 		text: "press and hold any button to skip, press and hold any two buttons to abort"
 	} );
 
-	// internal
+	// internals
+
+	Input.on( 'controllerAdded', function ( controller ) {
+
+		// if have callback
+		if ( callbacks.controllerAdded ) {
+			// ask if want to use this one
+			if ( callbacks.controllerAdded( controller ) === false ) return;
+		}
+		// configure
+		if ( !controller.configured ) {
+			async( function () { configureController( controller ); }, showDelay );
+		} else if ( callbacks.ready ) callbacks.ready( controller );
+
+	}.bind( this ));
+
+	Input.on( 'controllerRemoved', function ( controller ) {
+
+		// currently configuring, do next without finishing
+		if ( currentlyConfiguring == controller ) {
+			nextController( false );
+		// remove from list
+		} else {
+			var index = controllersToConfigure.indexOf( controller );
+			if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
+		}
+		// callback
+		if ( callbacks.controllerRemoved ) callbacks.controllerRemoved( controller );
+
+	}.bind( this ));
 
 	function configureController ( controller ) {
 
@@ -730,5 +736,5 @@ new (function(){
 
 	}
 
-})();
+})( this );
 

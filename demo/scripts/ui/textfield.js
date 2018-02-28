@@ -72,6 +72,7 @@ include( './ui' );
 			if ( numeric ) {
 				v = integer ? parseInt( rt.text ) : parseFloat( rt.text );
 				if ( isNaN ( v ) && resetText ) v = ( integer ? parseInt( resetText ) : parseFloat( resetText ) );
+				v = Math.max( minValue, Math.min( maxValue, v ) );
 			}
 			return v;
 		}, function( v ){
@@ -127,6 +128,7 @@ include( './ui' );
 					rt.showCaret = rt.showSelection = ui.dragSelect = false;
 				    rt.formatting = formatting;
 				    rt.scrollLeft = 0;
+					if ( numeric ) go.value = go.value;
 					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
 					go.fire( 'editEnd' );
 				}

@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "RenderBehavior.hpp"
-#include "Vector.hpp"
 #include "TypedVector.hpp"
 
 class RenderShapeBehavior: public RenderBehavior {
@@ -80,10 +79,10 @@ public:
 	
 	/// holds x,y point pairs for GPU_Polygon
 	TypedVector* polyPoints = NULL;
+	bool _renderPointsDirty = false;
 	
 	/// shadow points vertices container - used for drawing concave polys
-	vector<unsigned short> renderPoints;
-	bool _renderPointsDirty = false;
+	vector<unsigned short> renderTris;
 	
 	/// called when renderPoints changes
 	void UpdatePoints();

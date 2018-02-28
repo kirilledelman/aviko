@@ -357,6 +357,7 @@ void GameObject::InitClass() {
 			}
 		} else if ( s->error == ERROR_NOT_FOUND ) {
 			printf( ".script path \"%s\" was not found.\n", key );
+		
 		}
 		return ArgValue();
 		
@@ -416,16 +417,17 @@ void GameObject::InitClass() {
 	( "localToGlobal", //
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: localToGlobal( Float x, Float y )";
+		const char* error = "usage: localToGlobal( Float x, Float y, [ Boolean screenSpace ] )";
 		float x, y;
 		float xx, yy;
+		bool screenSpace = false;
 		GameObject* self = (GameObject*) go;
-		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y ) ) {
+		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y, TypeBool, &screenSpace ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// convert
-		self->ConvertPoint( x, y, xx, yy, true );
+		self->ConvertPoint( x, y, xx, yy, true, screenSpace );
 		
 		// return object
 		void *robj = script.NewObject();
@@ -439,16 +441,17 @@ void GameObject::InitClass() {
 	( "globalToLocal", //
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: globalToLocal( Float x, Float y )";
+		const char* error = "usage: globalToLocal( Float x, Float y, [ Boolean screenSpace ] )";
 		float x, y;
 		float xx, yy;
+		bool screenSpace = false;
 		GameObject* self = (GameObject*) go;
-		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y ) ) {
+		if ( !sa.ReadArguments( 2, TypeFloat, &x, TypeFloat, &y, TypeBool, &screenSpace ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// convert
-		self->ConvertPoint( x, y, xx, yy, false );
+		self->ConvertPoint( x, y, xx, yy, false, screenSpace );
 		
 		// return object
 		void *robj = script.NewObject();
@@ -1844,7 +1847,7 @@ bool GameObject::IsCameraIgnored() {
 }
 
 // converts between coord systems
-void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal ) {
+void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal, bool screenSpace ) {
 	
 	// matrix with x, y
 	float mat[ 16 ];
@@ -1858,14 +1861,14 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 		this->_worldTransformDirty = true;
 		GPU_MatrixMultiply( res, this->WorldTransform(), mat );
 		// apply camera transform
-		if ( scene && !this->IsCameraIgnored() ) {
+		if ( screenSpace && scene && !this->IsCameraIgnored() ) {
 			GPU_MatrixCopy( mat, res );
 			GPU_MatrixMultiply( res, scene->CameraTransform(), mat );
 		}
 	// multiply by world
 	} else {
 		// apply inverse camera
-		if ( scene && !this->IsCameraIgnored() ) {
+		if ( screenSpace && scene && !this->IsCameraIgnored() ) {
 			GPU_MatrixMultiply( res, scene->InverseCameraTransform(), mat );
 			GPU_MatrixCopy( mat, res );
 		}

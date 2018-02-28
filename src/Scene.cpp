@@ -50,7 +50,7 @@ Scene::Scene() {
 	this->groundBody = this->world->CreateBody( &bd );
 	
 	// set debug draw
-	this->SetFlags( -1 );//b2Draw::e_shapeBit | b2Draw::e_pairBit | b2Draw::e_jointBit );
+	this->SetFlags( b2Draw::e_shapeBit | b2Draw::e_pairBit | b2Draw::e_jointBit );
 	this->world->SetDebugDraw( this );
 	this->world->SetContactListener( this );
 	this->world->SetContactFilter( this );

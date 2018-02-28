@@ -395,7 +395,7 @@ bool TypedVector::Set( ArgValue& in ) {
 	if ( in.type == TypeArray ){
 		int np = (int) in.value.arrayValue->size();
 		if ( !container ) this->InitWithType( in.value.arrayValue->at( 0 ) );
-		this->SetLength( np );
+		if ( !lockedSize ) this->SetLength( np );
 		for ( int i = 0; i < np; i++ ){
 			this->SetElement( in.value.arrayValue->at( i ), i );
 		}
@@ -408,7 +408,7 @@ bool TypedVector::Set( ArgValue& in ) {
 			ArgValue v( other->typeName.c_str() );
 			this->InitWithType( v );
 		}
-		this->SetLength( np );
+		if ( !lockedSize ) this->SetLength( np );
 		for ( int i = 0; i < np; i++ ){
 			ArgValue val = other->GetElement( i );
 			this->SetElement( val, i );
@@ -443,42 +443,42 @@ bool TypedVector::SetElement( ArgValue& val, int index ) {
 			if ( val.type == TypeBool ) {
 				b = val.toBool();
 			} else return false;
-			if ( vb->size() <= index ) vb->resize( index + 1 );
+			if ( vb->size() <= index ) { if ( lockedSize ) return false; else vb->resize( index + 1 ); }
 			(*vb)[ index ] = b;
 			break;
 		case TypeChar:
 			vc = ((vector<Uint8>*) container);
 			if ( !val.toInt8( c ) ) { return false; }
-			if ( vc->size() <= index ) vc->resize( index + 1 );
+			if ( vc->size() <= index ) { if ( lockedSize ) return false; else vc->resize( index + 1 ); }
 			(*vc)[ index ] = c;
 			break;
 		case TypeInt:
 			vi = ((vector<int>*) container);
 			if ( !val.toInt( i ) ) { return false; }
-			if ( vi->size() <= index ) vi->resize( index + 1 );
+			if ( vi->size() <= index ) { if ( lockedSize ) return false; else vi->resize( index + 1 ); }
 			(*vi)[ index ] = i;
 			break;
 		case TypeFloat:
 			vf = ((vector<float>*) container);
 			if ( !val.toNumber( f ) ) { return false; }
-			if ( vf->size() <= index ) vf->resize( index + 1 );
+			if ( vf->size() <= index ) { if ( lockedSize ) return false; else vf->resize( index + 1 ); }
 			(*vf)[ index ] = f;
 			break;
 		case TypeDouble:
 			vd = ((vector<double>*) container);
 			if ( !val.toNumber( d ) ) { return false; }
-			if ( vd->size() <= index ) vd->resize( index + 1 );
+			if ( vd->size() <= index ) { if ( lockedSize ) return false; else vd->resize( index + 1 ); }
 			(*vd)[ index ] = d;
 			break;
 		case TypeString:
 			vs = ((vector<string>*) container);
 			if ( val.type != TypeString ) { return false; }
-			if ( vs->size() <= index ) vs->resize( index + 1 );
+			if ( vs->size() <= index ) { if ( lockedSize ) return false; else vs->resize( index + 1 ); }
 			(*vs)[ index ] = *val.value.stringValue;
 			break;
 		case TypeArray:
 			vo = ((vector<void*>*) container);
-			if ( vo->size() <= index ) vo->resize( index + 1 );
+			if ( vo->size() <= index ) { if ( lockedSize ) return false; else vo->resize( index + 1 ); }
 			// check object type
 			if ( val.type == TypeArray ) {
 				(*vo)[ index ] = val.arrayObject;
@@ -488,7 +488,7 @@ bool TypedVector::SetElement( ArgValue& val, int index ) {
 			break;
 		case TypeObject:
 			vo = ((vector<void*>*) container);
-			if ( vo->size() <= index ) vo->resize( index + 1 );
+			if ( vo->size() <= index ) { if ( lockedSize ) return false; else vo->resize( index + 1 ); }
 			// check object type
 			if ( val.type == TypeObject && !valIsNull && script.IsObjectDescendentOf( val.value.objectValue, typeName.c_str() ) ) {
 				(*vo)[ index ] = val.value.objectValue;
@@ -550,7 +550,7 @@ ArgValue TypedVector::GetElement( int index ) {
 
 /// push to end
 bool TypedVector::PushElement( ArgValue& val ) {
-	if ( !container ) return false;
+	if ( !container || lockedSize ) return false;
 	vector<bool>* vb = NULL;
 	vector<Uint8>* vc = NULL;
 	vector<int>* vi = NULL;
@@ -623,7 +623,7 @@ bool TypedVector::PushElement( ArgValue& val ) {
 
 /// pop last
 ArgValue TypedVector::PopElement() {
-	if ( !container ) return ArgValue();
+	if ( !container || lockedSize ) return ArgValue();
 	vector<bool>* vb = NULL;
 	vector<Uint8>* vc = NULL;
 	vector<int>* vi = NULL;
@@ -773,7 +773,7 @@ ArgValueVector* TypedVector::Slice( int start, int end ) {
 
 /// like Array.splice
 ArgValueVector* TypedVector::Splice( int start, int deleteCount, ArgValueVector::iterator insertElementIterator, int insertCount ) {
-	if ( !container ) return NULL;
+	if ( !container || lockedSize ) return NULL;
 	vector<bool>* vb = NULL;
 	vector<Uint8>* vc = NULL;
 	vector<int>* vi = NULL;
@@ -1016,7 +1016,7 @@ void TypedVector::ToVec2Vector( vector<b2Vec2>& points, float multiplier ) {
 		case TypeFloat:
 			vf = ((vector<float>*) container);
 			np = vf->size();
-			points.reserve( ceil( np / 2 ) );
+			points.resize( ceil( np / 2 ) );
 			for ( size_t i = 0; i < np; i++ ){
 				if ( i % 2 ) {
 					points[ i / 2 ].y = multiplier * (*vf)[ i ];
@@ -1028,7 +1028,7 @@ void TypedVector::ToVec2Vector( vector<b2Vec2>& points, float multiplier ) {
 		case TypeDouble:
 			vd = ((vector<double>*) container);
 			np = vd->size();
-			points.reserve( ceil( np / 2 ) );
+			points.resize( ceil( np / 2 ) );
 			for ( size_t i = 0; i < np; i++ ){
 				if ( i % 2 ) {
 					points[ i / 2 ].y = multiplier * (*vd)[ i ];

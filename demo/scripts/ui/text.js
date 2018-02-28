@@ -112,6 +112,13 @@ include( './ui' );
 
 		// (Number) or (Color) ^9 color
 		[ 'color9',  function (){ return rt.color9; }, function ( v ){ rt.color9 = v; } ],
+
+		// (Integer) characters to skip rendering from beginning of string
+		[ 'revealStart',  function (){ return rt.revealStart; }, function ( s ){ rt.revealStart = s; } ],
+
+		// (Integer) characters to skip rendering from beginning of string
+		[ 'revealEnd',  function (){ return rt.revealEnd; }, function ( s ){ rt.revealEnd = s; } ],
+
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );

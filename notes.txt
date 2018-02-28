@@ -1,45 +1,21 @@
 
-Ability to draw concave polys, readonly flag on shape, telling if shape if concave?
-
-Add App.log callback
-
-UI:
-	input
-	panel
-	scrollable
-	scrollbar
-	text
-	image
-	button
-	checkbox
-	dropdown
-
-	resizable split pane (v / h)
-
-
-RenderText - better wrapping on word boundary
-
 autoTile = true/false, uses tileX, tileY as multiples from current w/h
 	with special handling in sliced
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
+	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events
 
-In error handler, include offending line + ------------^
 
 Demo project
-	Controller configurator - wip
+	Controller configurator
 	Percussion playground
 	UI
 
 Look into tile based physics
 
-
-
 Normalize error messages, add verbosity
 Remove unnecessary printfs
 
-SaveFile - fix create subfolders
-	Controller.save - something's up w save dir
 
 =============================================
 

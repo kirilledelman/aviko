@@ -72,7 +72,11 @@ struct ArgValue {
 	ArgValue( int val ){ type = TypeInt; value.intValue = val; }
 	ArgValue( float val ){ type = TypeFloat; value.floatValue = val; }
 	ArgValue( double val ){ type = TypeDouble; value.doubleValue = val; }
-	ArgValue( const char* val ){ type = TypeString; value.stringValue = new string( val ); }
+	ArgValue( const char* val ){
+		type = TypeString;
+		value.stringValue = new string();
+		if ( val ) value.stringValue->assign( val );
+	}
 	ArgValue( void* val ){ type = TypeObject; value.objectValue = val; }
 	ArgValue( const ArgValue& copyFrom );
 	ArgValue( jsval val );

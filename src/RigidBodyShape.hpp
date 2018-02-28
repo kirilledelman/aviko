@@ -5,7 +5,6 @@
 #include "common.h"
 #include "ScriptableClass.hpp"
 #include "RenderShapeBehavior.hpp"
-#include "Vector.hpp"
 
 class RigidBodyBehavior;
 
@@ -14,7 +13,7 @@ class RigidBodyShape : public ScriptableClass {
 public:
 	
 	RigidBodyBehavior* body = NULL;
-	b2Fixture* fixture = NULL;
+	vector<b2Fixture*> fixtures;
 	
 	void SetBody( RigidBodyBehavior* b );
 	
@@ -31,6 +30,9 @@ public:
 	float restitution = 0.1;
 	bool isSensor = false;
 	
+	/// will split concave polys in multiple fixtures
+	bool splitConcave = true;
+	
 	RenderShapeBehavior::ShapeType shapeType = RenderShapeBehavior::ShapeType::Circle;
 	
 	float radius = 2;
@@ -38,7 +40,7 @@ public:
 	float height = 1;
 	b2Vec2 center = { 0, 0 };
 	
-	FloatVector* polyPoints = NULL;
+	TypedVector* polyPoints = NULL;
 	ArgValueVector* GetPoints();
 	void SetPoints( ArgValue& );
 	

@@ -4,7 +4,6 @@
 #include "RenderTextBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "SampleBehavior.hpp"
-#include "Vector.hpp"
 #include "TypedVector.hpp"
 
 // from ScriptableClass.hpp
@@ -834,7 +833,6 @@ void Application::InitClass() {
 	// call registration functions for all classes
 	input.InitClass(); // single instance
 	Controller::InitClass();
-	FloatVector::InitClass();
 	TypedVector::InitClass();
 	Color::InitClass();
 	Sound::InitClass();
@@ -1317,18 +1315,18 @@ bool SaveFile( const char* data, size_t numBytes, const char* filepath, const ch
 	string path = ResolvePath( filepath, ext, NULL );
 	
 	// create subfolders leading up to file
-	/*vector<string> parts = Resource::splitString( path.substr( app.currentDirectory.length() + 1 ), string( "/" ) );
+	vector<string> parts = Resource::splitString( path.substr( app.currentDirectory.length() + 1 ), string( "/" ) );
 	string subDir;
-	for ( int i = 1; i < parts.size() - 1; i++ ) {
-		subDir = "/" + parts[ i ];
-		if ( access( path.c_str(), R_OK ) == -1 ) {
+	for ( int i = 0; i < parts.size() - 1; i++ ) {
+		subDir = app.currentDirectory + "/" + parts[ i ];
+		if ( access( subDir.c_str(), R_OK ) == -1 ) {
 			// try to make directory
-			if ( mkdir( app.currentDirectory + subDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) == -1 ){
+			if ( mkdir( subDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH ) == -1 ){
 				printf( "Unable to create directory %s for saving.\n", subDir.c_str() );
 				return false;
 			}
 		}
-	}*/
+	}
 	
 	// create and save file
 	FILE *f = fopen( (char*) path.c_str(), "w+" );

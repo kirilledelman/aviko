@@ -162,8 +162,6 @@
 		71D3CBF81FEB3E9E006F7678 /* Color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 710A47351F7EB4F300A89171 /* Color.cpp */; };
 		71D3CBF91FEB3E9E006F7678 /* Tween.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A41FE5B046001147CD /* Tween.hpp */; };
 		71D3CBFA1FEB3E9E006F7678 /* Tween.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A31FE5B046001147CD /* Tween.cpp */; };
-		71D3CBFB1FEB3E9E006F7678 /* Vector.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A11FE596F0001147CD /* Vector.hpp */; };
-		71D3CBFC1FEB3E9E006F7678 /* Vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713F33A01FE596F0001147CD /* Vector.cpp */; };
 		71D3CBFD1FEB3E9E006F7678 /* Sound.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 718533251F9FF7B90080B05A /* Sound.hpp */; };
 		71D3CBFE1FEB3E9E006F7678 /* Sound.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 718533241F9FF7B90080B05A /* Sound.cpp */; };
 		71D3CBFF1FEB3E9E006F7678 /* Image.hpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E793911FC47DAD0026ABCB /* Image.hpp */; };
@@ -216,8 +214,6 @@
 		713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RigidBodyJoint.hpp; path = src/RigidBodyJoint.hpp; sourceTree = "<group>"; };
 		713D70201F82CDE80011B7E8 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Input.cpp; path = src/Input.cpp; sourceTree = "<group>"; };
 		713D70211F82CDE80011B7E8 /* Input.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Input.hpp; path = src/Input.hpp; sourceTree = "<group>"; };
-		713F33A01FE596F0001147CD /* Vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Vector.cpp; path = src/Vector.cpp; sourceTree = "<group>"; };
-		713F33A11FE596F0001147CD /* Vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Vector.hpp; path = src/Vector.hpp; sourceTree = "<group>"; };
 		713F33A31FE5B046001147CD /* Tween.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tween.cpp; path = src/Tween.cpp; sourceTree = "<group>"; };
 		713F33A41FE5B046001147CD /* Tween.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tween.hpp; path = src/Tween.hpp; sourceTree = "<group>"; };
 		71515BAC1F682EDB004ED8C0 /* ScriptHost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptHost.hpp; path = src/ScriptHost.hpp; sourceTree = "<group>"; };
@@ -428,8 +424,6 @@
 				710A47351F7EB4F300A89171 /* Color.cpp */,
 				713F33A41FE5B046001147CD /* Tween.hpp */,
 				713F33A31FE5B046001147CD /* Tween.cpp */,
-				713F33A11FE596F0001147CD /* Vector.hpp */,
-				713F33A01FE596F0001147CD /* Vector.cpp */,
 				71D9A14E20308AC4006E0FD3 /* TypedVector.hpp */,
 				71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */,
 				718533251F9FF7B90080B05A /* Sound.hpp */,
@@ -961,8 +955,6 @@
 				71D9A14F20308AC4006E0FD3 /* TypedVector.cpp in Sources */,
 				71D3CBF91FEB3E9E006F7678 /* Tween.hpp in Sources */,
 				71D3CBFA1FEB3E9E006F7678 /* Tween.cpp in Sources */,
-				71D3CBFB1FEB3E9E006F7678 /* Vector.hpp in Sources */,
-				71D3CBFC1FEB3E9E006F7678 /* Vector.cpp in Sources */,
 				71D3CBFD1FEB3E9E006F7678 /* Sound.hpp in Sources */,
 				71D3CBFE1FEB3E9E006F7678 /* Sound.cpp in Sources */,
 				71D3CBFF1FEB3E9E006F7678 /* Image.hpp in Sources */,

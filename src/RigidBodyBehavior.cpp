@@ -676,7 +676,9 @@ void RigidBodyBehavior::RemoveBody() {
 	// remove body
 	if ( this->body ) {
 		// clear fixtures from shapes
-		for ( size_t i = 0, nf = shapes.size(); i < nf; i++ ) { shapes[ i ]->fixture = NULL; }
+		for ( size_t i = 0, nf = shapes.size(); i < nf; i++ ) {
+			shapes[ i ]->fixtures.clear();
+		}
 		this->body->GetWorld()->DestroyBody( this->body );
 	}
 	this->body = NULL;

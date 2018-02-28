@@ -153,7 +153,7 @@ public:
 	float GetWorldAngle();
 	
 	// convert local to global and back
-	void ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal );
+	void ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal, bool screenSpace=true );
 
 	/// returns updated local transformation matrix
 	float* Transform();

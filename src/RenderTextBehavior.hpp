@@ -32,6 +32,7 @@ protected:
 		size_t pos = 0; // position in JSString
 		SDL_Color color = { 255,255,255,255 };
 		GlyphInfo* glyphInfo = NULL;
+		bool isWhiteSpace = false;
 		int pad = 0;
 	};
 	
@@ -138,6 +139,12 @@ public:
 	
 	/// num spaces
 	int tabSpaces = 4;
+
+	// number of characters to hide from beginning of line
+	int revealStart = 0;
+	
+	// number of characters to hide from end of line
+	int revealEnd = 0;
 	
 // selection / input
     

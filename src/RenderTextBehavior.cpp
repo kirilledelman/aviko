@@ -450,6 +450,26 @@ void RenderTextBehavior::InitClass() {
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
+	( "revealStart", //
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->revealStart; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->revealStart = max( 0, val );
+		rs->_dirty = true;
+		return rs->revealStart;
+	}));
+
+	script.AddProperty<RenderTextBehavior>
+	( "revealEnd", //
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->revealEnd; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
+		rs->revealEnd = max( 0, val );
+		rs->_dirty = true;
+		return rs->revealEnd;
+	}));
+	
+	script.AddProperty<RenderTextBehavior>
 	( "align", //
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->align; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
@@ -939,7 +959,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					skipOne = true;
 				}
 				
-				// constrol code accepted
+				// control code accepted
 				RenderTextCharacter empty;
 				if ( skipOne || skipTwo ) {
 					empty.x = previousCharacter ?
@@ -948,6 +968,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					empty.value = character;
 					empty.glyphInfo = GetGlyph( '\n', currentBold, currentItalic );
 					empty.pos = characterPos;
+					empty.isWhiteSpace = true;
 					currentLine->characters.push_back( empty );
 					current++;
 					characterPos++;
@@ -967,13 +988,45 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			// get glyph
 			GlyphInfo* glyph = GetGlyph( character, currentBold, currentItalic );
 			
-			// check if line width will exceed max line width
+			// check if need word wrap
+			
+			// check if current line width will exceed max line width
 			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine && !autoResize ) {
 				// start new line
+				RenderTextLine* prevLine = currentLine;
 				lines.emplace_back();
 				currentLine = &lines.back();
 				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;
+				
+				// word wrap - take back characters and put them into new line
+				if ( prevLine->characters.size() > 2 && !prevLine->characters.back().isWhiteSpace ) {
+					vector<RenderTextCharacter>::iterator b = prevLine->characters.begin();
+					vector<RenderTextCharacter>::iterator l = b + prevLine->characters.size() - 1;
+					vector<RenderTextCharacter>::iterator i = l;
+					
+					// go backwards character by character
+					while ( i != b ) {
+						// until hitting whitespace
+						if ( i->isWhiteSpace ) {
+							// split width
+							currentLine->width = prevLine->width - (i->x + i->width);
+							prevLine->width -= currentLine->width;
+							i++;
+							// move characters to new line
+							currentLine->firstCharacterPos = (int) i->pos;
+							b = i;
+							while ( i <= l ) {
+								currentLine->characters.push_back( *i );
+								previousCharacter = &currentLine->characters.back();
+								previousCharacter->x -= prevLine->width;
+								i++;
+							}
+							prevLine->characters.resize( prevLine->characters.size() - currentLine->characters.size() );
+							i = b;
+						} else i--;
+					}
+				}				
 			}
 			
 			// add new character
@@ -983,6 +1036,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			thisCharacter.value = character;
 			thisCharacter.width = glyph->advance + this->characterSpacing;
 			thisCharacter.pos = characterPos;
+			thisCharacter.isWhiteSpace = (character == ' ' || character == '\t' || character == '\r' || character == '\n');
 			if ( previousCharacter ) {
 				thisCharacter.x = glyph->minX + previousCharacter->x + previousCharacter->width;
 			} else {
@@ -1008,6 +1062,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 		}
 		
 		// set up
+		size_t lastReveal = characterPos - revealEnd;
 		characterPos = 0;
 		int lineHeight = ceil( TTF_FontLineSkip( this->fontResource->font ) + this->lineSpacing );
 		size_t lineIndex = 0;
@@ -1122,8 +1177,10 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					SDL_FillRect( textSurface, &caretRect, SDL_MapRGB(textSurface->format, character->color.r, character->color.g, character->color.b ) );
 				}
 				
-				// draw
-				if ( drawCurrentLine && character->glyphInfo && character->glyphInfo->surface && !justMeasure ) {
+				// draw character
+				if ( drawCurrentLine &&
+					character->glyphInfo && character->glyphInfo->surface &&
+					!justMeasure && (character->pos >= revealStart && character->pos <= lastReveal ) ) {
 					// set color
 					SDL_SetSurfaceColorMod( character->glyphInfo->surface, character->color.r, character->color.g, character->color.b );
 					// draw

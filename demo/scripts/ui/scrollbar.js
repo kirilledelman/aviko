@@ -208,7 +208,7 @@ include( './ui' );
 	// move handle while dragging
 	handle.ui.mouseMoveGlobal = function ( x, y ) {
 		if ( dragging ) {
-			var lp = go.globalToLocal( x, y );
+			var lp = go.globalToLocal( x, y, true );
 			if ( orientation == 'vertical' ) {
 				var availSize = ui.height - ui.padTop - ui.padBottom;
 				var hy = Math.max( ui.padTop,

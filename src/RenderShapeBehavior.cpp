@@ -28,12 +28,14 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	vector<ArgValue>* pArray = NULL;
 	float p1 = 0, p2 = 0, p3 = 0, p4 = 0, p5 = 0, p6 = 0;
 	void *initObj = NULL;
+	void *arrayObj = NULL;
 	
 	// if arguments are given
 	if ( args &&
-		( args->ReadArguments( 1, TypeInt, &pShape, TypeObject, &initObj ) ||
+		( args->ReadArguments( 1, TypeObject, &initObj ) ||
 		  args->ReadArguments( 1, TypeInt, &pShape, TypeFloat, &p1, TypeFloat, &p2, TypeFloat, &p3, TypeFloat, &p4, TypeFloat, &p5, TypeFloat, &p6 ) ||
-		  args->ReadArguments( 1, TypeInt, &pShape, TypeArray, &pArray ) ) ) {
+		  args->ReadArguments( 1, TypeInt, &pShape, TypeArray, &pArray ) ||
+		  args->ReadArguments( 1, TypeInt, &pShape, TypeObject, &arrayObj ) ) ) {
 		
 		// first is shape
 		this->shapeType = (ShapeType) pShape;
@@ -128,12 +130,12 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 					}
 				}
 			} else if ( this->shapeType == Polygon ) { /// polygon between polyPoints (x,y pairs)
-				if ( pArray ) {
+				if ( pArray || arrayObj ) {
 					this->polyPoints->Set( args->args[ 1 ] );
 					this->_renderPointsDirty = filled;
 				}
 			} else if ( this->shapeType == Chain ) { /// un-closed polygon between polyPoints (x,y pairs)
-				if ( pArray ) this->polyPoints->Set( args->args[ 1 ] );
+				if ( pArray || arrayObj ) this->polyPoints->Set( args->args[ 1 ] );
 			}
 		}
 	}
@@ -439,15 +441,97 @@ void RenderShapeBehavior::Resize( float w, float h ) {
 	
 }
 
-/* MARK:	-				UpdatePoints
+/* MARK:	-				To triangles
  -------------------------------------------------------------------- */
 
 void RenderShapeBehavior::UpdatePoints() {
 
 	_renderPointsDirty = false;
 	if ( shapeType == Polygon && filled ) {
-		// points to triangle strip
-		// TODO
+		// clear
+		renderTris.clear();
+		
+		// modified http://www.flipcode.com/archives/Efficient_Polygon_Triangulation.shtml
+		vector<float>& contour = *polyPoints->ToFloatVector();
+		
+		// allocate and initialize list of Vertices in polygon
+		int n = (int) contour.size() / 2;
+		if ( n < 3 ) return;
+		int nv = n;
+		unsigned short *V = new unsigned short[ n ];
+		
+		// we want a counter-clockwise polygon in V
+		float area = 0.0f;
+		for( int p = n-1, q = 0; q < n; p = q++ ) {
+			area += contour[ p * 2 ] * contour[ q * 2 + 1 ] - contour[ q * 2 ] * contour[ p * 2 + 1 ];
+		}
+		area *= 0.5f;
+		if ( 0.0f < area ) {
+			for ( int v = 0; v < n; v++ ) V[ v ] = v;
+		} else {
+			for( int v = 0; v < n; v++) V[ v ] = ( n - 1 ) - v;
+		}
+		
+		// remove nv-2 Vertices, creating 1 triangle every time */
+		int count = 2 * nv; // error detection
+		
+		for( int m = 0, v = nv - 1; nv > 2; ) {
+			
+			if ( 0 >= ( count-- ) ) return;  // if we loop, it is probably a non-simple polygon
+			
+			// three consecutive vertices in current polygon, <u,v,w>
+			int u = v  ; if (nv <= u) u = 0;// previous
+			v = u+1; if (nv <= v) v = 0;	// new v
+			int w = v+1; if (nv <= w) w = 0;// next
+			
+			// snip
+			bool snip = true;
+			float	Px, Py,
+			Ax = contour[ V[ u ] * 2 ],
+			Ay = contour[ V[ u ] * 2 + 1 ],
+			Bx = contour[ V[ v ] * 2 ],
+			By = contour[ V[ v ] * 2 + 1 ],
+			Cx = contour[ V[ w ] * 2 ],
+			Cy = contour[ V[ w ] * 2 + 1 ];
+			if ( 0.0000000001f > (((Bx-Ax)*(Cy-Ay)) - ((By-Ay)*(Cx-Ax))) ) {
+				snip = false;
+			} else {
+				for ( int p = 0; p < nv; p++ ) {
+					if( (p == u) || (p == v) || (p == w) ) continue;
+					Px = contour[ V[ p ] * 2 ];
+					Py = contour[ V[ p ] * 2 + 1 ];
+					
+					float ax = Cx - Bx, ay = Cy - By;
+					float bx = Ax - Cx, by = Ay - Cy;
+					float cx = Bx - Ax, cy = By - Ay;
+					float apx = Px - Ax, apy = Py - Ay;
+					float bpx = Px - Bx, bpy = Py - By;
+					float cpx = Px - Cx, cpy = Py - Cy;
+					float aCROSSbp = ax * bpy - ay * bpx;
+					float cCROSSap = cx * apy - cy * apx;
+					float bCROSScp = bx * cpy - by * cpx;
+					if ( ((aCROSSbp >= 0.0f) && (bCROSScp >= 0.0f) && (cCROSSap >= 0.0f)) ) {
+						snip = false;
+						break;
+					}
+				}
+			}
+			
+			if ( snip ) {
+				renderTris.push_back( V[ u ] );
+				renderTris.push_back( V[ v ] );
+				renderTris.push_back( V[ w ] );
+				m++;
+				
+				// remove v from remaining polygon
+				for( int s = v, t = v + 1; t < nv; s++, t++ ) V[s] = V[t]; nv--;
+				
+				// reset error detection counter
+				count = 2 * nv;
+			}
+		}
+		
+		delete[] V;
 	}
 	
 }
@@ -483,8 +567,6 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	
 	// draw based on type
 	GPU_Rect rect;
-	vector<unsigned short>* indexes;
-	vector<float>* points;
 	switch( behavior->shapeType ){
 		
 		case ShapeType::Line:
@@ -577,19 +659,26 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		case ShapeType::Polygon:
 			
 			if ( behavior->shapeType == Polygon && behavior->filled ) {
-				// decompose into triangle strip
+				// decompose into triangle strips
 				if ( behavior->_renderPointsDirty ) behavior->UpdatePoints();
+
 				// setup
-				indexes = &behavior->renderPoints;
-				points = behavior->polyPoints->ToFloatVector();
-				// target->color = color;
+				target->color = color;
 				target->use_color = true;
+				
+				// render
+				vector<float>* points = behavior->polyPoints->ToFloatVector();
 				GPU_PrimitiveBatch( NULL, target,
-								   (behavior->shapeType == Chain ? GPU_LINE_STRIP : ( behavior->filled ? GPU_TRIANGLE_STRIP : GPU_LINE_LOOP ) ),
-								   (int) points->size() / 2, points->data(),
-								   (int) indexes->size(), indexes->data(), GPU_BATCH_XY );
+								   GPU_TRIANGLES,
+								   points->size() / 2, points->data(),
+								   (int) behavior->renderTris.size(), behavior->renderTris.data(), GPU_BATCH_XY );
+				
+				// unset color
 				target->color = { 255, 255, 255, 255 };
 				target->use_color = false;
+				
+				//points = behavior->polyPoints->ToFloatVector();
+				//GPU_PolygonFilled( target, (int) points->size() / 2, points->data(), color );
 			} else {
 				vector<float>* fv = behavior->polyPoints->ToFloatVector();
 				GPU_Polyline( target, (int) fv->size() / 2, fv->data(), behavior->color->rgba, ( behavior->shapeType == Polygon ) );

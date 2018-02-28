@@ -34,6 +34,9 @@ public:
 	ScriptType type = ScriptType::TypeUndefined;
 	string typeName; // holds string specifier of type - 'Number', or 'GameObject', etc
 	
+	// ignore push, splice, etc..
+	bool lockedSize = false;
+	
 // notifications
 	
 	/// set to callback func to call on change (used by BodyShape etc)
