@@ -30,7 +30,9 @@ include( './ui' );
 		// (String) or (Color) or (Number) or (Image) or (null|false) - set background to sprite, or solid color, or nothing
 		[ 'background',  function (){ return background; }, function ( v ){
 			background = v;
-			if ( typeof( v ) == 'string' ) {
+			if ( v === false || v === null || v === undefined ){
+				go.render = null;
+			} else if ( typeof( v ) == 'string' ) {
 				bg.image = null;
 				bg.texture = v;
 				go.render = bg;
@@ -38,8 +40,6 @@ include( './ui' );
 				bg.image = v;
 				bg.texture = null;
 				go.render = bg;
-			} else if ( v === false || v === null || v === undefined ){
-				go.render = null;
 			} else {
 				shp.color = v;
 				go.render = shp;

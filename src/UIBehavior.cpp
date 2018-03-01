@@ -484,7 +484,7 @@ void UIBehavior::InitClass() {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->padRight ) ) {
 					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->padBottom ) ) {
 						if ( val.value.arrayValue->size() >= 4 )
-							val.value.arrayValue->at( 0 ).toNumber( ui->padLeft );
+							val.value.arrayValue->at( 3 ).toNumber( ui->padLeft );
 					}
 				}
 			}
@@ -564,7 +564,7 @@ void UIBehavior::InitClass() {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->marginRight ) ) {
 					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->marginBottom ) ) {
 						if ( val.value.arrayValue->size() >= 4 )
-							val.value.arrayValue->at( 0 ).toNumber( ui->marginLeft );
+							val.value.arrayValue->at( 3 ).toNumber( ui->marginLeft );
 					}
 				}
 			}
@@ -894,10 +894,32 @@ bool UIBehavior::Navigate( float x, float y ) {
 						break;
 				}
 				
+				// calc distance from center of this control to midpoint on each of four sides of candidate
+				float midX = (minX + (maxX - minX) * 0.5),
+					  midY = (minY + (maxY - minY) * 0.5),
+					  otherMidX = (otherMinX + (otherMaxX - otherMinX) * 0.5),
+					  otherMidY = (otherMinY + (otherMaxY - otherMinY) * 0.5),
+					  xx, yy, dist[ 4 ];
+				
+				// top side
+				yy = midY - otherMinY;
+				xx = midX - otherMidX;
+				dist[ 0 ] = sqrt( xx * xx + yy * yy );
+				// right
+				yy = midY - otherMidY;
+				xx = midX - otherMaxX;
+				dist[ 1 ] = sqrt( xx * xx + yy * yy );
+				// bottom
+				yy = midY - otherMaxY;
+				xx = midX - otherMidX;
+				dist[ 2 ] = sqrt( xx * xx + yy * yy );
+				// left
+				yy = midY - otherMidY;
+				xx = midX - otherMinX;
+				dist[ 3 ] = sqrt( xx * xx + yy * yy );
+				
 				// add to candidates
-				float yy = (minY + (maxY - minY) * 0.5) - (otherMinY + (otherMaxY - otherMinY) * 0.5),
-					  xx = (minX + (maxX - minX) * 0.5) - (otherMinX + (otherMaxX - otherMinX) * 0.5);
-				candidates[ other ] = sqrt( xx * xx + yy * yy );
+				candidates[ other ] = fmin( fmin( fmin( dist[ 0 ], dist[ 1 ] ), dist[ 2 ] ), dist[ 3 ] );
 			}
 			// increase search margin
 			extraMargin += maxMargin * 0.25;

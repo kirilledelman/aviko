@@ -118,39 +118,57 @@ void ScriptableClass::InitClass() {
 	( "on",
 		static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: on( String eventName, [ Function handler [, Boolean once ] ] )";
+		const char* error = "usage: on( String eventName | Array eventNames, [ Function handler [, Boolean once ] ] )";
 		void* handler = NULL;
 		bool once = false;
 		string propName;
+		ArgValueVector props;
 		
 		// validate
 		ScriptableClass* self = (ScriptableClass*) go;
 		if ( !sa.ReadArguments( 1, TypeString, &propName, TypeFunction, &handler, TypeBool, &once ) ) {
-			script.ReportError( error );
-			return false;
-		}
-		
-		// listeners
-		EventListeners& list = self->eventListeners[ propName ];
-		
-		// function specified
-		if ( handler ) {
-			// append to event listeners
-			list.emplace_back( handler, once );
-			// return this object for chaining
-			sa.ReturnObject( self->scriptObject );
-			// no function specified
-		} else {
-			// make array of currently attached listeners
-			ArgValueVector arr;
-			EventListeners::iterator it = list.begin(), end = list.end();
-			while( it != end ) {
-				arr.emplace_back( (void*) it->funcObject );
-				it++;
+			if ( !sa.ReadArguments( 1, TypeArray, &props, TypeFunction, &handler, TypeBool, &once ) ){
+				script.ReportError( error );
+				return false;
 			}
-			// return array
-			sa.ReturnArray( arr );
 		}
+		
+		// loop over array of event names
+		size_t nth = 0;
+		ArgValueVector retArr;
+		do {
+			// next property
+			if ( props.size() ) {
+				ArgValue &v = props[ nth ];
+				if ( v.type == TypeString ){
+					propName = *v.value.stringValue;
+				} else {
+					script.ReportError( error );
+					return false;
+				}
+			}
+			
+			// listeners
+			EventListeners& list = self->eventListeners[ propName ];
+			
+			// function specified
+			if ( handler ) {
+				// append to event listeners
+				list.emplace_back( handler, once );
+			// no function specified
+			} else {
+				// make array of currently attached listeners
+				EventListeners::iterator it = list.begin(), end = list.end();
+				while( it != end ) {
+					retArr.emplace_back( (void*) it->funcObject );
+					it++;
+				}
+			}
+		} while (++nth < props.size() );
+		
+		// return self of array of handlers
+		if ( handler ) sa.ReturnObject( self->scriptObject );
+		else sa.ReturnArray( retArr );
 		return true;
 	} ));
 	
@@ -159,46 +177,64 @@ void ScriptableClass::InitClass() {
 	( "off",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: off( String eventName [, Function handler ] )";
+		const char* error = "usage: off( String eventName | Array eventNames [, Function handler ] )";
 		void* handler = NULL;
 		string propName;
-		
+		ArgValueVector props;
+
 		// validate
-		if ( !sa.ReadArguments( 1, TypeString, &propName, TypeFunction, &handler ) ) {
-			script.ReportError( error );
-			return false;
-		}
-		
-		// remove from event listeners
 		ScriptableClass* self = (ScriptableClass*) go;
-		EventListeners& list = self->eventListeners[ propName ];
-		EventListeners::iterator it = list.begin();
-		while ( it != list.end() ) {
-			ScriptFunctionObject& fo = *it;
-			// is specified, find it
-			if ( handler ) {
-				// found?
-				if ( fo == handler ) {
-					// if executing, force it to be deleted after executing
-					if ( fo.executing ) {
-						fo.callOnce = true;
-					} else {
-						// remove
-						list.erase( it );
-					}
-					break;
-				}
-				it++;
-			} else {
-				if ( fo.executing ) {
-					fo.callOnce = true;
-					it++;
-				} else {
-					// remove
-					it = list.erase( it );
-				}
+		if ( !sa.ReadArguments( 1, TypeString, &propName, TypeFunction, &handler ) ) {
+			if ( !sa.ReadArguments( 1, TypeArray, &props, TypeFunction, &handler ) ) {
+				script.ReportError( error );
+				return false;
 			}
 		}
+		
+		// loop over array of event names
+		size_t nth = 0;
+		do {
+			// next property
+			if ( props.size() ) {
+				ArgValue &v = props[ nth ];
+				if ( v.type == TypeString ){
+					propName = *v.value.stringValue;
+				} else {
+					script.ReportError( error );
+					return false;
+				}
+			}
+			
+			// remove from event listeners
+			EventListeners& list = self->eventListeners[ propName ];
+			EventListeners::iterator it = list.begin();
+			while ( it != list.end() ) {
+				ScriptFunctionObject& fo = *it;
+				// is specified, find it
+				if ( handler ) {
+					// found?
+					if ( fo == handler ) {
+						// if executing, force it to be deleted after executing
+						if ( fo.executing ) {
+							fo.callOnce = true;
+						} else {
+							// remove
+							list.erase( it );
+						}
+						break;
+					}
+					it++;
+				} else {
+					if ( fo.executing ) {
+						fo.callOnce = true;
+						it++;
+					} else {
+						// remove
+						it = list.erase( it );
+					}
+				}
+			}
+		} while (++nth < props.size() );
 		
 		// for chaining
 		sa.ReturnObject( self->scriptObject );

@@ -428,8 +428,8 @@ void Application::InitClass() {
 			}
 		// pop one
 		} else if ( app.sceneStack.size() ){
-			newScene = app.sceneStack.back();
 			app.sceneStack.pop_back();
+			newScene = app.sceneStack.size() ? app.sceneStack.back() : NULL;
 		}
 		
 		// generate event
@@ -440,6 +440,7 @@ void Application::InitClass() {
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			app.CallEvent( event );
 		}
+		sa.ReturnObject( newScene ? newScene->scriptObject : NULL );
 		return true;
 	}) );
 	

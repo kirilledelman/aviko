@@ -1,15 +1,20 @@
-
-autoTile = true/false, uses tileX, tileY as multiples from current w/h
-	with special handling in sliced
+Image
+	save
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
 	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events
 
 
 Demo project
-	Controller configurator
-	Percussion playground
+	Main screen
+		about aviko
+		how to navigate
+
+
 	UI
+
+
+	Percussion playground
 
 Look into tile based physics
 
@@ -23,10 +28,15 @@ Nice to have
 
 =============================================
 
+Image
+	make gradient
+
 Raspberry Pi - pressing Alt disrupts subseq text entry
 
+autoTile = true/false, uses tileX, tileY as multiples from current w/h
+with special handling in sliced
 
-RenderText - add .revealLeft, .revealRight - floating point part = opacity of char on boundary
+Textured shapes/polys
 
 RenderSprite .texture = "https://...."
 
@@ -38,17 +48,12 @@ add convenience anchor/placement methods
 
 UIBehavior / setparent - to accelerate UI event dispatching - add a counter to gameobject - "numChildrenWithUI" or something and maintain it
 
-
 Application 'quit' event - dispatched right before exiting.
 
 RenderBehavior
 	.renderAfterChildren
 
-Supplant String with .substrPosition, etc methods for utf chars
-
 Add Color.Red, Blue, etc. constants
-
-Replace RenderText color0 - 9 with ObjectVector<Color> object
 
 Debugging api!
 
@@ -70,13 +75,6 @@ Add logging level - none, normal, verbose
 BodyShape
 .setCircle( radius, x, y );
 .setX___....
-
-Vector - other types besides Float
-*Vector classes can dispatch events on change, or be attached to Scriptable objects w handlers
-	.splice
-	.slice
-	.concat
-	.push, .pop
 
 RenderSprite
 	.frames = [ "anim/1", "anim/2", "anim/3" ] | null
@@ -100,7 +98,6 @@ $( 'name/name/name' ) -> great-grandchild
 $( '../sibling' ) -> sibling named
 can extend later to filter by properties
 
-detect circular parenting
 
 RenderTileMap
 
@@ -122,16 +119,6 @@ Network class
 	socket communication - ? - https://developers.google.com/talk/libjingle/developer_guide#about-the-libjingle-sdk
 
 
-Input should be able to read retroarch config
-	https://github.com/RetroPie/RetroPie-Setup/wiki/RetroArch-Configuration
-
-
-
-
-Promise-like interface?
-
-
-FXPORT.jsfl
 
 =============================================
 

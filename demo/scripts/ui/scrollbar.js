@@ -73,11 +73,11 @@ include( './ui' );
 		// (String) or (Color) or (Number) or (null|false)- scrollbar background set to sprite, or solid color, or nothing
 		[ 'background',  function (){ return background; }, function ( v ){
 			background = v;
-			if ( typeof( v ) == 'string' ) {
+			if ( v === false || v === null || v === undefined ){
+				go.render = null;
+			} else if ( typeof( v ) == 'string' ) {
 				bg.texture = v;
 				go.render = bg;
-			} else if ( v === false || v === null || v === undefined ){
-				go.render = null;
 			} else {
 				shp.color = v;
 				go.render = shp;

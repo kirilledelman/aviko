@@ -207,6 +207,24 @@ void Controller::InitClass() {
 		return true;
 	}));
 	
+	script.DefineFunction<Controller>
+	("get",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa){
+		string action;
+		// read args
+		if ( !sa.ReadArguments( 1, TypeString, &action ) || !action.length() ) {
+			script.ReportError( "usage: get( String action )" );
+			return false;
+		}
+		//
+		Controller* self = (Controller*) p;
+		ActionStates::iterator as = self->states.find( action );
+		if ( as != self->states.end() ) {
+			sa.ReturnInt( as->second );
+		}
+		return true;
+	}));
+	
 	// e.g:
 	// bind( 'fire', KEY_SPACE )
 	// bind( 'fire', MOUSE_BUTTON, 1 )

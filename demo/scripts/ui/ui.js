@@ -93,6 +93,7 @@ UI.style = UI.style ? UI.style : {
 		disabledBackground: './textures/ui:button-disabled',
 		slice: 8,
 		pad: 8,
+		cancelToBlur: false,
 
 		// apply to button's label (ui/text.js)
 		label: {

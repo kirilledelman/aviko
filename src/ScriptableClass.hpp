@@ -16,7 +16,7 @@ class Scene;
 struct Event {
 	
 	/// event name
-	const char* name = NULL;
+	const char* name = "";
 	
 	/// if true, it's dispatched in children first, then parent (GameObject uses this)
 	bool bubbles = false;

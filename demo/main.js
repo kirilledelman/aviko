@@ -1,8 +1,24 @@
-log( "Привет из main.js!" );
+/*
+	Aviko
+	Copyright 2018 Kirill Edelman - GPL
+	Open source libraries used in Aviko have their own copyrights and licenses
+	SDL2
+	SDL_gpu
+	SDL_image
+	SDL_mixer
+	SDL_ttf
+	SDL_net
+	Mozilla
+	Box2D
+	LiquidFun
 
-App.setWindowSize( 400, 240, 2 );
-App.windowResizable = true;
+ */
 
+
+// set screen size and pixel doubling
+App.setWindowSize( 640, 360, 2 ); // 720p @ 2x
+
+// auto-configure controller
 include( 'ui/controller-configurator', {
 	axis: [
 		{
@@ -18,63 +34,52 @@ include( 'ui/controller-configurator', {
 	buttons: [
 		{
 			id: 'accept',
-			description: 'Primary / Select'
+			description: 'Primary / Select / (A)'
 		}, {
 			id: 'cancel',
-			description: 'Secondary / Back'
-		},
+			description: 'Secondary / Back / (B)'
+		}, {
+			id: 'select',
+			description: 'Select'
+		}, {
+			id: 'start',
+			description: 'Start'
+		}
 	],
+	ready: function ( controller ) {
+		// quit if pressing select + start
+		controller.on( ['select','start' ], function () {
+			if ( this.get( 'select' ) && this.get( 'start' ) ) quit();
+		} );
+	}
 } );
 
-var text = App.scene.addChild( 'ui/text', { text: "Click to add points, Enter to make dynamic body, Shift+Enter to make static.", wrap: true, x: 0, width: 400 } );
-//App.scene.gravityY = 10;
+// auto-show mouse as soon as it moves
+Input.showCursor = false;
+Input.on( 'mouseMove', function() { Input.showCursor = true; }, true );
 
-var poly;
+// set some constants
+Color.Background = 0xFFFFFF;
+Color.Title = 0x106633;
+Color.Text = 0x333333;
 
-Input.mouseDown = function ( btn, x, y ) {
+// show main menu
+App.scene = include( 'main-menu' );
 
-	if ( !poly ) {
-		poly = new GameObject({
-			render: new RenderShape( Shape.Polygon ),
-			parent: App.scene,
-			opacity: 0.5
-		});
-		poly.outline = new GameObject({
-			render: new RenderShape( {
-				shape: Shape.Chain,
-				color: 0xff0000
-			} ),
-			parent: App.scene,
-		});
-	}
-
-	poly.render.points.push( x, y );
-	poly.outline.render.points.push( x, y );
-
-}
-
-Input.keyDown = function ( k, s ) {
-
-	if ( k == Key.Enter && poly ) {
-		poly.body = new Body();
-		poly.outline.parent = null;
-		poly.outine = null;
-		poly.opacity = 0.8;
-		poly.body.shape = new BodyShape( Shape.Polygon, poly.render.points );
-		if ( s ) poly.body.type = BodyType.Static;
-		else {
-			poly.ui = new UI();
-			poly.ui.mouseOver = function(){ log( "over" ); this.gameObject.render.color = 0x66FF66; };
-			poly.ui.mouseOut = function(){ log( "out" ); this.gameObject.render.color = 0xFFFFFF; };
-
-		}
-
-
-		poly = null;
-	}
-}
-
-
-Input.mouseWheel = function ( y, x ) {
-	if ( y ) text.revealEnd += y / Math.abs( y );
+// helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
+function transitionScene( newScene, oldScene, dir ) {
+	// draw old scene to image
+	var img = new Image( App.windowWidth, App.windowHeight );
+	img.draw( oldScene );
+	var ghost = new GameObject( {
+		render: new RenderSprite( img ),
+		x: dir * App.windowWidth,
+		parent: newScene
+	} );
+	// slide new scene in
+	newScene.x = -ghost.x;
+	newScene.moveTo( 0, 0, 0.5, Ease.Out );
+	ghost.fadeTo( 0, 0.5 ).finished = function () { ghost = ghost.parent = null; }
+	// done
+	return newScene;
 }
