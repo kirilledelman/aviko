@@ -561,12 +561,15 @@ public:
 		JS_AddObjectRoot( this->js, &this->global_object );
 		AddGlobalNamedObject( "global", this->global_object );
 		
-		printf ( "Spidermonkey initialized\n" );
+		// printf ( "Spidermonkey initialized\n" );
 	}
 	
 	// shutdown
 	void Shutdown () {
 		delete this->compartment;
+		while ( JS_IsExceptionPending( this->js ) ) {
+			JS_ClearPendingException( this->js );
+		}
 		JS_DestroyContext( this->js );
 		JS_DestroyRuntime( this->jsr );
 		JS_ShutDown();

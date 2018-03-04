@@ -89,7 +89,7 @@ void Behavior::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 
 
 // set a new parent for object
-bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
+bool Behavior::SetGameObject( GameObject* newGameObject ){
 	
 	// if parent is different
 	if ( newGameObject != this->gameObject ) {
@@ -126,9 +126,9 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 		if ( oldGameObject ) {
 			
 			// find this object in parent's list of children
-			BehaviorVector *parentList = &this->gameObject->behaviors;
-			BehaviorIterator listEnd = parentList->end();
-			BehaviorIterator it = find( parentList->begin(), listEnd, this );
+			BehaviorList *parentList = &this->gameObject->behaviors;
+			BehaviorList::iterator listEnd = parentList->end();
+			BehaviorList::iterator it = find( parentList->begin(), listEnd, this );
 			
 			// remove from list
 			if ( it != listEnd ) parentList->erase( it );
@@ -153,16 +153,7 @@ bool Behavior::SetGameObject( GameObject* newGameObject, int desiredPosition ){
 		// add to new gameobject
 		if ( newGameObject ) {
 			
-			// insert into behaviors based on desired position
-			int numBehaviors = (int) newGameObject->behaviors.size();
-			// convert negative pos
-			if ( desiredPosition < 0 ) desiredPosition = numBehaviors + desiredPosition;
-			// insert at location
-			if ( desiredPosition >= numBehaviors ) {
-				newGameObject->behaviors.push_back( this );
-			} else {
-				newGameObject->behaviors.insert( newGameObject->behaviors.begin() + max( 0, desiredPosition ), this );
-			}			
+			newGameObject->behaviors.push_back( this );
 			
 			// call attached event directly on event
 			BehaviorEventCallback func = this->GetCallbackForEvent( EVENT_ATTACHED );

@@ -8,7 +8,7 @@ new (function (){
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
 		layoutAlign: LayoutAlign.Stretch,
-		pad: [ 20, 40, 20, 40 ],
+		pad: [ 10, 20, 10, 20 ],
 		width: App.windowWidth,
 		height: App.windowHeight
 	} );
@@ -17,19 +17,19 @@ new (function (){
 	scene.addChild( 'ui/text', {
 		size: 40,
 		color: Color.Title,
-		bold: true,
 		align: TextAlign.Center,
-		text: "AVIKO DEMO"
+		marginBottom: 20,
+		text: "Aviko Demo"
 	} );
 
 	// description
 	scene.addChild( 'ui/text', {
 		size: 15,
 		color: Color.Text,
-		align: TextAlign.Left,
+		align: TextAlign.Center,
 		wrap: true,
 		text: "Aviko is a simple 2D game engine, geared towards learning and rapid prototyping. This demo " +
-		"shows Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks."
+		"shows some of Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks."
 	} );
 
 	// buttons container

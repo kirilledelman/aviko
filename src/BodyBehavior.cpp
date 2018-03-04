@@ -72,7 +72,7 @@ void BodyBehavior::InitClass() {
 
 
 /// attach/detach from a gameObject
-bool BodyBehavior::SetGameObject( GameObject* go, int pos ) {
+bool BodyBehavior::SetGameObject( GameObject* go ) {
 	
 	if ( go && go != this->gameObject && dynamic_cast<Scene*>(go) ) {
 		script.ReportError( "Scene can not have a physics body." );
@@ -89,7 +89,7 @@ bool BodyBehavior::SetGameObject( GameObject* go, int pos ) {
 	if ( go ) { go->DirtyTransform(); go->Transform(); }
 	
 	// base
-	bool r = Behavior::SetGameObject( go, pos );
+	bool r = Behavior::SetGameObject( go );
 	if ( r && go ) go->DirtyTransform();
 	return r;
 }

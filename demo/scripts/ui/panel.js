@@ -52,6 +52,12 @@ include( './ui' );
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
 		} ],
 
+		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
+		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+
+		// (Boolean) when background is solid color with filled = false, controls outline thickness
+		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( v ){ shp.lineThickness = v; } ],
+
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
 		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
 

@@ -26,7 +26,7 @@ Application::Application() {
     char *cwd = (char*) malloc( 1024 );
     getcwd( cwd, 1024 );
 	this->currentDirectory = string( cwd );
-	printf( "Current working directory is %s\n", cwd );
+	// printf( "Current working directory is %s\n", cwd );
     free( cwd );
 	
 	// init SDL_gpu
@@ -85,7 +85,7 @@ Application::Application( ScriptArguments* ) {
 
 Application::~Application() {
 	
-	printf( "(frames:%d, seconds:%f) average FPS: %f\n", this->frames, this->unscaledTime, ((float) this->frames / (float) this->unscaledTime) );
+	// printf( "(frames:%d, seconds:%f) average FPS: %f\n", this->frames, this->unscaledTime, ((float) this->frames / (float) this->unscaledTime) );
 	
 	// close mixer
 	Mix_CloseAudio();
@@ -867,7 +867,7 @@ void Application::GarbageCollect() {
 	soundManager.UnloadUnusedResources();
 	
 	// done
-	printf( "GC performed\n" );
+	// printf( "GC performed\n" );
 }
 
 void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {

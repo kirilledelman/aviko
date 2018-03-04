@@ -28,7 +28,7 @@ include( './ui' );
 	var disabled = false;
 	var checked = false;
 	var down = false;
-	var cancelToBlur = true;
+	var cancelToBlur = false;
 	var offBackground = false;
 	var focusBackground = false;
 	var overBackground = false;

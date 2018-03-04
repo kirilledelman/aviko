@@ -36,13 +36,15 @@ include( './ui' );
 	var mouseDownTime = null;
 	var selectAllOnFocus = false;
 	var acceptToEdit = false;
-	var cancelToBlur = true;
+	var cancelToBlur = false;
 	var blurOnClickOutside = true;
 	var editing = false;
+	var scrolling = false;
 	var touched = false;
 	var offBackground = false;
 	var focusBackground = false;
 	var disabledBackground = false;
+	var scrollingBackground = false;
 	var autoGrow = false;
 	var numeric = false;
 	var integer = false;
@@ -199,6 +201,12 @@ include( './ui' );
 			go.updateBackground();
 		} ],
 
+		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when disabled
+		[ 'scrollingBackground',  function (){ return scrollingBackground; }, function ( b ){
+			scrollingBackground = b;
+			go.updateBackground();
+		} ],
+
 		// (Number) corner roundness when background is solid color
 		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
 			shp.radius = b;
@@ -273,8 +281,14 @@ include( './ui' );
 			 ui.focusable = !(disabled = v) || acceptToEdit;
 			 if ( v && ui.focused ) ui.blur();
 			 go.updateBackground();
-			 tc.opacity = v ? 0.6 : 1;
 			 go.dispatch( 'layout' );
+		 } ],
+
+		// (Boolean) input is currently in scrolling mode
+		[ 'scrolling',  function (){ return scrolling; },
+		 function ( v ){
+			 scrolling = v;
+			 go.updateBackground();
 		 } ],
 
 		// (Boolean) enable display ^code formatting (while not editing)
@@ -387,6 +401,7 @@ include( './ui' );
 	    } else {
 		    ui.autoMoveFocus = acceptToEdit;
 	        go.editing = false;
+		    go.scrolling = false;
 		    go.updateBackground();
 		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
@@ -397,7 +412,7 @@ include( './ui' );
 	// navigation event
 	ui.navigation = function ( name, value ) {
 
-		stopEvent();
+		stopAllEvents();
 
 		// editing
 		if ( editing ) {
@@ -405,17 +420,42 @@ include( './ui' );
 			if ( name == 'accept' && !rt.multiLine ) go.editing = false;
 			else if ( name == 'cancel' ) {
 				// blur, or stop editing
-				if( cancelToBlur ) ui.blur();
+				if ( cancelToBlur ) ui.blur();
 				else go.editing = false;
 			}
+
+		// reading
+		} else if ( scrolling ) {
+
+			if ( name == 'cancel' || name == 'accept' ) {
+
+				// turn off scrolling mode
+				go.scrolling = false;
+
+			} else {
+
+				// scroll
+				if ( name == 'vertical' && rt.scrollHeight > rt.height ) {
+					rt.scrollTop =
+					Math.max( 0, Math.min( rt.scrollHeight - rt.height, rt.scrollTop + value * rt.lineHeight ) );
+				}
+				// scroll horizontally
+				if ( name == 'horizontal' && rt.scrollWidth > rt.width ){
+					rt.scrollLeft =
+					Math.max( 0, Math.min( rt.scrollWidth - rt.width, rt.scrollLeft + value * rt.lineHeight  ) );
+				}
+
+			}
+
 
 		// focused but not editing
 		} else {
 
-			// enter = begin editing
+			// enter = begin editing, or scrolling
 			if ( name == 'accept' ) {
 
 				if ( acceptToEdit && !disabled ) go.editing = true;
+				else if ( disabled && (rt.scrollHeight > rt.height || rt.scrollWidth > rt.width) ) go.scrolling = true;
 
 			// escape = blur
 			} else if ( name == 'cancel' ) {
@@ -429,6 +469,7 @@ include( './ui' );
 				else dy = value;
 				ui.moveFocus( dx, dy );
 			}
+
 		}
 	}
 
@@ -444,8 +485,10 @@ include( './ui' );
 			return;
 		}
 
+		var canScroll = (rt.scrollHeight > rt.height || rt.scrollWidth > rt.width);
+
 		// ignore if not focused
-		if ( !rt.multiLine && !ui.focused ) return;
+		if ( !canScroll || !ui.focused ) return;
 
 		var st = rt.scrollTop, sl = rt.scrollLeft;
 
@@ -815,7 +858,9 @@ include( './ui' );
 
 		// determine state
 		var prop;
-		if ( ui.focused ) {
+		if ( scrolling ) {
+			prop = scrollingBackground;
+		} else if ( ui.focused ) {
 			prop = focusBackground;
 		} else if ( disabled ) {
 			prop = disabledBackground;

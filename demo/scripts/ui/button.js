@@ -33,7 +33,7 @@ include( './ui' );
 	var label, image;
 	var disabled = false;
 	var down = false;
-	var cancelToBlur = true;
+	var cancelToBlur = false;
 	var offBackground = false;
 	var focusBackground = false;
 	var overBackground = false;

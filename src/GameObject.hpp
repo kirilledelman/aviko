@@ -11,8 +11,7 @@
 typedef vector<GameObject*> GameObjectVector;
 typedef vector<GameObject*>::iterator GameObjectIterator;
 
-typedef vector<Behavior*> BehaviorVector;
-typedef vector<Behavior*>::iterator BehaviorIterator;
+typedef list<Behavior*> BehaviorList;
 
 SCRIPT_CLASS_NAME( GameObject, "GameObject" );
 
@@ -219,7 +218,7 @@ public:
 	bool active( bool ); // setter
 	
 	/// contains game object's behaviors
-	BehaviorVector behaviors;
+	BehaviorList behaviors;
 
 	/// used for serialization
 	ArgValueVector* GetBehaviorsVector();
@@ -230,8 +229,8 @@ public:
 	/// returns first behavior of class
 	template<class BEHAVIOR>
 	BEHAVIOR* GetBehavior() {
-		for( BehaviorVector::size_type i = 0, nb = this->behaviors.size(); i < nb; i++ ){
-			Behavior *b = this->behaviors[ i ];
+		for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
+			Behavior *b = *i;
 			if ( script.GetInstance<BEHAVIOR>( b->scriptObject ) == b ) return b;
 		}
 		return NULL;
@@ -240,8 +239,8 @@ public:
 	/// returns first behavior of class
 	template<class BEHAVIOR>
 	void GetBehaviors( bool recurse, vector<BEHAVIOR*> &ret ) {
-		for( BehaviorVector::size_type i = 0, nb = this->behaviors.size(); i < nb; i++ ){
-			Behavior *b = this->behaviors[ i ];
+		for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
+			Behavior *b = *i;
 			if ( script.GetInstance<BEHAVIOR>( b->scriptObject ) == b ) {
 				ret.push_back( (BEHAVIOR*) b );
 			}

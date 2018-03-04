@@ -58,7 +58,7 @@ public:
 	/// set body angle
 	virtual void SetBodyAngle( float angleInRad ){};
 	
-	bool SetGameObject( GameObject* go, int pos=-1 );
+	bool SetGameObject( GameObject* go );
 	
 	/// construct and add body to scene->world
 	virtual void AddBody( Scene* scene ){};

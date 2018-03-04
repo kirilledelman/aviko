@@ -15,11 +15,18 @@ Image::Image( ScriptArguments* args ) {
 	if ( args ) {
 		
 		int w = 0, h = 0;
+		void* obj = NULL;
 		string url;
-		if ( args->ReadArguments( 2, TypeInt, &w, TypeInt, &h ) ) {
+		// width, height, draw object
+		if ( args->ReadArguments( 2, TypeInt, &w, TypeInt, &h, TypeObject, &obj ) ) {
 			this->width = max( 0, w );
 			this->height = max( 0, h );
 			this->image = this->_MakeImage();
+			if ( obj ) {
+				GameObject* go = script.GetInstance<GameObject>( obj );
+				if ( go ) this->Draw( go );
+			}
+		// string
 		} else if ( args->ReadArguments( 1, TypeString, &url ) ){
 			// try
 			this->FromDataURL( url );
@@ -350,7 +357,6 @@ bool Image::FromDataURL( string &s ) {
 	
 	// decode
 	string decoded = base64_decode( s );
-	printf( "%lu ... \n", decoded.size() );
 	SDL_RWops* rwops = SDL_RWFromMem( (void*) decoded.data(), (int) decoded.size() );
 	GPU_Image* img = GPU_LoadImage_RW( rwops, true );
 	if ( !img ) return false;

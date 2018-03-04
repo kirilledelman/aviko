@@ -1,5 +1,15 @@
+Separate Layout types into different functions
+	LayoutHorizontal
+	LayoutVertical
+	LayoutAnchors
+
+	In horizontal and vertical, add "wrapLayout" option, 
+
 Image
 	save
+
+Controller - refire axis option 
+
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
 	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events

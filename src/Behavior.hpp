@@ -46,7 +46,7 @@ public:
 	GameObject *gameObject = NULL;
 
 	/// attach/detach from a gameObject
-	virtual bool SetGameObject( GameObject* go, int pos=-1 );
+	virtual bool SetGameObject( GameObject* go );
 	
 // scripting
 		

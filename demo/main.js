@@ -16,7 +16,7 @@
 
 
 // set screen size and pixel doubling
-App.setWindowSize( 640, 360, 2 ); // 720p @ 2x
+App.setWindowSize( 640, 360, 1 ); // 720p @ 2x
 
 // auto-configure controller
 include( 'ui/controller-configurator', {
@@ -69,10 +69,11 @@ App.scene = include( 'main-menu' );
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
 function transitionScene( newScene, oldScene, dir ) {
 	// draw old scene to image
-	var img = new Image( App.windowWidth, App.windowHeight );
-	img.draw( oldScene );
 	var ghost = new GameObject( {
-		render: new RenderSprite( img ),
+		render: new RenderSprite( {
+			image: new Image( App.windowWidth, App.windowHeight, oldScene ),
+			blendMode: BlendMode.PremultipliedAlpha
+		} ),
 		x: dir * App.windowWidth,
 		parent: newScene
 	} );

@@ -24,9 +24,14 @@ include( './ui' );
 (function(go) {
 
 	// internal props
-	var ui = new UI(), bg, shp, background;
-	var handle, handleBackground, hbg, hshp;
+	var ui = new UI(), bg, shp;
+	var handle, hbg, hshp;
+	var offBackground, focusBackground, disabledBackground;
+	var handleOffBackground, handleFocusBackground, handleDisabledBackground;
+	var cancelToBlur = false;
+	var disabled = false;
 	var position = 0;
+	var discrete = false;
 	var totalSize = 100;
 	var handleSize = 20;
 	var orientation = 'vertical';
@@ -49,6 +54,7 @@ include( './ui' );
 		[ 'position',  function (){ return position; }, function ( p ){
 			if ( p != position ) {
 				position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
+				if ( discrete ) position = Math.round( position / handleSize ) * handleSize;
 				go.dispatchLate( 'layout' );
 			}
 		}],
@@ -70,18 +76,40 @@ include( './ui' );
 			}
 		}],
 
+		// (Boolean) values can only be changed in increments of handleSize (used for scrollbars used as paginators)
+		[ 'discrete',  function (){ return discrete; }, function ( cb ){ discrete = cb; } ],
+
+		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
+		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+
+		// (Boolean) input disabled
+		[ 'disabled',  function (){ return disabled; },
+		 function ( v ){
+			 disabled = v;
+			 ui.focusable = !v;
+			 if ( v && ui.focused ) ui.blur();
+			 go.updateBackground();
+		 } ],
+
+		// (GameObject) - reference to scroll handle
+		[ 'handle',  function (){ return handle; } ],
+
 		// (String) or (Color) or (Number) or (null|false)- scrollbar background set to sprite, or solid color, or nothing
-		[ 'background',  function (){ return background; }, function ( v ){
-			background = v;
-			if ( v === false || v === null || v === undefined ){
-				go.render = null;
-			} else if ( typeof( v ) == 'string' ) {
-				bg.texture = v;
-				go.render = bg;
-			} else {
-				shp.color = v;
-				go.render = shp;
-			}
+		[ 'background',  function (){ return offBackground; }, function ( v ){
+			offBackground = v;
+			go.updateBackground();
+		}],
+
+		// (String) or (Color) or (Number) or (null|false)- scrollbar background when focused set to sprite, or solid color, or nothing
+		[ 'focusBackground',  function (){ return focusBackground; }, function ( v ){
+			focusBackground = v;
+			go.updateBackground();
+		}],
+
+		// (String) or (Color) or (Number) or (null|false)- scrollbar background when disabled set to sprite, or solid color, or nothing
+		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( v ){
+			disabledBackground = v;
+			go.updateBackground();
 		}],
 
 		// (Number) corner roundness when background is solid color
@@ -106,17 +134,21 @@ include( './ui' );
 		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
 
 		// (String) or (Color) or (Number) or (null|false) - set draggable handle background to sprite, or solid color, or nothing
-		[ 'handleBackground',  function (){ return handleBackground; }, function ( v ){
-			handleBackground = v;
-			if ( typeof( v ) == 'string' ) {
-				hbg.texture = v;
-				handle.render = hbg;
-			} else if ( v === false || v === null || v === undefined ){
-				handle.render = null;
-			} else {
-				hshp.color = v;
-				handle.render = hshp;
-			}
+		[ 'handleBackground',  function (){ return handleOffBackground; }, function ( v ){
+			handleOffBackground = v;
+			go.updateBackground();
+		}],
+
+		// (String) or (Color) or (Number) or (null|false)- draggable handle background when focused set to sprite, or solid color, or nothing
+		[ 'handleFocusBackground',  function (){ return handleFocusBackground; }, function ( v ){
+			handleFocusBackground = v;
+			go.updateBackground();
+		}],
+
+		// (String) or (Color) or (Number) or (null|false)- draggable handle background when disabled set to sprite, or solid color, or nothing
+		[ 'handleDisabledBackground',  function (){ return handleDisabledBackground; }, function ( v ){
+			handleDisabledBackground = v;
+			go.updateBackground();
 		}],
 
 		// (Number) handle corner roundness when background is solid color
@@ -159,6 +191,7 @@ include( './ui' );
 	// handle
 	handle = new GameObject( { name: "Scrollbar.Handle" } );
 	handle.ui = new UI();
+	handle.ui.layoutType = Layout.Anchors;
 	handle.ui.focusable = false;
 	handle.serialized = false;
 	go.addChild( handle );
@@ -172,7 +205,7 @@ include( './ui' );
 	// UI
 	ui.layoutType = Layout.None;
 	ui.fitChildren = false;
-	ui.focusable = false;
+	ui.focusable = true;
 	ui.minWidth = ui.minHeight = 8;
 	go.ui = ui;
 
@@ -231,6 +264,9 @@ include( './ui' );
 	// mouse down on handle
 	handle.ui.mouseDown = function ( btn, x, y, wx, wy ) {
 		stopEvent();
+		if ( disabled ) return;
+
+		ui.focus();
 
 		// position of mouse on handle
 		grabX = x; grabY = y;
@@ -250,25 +286,90 @@ include( './ui' );
 		}
 	}
 
-	// wheel - just dispatch 'scroll' on gameObject
+	// wheel - dispatch 'scroll' on gameObject
 	ui.mouseWheel = function ( wy, wx ) {
 		stopEvent();
-		if ( orientation == 'vertical' ) {
-			go.fire( 'scroll', position - wy );
+		if ( disabled ) return;
+		var s = 0;
+		if ( orientation == 'horizontal' ) {
+			s = ( wx == 0 ? wy : wx );
+			if ( discrete ) s = s > 0 ? handleSize : -handleSize;
 		} else {
-			go.fire( 'scroll', position + wx );
+			s = -wy;
+			if ( discrete ) s = s > 0 ? handleSize : -handleSize;
 		}
+		go.position += s;
+		go.fire( 'scroll', position );
 	}
 
 	// down on scroll pane
 	ui.mouseDown = function( btn, x, y, wx, wy ) {
-		if ( dragging ) return;
+		if ( disabled ) return;
+		if ( disabled || dragging ) return;
+		ui.focus();
 
 		// try to center handle on point
 		handle.ui.fire( 'mouseDown', btn, handle.render.width * 0.5, handle.render.height * 0.5, wx, wy );
 
 		// do first mousemove
 		handle.ui.mouseMoveGlobal( wx, wy );
+	}
+
+	ui.navigation = function ( name, value ) {
+
+		if ( name == orientation ) {
+			if ( orientation == 'horizontal' ) {
+				ui.mouseWheel( 0, handleSize * value );
+			} else {
+				ui.mouseWheel( handleSize * value, 0 );
+			}
+		} else if ( name == 'cancel' && cancelToBlur ) {
+
+			ui.blur();
+
+		}
+
+	}
+
+	// sets current background based on state
+	go.updateBackground = function () {
+
+		// determine state
+		var prop, hprop;
+		if ( ui.focused ) {
+			prop = focusBackground;
+			hprop = handleFocusBackground;
+		} else if ( disabled ) {
+			prop = disabledBackground;
+			hprop = handleDisabledBackground;
+		} else {
+			prop = offBackground;
+			hprop = handleOffBackground;
+		}
+
+		// set look of background
+		if ( prop === null || prop === false ) {
+			go.render = null;
+		} else if ( typeof( prop ) == 'string' ) {
+			bg.texture = prop;
+			bg.resize( ui.width, ui.height );
+			go.render = bg;
+		} else {
+			shp.color = prop;
+			go.render = shp;
+		}
+
+		// set look of handle
+		if ( hprop === false || hprop === null ) {
+			handle.render = null;
+		} else if ( typeof( hprop ) == 'string' ) {
+			hbg.texture = hprop;
+			handle.render = hbg;
+		} else {
+			hshp.color = hprop;
+			handle.render = hshp;
+		}
+
 	}
 
 	// apply defaults

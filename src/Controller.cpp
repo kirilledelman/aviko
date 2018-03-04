@@ -422,8 +422,8 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 		// joystick axis
 		if ( etype == SDL_JOYAXISMOTION && e.jaxis.axis == b.index ) {
 			
-			Sint16 v = e.jaxis.value;
-			float val = v ? ( v < 0 ? ( (float) v / 32768.0f ) : ( (float) v / 32767.0f ) ) : 0;
+			newState = e.jaxis.value;
+			float val = newState ? ( newState < 0 ? ( (float) newState / 32768.0f ) : ( (float) newState / 32767.0f ) ) : 0;
 			if ( b.type == DIR_NEGATIVE ) val = -val;
 			
 			// adjust using dead zone
@@ -434,47 +434,47 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 			}
 			
 			// back to int
-			v = ( val * ( val >= 0 ? 32767 : 32768 ) );
+			newState = ( val * ( val >= 0 ? 32767 : 32768 ) );
 			
 			// ignore if value hasn't changed from previous state
-			if ( this->states[ b.action ] == v )  continue;
+			if ( this->states[ b.action ] == newState )  continue;
 
 			// add argument
 			event.scriptParams.AddStringArgument( b.action.c_str() );
 			event.scriptParams.AddFloatArgument( val );
 			
 			// remember new state
-			this->states[ b.action ] = v;
+			this->states[ b.action ] = newState;
 			
 		// hat
 		} else if ( etype == SDL_JOYHATMOTION && e.jhat.hat == b.index ) {
 			
 			Uint8 v = e.jhat.value;
-			int val = ( key == KEY_JOY_HAT_X ?
+			newState = ( key == KEY_JOY_HAT_X ?
 						 (( v & SDL_HAT_LEFT ) ? -1 : ( ( v & SDL_HAT_RIGHT ) ? 1 : 0 )) :
 						 (( v & SDL_HAT_UP ) ? -1 : ( ( v & SDL_HAT_DOWN ) ? 1 : 0 )) );
 			
-			if ( b.type == DIR_NEGATIVE ) val = -val;
+			if ( b.type == DIR_NEGATIVE ) newState = -newState;
 			
 			// ignore if value hasn't changed from previous state
-			if ( this->states[ b.action ] == val )  continue;
+			if ( this->states[ b.action ] == newState )  continue;
 			
 			// add argument
 			event.scriptParams.AddStringArgument( b.action.c_str() );
-			event.scriptParams.AddIntArgument( val );
+			event.scriptParams.AddIntArgument( newState );
 			
 			// remember new state
-			this->states[ b.action ] = val;
+			this->states[ b.action ] = newState;
 
 		// mouse wheel
 		} else if ( etype == SDL_MOUSEWHEEL ) {
 			
-			Sint32 val = ( key == KEY_MOUSE_WHEEL ? e.wheel.y : e.wheel.x);
-			if ( b.type == DIR_NEGATIVE ) val = -val;
+			newState = ( key == KEY_MOUSE_WHEEL ? e.wheel.y : e.wheel.x);
+			if ( b.type == DIR_NEGATIVE ) newState = -newState;
 			
 			// add argument
 			event.scriptParams.AddStringArgument( b.action.c_str() );
-			event.scriptParams.AddIntArgument( val );
+			event.scriptParams.AddIntArgument( newState );
 			
 			// dispatch now with value
 			this->CallEvent( event );
@@ -529,10 +529,10 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 		this->CallEvent( event );
 		
 		// check if binding name matches any of UI navigation events
-		if ( b.action.compare( app.input.navigationXAxis ) == 0 ||
+		if ( newState != 0 && ( b.action.compare( app.input.navigationXAxis ) == 0 ||
 			b.action.compare( app.input.navigationYAxis ) == 0 ||
 			b.action.compare( app.input.navigationAccept ) == 0 ||
-			b.action.compare( app.input.navigationCancel ) == 0 ) {
+			b.action.compare( app.input.navigationCancel ) == 0 ) ) {
 			
 			// dispatch as navigation event
 			event.name = EVENT_NAVIGATION;

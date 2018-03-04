@@ -35,7 +35,6 @@ UI.style = UI.style ? UI.style : {
 
 	// text label - ui/text.js
 	text: {
-		font: 'Arial',
 		size: 16,
 		textAlign: TextAlign.Left,
 		color: 0xFFFFFF,
@@ -43,7 +42,6 @@ UI.style = UI.style ? UI.style : {
 
 	// text input field - ui/textfield.js
 	textfield: {
-		font: 'Arial',
 		size: 16,
 		color: 0x0,
 		selectionColor: 0x0073b9,
@@ -53,6 +51,7 @@ UI.style = UI.style ? UI.style : {
 		focusBackground: './textures/ui:input-focus',
 		disabledBackground: './textures/ui:input-disabled',
 		acceptToEdit: true,
+		focusRect: true,
 	},
 
 	// scrollable container - ui/scrollable.js
@@ -64,15 +63,18 @@ UI.style = UI.style ? UI.style : {
 
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
-		background: 0xFFFFFF,
+		background: 0xF0F0F0,
+		handleBackground: 0xC0C0C0,
+		focusBackground: 0xFFFFF0,
+		handleBackground: 0xD0D0D0,
 		slice: 0,
 		cornerRadius: 4,
-		handleBackground: 0xC0C0C0,
 		handleSlice: 0,
 		handleCornerRadius: 4,
 		width: 16,
 		height: 16,
 		pad: 2,
+		focusRect: true,
 
 		// apply only to horizontal
 		horizontal: { },
@@ -93,7 +95,7 @@ UI.style = UI.style ? UI.style : {
 		disabledBackground: './textures/ui:button-disabled',
 		slice: 8,
 		pad: 8,
-		cancelToBlur: false,
+		focusRect: true,
 
 		// apply to button's label (ui/text.js)
 		label: {
@@ -115,6 +117,7 @@ UI.style = UI.style ? UI.style : {
 		disabledBackground: './textures/ui:checkbox-disabled',
 		slice: 0,
 		pad: 0,
+		focusRect: true,
 
 		// apply to checkbox label (ui/text.js)
 		label: {
@@ -138,6 +141,7 @@ UI.style = UI.style ? UI.style : {
 		// style applied to dropdown button itself (defaults to UI.style.button)
 		button: {
 			icon: './textures/ui:checkbox-check',
+			focusRect: true,
 		},
 
 		// image used for arrow on the right side of the dropdown (ui/image.js)
@@ -161,7 +165,55 @@ UI.style = UI.style ? UI.style : {
 			pad: 2,
 		}
 
+	},
+
+	// property list for editors (ui/property-list.js)
+	propertyList: {
+
+		valueWidth: 60,
+		spacingX: 2, // distance between label and value
+		spacingY: 2, // distance between rows
+
+		// applied to label
+		label: {
+
+		},
+
+		// applied to description
+		description: {
+
+		},
+
+		// applied to value textfield
+		value: {
+
+		}
+
+	},
+
+	// settings for focus rectangle (applied to ui/panel.js instance)
+	focusRect: {
+
+		// default color
+		background: 0x0073b9,
+
+		// rounded corner
+		cornerRadius: 2,
+
+		// stipple rendering
+		render: { stipple: 0.5 },
+
+		// outline thickness
+		lineThickness: 2,
+
+		// filled = solid rectangle
+		filled: false,
+
+		// pixels outside control
+		offset: 2
+
 	}
+
 
 
 
@@ -203,6 +255,29 @@ UI.base = UI.base ? UI.base : {
 			// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
 			[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){ ui.focusGroup = f; } ],
 
+			// (GameObject) or true|false - enables/disables focus rectangle
+			[ 'focusRect',  function (){ return ui.focusRect ? ui.focusRect.render : null; }, function ( fr ){
+				if ( fr === null || fr === false ) {
+					// remove
+					if ( ui.focusRect ) {
+						ui.focusRect.parent = null;
+						ui.focusRect = null;
+						ui.off( 'layout', layoutFocusRect );
+						ui.off( 'focusChanged', focusChangedRect );
+					}
+				// add
+				} else if ( !ui.focusRect ) {
+					ui.focusRect = new GameObject( './panel', {
+						active: false,
+						fixedPosition: true,
+						style: UI.style.focusRect,
+					} );
+					ui.on( 'layout', layoutFocusRect );
+					ui.on( 'focusChanged', focusChangedRect );
+					go.addChild( ui.focusRect, 0 );
+				}
+			} ],
+
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
 			[ 'layoutType',  function (){ return ui.layoutType; }, function ( v ){ ui.layoutType = v; } ],
 
@@ -213,10 +288,13 @@ UI.base = UI.base ? UI.base : {
 			[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
 
 			// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
-			[ 'fitChildren',  function (){ return ui.expandChildren; }, function ( v ){ ui.expandChildren = v; } ],
+			[ 'fitChildren',  function (){ return ui.fitChildren; }, function ( v ){ ui.fitChildren = v; } ],
 
 			// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
 			[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
+
+			// (Boolean) if true, parent will ignore this element while performing layout
+			[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
 
 			// (Number) minimum width allowed by layout
 			[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
@@ -354,6 +432,19 @@ UI.base = UI.base ? UI.base : {
 				scrollable.scrollLeft = l;
 			}
 		}
+
+		// focus rectangle callbacks
+		function layoutFocusRect ( w, h ) {
+			var fr = this.focusRect;
+			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
+			fr.setTransform( -fr.offset, -fr.offset );
+		};
+
+		function focusChangedRect( nf ) {
+			if ( this.focusRect.active = (nf == this) ) {
+				this.focusRect.dispatch( 'layout' );
+			}
+		};
 
 	},
 

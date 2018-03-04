@@ -493,6 +493,7 @@ void GameObject::InitClass() {
 		// validate params
 		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition | Object initProperties ] ] )";
 		void* obj = NULL;
+		void *initObj = NULL;
 		string scriptName;
 		GameObject* other = NULL;
 		
@@ -504,7 +505,11 @@ void GameObject::InitClass() {
 				other = new GameObject( NULL );
 			} else {
 				other = script.GetInstance<GameObject>( obj );
-			}		
+				if ( !other && sa.args.size() == 1 ) {
+					initObj = obj;
+					other = new GameObject( NULL );
+				}
+			}
 		} else if ( sa.ReadArguments( 1, TypeString, &scriptName ) ){
 			// make new game object
 			other = new GameObject( NULL );
@@ -518,10 +523,9 @@ void GameObject::InitClass() {
 		}
 		
 		// either position or initObj
-		void *initObj = NULL;
 		int pos = -1; //(int) other->children.size();
-		if ( !sa.ReadArgumentsFrom( 1, 1, TypeObject, &initObj, TypeInt, &pos ) ){
-			sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
+		if ( !sa.ReadArgumentsFrom( (initObj ? 0 : 1), 1, TypeObject, &initObj, TypeInt, &pos ) ){
+			sa.ReadArgumentsFrom( (initObj ? 0 : 1), 1, TypeInt, &pos );
 		}
 		
 		// all good
@@ -953,10 +957,10 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 void GameObject::CallEvent( Event &event ) {
 	
 	// for each behavior
-	for( int i = (int) this->behaviors.size() - 1; i >= 0; i-- ) {
+	for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
 		
 		// get callback
-		Behavior* behavior = this->behaviors[ i ];
+		Behavior* behavior = *i;
 		
 		// ensure it's active
 		if ( !behavior->active() ) continue;
@@ -972,12 +976,9 @@ void GameObject::CallEvent( Event &event ) {
 /// returns ArgValueVector with each behavior's scriptObject
 ArgValueVector* GameObject::GetBehaviorsVector() {
 	ArgValueVector* vec = new ArgValueVector();
-	size_t nc = this->behaviors.size();
-	vec->resize( nc );
-	for ( size_t i = 0; i < nc; i++ ){
-		ArgValue &val = (*vec)[ i ];
-		val.type = TypeObject;
-		val.value.objectValue = this->behaviors[ i ]->scriptObject;
+	for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
+		Behavior *b = *i;
+		vec->emplace_back( b->scriptObject );
 	}
 	return vec;
 }
@@ -985,7 +986,7 @@ ArgValueVector* GameObject::GetBehaviorsVector() {
 /// overwrites behaviors
 ArgValueVector* GameObject::SetBehaviorsVector( ArgValueVector* in ) {
 	// remove all behaviors first
-	while( this->behaviors.size() ) this->behaviors[ 0 ]->SetGameObject( NULL );
+	while( this->behaviors.begin() != this->behaviors.end() ) this->behaviors.front()->SetGameObject( NULL );
 	// add behaviors
 	size_t nc = in->size();
 	for ( size_t i = 0; i < nc; i++ ){
@@ -1007,8 +1008,9 @@ void GameObject::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 		protectedObjects.push_back( &(this->children[ i ]->scriptObject) );
 	}
 	// behaviors
-	for ( size_t i = 0, nb = this->behaviors.size(); i < nb; i++ ) {
-		protectedObjects.push_back( &(this->behaviors[ i ]->scriptObject) );
+	for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
+		Behavior *b = *i;
+		protectedObjects.push_back( &(b->scriptObject) );
 	}
 	// parent
 	if ( this->parent ) protectedObjects.push_back( &parent->scriptObject );
