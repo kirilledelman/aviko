@@ -103,7 +103,7 @@ include( './ui' );
 	// UI
 	ui.focusable = false;
 	ui.layoutType = Layout.Horizontal;
-	ui.layoutAlign = LayoutAlign.Stretch;
+	ui.layoutAlignY = LayoutAlign.Stretch;
 	ui.fitChildren = true;
 	go.ui = ui;
 

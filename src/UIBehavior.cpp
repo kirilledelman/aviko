@@ -85,7 +85,6 @@ void UIBehavior::InitClass() {
 	script.SetProperty( "Anchors", ArgValue( (int) LayoutType::Anchors ), constants );
 	script.SetProperty( "Vertical", ArgValue( (int) LayoutType::Vertical ), constants );
 	script.SetProperty( "Horizontal", ArgValue( (int) LayoutType::Horizontal ), constants );
-	script.SetProperty( "Grid", ArgValue( (int) LayoutType::Grid ), constants );
 	script.FreezeObject( constants );
 	
 	constants = script.NewObject();
@@ -402,17 +401,30 @@ void UIBehavior::InitClass() {
 	}) );
 	
 	script.AddProperty<UIBehavior>
-	( "layoutAlign",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->crossAxisAlign; }),
+	( "layoutAlignX",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->axisAlignX; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
 		UIBehavior* ui = (UIBehavior*) b;
 		LayoutAlign v = (LayoutAlign) val;
-		if ( ui->crossAxisAlign != v ) {
-			ui->crossAxisAlign = v;
-			ui->RequestLayout( ArgValue( "layoutAlign" ) );
+		if ( ui->axisAlignX != v ) {
+			ui->axisAlignX = v;
+			ui->RequestLayout( ArgValue( "layoutAlignX" ) );
 		}
-		return (int) ui->crossAxisAlign;
+		return (int) ui->axisAlignX;
 	 }));
+	
+	script.AddProperty<UIBehavior>
+	( "layoutAlignY",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->axisAlignY; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		LayoutAlign v = (LayoutAlign) val;
+		if ( ui->axisAlignY != v ) {
+			ui->axisAlignY = v;
+			ui->RequestLayout( ArgValue( "layoutAlignY" ) );
+		}
+		return (int) ui->axisAlignY;
+	}));
 	
 	script.AddProperty<UIBehavior>
 	( "selfAlign",
@@ -437,6 +449,42 @@ void UIBehavior::InitClass() {
 			ui->RequestLayout( ArgValue( "flex" ) );
 		}
 		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "wrapEnabled",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->wrapEnabled; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->wrapEnabled != val ) {
+			ui->wrapEnabled = val;
+			ui->RequestLayout( ArgValue( "wrapEnabled" ) );
+		}
+		return ui->wrapEnabled;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "wrapAfter",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->wrapAfter; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->wrapAfter != val ) {
+			ui->wrapAfter = val;
+			ui->RequestLayout( ArgValue( "wrapAfter" ) );
+		}
+		return (int) ui->wrapAfter;
+	}) );
+	
+	script.AddProperty<UIBehavior>
+	( "forceWrap",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->forceWrap; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->forceWrap != val ) {
+			ui->forceWrap = val;
+			ui->RequestLayout( ArgValue( "forceWrap" ) );
+		}
+		return ui->forceWrap;
 	}));
 	
 	script.AddProperty<UIBehavior>
@@ -953,286 +1001,43 @@ bool UIBehavior::Navigate( float x, float y ) {
 /* MARK:	-				Layout
  -------------------------------------------------------------------- */
 
-/// layout type defines how this UI lays out its children
-/// this function is called after parentUI has already this UI's width and height
-void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 
+void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
+	
 	if ( !behavior->gameObject ) return;
+	
+	// remember current, to retrigger layout later if changed
+	float
+	oldWidth = behavior->layoutWidth,
+	oldHeight = behavior->layoutHeight,
+	oldMinWidth = behavior->minWidth,
+	oldMinHeight = behavior->minHeight;
 	
 	// constrain size
 	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
 	behavior->layoutHeight = fmax( behavior->minHeight, fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), behavior->layoutHeight ) );
-	
-	// remember current, to retrigger layout later if changed
-	float	oldWidth = behavior->layoutWidth,
-			oldHeight = behavior->layoutHeight,
-			oldMinWidth = behavior->minWidth,
-			oldMinHeight = behavior->minHeight;
-	
-	// collect children with UI component
+
+	// collect children with active UI component
 	vector<UIBehavior*> childUIs;
 	for ( size_t i = 0, nc = behavior->gameObject->children.size(); i < nc; i++ ){
 		UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
 		if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() && !ui->fixedPosition ) childUIs.push_back( ui );
 	}
 	
-	// for each child ui
-	float curX = behavior->padLeft;
-	float curY = behavior->padRight;
-	float maxSize = 0;
-	float innerWidth = fmax( 0, behavior->layoutWidth - ( behavior->padLeft + behavior->padRight ) );
-	float innerHeight = fmax( 0, behavior->layoutHeight - ( behavior->padTop + behavior->padBottom ) );
-	float maxX = 0, maxY = 0;
-	
-	// first layout step
-	
-	// measure space used by items
-	float totalFlex = 0;
-	vector<UIBehavior*> flexed;
-	size_t gridRowStartElement = 0;
-	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
-		UIBehavior* childUI = childUIs[ i ];
-		float x = 0, y = 0, w = 0, h = 0;
-		float fw = 0, fh = 0; // used to calculate maxX, maxY
-		
-		// anchor - based layout
-		if ( behavior->layoutType == LayoutType::Anchors ) {
-			
-			childUI->GetAnchoredPosition( behavior, x, y, w, h );
-			fw = w; fh = h;
-			
-		// vertical list
-		} else if ( behavior->layoutType == LayoutType::Vertical ) {
-			
-			// measure
-			x = curX; w = fw = childUI->layoutWidth;
-			y = curY + childUI->marginTop;
-			if ( childUI->flex ) {
-				h = childUI->minHeight;
-				flexed.push_back( childUI );
-				totalFlex += childUI->flex;
-			} else h = childUI->layoutHeight;
-			curY += h + childUI->marginTop + childUI->marginBottom + behavior->spacingY;
-			fh = h;
-			
-			// if child is stretchy, use its minWidth for maxX
-			LayoutAlign align = behavior->crossAxisAlign;
-			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
-			if ( childUI->flex || align == LayoutAlign::Stretch ) fw = childUI->minWidth;
-			
-		// horizontal list
-		} else if ( behavior->layoutType == LayoutType::Horizontal ) {
-
-			// measure
-			y = curY; h = fh = childUI->layoutHeight;
-			x = curX + childUI->marginLeft;
-			if ( childUI->flex ) {
-				w = childUI->minWidth;
-				flexed.push_back( childUI );
-				totalFlex += childUI->flex;
-			} else w = childUI->layoutWidth;
-			curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
-			fw = w;
-			
-			// if child is stretchy, use its minHeight for maxY
-			LayoutAlign align = behavior->crossAxisAlign;
-			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
-			if ( childUI->flex || align == LayoutAlign::Stretch ) fh = childUI->minHeight;
-			
-		// grid - left to right, row after row
-		} else if ( behavior->layoutType == LayoutType::Grid ) {
-			
-			w = fw = childUI->layoutWidth;
-			h = fh = childUI->layoutHeight;
-			// new row?
-			if ( curX + w + childUI->marginLeft + childUI->marginRight + behavior->spacingX >= innerWidth ) {
-				
-				// re-align current row vertically to maxSize height
-				for ( size_t j = gridRowStartElement; j < i; j++ ) {
-					UIBehavior* rowItem = childUIs[ j ];
-					GameObject* rowGo = rowItem->gameObject;
-					LayoutAlign align = behavior->crossAxisAlign;
-					if ( rowItem->selfAlign != LayoutAlign::Default ) align = rowItem->selfAlign;
-					switch ( align ) {
-						case LayoutAlign::Stretch:
-							rowItem->layoutHeight = maxSize - rowItem->marginBottom;
-							break;
-						case LayoutAlign::End:
-							rowGo->SetY( rowGo->GetY() + ( maxSize - rowItem->marginBottom ) - rowItem->layoutHeight );
-							break;
-						case LayoutAlign::Center:
-							rowGo->SetY( rowGo->GetY() + ( ( maxSize - rowItem->marginBottom ) - rowItem->layoutHeight ) * 0.5 );
-							break;
-						default: break;
-					}
-				}
-				
-				// set position to beginning of next row
-				gridRowStartElement = i;
-				curX = behavior->padLeft;
-				curY += maxSize + behavior->spacingY;
-				maxSize = h + childUI->marginTop + childUI->marginBottom;
-			} else maxSize = fmax( maxSize, h + childUI->marginTop + childUI->marginBottom );
-			
-			x = curX + childUI->marginLeft;
-			y = curY + childUI->marginTop;
-			
-			if ( childUI->flex ) curX = innerWidth; // flex in grid layout = new row after this child
-			else curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
-			
-		} else if ( behavior->layoutType == LayoutType::None ){
-			
-			x = childUI->gameObject->GetX();
-			y = childUI->gameObject->GetY();
-			w = fw = childUI->layoutWidth;
-			h = fh = childUI->layoutHeight;
-			
-		}
-		
-		// max extents of children
-		maxX = fmax( maxX, x + fw + childUI->marginRight );
-		maxY = fmax( maxY, y + fh + childUI->marginBottom );
-		
-		// set/store
-		childUI->gameObject->SetPosition( floorf( x ), floorf( y ) );
-		childUI->layoutWidth = ( w );
-		childUI->layoutHeight = ( h );
-
-	}
-	
-	// if grid, finish aligning last row
-	if ( behavior->layoutType == LayoutType::Grid ) {
-		
-		// re-align last row vertically to maxSize height
-		for ( size_t j = gridRowStartElement, nc = childUIs.size(); j < nc; j++ ) {
-			UIBehavior* rowItem = childUIs[ j ];
-			GameObject* rowGo = rowItem->gameObject;
-			LayoutAlign align = behavior->crossAxisAlign;
-			if ( rowItem->selfAlign != LayoutAlign::Default ) align = rowItem->selfAlign;
-			switch ( align ) {
-				case LayoutAlign::Stretch:
-					rowItem->layoutHeight = maxSize - rowItem->marginBottom;
-					break;
-				case LayoutAlign::End:
-					rowGo->SetY( rowGo->GetY() + ( maxSize - rowItem->marginBottom ) - rowItem->layoutHeight );
-					break;
-				case LayoutAlign::Center:
-					rowGo->SetY( rowGo->GetY() + ( ( maxSize - rowItem->marginBottom ) - rowItem->layoutHeight ) * 0.5 );
-					break;
-				default: break;
-			}
-		}
-		
-	// in vertical and horizontal layouts
-	} else if ( behavior->layoutType == LayoutType::Vertical || behavior->layoutType == LayoutType::Horizontal ) {
-	
-		// distribute leftover extra space to flexed ui's
-		float extraSpace = ( behavior->layoutType == LayoutType::Vertical ) ?
-							( innerHeight - ( maxY - behavior->padTop ) ) : ( innerWidth - ( maxX - behavior->padLeft ) );
-		float spaceLeft = extraSpace, spaceShare = 0;
-		for ( size_t i = 0, nf = flexed.size(); i < nf; i++ ) {
-			if ( spaceLeft <= 0 ) break;
-			UIBehavior* f = flexed[ i ];
-			spaceShare = fmin( spaceLeft, extraSpace * ( f->flex / totalFlex ) );
-			if ( behavior->layoutType == LayoutType::Vertical ) {
-				f->layoutHeight = f->minHeight + spaceShare;
-			} else {
-				f->layoutWidth = f->minWidth + spaceShare;
-			}
-			spaceLeft -= spaceShare;
-		}
-	}
-	
-	// if fit children is set
-	if ( behavior->fitChildren && behavior->layoutType != LayoutType::None && behavior->layoutType != LayoutType::Anchors ) {
-		if ( behavior->layoutType == LayoutType::Grid || behavior->layoutType == LayoutType::Vertical || behavior->layoutType == LayoutType::Horizontal ) {
-			behavior->layoutHeight = fmax( behavior->layoutHeight, maxY + behavior->padBottom );
-			behavior->layoutWidth = fmax( behavior->layoutWidth, maxX + behavior->padRight );
-		} else if ( behavior->layoutType == LayoutType::None ) {
-			behavior->layoutWidth = fmax( behavior->layoutWidth, maxX );
-			behavior->layoutHeight = fmax( behavior->layoutHeight, maxY );
-		}
-		behavior->minWidth = maxX + behavior->padRight;
-		behavior->minHeight = maxY + behavior->padBottom;
-	}
-	
-	// enforce min/max again
-	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
-	behavior->layoutHeight = fmax( behavior->minHeight, fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), behavior->layoutHeight ) );
-
-	// horizontal and vertical layouts require second pass
-	if ( behavior->layoutType == LayoutType::Vertical || behavior->layoutType == LayoutType::Horizontal ) {
-	
-		curX = behavior->padLeft;
-		curY = behavior->padTop;
-		innerWidth = behavior->layoutWidth - ( behavior->padLeft + behavior->padRight );
-		innerHeight = behavior->layoutHeight - ( behavior->padTop + behavior->padBottom );
-		for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
-			UIBehavior* childUI = childUIs[ i ];
-			float x = 0, y = 0, w = 0, h = 0;
-			// vertical list
-			if ( behavior->layoutType == LayoutType::Vertical ) {
-				// measure
-				y = curY + childUI->marginTop;
-				w = childUI->layoutWidth;
-				h = childUI->layoutHeight;
-				LayoutAlign align = behavior->crossAxisAlign;
-				if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
-				switch ( align ) {
-					case LayoutAlign::Stretch:
-						x = behavior->padLeft + childUI->marginLeft;
-						w = innerWidth - (childUI->marginLeft + childUI->marginRight);
-						break;
-					case LayoutAlign::Default:
-					case LayoutAlign::Start:
-						x = behavior->padLeft + childUI->marginLeft;
-						break;
-					case LayoutAlign::End:
-						x = behavior->padLeft + (innerWidth - ( w + childUI->marginRight ) );
-						break;
-					case LayoutAlign::Center:
-						x = behavior->padLeft + (innerWidth - w) * 0.5;
-						break;
-						
-				}
-				curY += h + childUI->marginTop + childUI->marginBottom + behavior->spacingY;
-				
-			// horizontal list
-			} else if ( behavior->layoutType == LayoutType::Horizontal ) {
-				
-				// measure
-				x = curX + childUI->marginLeft;
-				w = childUI->layoutWidth;
-				h = childUI->layoutHeight;
-				LayoutAlign align = behavior->crossAxisAlign;
-				if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
-				switch ( align ) {
-					case LayoutAlign::Stretch:
-						y = behavior->padTop + childUI->marginTop;
-						h = innerHeight - ( childUI->marginTop + childUI->marginBottom );
-						break;
-					case LayoutAlign::Default:
-					case LayoutAlign::Start:
-						y = behavior->padTop + childUI->marginTop;
-						break;
-					case LayoutAlign::End:
-						y = behavior->padTop + (innerHeight - ( h + childUI->marginBottom ) );
-						break;
-					case LayoutAlign::Center:
-						y = behavior->padTop + (innerHeight - h) * 0.5;
-						break;
-						
-				}
-				curX += w + childUI->marginLeft + childUI->marginRight + behavior->spacingX;
-				
-			}
-			
-			// set/store
-			childUI->gameObject->SetPosition( floorf( x ), floorf( y ) );
-			childUI->layoutWidth = floorf( w );
-			childUI->layoutHeight = floorf( h );
-			
-		}
+	// call appropriate layout function
+	switch ( behavior->layoutType ) {
+		case LayoutType::None:
+			behavior->LayoutNone( childUIs );
+			break;
+		case LayoutType::Anchors:
+			behavior->LayoutAnchors( childUIs );
+			break;
+		case LayoutType::Horizontal:
+			behavior->LayoutHorizontal( childUIs );
+			break;
+		case LayoutType::Vertical:
+			behavior->LayoutVertical( childUIs );
+			break;
 	}
 	
 	// if there's render component
@@ -1262,13 +1067,411 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	
 	// if layout process changed width/height/min/max
 	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight ||
-			behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight ) {
+		behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight ) {
 		// request layout again
 		behavior->RequestLayout( ArgValue() );
 	}
 	
 }
 
+void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
+	
+	float innerWidth = fmax( 0, this->layoutWidth - ( this->padLeft + this->padRight ) );
+	float innerHeight = fmax( 0, this->layoutHeight - ( this->padTop + this->padBottom ) );
+	float totalMinSize = 0;
+	float minChildSize = 0;
+	float curX = 0;
+	float curY = 0;
+
+	struct LayoutRow {
+		vector<UIBehavior*> items;
+		float maxSize = 0;
+		float minSize = 0;
+		float spaceUsed = 0;
+		float totalFlex = 0;
+		vector<UIBehavior*> flexed;
+	};
+	
+	vector<LayoutRow> rows;
+	rows.emplace_back();
+	LayoutRow* currentRow = &rows.back();
+	
+	// put all elements in rows first
+	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
+		UIBehavior* childUI = childUIs[ i ];
+		float
+		w = ( childUI->flex ? childUI->minWidth : childUI->layoutWidth ) + childUI->marginLeft + childUI->marginRight,
+		h = childUI->layoutHeight + childUI->marginTop + childUI->marginBottom;
+		
+		// if child won't fit in current row
+		if ( wrapEnabled && currentRow->items.size() > 0 && curX + w + this->spacingX >= innerWidth ) {
+			
+			// start new row
+			curX = 0;
+			totalMinSize += currentRow->minSize;
+			rows.emplace_back();
+			currentRow = &rows.back();
+			
+		}
+		
+		// add to current row
+		currentRow->items.push_back( childUI );
+		currentRow->maxSize = fmax( h, currentRow->maxSize );
+		currentRow->minSize = fmax( childUI->minHeight, currentRow->minSize );
+		currentRow->spaceUsed = curX + w;
+		curX += w + spacingX;
+		minChildSize = fmax( minChildSize, w );
+		if ( childUI->flex ) {
+			currentRow->flexed.push_back( childUI );
+			currentRow->totalFlex += childUI->flex;
+		}
+		
+		// check if new row is needed for next item
+		if ( wrapEnabled && ( childUI->forceWrap || ( wrapAfter > 0 && currentRow->items.size() >= wrapAfter ) ) ) {
+		
+			// force wrap next row
+			curX = innerWidth;
+		
+		}
+		
+	}
+	
+	// minimum height required for all rows
+	totalMinSize = totalMinSize + ( rows.size() - 1 ) * spacingY;
+	
+	// if stretching rows across, and there's more space than needed
+	if ( this->axisAlignY == LayoutAlign::Stretch && innerHeight > totalMinSize ) {
+		// expand all rows' maxSize to fill entire innerheight
+		float averageRowHeight = floor( (innerHeight - totalMinSize) / (float) rows.size() );
+		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
+			LayoutRow* currentRow = &rows[ r ];
+			currentRow->maxSize = averageRowHeight;
+		}
+	}
+	
+	// prepare
+	float maxX = 0, maxY = 0, spacing = 0, startOffset = 0;
+	curY = this->padTop;
+	
+	// process each row
+	for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
+		LayoutRow* currentRow = &rows[ r ];
+		// distribute flex space to fill row, if there are flex items
+		if ( currentRow->totalFlex > 0 ) {
+			float extraSpace = innerWidth - currentRow->spaceUsed;
+			float spaceLeft = extraSpace, spaceShare = 0;
+			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
+				if ( spaceLeft <= 0 ) break;
+				UIBehavior* f = currentRow->flexed[ i ];
+				spaceShare = floor( fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) ) );
+				f->layoutWidth = f->minWidth + spaceShare;
+				spaceLeft -= spaceShare;
+			}
+			spacing = spacingX;
+			currentRow->spaceUsed = innerWidth;
+			startOffset = 0;
+		// otherwise, if stretch main axis align, add space
+		} else if ( axisAlignX == LayoutAlign::Stretch ){
+			spacing = ( innerWidth - ( currentRow->spaceUsed - spacingX * ( currentRow->items.size() - 1 ) ) ) / (float) currentRow->items.size();
+			startOffset = spacing * 0.5;
+			currentRow->spaceUsed = innerWidth;
+		} else {
+			// normal
+			spacing = spacingX;
+			startOffset = 0;
+		}
+		
+		// start row
+		
+		// reset X
+		if ( this->axisAlignX == LayoutAlign::End ) {
+			curX = padLeft + innerWidth - currentRow->spaceUsed;
+		} else if ( this->axisAlignX == LayoutAlign::Center ) {
+			curX = padLeft + ( innerWidth - currentRow->spaceUsed ) * 0.5;
+		} else {
+			curX = padLeft;
+		}
+		curX += startOffset;
+		
+		// lay out each child in row
+		for ( size_t i = 0, nc = currentRow->items.size(); i < nc; i++ ){
+			
+			UIBehavior* childUI = currentRow->items[ i ];
+			float x = 0, y = 0, w = 0, h = 0;
+			
+			// measure
+			x = curX + childUI->marginLeft;
+			w = childUI->layoutWidth;
+			h = childUI->layoutHeight;
+			LayoutAlign align = this->axisAlignY;
+			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
+			switch ( align ) {
+				case LayoutAlign::Stretch:
+					y = curY + childUI->marginTop;
+					h = currentRow->maxSize - ( childUI->marginTop + childUI->marginBottom );
+					break;
+				case LayoutAlign::Default:
+				case LayoutAlign::Start:
+					y = curY + childUI->marginTop;
+					break;
+				case LayoutAlign::End:
+					y = curY + (currentRow->maxSize - ( h + childUI->marginBottom ) );
+					break;
+				case LayoutAlign::Center:
+					y = curY + (currentRow->maxSize - h) * 0.5;
+					break;
+					
+			}
+			
+			// max dims
+			maxX = fmax( maxX, x + w + childUI->marginRight );
+			maxY = fmax( maxY, y + h + childUI->marginBottom );
+
+			// step forward
+			curX += w + childUI->marginLeft + childUI->marginRight + spacing;
+
+			// set/store
+			childUI->gameObject->SetPosition( x, y );
+			childUI->layoutWidth = w;
+			childUI->layoutHeight = h;
+			
+		}
+		
+		// next row
+		curY += currentRow->maxSize + spacingY;
+		
+	}
+	
+	// if fit children is set, ensure children are contained, and min sizes set
+	if ( this->fitChildren ) {
+		this->layoutHeight = fmax( this->layoutHeight, maxY + this->padBottom );
+		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
+		if ( wrapEnabled ) {
+			this->minWidth = minChildSize + this->padLeft + this->padRight;
+		} else {
+			this->minWidth = maxX + this->padRight;
+		}
+		if ( this->axisAlignY == LayoutAlign::Stretch ) {
+			this->minHeight = totalMinSize + this->padBottom;
+		} else {
+			this->minHeight = maxY + this->padBottom;
+		}
+	}
+	
+	// enforce min/max again
+	this->layoutWidth = fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) );
+	this->layoutHeight = fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) );
+	
+}
+
+void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
+	
+	float innerWidth = fmax( 0, this->layoutWidth - ( this->padLeft + this->padRight ) );
+	float innerHeight = fmax( 0, this->layoutHeight - ( this->padTop + this->padBottom ) );
+	float totalMinSize = 0;
+	float minChildSize = 0;
+	float curX = 0;
+	float curY = 0;
+	
+	struct LayoutRow {
+		vector<UIBehavior*> items;
+		float maxSize = 0;
+		float minSize = 0;
+		float spaceUsed = 0;
+		float totalFlex = 0;
+		vector<UIBehavior*> flexed;
+	};
+	
+	vector<LayoutRow> rows;
+	rows.emplace_back();
+	LayoutRow* currentRow = &rows.back();
+	
+	// put all elements in rows first
+	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
+		UIBehavior* childUI = childUIs[ i ];
+		float
+		w = childUI->layoutWidth + childUI->marginLeft + childUI->marginRight,
+		h = ( childUI->flex ? childUI->minHeight : childUI->layoutHeight ) + childUI->marginTop + childUI->marginBottom;
+		
+		// if child won't fit in current row
+		if ( wrapEnabled && currentRow->items.size() > 0 && curY + h + this->spacingY >= innerHeight ) {
+			
+			// start new row
+			curY = 0;
+			totalMinSize += currentRow->minSize;
+			rows.emplace_back();
+			currentRow = &rows.back();
+			
+		}
+		
+		// add to current row
+		currentRow->items.push_back( childUI );
+		currentRow->maxSize = fmax( w, currentRow->maxSize );
+		currentRow->minSize = fmax( childUI->minWidth, currentRow->minSize );
+		currentRow->spaceUsed = curY + h;
+		curY += h + spacingY;
+		minChildSize = fmax( minChildSize, h );
+		if ( childUI->flex ) {
+			currentRow->flexed.push_back( childUI );
+			currentRow->totalFlex += childUI->flex;
+		}
+		
+		// check if new row is needed for next item
+		if ( wrapEnabled && ( childUI->forceWrap || ( wrapAfter > 0 && currentRow->items.size() >= wrapAfter ) ) ) {
+			
+			// force wrap next row
+			curY = innerHeight;
+			
+		}
+		
+	}
+	
+	// minimum width required for all rows
+	totalMinSize = totalMinSize + ( rows.size() - 1 ) * spacingX;
+	
+	// if stretching rows across, and there's more space than needed
+	if ( this->axisAlignX == LayoutAlign::Stretch && innerWidth > totalMinSize ) {
+		// expand all rows' maxSize to fill entire innerwidth
+		float averageRowWidth = floor( (innerWidth - totalMinSize) / (float) rows.size() );
+		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
+			LayoutRow* currentRow = &rows[ r ];
+			currentRow->maxSize = averageRowWidth;
+		}
+	}
+	
+	// prepare
+	float maxX = 0, maxY = 0, spacing = 0, startOffset = 0;
+	curX = this->padLeft;
+	
+	// process each row
+	for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
+		LayoutRow* currentRow = &rows[ r ];
+		// distribute flex space to fill row, if there are flex items
+		if ( currentRow->totalFlex > 0 ) {
+			float extraSpace = innerHeight - currentRow->spaceUsed;
+			float spaceLeft = extraSpace, spaceShare = 0;
+			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
+				if ( spaceLeft <= 0 ) break;
+				UIBehavior* f = currentRow->flexed[ i ];
+				spaceShare = floor( fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) ) );
+				f->layoutHeight = f->minHeight + spaceShare;
+				spaceLeft -= spaceShare;
+			}
+			spacing = spacingY;
+			currentRow->spaceUsed = innerHeight;
+			startOffset = 0;
+		// otherwise, if stretch main axis align, add space
+		} else if ( axisAlignY == LayoutAlign::Stretch ){
+			spacing = ( innerHeight - ( currentRow->spaceUsed - spacingY * ( currentRow->items.size() - 1 ) ) ) / (float) currentRow->items.size();
+			startOffset = spacing * 0.5;
+			currentRow->spaceUsed = innerHeight;
+		} else {
+			// normal
+			spacing = spacingY;
+			startOffset = 0;
+		}
+		
+		// start row
+		
+		// reset Y
+		if ( this->axisAlignY == LayoutAlign::End ) {
+			curY = padTop + innerHeight - currentRow->spaceUsed;
+		} else if ( this->axisAlignY == LayoutAlign::Center ) {
+			curY = padTop + ( innerHeight - currentRow->spaceUsed ) * 0.5;
+		} else {
+			curY = padTop;
+		}
+		curY += startOffset;
+		
+		// lay out each child in row
+		for ( size_t i = 0, nc = currentRow->items.size(); i < nc; i++ ){
+			
+			UIBehavior* childUI = currentRow->items[ i ];
+			float x = 0, y = 0, w = 0, h = 0;
+			
+			// measure
+			y = curY + childUI->marginTop;
+			w = childUI->layoutWidth;
+			h = childUI->layoutHeight;
+			LayoutAlign align = this->axisAlignX;
+			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
+			switch ( align ) {
+				case LayoutAlign::Stretch:
+					x = curX + childUI->marginLeft;
+					w = currentRow->maxSize - ( childUI->marginLeft + childUI->marginRight );
+					break;
+				case LayoutAlign::Default:
+				case LayoutAlign::Start:
+					x = curX + childUI->marginLeft;
+					break;
+				case LayoutAlign::End:
+					x = curX + (currentRow->maxSize - ( w + childUI->marginRight ) );
+					break;
+				case LayoutAlign::Center:
+					x = curX + (currentRow->maxSize - w) * 0.5;
+					break;
+					
+			}
+			
+			// max dims
+			maxX = fmax( maxX, x + w + childUI->marginRight );
+			maxY = fmax( maxY, y + h + childUI->marginBottom );
+			
+			// step forward
+			curY += h + childUI->marginTop + childUI->marginBottom + spacing;
+			
+			// set/store
+			childUI->gameObject->SetPosition( x, y );
+			childUI->layoutWidth = w;
+			childUI->layoutHeight = h;
+			
+		}
+		
+		// next row
+		curX += currentRow->maxSize + spacingX;
+		
+	}
+	
+	// if fit children is set, ensure children are contained, and min sizes set
+	if ( this->fitChildren ) {
+		this->layoutHeight = fmax( this->layoutHeight, maxY + this->padBottom );
+		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
+		if ( wrapEnabled ) {
+			this->minHeight = minChildSize + this->padTop + this->padBottom;
+		} else {
+			this->minHeight = maxY + this->padBottom;
+		}
+		if ( this->axisAlignX == LayoutAlign::Stretch ) {
+			this->minWidth = totalMinSize + this->padRight;
+		} else {
+			this->minWidth = maxX + this->padRight;
+		}
+	}
+	
+	// enforce min/max again
+	this->layoutWidth = fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) );
+	this->layoutHeight = fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) );
+
+}
+
+void UIBehavior::LayoutAnchors( vector<UIBehavior *> &childUIs ) {
+	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
+		UIBehavior* childUI = childUIs[ i ];
+		float x = 0, y = 0, w = 0, h = 0;
+		
+		childUI->GetAnchoredPosition( this, x, y, w, h );
+		
+		childUI->gameObject->SetPosition( x, y );
+		childUI->layoutWidth = ( w );
+		childUI->layoutHeight = ( h );
+	}
+}
+
+void UIBehavior::LayoutNone( vector<UIBehavior *> &childUIs ) {
+	// no action
+}
+
+/// resolves anchored position/size
 void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h ) {
 	
 	// use previous / default
@@ -1373,23 +1576,17 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 	
 }
 
+/// debounces multiple layout requests
 void UIBehavior::RequestLayout( ArgValue trigger ) {
-
-	//
-	// UIBehavior::Layout( this, NULL, NULL );
-	
 	// dispatch down
 	GameObject* top = this->gameObject ? this->gameObject->GetScene() : NULL;
 	if ( top ) {
-		// printf( "--layout requested-- (%s)\n", ( trigger.type == TypeString ? trigger.value.stringValue->c_str() : NULL ) );
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true );
 		if ( trigger.type != TypeUndefined ) {
 			params->push_back( trigger );
 			params->push_back( ArgValue( this->scriptObject ) );
 		}
 	}
-	
-	
 }
 
 

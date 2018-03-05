@@ -116,7 +116,7 @@ include( './ui' );
 	// main button
 	button = new GameObject( './button', {
 		text: "   ",
-		layoutAlign: LayoutAlign.Stretch
+		layoutAlignX: LayoutAlign.Stretch
 	} );
 	go.addChild( button );
 
@@ -172,7 +172,7 @@ include( './ui' );
 			// scrollable container
 			dropdown = new GameObject( './scrollable', {
 				layoutType: Layout.Vertical,
-				layoutAlign: LayoutAlign.Stretch,
+				layoutAlignX: LayoutAlign.Stretch,
 				height: button.height,
 				width: button.width,
 				update: go.updateDropdownPosition,

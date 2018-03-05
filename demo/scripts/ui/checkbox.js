@@ -171,7 +171,7 @@ include( './ui' );
 	container.ui = new UI( {
 		spacingX: 4,
 		layoutType: Layout.Horizontal,
-		layoutAlign: LayoutAlign.Center,
+		layoutAlignY: LayoutAlign.Center,
 		fitChildren: true,
 		flex: 1,
 	} );
@@ -201,7 +201,7 @@ include( './ui' );
 	// UI
 	ui.autoMoveFocus = true;
 	ui.layoutType = Layout.Vertical;
-	ui.layoutAlign = LayoutAlign.Stretch;
+	ui.layoutAlignX = LayoutAlign.Stretch;
 	ui.fitChildren = true;
 	ui.focusable = true;
 	go.ui = ui;

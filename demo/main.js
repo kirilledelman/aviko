@@ -54,6 +54,50 @@ include( 'ui/controller-configurator', {
 	}
 } );
 
+
+/*var p = App.scene.addChild( {
+		render: new RenderShape( Shape.Rectangle ),
+		x: 10, y: 10,
+		ui: new UI( {
+			width: 100,
+			height: 100,
+			pad: 8,
+			spacing: 4,
+			wrapAfter: 0,
+			layoutType: Layout.Vertical,
+			layoutAlignX: LayoutAlign.Center,
+			layoutAlignY: LayoutAlign.Stretch,
+		} )
+	} );
+p.render.color = 0x33FF33;
+
+for ( var i = 0; i < 10; i++ ) {
+
+	var pp = p.addChild( 'ui/panel', {
+		width: 20 + Math.random() * 20,
+		height: 20 + Math.random() * 20,
+		background: 0xFFFFFF
+
+	} );
+
+	// if ( i % 2 ) pp.flex = 1;
+
+
+}
+
+Input.mouseMove = function ( x, y ) {
+
+	if ( Input.get( Key.MouseButton ) ) {
+		p.ui.resize( x - p.x, y - p.y );
+	}
+
+}
+
+Input.mouseDown = function ( ) { p.ui.requestLayout(); }
+
+*/
+
+
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
 Input.on( 'mouseMove', function() { Input.showCursor = true; }, true );

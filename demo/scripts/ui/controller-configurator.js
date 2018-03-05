@@ -185,7 +185,7 @@ new (function( params ){
 		width: App.windowWidth,
 		height: App.windowHeight,
 		layoutType: Layout.Vertical,
-		layoutAlign: LayoutAlign.Stretch
+		layoutAlignX: LayoutAlign.Stretch
 	} );
 	container.render.color.set( 1, 1, 1, 0.15 );
 

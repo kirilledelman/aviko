@@ -1235,14 +1235,14 @@ void GameObject::SetTransform( float x, float y, float angle, float scaleX, floa
 }
 
 void GameObject::SetPosition( float x, float y ) {
-	this->Transform();
+	//this->Transform();
 	this->_position.Set( x, y );
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetPositionAndAngle( float x, float y, float angle ) {
-	this->Transform();
+	//this->Transform();
 	this->_position.Set( x, y );
 	this->_angle = angle;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
@@ -1250,62 +1250,62 @@ void GameObject::SetPositionAndAngle( float x, float y, float angle ) {
 }
 
 void GameObject::SetX( float x ) {
-	this->Transform();
+	//this->Transform();
 	this->_position.x = x;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetY( float y ) {
-	this->Transform();
+	//this->Transform();
 	this->_position.y = y;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetZ( float z ) {
-	this->Transform();
+	//this->Transform();
 	this->_z = z;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 }
 
 void GameObject::SetAngle( float a ) {
-	this->Transform();
+	//this->Transform();
 	this->_angle = a;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetSkewX( float sx ) {
-	this->Transform();
+	//this->Transform();
 	this->_skew.x = sx;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetSkewY( float sy ) {
-	this->Transform();
+	//this->Transform();
 	this->_skew.y = sy;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScale( float sx, float sy ) {
-	this->Transform();
+	//this->Transform();
 	this->_scale.Set( sx, sy );
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScaleX( float sx ) {
-	this->Transform();
+	//this->Transform();
 	this->_scale.x = sx;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScaleY( float sy ) {
-	this->Transform();
+	//this->Transform();
 	this->_scale.y = sy;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	if ( this->HasBody() ) this->body->SyncBodyToObject();

@@ -29,7 +29,7 @@ include( './ui' );
 (function(go) {
 
 	// internal props
-	var ui = new UI(), container, bg, shp, background = false;
+	var ui = new UI(), bg, shp, background = false;
 	var label, image;
 	var disabled = false;
 	var down = false;
@@ -59,7 +59,7 @@ include( './ui' );
 		// (GameObject) instance of 'ui/text.js' used as label
 		[ 'label',  function (){
 			if ( !label ) {
-				label = container.addChild( './text', {
+				label = go.addChild( './text', {
 					name: "Label",
 					wrap: false,
 					active: false
@@ -71,7 +71,7 @@ include( './ui' );
 		// (GameObject) instance of 'ui/image.js' used as icon
 		[ 'image',  function (){
 			if ( !image ) {
-				image = container.addChild( './image', {
+				image = go.addChild( './image', {
 					name: "Icon",
 					mode: 'icon',
 					active: false
@@ -81,7 +81,7 @@ include( './ui' );
 		} ],
 
 		// (Number) space between icon and label
-		[ 'gap',  function (){ return container.ui.spacingX; }, function ( v ){ container.ui.spacingX = v; } ],
+		[ 'gap',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
 
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
@@ -169,22 +169,11 @@ include( './ui' );
 		centered: false
 	});
 
-	// container
-	container = go.addChild();
-	container.name = "Button.Container";
-	container.ui = new UI( {
-		spacingX: 4,
-		layoutType: Layout.Horizontal,
-		layoutAlign: LayoutAlign.Center,
-		fitChildren: true,
-		flex: 1,
-	} );
-	container.serialized = false;
-
 	// UI
 	ui.autoMoveFocus = true;
-	ui.layoutType = Layout.Vertical;
-	ui.layoutAlign = LayoutAlign.Center;
+	ui.layoutType = Layout.Horizontal;
+	ui.layoutAlignX = LayoutAlign.Center;
+	ui.layoutAlignY = LayoutAlign.Center;
 	ui.fitChildren = true;
 	ui.focusable = true;
 	go.ui = ui;

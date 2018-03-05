@@ -22,7 +22,6 @@ public:
 		Anchors,
 		Horizontal,
 		Vertical,
-		Grid
 	} LayoutType;
 	
 	typedef enum class LayoutAlign {
@@ -92,8 +91,20 @@ public:
 	// stretch this element to fill empty space in vertical and horizontal layouts, where fitChildren = false
 	float flex = 0;
 	
-	// for horizontal and vertical - how to align child on secondary axis
-	LayoutAlign crossAxisAlign = LayoutAlign::Stretch;
+	// if true, Horizontal and Vertical layouts will wrap their children
+	bool wrapEnabled = true;
+	
+	// if > 0, will auto-wrap row/column after this many items in Horizontal and Vertical layouts
+	int wrapAfter = 0;
+
+	// if true, row will wrap after this element in Horizontal and Vertical layouts
+	bool forceWrap = false;
+	
+	// for horizontal and vertical - how to align child on X axis
+	LayoutAlign axisAlignX = LayoutAlign::Center;
+	
+	// for horizontal and vertical - how to align child on Y axis
+	LayoutAlign axisAlignY = LayoutAlign::Center;
 	
 	// overrides parent
 	LayoutAlign selfAlign = LayoutAlign::Default;
@@ -122,7 +133,12 @@ public:
 	
 	/// requests late layout event (scene)
 	void RequestLayout( ArgValue trigger );
-	
+		
+	/// layout types
+	void LayoutNone( vector<UIBehavior*> &childUIs );
+	void LayoutHorizontal( vector<UIBehavior*> &childUIs );
+	void LayoutVertical( vector<UIBehavior*> &childUIs );
+	void LayoutAnchors( vector<UIBehavior*> &childUIs );
 	void GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, float& w, float& h );
 	
 	// UI events

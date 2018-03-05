@@ -7,7 +7,7 @@ new (function (){
 
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
-		layoutAlign: LayoutAlign.Stretch,
+		layoutCrossAlign: LayoutAlign.Stretch,
 		pad: [ 10, 20, 10, 20 ],
 		width: App.windowWidth,
 		height: App.windowHeight
@@ -29,7 +29,7 @@ new (function (){
 		spacing: 10,
 		marginBottom: 10,
 		layoutType: Layout.Horizontal,
-		layoutAlign: LayoutAlign.Stretch,
+		layoutCrossAlign: LayoutAlign.Stretch,
 		flex: 1
 	} );
 

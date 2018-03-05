@@ -122,6 +122,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 				}
 			} else if ( this->shapeType == RoundedRectangle ) { /// rectangle x wide, y tall, radius corner
 				this->x = 30; this->y = 20;
+				this->centered = false;
 				if ( numArgs >= 3 ) {
 					this->x = p1;
 					this->y = p2;

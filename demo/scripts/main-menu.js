@@ -7,7 +7,7 @@ new (function (){
 
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
-		layoutAlign: LayoutAlign.Stretch,
+		layoutAlignX: LayoutAlign.Stretch,
 		pad: [ 10, 20, 10, 20 ],
 		width: App.windowWidth,
 		height: App.windowHeight
@@ -35,8 +35,7 @@ new (function (){
 	// buttons container
 	var buttons = scene.addChild( 'ui/panel', {
 		background: null,
-		layoutType: Layout.Grid,
-		layoutAlign: LayoutAlign.Center,
+		layoutType: Layout.Horizontal,
 		spacing: 4,
 		flex: 1
 	} );
@@ -104,6 +103,7 @@ new (function (){
 	// put
 	scene.addChild( 'ui/button', {
 		text: "Exit",
+		icon: "/scripts/ui/textures/ui:icon-cancel",
 		click: function () {
 			quit();
 		}
