@@ -51,13 +51,19 @@ include( './ui' );
 		} ],
 
 		// (Number) - position of the handle - 0 to (totalSize - handleSize)
-		[ 'position',  function (){ return position; }, function ( p ){
-			if ( p != position ) {
-				position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
-				if ( discrete ) position = Math.round( position / handleSize ) * handleSize;
-				go.dispatchLate( 'layout' );
+		[ 'position',
+			function (){
+				if ( discrete ) return Math.round( position / handleSize ) * handleSize;
+				else return position;
+			},
+			function ( p ){
+				if ( p != position ) {
+					position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
+					if ( discrete ) position = Math.round( position / handleSize ) * handleSize;
+					go.dispatchLate( 'layout' );
+				}
 			}
-		}],
+		],
 
 		// (Number) - total size of scrollable content (note that actual size of scrollbar is set with width/height, or anchors)
 		[ 'totalSize',  function (){ return totalSize; }, function ( v ) {
@@ -205,6 +211,7 @@ include( './ui' );
 	// UI
 	ui.layoutType = Layout.None;
 	ui.fitChildren = false;
+	ui.autoMoveFocus = false;
 	ui.focusable = true;
 	ui.minWidth = ui.minHeight = 8;
 	go.ui = ui;
@@ -242,22 +249,22 @@ include( './ui' );
 	handle.ui.mouseMoveGlobal = function ( x, y ) {
 		if ( dragging ) {
 			var lp = go.globalToLocal( x, y, true );
+			var newPos = prevPos = go.position;
 			if ( orientation == 'vertical' ) {
 				var availSize = ui.height - ui.padTop - ui.padBottom;
 				var hy = Math.max( ui.padTop,
 	                        Math.min( ui.padTop + availSize - handle.render.height,
 	                                  lp.y - grabY ) );
 				go.position = totalSize * ( (hy - ui.padTop) / availSize );
-				go.fire( 'scroll', go.position );
 			} else {
 				var availSize = ui.width - ui.padLeft - ui.padRight;
 				var hx = Math.max( ui.padLeft,
 	                        Math.min( ui.padLeft + availSize - handle.render.width,
 	                                  lp.x - grabX ) );
 				go.position = totalSize * ( (hx - ui.padLeft) / availSize );
-				go.fire( 'scroll', go.position );
 			}
-
+			newPos = go.position;
+			if ( prevPos != newPos ) go.fire( 'scroll', newPos );
 		}
 	}
 
@@ -298,8 +305,10 @@ include( './ui' );
 			s = -wy;
 			if ( discrete ) s = s > 0 ? handleSize : -handleSize;
 		}
+		var prevPos = go.position;
 		go.position += s;
-		go.fire( 'scroll', position );
+		var newPos = go.position;
+		if ( newPos != prevPos ) go.fire( 'scroll', newPos );
 	}
 
 	// down on scroll pane
@@ -315,17 +324,49 @@ include( './ui' );
 		handle.ui.mouseMoveGlobal( wx, wy );
 	}
 
+	//
 	ui.navigation = function ( name, value ) {
 
+		var dir = ( value > 0 ? 1 : -1 );
+		var prevPos = position;
+
+		// pressed direction in the same axis as is orientation
 		if ( name == orientation ) {
 			if ( orientation == 'horizontal' ) {
-				ui.mouseWheel( 0, handleSize * value );
+				ui.mouseWheel( 0, dir * handleSize );
+				if ( prevPos == position ) ui.moveFocus( dir, 0 );
 			} else {
-				ui.mouseWheel( handleSize * value, 0 );
+				ui.mouseWheel( -dir * handleSize, 0 );
+				if ( prevPos == position ) ui.moveFocus( 0, dir );
 			}
+
+		// blur
 		} else if ( name == 'cancel' && cancelToBlur ) {
 
 			ui.blur();
+
+		// accept
+		} else if ( name == 'accept' ) {
+
+			// cycle scroll
+			if ( position < ( totalSize - handleSize ) ) {
+
+				go.position = position + handleSize;
+
+			} else {
+
+				go.position = 0;
+
+			}
+
+
+		} else if ( name == 'horizontal' ) {
+
+			ui.moveFocus( dir, 0 );
+
+		} else {
+
+			ui.moveFocus( 0, dir );
 
 		}
 

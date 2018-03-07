@@ -15,13 +15,14 @@ ScriptableClass::~ScriptableClass() {
 		ScriptableClass::CancelAsync( this->scriptObject, -1 );
 		ScriptableClass::CancelDebouncer( this->scriptObject, "" );
 		
+		// clean up late events
+		app.RemoveLateEvents( this );
+		
 		// clean up, if protected
 		script.ProtectObject( &this->scriptObject, false );
 		JS_SetPrivate( (JSObject*) this->scriptObject, NULL );
 		this->scriptObject = NULL;
 		
-		// clean up late events
-		app.RemoveLateEvents( this );
 	}
 	
 }

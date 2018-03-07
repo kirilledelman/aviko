@@ -670,8 +670,8 @@ include( './ui' );
 	// key down
 	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
 
-		// if not editing, ignore all except Tab
-		if ( !editing && code != Key.Tab ) code = 0;
+		// if not editing, ignore all except Tab, Enter, and Escape
+		if ( !editing && code != Key.Tab && code != Key.Enter && code != Key.Escape ) code = 0;
 
 		// ready
 		ui.dragSelect = false;
@@ -700,17 +700,28 @@ include( './ui' );
 				break;
 
 	        case Key.Return:
-		        if ( rt.multiLine ) {
-			        ui.keyPress( "\n" ); // newline in multiline box
+		        if ( editing ) {
+			        if ( rt.multiLine ) {
+				        ui.keyPress( "\n" ); // newline in multiline box
+			        } else {
+				        // text changed?
+				        if ( txt != resetText ) go.fire( 'change', go.value );
+				        go.editing = false;
+			        }
 		        } else {
-			        // text changed?
-			        if ( txt != resetText ) go.fire( 'change', go.value );
+			        ui.navigation( 'accept' );
 		        }
 	            break;
 
 		    case Key.Escape:
-		        // if single line text field, reset text
-				if ( !rt.multiLine ) { rt.text = resetText; rt.caretPosition = resetText.positionLength(); }
+			    if ( editing ) {
+				    // if single line text field, reset text
+				    if ( !rt.multiLine ) {
+					    rt.text = resetText;
+					    rt.caretPosition = resetText.positionLength();
+				    }
+			    }
+			    ui.navigation( 'cancel' );
 	            break;
 
 	        case Key.Backspace:

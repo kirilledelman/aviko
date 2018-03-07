@@ -8,7 +8,7 @@ new (function (){
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
-		pad: [ 10, 20, 10, 20 ],
+		pad: 20,
 		width: App.windowWidth,
 		height: App.windowHeight
 	} );
@@ -100,7 +100,6 @@ new (function (){
 		click: buttonClick
 	} );
 
-	// put
 	scene.addChild( 'ui/button', {
 		text: "Exit",
 		icon: "/scripts/ui/textures/ui:icon-cancel",

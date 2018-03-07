@@ -47,8 +47,11 @@ public:
 	/// blur this ui
 	void Blur( bool sendEvent=true );
 	
-	/// pick a new focus object
+	/// focus on a new focus object in direction
 	bool Navigate( float x, float y );
+	
+	/// find focusable in direction
+	UIBehavior* FindFocusable( float x, float y );
 	
 	// focus overrides
 	UIBehavior* navigationLeft = NULL;

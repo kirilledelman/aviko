@@ -45,7 +45,7 @@ include( './ui' );
 	// API properties
 	var mappedProps = [
 
-		// (*) 'value' property of selected item
+		// (Array) in form of [ { text:"Label text", value:(*), icon:"optional icon", disabled:(Boolean) } ...]
 		[ 'items',  function (){ return items; },
 			function ( v ){
 				items = v;
@@ -83,7 +83,7 @@ include( './ui' );
 		// (GameObject) instance of 'ui/button.js' used as main area
 		[ 'button',  function (){ return button; } ],
 
-		// (*) 'value' property of selected item
+		// (GameObject) instance of 'ui/image.js' used for dropdown icon
 		[ 'arrowImage',  function (){ return arrowImage; } ],
 
 		// (String) or null - texture on icon
@@ -173,6 +173,8 @@ include( './ui' );
 			dropdown = new GameObject( './scrollable', {
 				layoutType: Layout.Vertical,
 				layoutAlignX: LayoutAlign.Stretch,
+				layoutAlignY: LayoutAlign.Start,
+				wrapEnabled: false,
 				height: button.height,
 				width: button.width,
 				update: go.updateDropdownPosition,
@@ -180,6 +182,7 @@ include( './ui' );
 				opacity: 0,
 				style: UI.style.dropdown.menu,
 				ignoreCamera: true,
+				fixedPosition: true,
 			} );
 			// add items
 			var item, selectedItem;

@@ -214,12 +214,6 @@ include( './ui' );
 
 			if ( cancelToBlur ) ui.blur();
 
-		// directional - move focus
-		} else {
-			/*var dx = 0, dy = 0;
-			if ( name == 'horizontal' ) dx = value;
-			else dy = value;
-			ui.moveFocus( dx, dy );*/
 		}
 
 		// rethrow

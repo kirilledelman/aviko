@@ -57,6 +57,8 @@ UI.style = UI.style ? UI.style : {
 	// scrollable container - ui/scrollable.js
 	scrollable: {
 		layoutType: Layout.Vertical,
+		layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Start,
 		spacing: 4,
 		scrollbars: 'auto'
 	},
@@ -141,12 +143,11 @@ UI.style = UI.style ? UI.style : {
 		// style applied to dropdown button itself (defaults to UI.style.button)
 		button: {
 			icon: './textures/ui:checkbox-check',
-			focusRect: true,
 		},
 
 		// image used for arrow on the right side of the dropdown (ui/image.js)
 		arrowImage: {
-			texture: './textures/ui:checkbox-check',
+			// texture: './textures/ui:checkbox-check',
 		},
 
 		// scrollable container with items (ui/scrollable.js)
@@ -161,7 +162,8 @@ UI.style = UI.style ? UI.style : {
 			overBackground: 0xEEEEFF,
 			downBackground: 0xDDDDFF,
 			disabledBackground: 0xAAAAAA,
-			layoutAlignX: LayoutAlign.Stretch,
+			layoutAlignX: LayoutAlign.Start,
+			focusRect: false,
 			pad: 2,
 		}
 
@@ -170,13 +172,23 @@ UI.style = UI.style ? UI.style : {
 	// property list for editors (ui/property-list.js)
 	propertyList: {
 
-		valueWidth: 60,
+		valueWidth: 60, // width of value part. height of rows is set in value.AnyType
 		spacingX: 2, // distance between label and value
 		spacingY: 2, // distance between rows
 
+		// applied to group label - note that first group's marginTop will be forced to 0
+		group: {
+			bold: true,
+			color: 0x333333,
+			align: TextAlign.Left,
+			margin: [ 8, 0, 4, 0 ]
+		},
+
 		// applied to label
 		label: {
-
+			pad: 6,
+			align: TextAlign.Right,
+			color: 0x0,
 		},
 
 		// applied to description
@@ -184,9 +196,32 @@ UI.style = UI.style ? UI.style : {
 
 		},
 
-		// applied to value textfield
+		// applied to field value based on type
 		value: {
+			// all types
+			any: {
+				height: 20,
+				acceptToEdit: true,
+				cancelToBlur: false,
+				blurOnClickOutside: false,
+			},
+			// Number - ui/textfield
+			number: {
+				numeric: true,
+				selectAllOnFocus: true,
+			},
+			// String - ui/textfield
+			string: {
 
+			},
+			// Object - ui/button
+			object: {
+
+			},
+			// Enum - ui/dropdown
+			enum: {
+
+			}
 		}
 
 	},
@@ -287,14 +322,8 @@ UI.base = UI.base ? UI.base : {
 			// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on Y axis
 			[ 'layoutAlignY',  function (){ return ui.layoutAlignY; }, function ( v ){ ui.layoutAlignY = v; } ],
 
-			// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
-			[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
-
 			// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
 			[ 'fitChildren',  function (){ return ui.fitChildren; }, function ( v ){ ui.fitChildren = v; } ],
-
-			// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
-			[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
 
 			// (Boolean) for Horizontal and Vertical layouts, allow wrap of children into rows
 			[ 'wrapEnabled',  function (){ return ui.wrapEnabled; }, function ( v ){ ui.wrapEnabled = v; } ],
@@ -304,6 +333,12 @@ UI.base = UI.base ? UI.base : {
 
 			// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
 			[ 'forceWrap',  function (){ return ui.forceWrap; }, function ( v ){ ui.forceWrap = v; } ],
+
+			// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
+			[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
+
+			// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
+			[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
 
 			// (Boolean) if true, parent will ignore this element while performing layout
 			[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
@@ -344,21 +379,6 @@ UI.base = UI.base ? UI.base : {
 			// (Number) offset from anchorLeft
 			[ 'bottom',  function (){ return ui.bottom; }, function ( v ){ ui.bottom = v; } ],
 
-			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v; } ],
-
-			// (Number) inner padding top
-			[ 'padTop',  function (){ return ui.padTop; }, function ( v ){ ui.padTop = v; }, true ],
-
-			// (Number) inner padding right
-			[ 'padRight',  function (){ return ui.padRight; }, function ( v ){ ui.padRight = v; }, true ],
-
-			// (Number) inner padding bottom
-			[ 'padBottom',  function (){ return ui.padBottom; }, function ( v ){ ui.padBottom = v; }, true ],
-
-			// (Number) inner padding left
-			[ 'padLeft',  function (){ return ui.padLeft; }, function ( v ){ ui.padLeft = v; }, true ],
-
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
 			[ 'margin',  function (){ return ui.margin; }, function ( v ){ ui.margin = v; } ],
 
@@ -373,6 +393,21 @@ UI.base = UI.base ? UI.base : {
 
 			// (Number) outer margin left
 			[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
+
+			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
+			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v; } ],
+
+			// (Number) inner padding top
+			[ 'padTop',  function (){ return ui.padTop; }, function ( v ){ ui.padTop = v; }, true ],
+
+			// (Number) inner padding right
+			[ 'padRight',  function (){ return ui.padRight; }, function ( v ){ ui.padRight = v; }, true ],
+
+			// (Number) inner padding bottom
+			[ 'padBottom',  function (){ return ui.padBottom; }, function ( v ){ ui.padBottom = v; }, true ],
+
+			// (Number) inner padding left
+			[ 'padLeft',  function (){ return ui.padLeft; }, function ( v ){ ui.padLeft = v; }, true ],
 
 			// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
 			[ 'spacing',  function (){ return ui.spacing; }, function ( v ){ ui.spacing = v; }, true ],

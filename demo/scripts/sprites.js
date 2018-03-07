@@ -7,8 +7,10 @@ new (function (){
 
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
-		layoutCrossAlign: LayoutAlign.Stretch,
-		pad: [ 10, 20, 10, 20 ],
+		layoutAlignX: LayoutAlign.Start,
+		layoutAlignY: LayoutAlign.Start,
+		pad: 20,
+		spacing: 10,
 		width: App.windowWidth,
 		height: App.windowHeight
 	} );
@@ -19,22 +21,13 @@ new (function (){
 		color: Color.Title,
 		bold: true,
 		align: TextAlign.Center,
+		wrap: false,
+		selfAlign: LayoutAlign.Stretch,
 		text: "Sprites"
 	} );
 
-	// container
-	var cont = scene.addChild( 'ui/panel', {
-		background: null,
-		pad:0,
-		spacing: 10,
-		marginBottom: 10,
-		layoutType: Layout.Horizontal,
-		layoutCrossAlign: LayoutAlign.Stretch,
-		flex: 1
-	} );
-
 	// scrollable description
-	var description = cont.addChild( 'ui/textfield', {
+	var description = scene.addChild( 'ui/textfield', {
 		size: 12,
 		disabled: true,
 		disabledBackground: false,
@@ -43,26 +36,22 @@ new (function (){
 		cornerRadius: 2,
 		background: false,
 		cancelToBlur: false,
-		pad: 4,
+		pad: 5,
 		marginBottom: 40,
 		color: Color.Text,
-		width: 300,
+		width: 290,
 		wrap: true,
+		flex: 1,
 		multiLine: true,
 		focusRect: true,
 	} );
 
-	var example = cont.addChild( 'ui/panel', {
-		flex: 1
-	} );
-
-	// scrollbar
+	// page selector scrollbar
 	var scrollbar = description.addChild( 'ui/scrollbar', {
 		orientation: 'horizontal',
 		totalSize: 3,
 		position: 0,
 		handleSize: 1,
-		width: 300,
 		anchorTop: 1,
 		top: -15,
 		bottom: -40,
@@ -72,28 +61,72 @@ new (function (){
 		scroll: changePage
 	});
 
-	example.addChild( 'ui/property-list', {
-		showAll: false,
-		properties: {
-			'x': true,
-			'y': true,
-		},
-		groups: [
-			{ name: "Position", properties: [ 'x', 'y' ] }
-		],
-		target: scrollbar
-	} );
-
 	// page number on scrollbar handle
 	var pageNumber = scrollbar.handle.addChild( 'ui/text', {
-		text: 'page 1',
+		text: 'Page 1',
 		color: Color.Text,
 		align: TextAlign.Center
 	} );
 
+	// back to main menu button
+	scene.addChild( 'ui/button', {
+		text: "Back to main menu",
+		selfAlign: LayoutAlign.Start,
+		forceWrap: true, // new column after this
+		click: function () {
+			App.popScene();
+			transitionScene( App.scene, scene, 1 );
+			scene = null;
+		}
+	} );
+
+	// example holder
+	var example = scene.addChild( 'ui/panel', {
+		flex: 1,
+		width: 300,
+		// background: false,
+		layoutType: Layout.Vertical,
+		layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Stretch,
+	} );
+
+	// sample sprite
+	var spriteContainer = example.addChild( 'ui/scrollable', {
+		height: 200,
+		flex: 1,
+		layoutType: Layout.None,
+		scrollbars: false,
+		layout: function () {
+			this.scrollWidth = this.width;
+			this.scrollHeight = this.height;
+		}
+	} );
+
+	var sprite = spriteContainer.addChild( {
+		render: new RenderSprite( 'queen.png' ),
+		scale: 0.5,
+		x: 150, y: 100,
+	} );
+	sprite.render.pivotX = sprite.render.pivotY = 0.5;
+
+	// properties
+	var propsContainer = example.addChild( 'ui/scrollable', {
+		flex: 1,
+		pad: 5,
+		valueWidth: 150,
+	} );
+
+	var props = propsContainer.addChild( 'ui/property-list', {
+		showAll: false,
+		target: sprite.render,
+		layout: function () {
+			propsContainer.scrollHeight = this.height;
+			log ( "Sup", propsContainer.scrollHeight, this.height );
+		}
+	} );
+
 	// multiple subsections of slide
 	function changePage( p ) {
-
 		pageNumber.text = 'page ' + (p + 1);
 		switch ( p ){
 			case 0:
@@ -102,33 +135,61 @@ new (function (){
 				"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
 				"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
 				"Sprite sheets (texture atlases) in JSON format can be used to " +
-				"combine multiple small sprites into one texture to increase performance"
+				"combine multiple small sprites into one texture to increase performance";
+
+				props.properties = {
+					'texture': { enum: [
+						{ text: "queen.png", value: "/textures/queen.png" },
+						{ text: "king.png", value: "/textures/king.png" },
+					] }
+				};
+				props.groups = [ { name: 'Texture', properties: [ 'texture' ] } ];
+				sprite.update = null;
+				sprite.angle = 0;
+
 				break;
 			case 1:
 				description.text =
 				"Sprites can be tiled in x or y direction, and flipped. Multiplicative " +
 				"and additive color tinting is supported, as well as opacity, and stippling."
+
+				props.properties = {
+					'flipX': true,
+					'flipY': true,
+					'pivotX': { min: 0, max: 1, step: 0.1 },
+					'pivotY': { min: 0, max: 1, step: 0.1 },
+					'tileX': true,
+					'tileY': true,
+				};
+				props.groups = [
+					{ name: "Flip", properties: [ 'flipX', 'flipY' ] },
+					{ name: "Pivot", properties: [ 'flipX', 'flipY' ] },
+					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] } ];
+				sprite.update = function( dt ) { this.angle += dt * 10; }
+
 				break;
 			case 2:
 				description.text =
 				"To help create user interface elements define stretchable regions on " +
 				"texture by setting ^Bslice^n property.";
+
+				props.properties = {
+					'sliceLeft': true,
+					'sliceTop': true,
+					'sliceBottom': true,
+					'sliceRight': true,
+				};
+				props.groups = [ { name: "9-slice", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]} ];
+				sprite.update = null;
+				sprite.angle = 0;
+
 				break;
 
 		}
 
 	}
 
-	// back to main menu button
-	scene.addChild( 'ui/button', {
-		text: "Back to main menu",
-		selfAlign: LayoutAlign.Start,
-		click: function () {
-			App.popScene();
-			transitionScene( App.scene, scene, 1 );
-			scene = null;
-		}
-	} );
+
 
 	// show first page
 	changePage( 0 );

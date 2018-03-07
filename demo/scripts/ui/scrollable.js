@@ -97,6 +97,71 @@ include( './ui' );
 		// (GameObject) the actual container to which all children are added
 		[ 'container',  function (){ return container; } ],
 
+		// map back to this ui (not container)
+
+		// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
+		[ 'forceWrap',  function (){ return ui.forceWrap; }, function ( v ){ ui.forceWrap = v; } ],
+
+		// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
+		[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
+
+		// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
+		[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
+
+		// (Boolean) if true, parent will ignore this element while performing layout
+		[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
+
+		// (Number) minimum width allowed by layout
+		[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
+
+		// (Number) minimum height allowed by layout
+		[ 'minHeight',  function (){ return ui.minHeight; }, function ( v ){ ui.minHeight = v; } ],
+
+		// (Number) maximum width allowed by layout
+		[ 'maxWidth',  function (){ return ui.maxWidth; }, function ( v ){ ui.maxWidth = v; } ],
+
+		// (Number) maximum height allowed by layout
+		[ 'maxHeight',  function (){ return ui.maxHeight; }, function ( v ){ ui.maxHeight = v; } ],
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		[ 'anchorLeft',  function (){ return ui.anchorLeft; }, function ( v ){ ui.anchorLeft = v; } ],
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		[ 'anchorRight',  function (){ return ui.anchorRight; }, function ( v ){ ui.anchorRight = v; } ],
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		[ 'anchorTop',  function (){ return ui.anchorTop; }, function ( v ){ ui.anchorTop = v; } ],
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		[ 'anchorBottom',  function (){ return ui.anchorBottom; }, function ( v ){ ui.anchorBottom = v; } ],
+
+		// (Number) offset from anchorLeft
+		[ 'left',  function (){ return ui.left; }, function ( v ){ ui.left = v; } ],
+
+		// (Number) offset from anchorLeft
+		[ 'right',  function (){ return ui.right; }, function ( v ){ ui.right = v; } ],
+
+		// (Number) offset from anchorLeft
+		[ 'top',  function (){ return ui.top; }, function ( v ){ ui.top = v; } ],
+
+		// (Number) offset from anchorLeft
+		[ 'bottom',  function (){ return ui.bottom; }, function ( v ){ ui.bottom = v; } ],
+
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
+		[ 'margin',  function (){ return ui.margin; }, function ( v ){ ui.margin = v; } ],
+
+		// (Number) outer margin top
+		[ 'marginTop',  function (){ return ui.marginTop; }, function ( v ){ ui.marginTop = v; }, true ],
+
+		// (Number) outer margin right
+		[ 'marginRight',  function (){ return ui.marginRight; }, function ( v ){ ui.marginRight = v; }, true ],
+
+		// (Number) outer margin bottom
+		[ 'marginBottom',  function (){ return ui.marginBottom; }, function ( v ){ ui.marginBottom = v; }, true ],
+
+		// (Number) outer margin left
+		[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
+
 	];
 	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );
@@ -134,6 +199,7 @@ include( './ui' );
 			// detach
 			if ( vsb ) vsb.parent = null;
 			if ( hsb ) hsb.parent = null;
+			vsb = hsb = null;
 		} else {
 			// vertical
 			if ( !vsb ) {
@@ -189,7 +255,7 @@ include( './ui' );
 	ui.layout = function( w, h ) {
 
 		// auto-size container for lists
-		if ( container.ui.layoutType == Layout.Vertical || container.layoutType == Layout.Grid ) {
+		if ( container.ui.layoutType == Layout.Vertical  ) {
 			container.ui.width = Math.max( container.ui.minWidth, w );
 		} else if ( container.ui.layoutType == Layout.Horizontal ) {
 			container.ui.height = Math.max( container.ui.minHeight, h );
@@ -198,6 +264,9 @@ include( './ui' );
 		img.resize( w, h );
 		go.scrollLeft = go.scrollLeft; // use setter to clip value
 		go.scrollTop = go.scrollTop; // use setter to clip value
+
+		// refire
+		go.fire( 'layout', w, h );
 	}
 
 	// container resizing should update scrollbars

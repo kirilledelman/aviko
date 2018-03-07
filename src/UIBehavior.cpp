@@ -762,6 +762,22 @@ void UIBehavior::InitClass() {
 	} ));
 	
 	script.DefineFunction<UIBehavior>
+	("getFocusable",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		UIBehavior* self = (UIBehavior*) p;
+		int dirX = 0, dirY = 0;
+		if ( !sa.ReadArguments( 2, TypeInt, &dirX, TypeInt, &dirY ) ) {
+			script.ReportError( "usage: getFocusable( Int directionX, Int directionY )" );
+			return false;
+		}
+		
+		// find
+		UIBehavior* ui = self->FindFocusable( dirX, dirY );
+		sa.ReturnObject( ui ? ui->scriptObject : NULL );
+		return true;
+	} ));
+	
+	script.DefineFunction<UIBehavior>
 	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		UIBehavior* self = (UIBehavior*) obj;
@@ -870,6 +886,19 @@ bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* 
 /// change focus to focusable UI that's in the direction x, y from this control
 bool UIBehavior::Navigate( float x, float y ) {
 		
+	UIBehavior* other = this->FindFocusable( x, y );
+	
+	if ( other ) {
+		other->Focus(); return true;
+	}
+	
+	// nothing found
+	return false;
+	
+}
+
+UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
+
 	// normalize direction
 	Uint8 dir = ( y < 0 ? 0 :
 				 ( y > 0 ? 2 :
@@ -881,122 +910,113 @@ bool UIBehavior::Navigate( float x, float y ) {
 	else if ( dir == 1 && this->navigationRight ) other = this->navigationRight;
 	else if ( dir == 2 && this->navigationDown ) other = this->navigationDown;
 	else if ( dir == 3 && this->navigationLeft ) other = this->navigationLeft;
-
-	// not overridden
-	if ( !other ) {
-		
-		// get min,max of this control in global coords
-		float minX, minY, maxX, maxY;
-		this->gameObject->ConvertPoint( 0, 0, minX, minY, true );
-		this->gameObject->ConvertPoint( layoutWidth, layoutHeight, maxX, maxY, true );
-		
-		// set of control/distance from this control
-		unordered_map<UIBehavior*,float> candidates;
-		
-		// for each UI in scene
-		vector<UIBehavior*> uiElements;
-		this->scene->GetBehaviors( true, uiElements );
-		if ( !uiElements.size() || ( uiElements.size() == 1 && uiElements[ 0 ] == this ) ) return NULL;
-		
-		// try until find a candidate or margin of search is too big
-		float maxMargin = fmax( maxX - minX, maxY - minY );
-		float extraMargin = fmin( maxX - minX, maxY - minY ) * 0.5;
-		while ( !candidates.size() && extraMargin < maxMargin ) {
-			for ( size_t i = 0, nc = uiElements.size(); i < nc; i++ ) {
-				other = uiElements[ i ];
-				if ( other == this || !other->focusable || other->navigationGroup.compare( navigationGroup ) != 0 || !other->Behavior::active() ) continue;
-				
-				// get min/max of other control
-				float otherMinX, otherMinY, otherMaxX, otherMaxY;
-				other->gameObject->ConvertPoint( 0, 0, otherMinX, otherMinY, true );
-				other->gameObject->ConvertPoint( other->layoutWidth, other->layoutHeight, otherMaxX, otherMaxY, true );
-				
-				switch( dir ) {
-					case 0: // up
-						otherMinX -= extraMargin;
-						otherMaxX += extraMargin;
-						if ( otherMaxY > minY || // below
-							 otherMaxX < minX || otherMinX > maxX ) // no overlap
-							 continue;
-						break;
-					case 2: // down
-						otherMinX -= extraMargin;
-						otherMaxX += extraMargin;
-						if ( otherMinY < maxY || // above
-							otherMaxX < minX || otherMinX > maxX ) // no overlap
-							continue;
-						break;
-					case 3: // left
-						otherMinY -= extraMargin;
-						otherMaxY += extraMargin;
-						if ( otherMaxX > minX || // right
-							otherMaxY < minY || otherMinY > maxY ) // no overlap
-							continue;
-						break;
-					case 1: // right
-						otherMinY -= extraMargin;
-						otherMaxY += extraMargin;
-						if ( otherMinX < maxX || // left
-							otherMaxY < minY || otherMinY > maxY ) // no overlap
-							continue;
-						break;
-				}
-				
-				// calc distance from center of this control to midpoint on each of four sides of candidate
-				float midX = (minX + (maxX - minX) * 0.5),
-					  midY = (minY + (maxY - minY) * 0.5),
-					  otherMidX = (otherMinX + (otherMaxX - otherMinX) * 0.5),
-					  otherMidY = (otherMinY + (otherMaxY - otherMinY) * 0.5),
-					  xx, yy, dist[ 4 ];
-				
-				// top side
-				yy = midY - otherMinY;
-				xx = midX - otherMidX;
-				dist[ 0 ] = sqrt( xx * xx + yy * yy );
-				// right
-				yy = midY - otherMidY;
-				xx = midX - otherMaxX;
-				dist[ 1 ] = sqrt( xx * xx + yy * yy );
-				// bottom
-				yy = midY - otherMaxY;
-				xx = midX - otherMidX;
-				dist[ 2 ] = sqrt( xx * xx + yy * yy );
-				// left
-				yy = midY - otherMidY;
-				xx = midX - otherMinX;
-				dist[ 3 ] = sqrt( xx * xx + yy * yy );
-				
-				// add to candidates
-				candidates[ other ] = fmin( fmin( fmin( dist[ 0 ], dist[ 1 ] ), dist[ 2 ] ), dist[ 3 ] );
+	
+	// found!
+	if ( other ) return other;
+	
+	// get min,max of this control in global coords
+	float minX, minY, maxX, maxY;
+	this->gameObject->ConvertPoint( 0, 0, minX, minY, true );
+	this->gameObject->ConvertPoint( layoutWidth, layoutHeight, maxX, maxY, true );
+	
+	// set of control/distance from this control
+	unordered_map<UIBehavior*,float> candidates;
+	
+	// for each UI in scene
+	vector<UIBehavior*> uiElements;
+	this->scene->GetBehaviors( true, uiElements );
+	if ( !uiElements.size() || ( uiElements.size() == 1 && uiElements[ 0 ] == this ) ) return NULL;
+	
+	// try until find a candidate or margin of search is too big
+	float maxMargin = fmax( maxX - minX, maxY - minY );
+	float extraMargin = fmin( maxX - minX, maxY - minY ) * 0.5;
+	while ( !candidates.size() && extraMargin < maxMargin ) {
+		for ( size_t i = 0, nc = uiElements.size(); i < nc; i++ ) {
+			other = uiElements[ i ];
+			if ( other == this || !other->focusable || other->navigationGroup.compare( navigationGroup ) != 0 || !other->Behavior::active() || !other->gameObject->active() ) continue;
+			
+			// get min/max of other control
+			float otherMinX, otherMinY, otherMaxX, otherMaxY;
+			other->gameObject->ConvertPoint( 0, 0, otherMinX, otherMinY, true );
+			other->gameObject->ConvertPoint( other->layoutWidth, other->layoutHeight, otherMaxX, otherMaxY, true );
+			
+			switch( dir ) {
+				case 0: // up
+					otherMinX -= extraMargin;
+					otherMaxX += extraMargin;
+					if ( otherMaxY > minY || // below
+						otherMaxX < minX || otherMinX > maxX ) // no overlap
+						continue;
+					break;
+				case 2: // down
+					otherMinX -= extraMargin;
+					otherMaxX += extraMargin;
+					if ( otherMinY < maxY || // above
+						otherMaxX < minX || otherMinX > maxX ) // no overlap
+						continue;
+					break;
+				case 3: // left
+					otherMinY -= extraMargin;
+					otherMaxY += extraMargin;
+					if ( otherMaxX > minX || // right
+						otherMaxY < minY || otherMinY > maxY ) // no overlap
+						continue;
+					break;
+				case 1: // right
+					otherMinY -= extraMargin;
+					otherMaxY += extraMargin;
+					if ( otherMinX < maxX || // left
+						otherMaxY < minY || otherMinY > maxY ) // no overlap
+						continue;
+					break;
 			}
-			// increase search margin
-			extraMargin += maxMargin * 0.25;
+			
+			// calc distance from center of this control to midpoint on each of four sides of candidate
+			float midX = (minX + (maxX - minX) * 0.5),
+			midY = (minY + (maxY - minY) * 0.5),
+			otherMidX = (otherMinX + (otherMaxX - otherMinX) * 0.5),
+			otherMidY = (otherMinY + (otherMaxY - otherMinY) * 0.5),
+			xx, yy, dist[ 4 ];
+			
+			// top side
+			yy = midY - otherMinY;
+			xx = midX - otherMidX;
+			dist[ 0 ] = sqrt( xx * xx + yy * yy );
+			// right
+			yy = midY - otherMidY;
+			xx = midX - otherMaxX;
+			dist[ 1 ] = sqrt( xx * xx + yy * yy );
+			// bottom
+			yy = midY - otherMaxY;
+			xx = midX - otherMidX;
+			dist[ 2 ] = sqrt( xx * xx + yy * yy );
+			// left
+			yy = midY - otherMidY;
+			xx = midX - otherMinX;
+			dist[ 3 ] = sqrt( xx * xx + yy * yy );
+			
+			// add to candidates
+			candidates[ other ] = fmin( fmin( fmin( dist[ 0 ], dist[ 1 ] ), dist[ 2 ] ), dist[ 3 ] );
 		}
-		
-		// pick candidate with shortest dist
-		other = NULL;
-		float minDist = 0;
-		unordered_map<UIBehavior*,float>::iterator it = candidates.begin(), end = candidates.end();
-		while( it != end ) {
-			if ( !other || ( other && it->second < minDist ) ) {
-				other = it->first;
-				minDist = it->second;
-			}
-			it++;
-		}
-		
+		// increase search margin
+		extraMargin += maxMargin * 0.25;
 	}
 	
-	// if candidate is found, focus on it
-	if ( other ) {
-		other->Focus(); return true;
+	// pick candidate with shortest dist
+	other = NULL;
+	float minDist = 0;
+	unordered_map<UIBehavior*,float>::iterator it = candidates.begin(), end = candidates.end();
+	while( it != end ) {
+		if ( !other || ( other && it->second < minDist ) ) {
+			other = it->first;
+			minDist = it->second;
+		}
+		it++;
 	}
-	
-	// nothing found
-	return false;
+		
+	return other;
 	
 }
-
 
 /* MARK:	-				Layout
  -------------------------------------------------------------------- */

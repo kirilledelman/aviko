@@ -23,11 +23,12 @@ include( './ui' );
 	var target = null;
 	var showAll = true;
 	var properties = false;
+	var valueWidth = 150;
+	var disabled = false;
 	var groups = [];
-	var valueWidth = 50;
 
 	var showAll = false;
-	go.serializeMask = { 'ui':1 };
+	go.serializeMask = { 'ui':1, 'target':1, 'children': 1 };
 
 	// API properties
 	var mappedProps = [
@@ -39,27 +40,29 @@ include( './ui' );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Object) in form of { 'propertyName': PROPDEF, 'propertyName2': PROPDEF ... }
-		//      PROPDEF is either
+		// (Object) in form of { 'propertyName': PROPERTY_DEF, 'propertyName2': PROPERTY_DEF ... }
+		//      PROPERTY_DEF is either
 		//      (Boolean)   true - show with auto settings
 		//                  false - do not show
 		//      or
-		//      (Object) with optional properties:
-		//          min: mininim numeric value,
-		//          max: maximim numeric value,
-		//          step: step for numeric text box,
-		//          type("int"|"float"|"string"|"object")
-		//          description: help text
+		//      (Object) with (all optional) properties:
+		//          min: (Number) mininim numeric value,
+		//          max: (Number) maximim numeric value,
+		//          step: (Number) step for numeric text box,
+		//          integer: (Boolean) if numeric - only allows integers
+		//          multiLine: (Boolean) if string - allow multi-line text input
+		//          readOnly: (Boolean) force read only for this field
+		//          enum: [ { icon:"icon1", text:"text1", value:value1 }, { text:text2, value:value2 }, ... ] - shows dropdown
+		//          description: "text displayed for property instead of property name",
+		//
 		[ 'properties',  function (){ return properties; }, function ( v ){
 			properties = v;
 			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Array) of objects in form { name: "group name", properties: [ 'p1', 'p2'... ] }
-		// properties will be grouped into named sections, in order specified
-		// if group without properties is specified, it's used for all other properties not in a group
-		[ 'groups',  function (){ return target; }, function ( v ){
-			target = v;
+		// (Array) in form of [ { name: "Group name", properties: [ 'p1', 'p2', ... ] } ... ] to group and order properties
+		[ 'groups',  function (){ return groups; }, function ( v ){
+			groups = (v && typeof( v ) == 'object' && v.constructor == Array) ? v : [];
 			go.debounce( 'refresh', go.refresh );
 		}],
 
@@ -69,21 +72,16 @@ include( './ui' );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Number) width of value field
+		// (Number) width of value field (text stretches to fill the rest of space)
 		[ 'valueWidth',  function (){ return excludeProperties; }, function ( v ) {
 			excludeProperties = v;
-			go.debounce( 'update', go.update );
+			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Number) spacing between rows
-		[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ) {
-			ui.spacingY = v;
-			go.debounce( 'update', go.update );
-		}],
-
-		// (Boolean) read-only mode
-		[ 'readOnly',  function (){ return 'TODO'; }, function ( v ){
-			//TODO
+		// (Boolean) disable all fields
+		[ 'disabled',  function (){ return disabled; }, function ( v ) {
+			disabled = v;
+			go.debounce( 'refresh', go.refresh );
 		}],
 
 		// (Boolean) show add and remove property (and array items) buttons
@@ -103,49 +101,139 @@ include( './ui' );
 	// UI
 	ui.focusable = false;
 	ui.layoutType = Layout.Horizontal;
-	ui.layoutAlignY = LayoutAlign.Stretch;
+	ui.layoutAlignX = LayoutAlign.Stretch;
+	ui.layoutAlignY = LayoutAlign.Start;
+	ui.wrapEnabled = true;
+	ui.wrapAfter = 2;
 	ui.fitChildren = true;
 	go.ui = ui;
 
-	// vertical container for all labels
-	var labelsContainer = go.addChild( {
-		ui: new UI( {
-			layoutType: Layout.Vertical,
-			spacingY: ui.spacingY
-		} )
-	} );
-
-	// vertical container for all value inputs
-	var valuesContainer = go.addChild( {
-		ui: new UI( {
-			layoutType: Layout.Vertical,
-			spacingY: ui.spacingY
-		} )
-	} );
+	ui.layout = function () {
+		go.fire( 'layout' );
+	}
 
 	// recreates controls
 	go.refresh = function () {
 		// remove previous
-		labelsContainer.children = [];
-		valuesContainer.children = [];
+		go.children = [];
+		ui.height = ui.minHeight = 0;
 		if ( !target ) return;
 
-		// for each property name in target
-		var propNamesArray = [];
-		var propNameObject = {};
+		// sort properties into groups
+		var regroup = { ' ': [] }; // default (unsorted) group
+		var mappedProps = {};
 
+		// copy each specified group into regroup
+		for ( var i in groups ) {
+			var g = groups[ i ];
+			var props = regroup[ g.name ] = [];
+			// copy properties that exist in target and match showing criteria
+			for( var i in g.properties ) {
+				var pname = g.properties[ i ];
+				var pdef = properties[ pname ];
+				if ( target[ pname ] !== undefined && // target has property
+					( ( showAll && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
+					( !showAll && pdef !== undefined && pdef !== false ) ) ) { // showing select properties, and prop is included
+						props.push( pname );
+						mappedProps[ pname ] = g.name;
+				}
+ 			}
+		}
+		// for each property name in target object
 		for ( var p in target ) {
-			// if displaying all properties
-			var pp = properties[ p ];
-			if ( ( showAll && pp !== false ) || (!showAll && pp !== undefined && pp !== false ) ) {
-				// add to list
-				propNamesArray.push( p );
-				propNamesObject[ p ] = true;
+			var pdef = properties[ p ];
+			if ( ( showAll && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
+				( !showAll && pdef !== undefined && pdef !== false ) ) { // showing select properties, and prop is included
+				// property not in any groups
+				if ( mappedProps[ p ] === undefined ) {
+					// put in default group
+					regroup[ ' ' ].push( p );
+				}
 			}
 		}
+		// sort default group by name
+		regroup[ ' ' ].sort();
+
+		// for each group
+		for ( var i = 0, ng = groups.length; i <= ng; i++ ) {
+			var props = i < ng ? regroup[ groups[ i ].name ] : regroup[ ' ' ];
+			if ( props === undefined || !props.length ) continue;
+
+			// not default group
+			if ( i < ng ) {
+
+				// add group title
+				var groupTitle = go.addChild( 'ui/text', {
+					forceWrap: true,
+					text: groups[ i ].name,
+					style: UI.style.propertyList.group
+				} );
+				// clear top margin if first
+				if ( i == 0 ) groupTitle.marginTop = 0;
+
+			}
+
+			// for each property
+			for ( var j = 0, np = props.length; j < np; j++ ) {
+				var pname = props[ j ];
+				var pdef = properties[ pname ];
+
+				// add label
+				var label = go.addChild( 'ui/text', {
+					text: ( ( pdef && pdef.description ) ? pdef.description : pname ),
+					flex: 1,
+					style: UI.style.propertyList.label
+				} );
+
+				// value/type
+				var fieldValue = target[ pname ];
+				var fieldType = typeof( fieldValue );
+
+				// check for enumeration
+				if ( pdef && pdef.enum !== undefined ) {
+					fieldType = 'enum';
+				}
+
+				// create appropriate control
+				var field;
+				switch ( fieldType ) {
+					case 'number':
+						field = go.addChild( 'ui/textfield', {
+							numeric: true,
+							width: valueWidth,
+							integer: ( pdef && pdef.integer !== undefined ) ? pdef.integer : false,
+							min: ( pdef && pdef.min !== undefined ) ? pdef.min : -Infinity,
+							max: ( pdef && pdef.max !== undefined ) ? pdef.max : Infinity,
+							step: ( pdef && pdef.step !== undefined ) ? pdef.step : 1,
+							value: fieldValue,
+							style: UI.style.propertyList.value.any
+						} );
+						field.style = UI.style.propertyList.value.number;
+						break;
+					case 'enum':
+						field = go.addChild( 'ui/dropdown', {
+							value: fieldValue,
+							items: pdef.enum,
+							style: UI.style.propertyList.value.any
+						} );
+						field.style = UI.style.propertyList.value.number;
+						break;
+					default:
+						field = go.addChild( 'ui/textfield', {
+							width: valueWidth,
+							disabled: true,
+							value: fieldValue.toString(),
+							style: UI.style.propertyList.value.any
+						} );
+						break;
+
+				}
 
 
+			}
 
+
+		}
 
 
 		// log ( Object.getOwnPropertyNames( target ) );
@@ -154,8 +242,16 @@ include( './ui' );
 
 	}
 
-	// update style
-	go.update = function () {
+	// refreshes properties values in rows from target
+	go.reload = function () {
+
+		if ( !target ) return;
+
+		// for each property name in target
+		// var propNamesArray = [];
+		// var propNameObject = {};
+
+
 
 
 	}

@@ -10,6 +10,7 @@ Image
 
 Controller - refire axis option 
 
+Image / child autoDraw is drawn normally when Image height = 0, should be hidden
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
 	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events

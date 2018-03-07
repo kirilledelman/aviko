@@ -996,6 +996,7 @@ void Application::GameLoop() {
 			event.scriptParams.ResizeArguments( 0 );
 			event.scriptParams.AddFloatArgument( this->deltaTime );
 			scene->DispatchEvent( event, true );
+			event.skipObject = NULL;
 			event.stopped = false; // reused
 		}
 		
@@ -1037,6 +1038,7 @@ void Application::GameLoop() {
 			// late update
 			event.name = EVENT_LATE_UPDATE;
 			scene->DispatchEvent( event, true );
+			event.skipObject = NULL;
 			event.stopped = false; // reused
 		}
 		
@@ -1050,6 +1052,7 @@ void Application::GameLoop() {
 			event.behaviorParam = this->backScreen->target;
 			scene->Render( event );
 			event.behaviorParam = NULL;
+			event.skipObject = NULL;
 			event.stopped = false; // reused
 		}
 		
