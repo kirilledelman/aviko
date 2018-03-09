@@ -1107,10 +1107,11 @@ void Application::RemoveLateEvents( ScriptableClass* obj ) {
 }
 
 // runs late events
-void Application::RunLateEvents() {
+void Application::RunLateEvents( int maxRepeats ) {
 	lateEventsProcessing = lateEvents; // copy
 	lateEvents.clear();
 	LateEventMap::iterator oit = lateEventsProcessing.begin(), oend = lateEventsProcessing.end();
+	size_t numProcessed = 0;
 	while ( oit != oend ) {
 		ScriptableClass* obj = oit->first;
 		ObjectEventMap& objMap = oit->second;
@@ -1128,9 +1129,12 @@ void Application::RunLateEvents() {
 				obj->ScriptableClass::CallEvent( event );
 			}
 			it++;
+			numProcessed++;
 		}
 		oit++;
 	}
+	// run until no new events, or max iterations
+	if ( numProcessed && maxRepeats > 0 ) RunLateEvents( maxRepeats - 1 );
 }
 
 /* MARK:	-				Global funcs ( from common.h )

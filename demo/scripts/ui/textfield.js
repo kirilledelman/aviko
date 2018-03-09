@@ -928,7 +928,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.textfield );
+	UI.base.applyProperties( go, UI.style.textfield );
 	go.constructing = false;
 
 })(this);

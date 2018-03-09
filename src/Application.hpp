@@ -133,7 +133,7 @@ public:
 	void RemoveLateEvents( ScriptableClass* obj );
 	
 	// runs late events
-	void RunLateEvents();
+	void RunLateEvents( int maxRepeats = 0 );
 	
 // running
 	

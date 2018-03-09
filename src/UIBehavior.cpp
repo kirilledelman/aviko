@@ -316,8 +316,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutWidth; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
+		val = fmin( ( ui->maxWidth > 0 ? ui->maxWidth : 9999999 ), fmax( val, ui->minWidth ) );
 		if ( ui->layoutWidth != val ) {
-			val = ui->layoutWidth = fmax( 0, val );
+			ui->layoutWidth = val;
 			ui->RequestLayout( ArgValue( "width" ) );
 		}
 		return val;
@@ -328,8 +329,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutHeight; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		UIBehavior* ui = (UIBehavior*) b;
+		val = fmin( ( ui->maxHeight > 0 ? ui->maxHeight : 9999999 ), fmax( val, ui->minHeight ) );
 		if ( ui->layoutHeight != val ) {
-			val = ui->layoutHeight = fmax( 0, val );
+			ui->layoutHeight = val;
 			ui->RequestLayout( ArgValue( "height" ) );
 		}
 		return val;
@@ -781,11 +783,15 @@ void UIBehavior::InitClass() {
 	( "resize", // setSize( Number width, Number height )
 	 static_cast<ScriptFunctionCallback>([]( void* obj, ScriptArguments& sa ) {
 		UIBehavior* self = (UIBehavior*) obj;
-		if ( !sa.ReadArguments( 2, TypeFloat, &self->layoutWidth, TypeFloat, &self->layoutHeight ) ) {
+		float lw = self->layoutWidth, lh = self->layoutHeight;
+		if ( !sa.ReadArguments( 2, TypeFloat, &lw, TypeFloat, &lh ) ) {
 			script.ReportError( "usage: resize( Number width, Number height )" );
 			return false;
 		}
-		self->RequestLayout( ArgValue( "resize" ) );
+		if ( lw != self->layoutWidth || lh != self->layoutHeight ) {
+			self->layoutWidth = lw; self->layoutHeight = lh;
+			self->RequestLayout( ArgValue( "resize" ) );
+		}
 		return true;
 	}));
 	
@@ -872,7 +878,7 @@ void UIBehavior::Blur( bool sendEvent ) {
 bool UIBehavior::IsScreenPointInBounds( float x, float y, float* localX, float* localY ) {
 	// ask gameObject's RenderBehavior if screen point is inside object
 	if ( this->gameObject != NULL ) {
-		if ( this->gameObject->render != NULL ) {
+		if ( this->gameObject->render != NULL && ( this->layoutHeight == 0 || this->layoutWidth == 0 ) ) {
 			return this->gameObject->render->IsScreenPointInside( x, y, localX, localY );
 		} else {
 			this->gameObject->ConvertPoint( x, y, *localX, *localY, false );
@@ -1026,6 +1032,10 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	
 	if ( !behavior->gameObject ) return;
 	
+	// constrain size
+	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
+	behavior->layoutHeight = fmax( behavior->minHeight, fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), behavior->layoutHeight ) );
+	
 	// remember current, to retrigger layout later if changed
 	float
 	oldWidth = behavior->layoutWidth,
@@ -1033,10 +1043,6 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	oldMinWidth = behavior->minWidth,
 	oldMinHeight = behavior->minHeight;
 	
-	// constrain size
-	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
-	behavior->layoutHeight = fmax( behavior->minHeight, fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), behavior->layoutHeight ) );
-
 	// collect children with active UI component
 	vector<UIBehavior*> childUIs;
 	for ( size_t i = 0, nc = behavior->gameObject->children.size(); i < nc; i++ ){
@@ -1088,6 +1094,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	// if layout process changed width/height/min/max
 	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight ||
 		behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight ) {
+		printf( "Change in %p (%s) retrigger layout\n", behavior, behavior->gameObject->name.c_str() );
 		// request layout again
 		behavior->RequestLayout( ArgValue() );
 	}
@@ -1157,7 +1164,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// minimum height required for all rows
-	totalMinSize = totalMinSize + ( rows.size() - 1 ) * spacingY;
+	totalMinSize = currentRow->minSize + totalMinSize + ( rows.size() - 1 ) * spacingY;
 	
 	// if stretching rows across, and there's more space than needed
 	if ( this->axisAlignY == LayoutAlign::Stretch && innerHeight > totalMinSize ) {
@@ -1268,7 +1275,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
 		if ( wrapEnabled ) {
 			this->minWidth = minChildSize + this->padLeft + this->padRight;
-		} else {
+		} else if ( this->axisAlignX != LayoutAlign::Stretch ){
 			this->minWidth = maxX + this->padRight;
 		}
 		if ( this->axisAlignY == LayoutAlign::Stretch ) {
@@ -1458,8 +1465,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
 		if ( wrapEnabled ) {
 			this->minHeight = minChildSize + this->padTop + this->padBottom;
-		} else {
-			this->minHeight = maxY + this->padBottom;
+		} else if ( this->axisAlignY != LayoutAlign::Stretch ){
+			 this->minHeight = maxY + this->padBottom;
 		}
 		if ( this->axisAlignX == LayoutAlign::Stretch ) {
 			this->minWidth = totalMinSize + this->padRight;
@@ -1599,7 +1606,7 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 /// debounces multiple layout requests
 void UIBehavior::RequestLayout( ArgValue trigger ) {
 	// dispatch down
-	GameObject* top = this->gameObject ? this->gameObject->GetScene() : NULL;
+	GameObject* top = ( this->fixedPosition ? this->gameObject : ( this->gameObject ? this->gameObject->GetScene() : NULL ) );
 	if ( top ) {
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true );
 		if ( trigger.type != TypeUndefined ) {

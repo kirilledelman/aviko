@@ -97,6 +97,7 @@ include( './ui' );
 	ui.width = ui.minWidth = ui.padLeft + ui.padRight;
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Anchors;
+	ui.fitChildren = true;
 	ui.focusable = false;
 	go.ui = ui;
 
@@ -107,6 +108,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.panel );
+	UI.base.applyProperties( go, UI.style.panel );
 
 })(this);

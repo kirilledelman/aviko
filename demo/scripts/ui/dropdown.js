@@ -116,7 +116,9 @@ include( './ui' );
 	// main button
 	button = new GameObject( './button', {
 		text: "   ",
-		layoutAlignX: LayoutAlign.Stretch
+		layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Center,
+		wrapEnabled: false,
 	} );
 	go.addChild( button );
 
@@ -130,6 +132,8 @@ include( './ui' );
 	ui.width = ui.minWidth = ui.padLeft + ui.padRight;
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Vertical;
+	ui.layoutAlignX = LayoutAlign.Stretch;
+	ui.layoutAlignY = LayoutAlign.Start;
 	ui.focusable = false;
 	go.ui = ui;
 
@@ -199,6 +203,9 @@ include( './ui' );
 					style: UI.style.dropdown.item,
 				} );
 				if ( !i || i == selectedIndex ) selectedItem = item;
+				if ( i == selectedIndex && go.itemCheck != undefined ) {
+					item.addChild( './image', go.itemCheck );
+				}
 				dropdown.addChild( item );
 			}
 			// link top/bottom
@@ -271,6 +278,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.dropdown );
+	UI.base.applyProperties( go, UI.style.dropdown );
+	button.state = 'auto';
 
 })(this);

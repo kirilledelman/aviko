@@ -127,6 +127,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.image );
+	UI.base.applyProperties( go, UI.style.image );
 
 })(this);

@@ -34,8 +34,10 @@ new (function (){
 
 	// buttons container
 	var buttons = scene.addChild( 'ui/panel', {
+		name: "Buttons",
 		background: null,
 		layoutType: Layout.Horizontal,
+		wrapEnabled: true,
 		spacing: 4,
 		flex: 1
 	} );
@@ -97,6 +99,7 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Serialization",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 

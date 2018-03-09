@@ -58,14 +58,18 @@ include( './ui' );
 
 		// (Number) width of the scrollable container area
 		[ 'scrollWidth',  function (){ return container.ui.width; }, function ( w ){
-			container.ui.width = w;
-			go.debounce( 'updateScrollbars', go.updateScrollbars );
+			if ( container.ui.width != w ) {
+				container.ui.width = w;
+				go.debounce( 'updateScrollbars', go.updateScrollbars );
+			}
 		} ],
 
 		// (Number) height of the scrollable container area
 		[ 'scrollHeight',  function (){ return container.ui.height; }, function ( h ){
-			container.ui.height = h;
-			go.debounce( 'updateScrollbars', go.updateScrollbars );
+			if ( container.ui.height != h ) {
+				container.ui.height = h;
+				go.debounce( 'updateScrollbars', go.updateScrollbars );
+			}
 		} ],
 
 		// (Number) current y scroll position
@@ -284,6 +288,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.scrollable );
+	UI.base.applyProperties( go, UI.style.scrollable );
 
 })(this);

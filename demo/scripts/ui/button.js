@@ -32,13 +32,7 @@ include( './ui' );
 	var ui = new UI(), bg, shp, background = false;
 	var label, image;
 	var disabled = false;
-	var down = false;
 	var cancelToBlur = false;
-	var offBackground = false;
-	var focusBackground = false;
-	var overBackground = false;
-	var disabledBackground = false;
-	var downBackground = false;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -89,7 +83,7 @@ include( './ui' );
 			 disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
-			 go.updateBackground();
+			 go.state = 'disabled';
 			 label.opacity = v ? 0.6 : 1;
 			 go.dispatch( 'layout' );
 		 } ],
@@ -98,40 +92,24 @@ include( './ui' );
 		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
 
 		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'background',  function (){ return offBackground; }, function ( b ){
-			offBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when focused
-		[ 'focusBackground',  function (){ return focusBackground; }, function ( b ){
-			focusBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when focused
-		[ 'overBackground',  function (){ return overBackground; }, function ( b ){
-			overBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when disabled
-		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( b ){
-			disabledBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when button is pressed down
-		[ 'downBackground',  function (){ return downBackground; }, function ( b ){
-			downBackground = b;
-			go.updateBackground();
+		[ 'background',  function (){ return background; }, function ( b ){
+			background = b;
+			if ( b === null || b === false ) {
+				go.render = null;
+			} else if ( typeof( b ) == 'string' ) {
+				bg.texture = b;
+				bg.resize( ui.width, ui.height );
+				go.render = bg;
+			} else {
+				shp.color = b;
+				go.render = shp;
+			}
 		} ],
 
 		// (Number) corner roundness when background is solid color
 		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
 			shp.radius = b;
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-			go.updateBackground();
 		} ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
@@ -189,8 +167,10 @@ include( './ui' );
 		// focused
 	    if ( newFocus == ui ) {
 		    go.scrollIntoView();
+		    go.state = 'focus';
+	    } else {
+		    go.state = 'auto';
 	    }
-	    go.updateBackground();
 		go.fire( 'focusChanged', newFocus );
 	}
 
@@ -206,8 +186,8 @@ include( './ui' );
 			ui.fire( 'click', 0, 0, 0, go.x, go.y );
 
 			// animate down / up
-			down = true; go.updateBackground();
-			go.async( function() { down = false; go.updateBackground(); }, 0.1 );
+			go.state = 'down';
+			go.async( function() { go.state = 'auto'; }, 0.1 );
 
 		// escape = blur
 		} else if ( name == 'cancel' ) {
@@ -223,26 +203,26 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		stopAllEvents();
 		if ( disabled ) return;
+		stopAllEvents();
 		ui.focus();
 		go.fire( 'click', btn, x, y, wx, wy );
 	}
 
 	// mouse down/up state
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		stopAllEvents();
 		if ( disabled ) return;
-		down = true; go.updateBackground();
+		stopAllEvents();
+		go.state = 'down';
 		// forward to gameObject
 		go.fire( 'mouseDown', btn, x, y, wx, wy );
 	}
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		stopAllEvents();
 		if ( disabled ) return;
-		down = false; go.updateBackground();
+		stopAllEvents();
+		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
 
@@ -259,42 +239,12 @@ include( './ui' );
 
 	// rollover / rollout
 	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
-		go.updateBackground();
+		go.state = 'auto';
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
-	// sets current background based on state
-	go.updateBackground = function () {
-
-		// determine state
-		var prop;
-		if ( down ) {
-			prop = downBackground;
-		} else if ( ui.focused ) {
-			prop = focusBackground;
-		} else if ( disabled ) {
-			prop = disabledBackground;
-		} else if ( ui.over ) {
-			prop = overBackground;
-		} else {
-			prop = offBackground;
-		}
-
-		// set look
-		if ( prop === null || prop === false ) {
-			go.render = null;
-		} else if ( typeof( prop ) == 'string' ) {
-			bg.texture = prop;
-			bg.resize( ui.width, ui.height );
-			go.render = bg;
-		} else {
-			shp.color = prop;
-			go.render = shp;
-		}
-
-	}
-
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.button );
+	UI.base.applyProperties( go, UI.style.button );
+	go.state = 'auto';
 
 })(this);

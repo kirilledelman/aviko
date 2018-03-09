@@ -157,7 +157,7 @@ new (function( params ){
 		// (Object) used to apply style (collection of properties) - use to preconfigure look of title, prompt etc.
 		[ 'style',  function (){ return style; }, function ( v ){
 			style = v;
-			if ( container ) UI.base.applyDefaults( this, style );
+			if ( container ) UI.base.applyProperties( this, style );
 		} ],
 
 	];
@@ -175,7 +175,7 @@ new (function( params ){
 
 	// optional init parameter ( can pass as include( 'ui/controller-configurator', { ... init ... } ) )
 
-	if ( params != global ) UI.base.applyDefaults( this, params );
+	if ( params != global ) UI.base.applyProperties( this, params );
 
 	// display elements - feel free to modify, or adjust in willShow callback
 

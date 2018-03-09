@@ -10,6 +10,7 @@ new (function (){
 		layoutAlignX: LayoutAlign.Start,
 		layoutAlignY: LayoutAlign.Start,
 		pad: 20,
+		wrapEnabled: true,
 		spacing: 10,
 		width: App.windowWidth,
 		height: App.windowHeight
@@ -17,6 +18,7 @@ new (function (){
 
 	// title
 	scene.addChild( 'ui/text', {
+		name: "Title",
 		size: 30,
 		color: Color.Title,
 		bold: true,
@@ -84,7 +86,7 @@ new (function (){
 	var example = scene.addChild( 'ui/panel', {
 		flex: 1,
 		width: 300,
-		// background: false,
+		background: 0xF0F0F0,
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Stretch,
@@ -116,12 +118,13 @@ new (function (){
 		valueWidth: 150,
 	} );
 
+	// add property list to scrollable container
 	var props = propsContainer.addChild( 'ui/property-list', {
 		showAll: false,
 		target: sprite.render,
 		layout: function () {
-			propsContainer.scrollHeight = this.height;
-			log ( "Sup", propsContainer.scrollHeight, this.height );
+			// resize to fit
+			propsContainer.scrollHeight = this.height + propsContainer.padTop + propsContainer.padBottom;
 		}
 	} );
 
@@ -141,7 +144,8 @@ new (function (){
 					'texture': { enum: [
 						{ text: "queen.png", value: "/textures/queen.png" },
 						{ text: "king.png", value: "/textures/king.png" },
-					] }
+					] },
+					'flipX': true,
 				};
 				props.groups = [ { name: 'Texture', properties: [ 'texture' ] } ];
 				sprite.update = null;
@@ -172,7 +176,6 @@ new (function (){
 				description.text =
 				"To help create user interface elements define stretchable regions on " +
 				"texture by setting ^Bslice^n property.";
-
 				props.properties = {
 					'sliceLeft': true,
 					'sliceTop': true,
@@ -189,7 +192,7 @@ new (function (){
 
 	}
 
-
+	Input.keyDown = function () { App.scene.ui.requestLayout(); }
 
 	// show first page
 	changePage( 0 );

@@ -1,9 +1,4 @@
-Separate Layout types into different functions
-	LayoutHorizontal
-	LayoutVertical
-	LayoutAnchors
-
-	In horizontal and vertical, add "wrapLayout" option, 
+if requestLayout from requestLayout, process immediately after
 
 Image
 	save

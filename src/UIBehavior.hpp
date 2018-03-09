@@ -95,7 +95,7 @@ public:
 	float flex = 0;
 	
 	// if true, Horizontal and Vertical layouts will wrap their children
-	bool wrapEnabled = true;
+	bool wrapEnabled = false;
 	
 	// if > 0, will auto-wrap row/column after this many items in Horizontal and Vertical layouts
 	int wrapAfter = 0;
@@ -104,10 +104,10 @@ public:
 	bool forceWrap = false;
 	
 	// for horizontal and vertical - how to align child on X axis
-	LayoutAlign axisAlignX = LayoutAlign::Center;
+	LayoutAlign axisAlignX = LayoutAlign::Start;
 	
 	// for horizontal and vertical - how to align child on Y axis
-	LayoutAlign axisAlignY = LayoutAlign::Center;
+	LayoutAlign axisAlignY = LayoutAlign::Start;
 	
 	// overrides parent
 	LayoutAlign selfAlign = LayoutAlign::Default;

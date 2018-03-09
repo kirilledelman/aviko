@@ -3,8 +3,8 @@
 	Edit UI.style structure below to change the default appearance of Aviko UI components.
 
 	These are just default properties set at creation and can be overridden. See components
-	source files for all available properties. Some shared properties are defined in this file
-	in "shared functionality" block.
+	source files for all available properties. Some shared properties are defined in ui.js
+	in "shared functionality" block (below)
 
     To further customize / use different "substyles" for differently styled components,
     provide .style param. E.g:
@@ -26,7 +26,6 @@ UI.style = UI.style ? UI.style : {
 
 	// basic container panel - ui/panel.js
 	panel: {
-		background: './textures/ui:gradient',
 		slice: 0,
 		layoutType: Layout.Anchors,
 		pad: 8,
@@ -35,23 +34,34 @@ UI.style = UI.style ? UI.style : {
 
 	// text label - ui/text.js
 	text: {
-		size: 16,
+		size: 12,
 		textAlign: TextAlign.Left,
 		color: 0xFFFFFF,
 	},
 
 	// text input field - ui/textfield.js
 	textfield: {
-		size: 16,
+		size: 12,
 		color: 0x0,
 		selectionColor: 0x0073b9,
 		slice: 8,
 		pad: 8,
-		background: './textures/ui:input',
-		focusBackground: './textures/ui:input-focus',
-		disabledBackground: './textures/ui:input-disabled',
 		acceptToEdit: true,
 		focusRect: true,
+		states:{
+			off: {
+				background: './textures/ui:text-off',
+			},
+			scroll: {
+				background: './textures/ui:text-scroll'
+			},
+			focus: {
+				background: './textures/ui:text-focus',
+			},
+			disabled: {
+				background: './textures/ui:text-disabled'
+			},
+		}
 	},
 
 	// scrollable container - ui/scrollable.js
@@ -65,18 +75,34 @@ UI.style = UI.style ? UI.style : {
 
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
-		background: 0xF0F0F0,
-		handleBackground: 0xC0C0C0,
-		focusBackground: 0xFFFFF0,
-		handleBackground: 0xD0D0D0,
-		slice: 0,
-		cornerRadius: 4,
-		handleSlice: 0,
-		handleCornerRadius: 4,
-		width: 16,
-		height: 16,
+		slice: 6,
+		minWidth: 24,
+		minHeight: 24,
 		pad: 2,
 		focusRect: true,
+		handle: {
+			slice: 8
+		},
+		states: {
+			off: {
+				background: './textures/ui:scrollbar-off',
+				handle: {
+					background: './textures/ui:scrollbar-handle-off',
+				}
+			},
+			focus: {
+				background: './textures/ui:scrollbar-focus',
+				handle: {
+					background: './textures/ui:scrollbar-handle-focus',
+				}
+			},
+			disabled: {
+				background: './textures/ui:scrollbar-fisabled',
+				handle: {
+					background: './textures/ui:scrollbar-handle-disabled',
+				}
+			},
+		},
 
 		// apply only to horizontal
 		horizontal: { },
@@ -90,33 +116,48 @@ UI.style = UI.style ? UI.style : {
 
 	// button - ui/button.js
 	button: {
-		background: './textures/ui:button',
-		overBackground: './textures/ui:button-over',
-		focusBackground: './textures/ui:button-over',
-		downBackground: './textures/ui:button-down',
-		disabledBackground: './textures/ui:button-disabled',
-		slice: 8,
+		slice: 10,
 		pad: 8,
 		focusRect: true,
 
 		// apply to button's label (ui/text.js)
 		label: {
 			color: 0x0,
-			size: 14
+			size: 16
 		},
 
-		// apply to icon image
-		image: {},
+		// apply to icon image (ui/image.js)
+		image: {
+			width: 20,
+			height: 20,
+			mode: 'fit'
+		},
+
+		states:{
+			off: {
+				background: './textures/ui:button-off',
+			},
+			over: {
+				background: './textures/ui:button-over',
+			},
+			focus: {
+				background: './textures/ui:button-focus',
+			},
+			down: {
+				background: './textures/ui:button-down',
+			},
+			disabled: {
+				background: './textures/ui:button-disabled',
+				label: {
+					color: 0x333333
+				}
+			},
+		}
 	},
 
 	// checkbox - ui/checkbox.js
 	checkbox: {
 
-		background: './textures/ui:checkbox',
-		overBackground: './textures/ui:checkbox-over',
-		focusBackground: './textures/ui:checkbox-over',
-		downBackground: './textures/ui:checkbox-over',
-		disabledBackground: './textures/ui:checkbox-disabled',
 		slice: 0,
 		pad: 0,
 		focusRect: true,
@@ -124,13 +165,47 @@ UI.style = UI.style ? UI.style : {
 		// apply to checkbox label (ui/text.js)
 		label: {
 			color: 0x0,
-			size: 14
+			size: 12,
+			marginLeft: 8,
+			pad: 2,
 		},
 
-		// "checkmark" image (ui/image.js)
-		image: {
-			texture: './textures/ui:checkbox-check',
+		// "checkbox" button (ui/button.js)
+		checkbox: {
+			// "checkmark" image
+			icon: './textures/ui:checkbox-check',
 		},
+
+		states: {
+			off: {
+				checkbox: {
+					background: './textures/ui:checkbox-off',
+				}
+			},
+			over: {
+				checkbox: {
+					background: './textures/ui:checkbox-over',
+				}
+			},
+			focus: {
+				checkbox: {
+					background: './textures/ui:checkbox-focus',
+				}
+			},
+			down: {
+				checkbox: {
+					background: './textures/ui:checkbox-down',
+				}
+			},
+			disabled: {
+				checkbox: {
+					background: './textures/ui:checkbox-disabled',
+				},
+				label: {
+					color: 0x333333
+				}
+			},
+		}
 
 	},
 
@@ -138,33 +213,94 @@ UI.style = UI.style ? UI.style : {
 	dropdown: {
 
 		maxVisibleItems: 5,
-		pad: 4,
 
-		// style applied to dropdown button itself (defaults to UI.style.button)
+		// style applied to dropdown button itself - ui/button.js
 		button: {
-			icon: './textures/ui:checkbox-check',
+			label: {
+				size: 12
+			},
+			states: {
+				off: {
+					background: './textures/ui:dropdown-off',
+				},
+				over: {
+					background: './textures/ui:dropdown-over',
+				},
+				focus: {
+					background: './textures/ui:dropdown-focus',
+				},
+				down: {
+					background: './textures/ui:dropdown-down',
+				},
+				disabled: {
+					background: './textures/ui:dropdown-disabled',
+					label: {
+						color: 0x333333
+					}
+				},
+			}
 		},
 
-		// image used for arrow on the right side of the dropdown (ui/image.js)
+		// image used for arrow on the right side of the dropdown - ui/image.js
 		arrowImage: {
-			// texture: './textures/ui:checkbox-check',
+			marginLeft: 4,
+			texture: './textures/ui:dropdown-arrow',
 		},
 
 		// scrollable container with items (ui/scrollable.js)
 		menu: {
-			spacingY: 0
+			spacingY: 0,
+			pad: 0,
 		},
 
-		// look of items in the dropdown list (ui/button.js)
+		// items in the dropdown list (ui/button.js)
 		item: {
-			background: 0xFFFFFF,
-			focusBackground: 0xEEEEFF,
-			overBackground: 0xEEEEFF,
-			downBackground: 0xDDDDFF,
-			disabledBackground: 0xAAAAAA,
+			label: {
+				size: 12,
+				flex: 1
+			},
 			layoutAlignX: LayoutAlign.Start,
 			focusRect: false,
-			pad: 2,
+			pad: [ 4, 8, 4, 8 ],
+			states:{
+				off: {
+					background: './textures/ui:item-off',
+					label: {
+						color: 0x0
+					}
+				},
+				over: {
+					background: './textures/ui:item-over',
+					label: {
+						color: 0xFFFFFF
+					}
+				},
+				focus: {
+					background: './textures/ui:item-focus',
+					label: {
+						color: 0xFFFFFF
+					}
+				},
+				down: {
+					background: './textures/ui:item-down',
+					label: {
+						color: 0xFFFFFF
+					}
+				},
+				disabled: {
+					background: './textures/ui:item-disabled',
+					label: {
+						color: 0x333333
+					}
+				},
+			}
+		},
+
+		// currently selected item checkmark (ui/image.js)
+		itemCheck: {
+			texture: './textures/ui:item-check',
+			mode: 'icon',
+			marginLeft: 4,
 		}
 
 	},
@@ -226,7 +362,7 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
-	// settings for focus rectangle (applied to ui/panel.js instance)
+	// settings for focus rectangle (ui/panel.js)
 	focusRect: {
 
 		// default color
@@ -263,7 +399,7 @@ Shared functionality between Aviko ui components
 
 UI.base = UI.base ? UI.base : {
 
-	// layout specific properties shared between UI components
+	// layout-specific properties shared between UI components
 	addSharedProperties: function( go, ui ) {
 
 		// create properties on gameObject
@@ -274,6 +410,9 @@ UI.base = UI.base ? UI.base : {
 
 			// (Number) current height of the control
 			[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; } ],
+
+			// (Boolean) allows keyboard / navigation focus
+			[ 'focusable',  function (){ return ui.focusable; }, function ( v ){ ui.focusable = v; } ],
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
 			[ 'focusLeft',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
@@ -290,7 +429,7 @@ UI.base = UI.base ? UI.base : {
 			// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
 			[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){ ui.focusGroup = f; } ],
 
-			// (GameObject) or true|false - enables/disables focus rectangle
+			// (Boolean) - enables/disables focus rectangle (getter returns Render component)
 			[ 'focusRect',  function (){ return ui.focusRect ? ui.focusRect.render : null; }, function ( fr ){
 				if ( fr === null || fr === false ) {
 					// remove
@@ -419,7 +558,17 @@ UI.base = UI.base ? UI.base : {
 			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ],
 
 			// (Object) used to apply style (collection of properties) other than default after creating / during init
-			[ 'style',  function (){ return null; }, function ( v ){ UI.base.applyDefaults( go, v ); }, true ],
+			[ 'style',  function (){ return null; }, function ( v ){ UI.base.applyProperties( go, v ); }, true ],
+
+			// (Object) used to change state of control. Holds definitions from initialization
+			[ 'states',  function (){ return go._states; }, function ( v ){ go._states = clone( v ); }, true ],
+
+			// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc). Applies properties from object in .states style property
+			[ 'state',  function (){ return go._state ? go._state : 'off'; }, function ( v ){
+				if ( v == 'auto' ) v = ( ui.disabled ? 'disabled' : ( ui.focused ? 'focus' : ( ui.over ? 'over' : 'off' ) ) );
+				go._state = v;
+				if ( go._states !== undefined && go._states[ v ] !== undefined ) UI.base.applyProperties( go, go._states[ v ] );
+			}, true ],
 		];
 		// map them to gameObject
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
@@ -480,37 +629,39 @@ UI.base = UI.base ? UI.base : {
 			}
 		}
 
-		// focus rectangle callbacks
+		// focus rectangle layout callback
 		function layoutFocusRect ( w, h ) {
 			var fr = this.focusRect;
+			if ( !fr ) return;
 			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
 			fr.setTransform( -fr.offset, -fr.offset );
 		};
 
+		// focus rectangle focus change callback
 		function focusChangedRect( nf ) {
-			if ( this.focusRect.active = (nf == this) ) {
+			if ( this.focusRect.active = (nf == this) ){
 				this.focusRect.dispatch( 'layout' );
 			}
 		};
 
 	},
 
-	// sets defaults from UI.style
-	applyDefaults: function ( go, defaults ) {
-		if ( !defaults ) return;
-		for ( var p in defaults ) {
+	// sets properties on an object
+	applyProperties: function ( go, props ) {
+		if ( !props || !go ) return;
+		for ( var p in props ) {
 			// object with same name?
-			if ( typeof( defaults[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' ) {
+			if ( typeof( props[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' ) {
 				// apply properties to it
-				for ( var s in defaults[ p ] ) go[ p ][ s ] = defaults[ p ][ s ];
+				UI.base.applyProperties( go[ p ], props[ p ] );
 			} else {
 				// just set property
-				go[ p ] = defaults[ p ];
+				go[ p ] = props[ p ];
 			}
 		}
 	},
 
-	// creates mapped properties
+	// creates properties with getter/setters
 	addMappedProperties: function ( go, mappedProps ) {
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		for ( var i = 0; i < mappedProps.length; i++ ) {

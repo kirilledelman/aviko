@@ -257,6 +257,6 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyDefaults( go, UI.style.propertyList );
+	UI.base.applyProperties( go, UI.style.propertyList );
 
 })(this);
