@@ -134,6 +134,10 @@ public:
 	float spacingX = 0;
 	float spacingY = 0;
 	
+	// helper - returns true, if this UI is stretchy in X or Y dir
+	bool IsStretchyX();
+	bool IsStretchyY();
+	
 	/// requests late layout event (scene)
 	void RequestLayout( ArgValue trigger );
 		

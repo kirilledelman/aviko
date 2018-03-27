@@ -397,6 +397,8 @@ void Application::InitClass() {
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			app.CallEvent( event );
 		}
+		
+		sa.ReturnObject( obj );
 		return true;
 	}) );
 	
@@ -670,10 +672,16 @@ void Application::InitClass() {
 			script.ReportError( "usage: include( String scriptResource, [ Object thisObject ] )" );
 			return false;
 		}
-		ArgValue ret;
-		script.Execute( app.scriptManager.Get( path.c_str() ), thisObj ? thisObj : sa.GetThis(), &ret );
-		sa.ReturnValue( ret );
-		return true;
+		ScriptResource* sr = app.scriptManager.Get( path.c_str() );
+		if ( sr->error == ERROR_NONE ) {
+			ArgValue ret;
+			script.Execute( sr, thisObj ? thisObj : sa.GetThis(), &ret );
+			sa.ReturnValue( ret );
+			return true;
+		} else {
+			printf( "returning false\n");
+			return false;
+		}
 	}) );
 	
 	// global toInit serializer
@@ -867,7 +875,7 @@ void Application::GarbageCollect() {
 	soundManager.UnloadUnusedResources();
 	
 	// done
-	// printf( "GC performed\n" );
+	printf( "GC performed\n" );
 }
 
 void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -979,9 +987,6 @@ void Application::GameLoop() {
 			_timeFps = _time;
 		}
 		
-		// perform asyncs & debounce calls
-		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
-		
 		// advance tweens
 		Tween::ProcessActiveTweens( deltaTime, unscaledDeltaTime );
 		
@@ -1042,6 +1047,9 @@ void Application::GameLoop() {
 			event.stopped = false; // reused
 		}
 		
+		// perform asyncs & debounce calls
+		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
+		
 		// late events (scheduled by `fireLate` and `dispatchLate` / Application::AddLateEvent )
 		RunLateEvents();
 		
@@ -1058,7 +1066,7 @@ void Application::GameLoop() {
 		
 		// copy to main screen and flip
 		GPU_ActivateShaderProgram(0, NULL);
-		GPU_Clear( this->screen );
+//		GPU_Clear( this->screen );
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );
 		GPU_Flip( this->screen );
 		
@@ -1099,11 +1107,12 @@ ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eve
 	
 }
 
-
 /// remove late events for object (on destruction)
 void Application::RemoveLateEvents( ScriptableClass* obj ) {
 	LateEventMap::iterator it = lateEvents.find( obj );
 	if ( it != lateEvents.end() ) lateEvents.erase( it );
+	it = lateEventsProcessing.find( obj );
+	if ( it != lateEventsProcessing.end() ) lateEventsProcessing.erase( it );
 }
 
 // runs late events
@@ -1117,22 +1126,25 @@ void Application::RunLateEvents( int maxRepeats ) {
 		ObjectEventMap& objMap = oit->second;
 		ObjectEventMap::iterator it = objMap.begin(), end = objMap.end();
 		while ( it != end ) {
-			LateEvent& le = it->second;
-			Event event( it->first.c_str() );
-			// add params
-			for ( size_t i = 0, np = le.params.size(); i < np; i++ ) event.scriptParams.AddArgument( le.params[ i ] );
-			// call
-			if ( le.lateDispatch ) {
-				GameObject* go = (GameObject*) obj;
-				if ( go ) go->DispatchEvent( event, true );
-			} else {
-				obj->ScriptableClass::CallEvent( event );
+			if ( obj->scriptObject ) {
+				LateEvent& le = it->second;
+				Event event( it->first.c_str() );
+				// add params
+				for ( size_t i = 0, np = le.params.size(); i < np; i++ ) event.scriptParams.AddArgument( le.params[ i ] );
+				// call
+				if ( le.lateDispatch ) {
+					GameObject* go = (GameObject*) obj;
+					if ( go ) go->DispatchEvent( event, true );
+				} else {
+					obj->ScriptableClass::CallEvent( event );
+				}
 			}
 			it++;
 			numProcessed++;
 		}
 		oit++;
 	}
+	lateEventsProcessing.clear();
 	// run until no new events, or max iterations
 	if ( numProcessed && maxRepeats > 0 ) RunLateEvents( maxRepeats - 1 );
 }
@@ -1232,7 +1244,10 @@ string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, 
 	vector<string> parts = Resource::splitString( fileKey, string( "/" ) );
 	
 	// ensure first / is stripped
-	if ( fileKey.c_str()[ 0 ] == '/' ) fileKey = fileKey.substr( 1 );
+	if ( fileKey.c_str()[ 0 ] == '/' ) {
+		fileKey = fileKey.substr( 1 );
+		parts.erase( parts.begin() );
+	}
 
 	// given set of extensions
 	vector<string> extensions = Resource::splitString( string( commaSeparatedExtensions ), "," );

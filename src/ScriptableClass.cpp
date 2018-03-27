@@ -9,7 +9,7 @@ vector<Event*> Event::eventStack;
 ScriptableClass::~ScriptableClass() {
 	
 	// script
-	if ( this->scriptObject && script.js ) {
+	if ( this->scriptObject != NULL && script.js != NULL ) {
 		
 		// remove from all scheduled calls
 		ScriptableClass::CancelAsync( this->scriptObject, -1 );
@@ -19,7 +19,6 @@ ScriptableClass::~ScriptableClass() {
 		app.RemoveLateEvents( this );
 		
 		// clean up, if protected
-		script.ProtectObject( &this->scriptObject, false );
 		JS_SetPrivate( (JSObject*) this->scriptObject, NULL );
 		this->scriptObject = NULL;
 		

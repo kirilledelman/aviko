@@ -37,7 +37,7 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
-	// printf( "~GameObject\n" );
+	// printf( "~GameObject %p\n", this );
 	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
@@ -66,7 +66,12 @@ void GameObject::InitClass() {
 	( "active",
 	 static_cast<ScriptBoolCallback>([](void* go, bool a ) { return ((GameObject*) go)->active(); }),
 	 static_cast<ScriptBoolCallback>([](void* go, bool a ) {
-		return ((GameObject*) go)->active( a );
+		GameObject* self = (GameObject*) go;
+		if ( self->_active != a ) {
+			a = self->active( a );
+			if ( self->ui != NULL ) self->ui->RequestLayout( ArgValue( "active" ) );
+		}
+		return a;
 	}));
 	
 	script.AddProperty<GameObject>
@@ -587,6 +592,27 @@ void GameObject::InitClass() {
 		return true;
 	}));
 	
+	script.DefineFunction<GameObject>
+	( "removeAllChildren",
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		
+		// validate params
+		GameObject* self = (GameObject*) go;
+		
+		// return the object
+		ArgValueVector* prevChildren = self->GetChildrenVector();
+		sa.ReturnArray( *prevChildren );
+		delete prevChildren;
+		
+		// unparent all
+		while ( self->children.size() ) {
+			self->children.back()->SetParent( NULL );
+		}
+		
+		// schedule layout
+		if ( self->ui ) self->ui->RequestLayout( ArgValue( "removeChild" ) );
+		return true;
+	}));
 	
 	script.DefineFunction<GameObject>
 	( "moveTo",

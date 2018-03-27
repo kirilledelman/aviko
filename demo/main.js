@@ -54,20 +54,27 @@ include( 'ui/controller-configurator', {
 	}
 } );
 
-/*var p = App.scene.addChild( 'ui/panel', {
-	x: 10, y: 10, width: 100, height: 100,
-	pad: 16,
-	background: 0xD0D0D0,
-	layoutType: Layout.Vertical,
-	layoutAlignX: LayoutAlign.Stretch,
-	layoutAlignY: LayoutAlign.Start,
+/*
+var p = App.scene.addChild( new GameObject({
+	x: 10, y: 10,
+	ui: new UI ( {
+		layoutType: Layout.Vertical,
+		pad: 10, spacing: 5,
+		width: 200, height: 100,
+		wrapEnabled: true,
+		fitChildren: true,
+		layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Start,
+	} ),
+	render: new RenderShape( { shape: Shape.Rectangle, color: 0xA0A0A0, centered: false } )
 
-} );
+}) );
 
-var s = p.addChild( 'ui/scrollbar', {
-	orientation: 'horizontal',
-
-} );
+for ( var i = 0; i < 20; i++ ) {
+	var t = p.addChild( 'ui/button', {
+		text: '[' + i + ']'
+	});
+}
 
 Input.mouseMove = function ( x, y ) {
 
@@ -75,8 +82,8 @@ Input.mouseMove = function ( x, y ) {
 		p.ui.resize( x - p.x, y - p.y );
 	}
 
-}*/
-
+}
+*/
 
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
@@ -104,7 +111,7 @@ function transitionScene( newScene, oldScene, dir ) {
 	// slide new scene in
 	newScene.x = -ghost.x;
 	newScene.moveTo( 0, 0, 0.5, Ease.Out );
-	ghost.fadeTo( 0, 0.5 ).finished = function () { ghost = ghost.parent = null; }
+	ghost.fadeTo( 0, 0.5 ).finished = function () { ghost = ghost.parent = null; gc(); }
 	// done
 	return newScene;
 }

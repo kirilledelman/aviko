@@ -134,6 +134,9 @@ public:
 	}
 	
 	RESOURCE_TYPE* FindByPath( const char* fullpath ) {
+		
+		if ( !fullpath ) return NULL;
+		
 		// find it
 		auto it = this->map.begin();
 		while( it != this->map.end() ) {

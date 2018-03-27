@@ -45,8 +45,13 @@ include( './ui' );
 		[ 'image',  function (){ return rs.image; }, function ( v ){ rs.image = v; go.updateParams(); } ],
 
 		// (String) 'icon', 'fit', 'fill', or 'stretch'
-		[ 'mode',  function (){ return mode; }, function ( v ){ mode = v; go.updateParams(); } ]
+		[ 'mode',  function (){ return mode; }, function ( v ){ mode = v; go.updateParams(); } ],
 
+		// (Boolean) image is flipped X
+		[ 'flipX', function (){ return rs.flipX; }, function ( v ){ rs.flipX = v; } ],
+
+		// (Boolean) image is flipped X
+		[ 'flipY', function (){ return rs.flipY; }, function ( v ){ rs.flipY = v; } ],
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );

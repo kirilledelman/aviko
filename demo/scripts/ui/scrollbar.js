@@ -27,6 +27,7 @@ include( './ui' );
 	var ui = new UI(), bg, shp, background;
 	var handle;
 	var cancelToBlur = false;
+	var acceptToCycle = false;
 	var disabled = false;
 	var position = 0;
 	var discrete = false;
@@ -73,7 +74,7 @@ include( './ui' );
 		}],
 
 		// (Number) - the size of visible "window" into content (less than totalSize)
-		[ 'handleSize',  function (){ return totalSize; }, function ( v ){
+		[ 'handleSize',  function (){ return handleSize; }, function ( v ){
 			if ( v != handleSize ) {
 				handleSize = v;
 				go.dispatchLate( 'layout' );
@@ -85,6 +86,9 @@ include( './ui' );
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+
+		// (Boolean) pressing Enter (or 'accept' controller button) will "pageDown" scrollbar page-by-page. If false, controller direction can be used to scroll
+		[ 'acceptToCycle',  function (){ return acceptToCycle; }, function ( a ){ acceptToCycle = a; } ],
 
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
@@ -220,13 +224,13 @@ include( './ui' );
 				var hy = Math.max( ui.padTop,
 	                        Math.min( ui.padTop + availSize - handle.render.height,
 	                                  lp.y - grabY ) );
-				go.position = totalSize * ( (hy - ui.padTop) / availSize );
+				go.position = Math.round( totalSize * ( (hy - ui.padTop) / availSize ) );
 			} else {
 				var availSize = ui.width - ui.padLeft - ui.padRight;
 				var hx = Math.max( ui.padLeft,
 	                        Math.min( ui.padLeft + availSize - handle.render.width,
 	                                  lp.x - grabX ) );
-				go.position = totalSize * ( (hx - ui.padLeft) / availSize );
+				go.position = Math.round( totalSize * ( (hx - ui.padLeft) / availSize ) );
 			}
 			newPos = go.position;
 			if ( prevPos != newPos ) go.fire( 'scroll', newPos );
@@ -312,13 +316,18 @@ include( './ui' );
 
 		// pressed direction in the same axis as is orientation
 		if ( name == orientation ) {
-			if ( orientation == 'horizontal' ) {
-				ui.mouseWheel( 0, dir * handleSize );
-				if ( prevPos == position ) ui.moveFocus( dir, 0 );
-			} else {
-				ui.mouseWheel( -dir * handleSize, 0 );
-				if ( prevPos == position ) ui.moveFocus( 0, dir );
-			}
+
+			go.async( function() {
+				if ( orientation == 'horizontal' ) {
+					if ( !acceptToCycle ) go.position += handleSize * dir;
+					if ( prevPos == position ) ui.moveFocus( dir, 0 );
+					else go.fire( 'scroll', go.position );
+				} else {
+					if ( !acceptToCycle ) go.position += handleSize * dir;
+					if ( prevPos == position ) ui.moveFocus( 0, dir );
+					else go.fire( 'scroll', go.position );
+				}
+			} );
 
 		// blur
 		} else if ( name == 'cancel' && cancelToBlur ) {
@@ -328,17 +337,20 @@ include( './ui' );
 		// accept
 		} else if ( name == 'accept' ) {
 
-			// cycle scroll
-			if ( position < ( totalSize - handleSize ) ) {
-
-				go.position = position + handleSize;
-
+			if ( acceptToCycle ) {
+				// cycle scroll
+				go.async( function () {
+					if ( position < ( totalSize - handleSize ) ) {
+						go.position = position + handleSize;
+					} else {
+						go.position = 0;
+					}
+					go.fire( 'scroll', go.position );
+				} );
+			// work like tab
 			} else {
-
-				go.position = 0;
-
+				ui.moveFocus( 1 );
 			}
-
 
 		} else if ( name == 'horizontal' ) {
 

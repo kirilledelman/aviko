@@ -231,6 +231,13 @@ ArgValue::ArgValue( jsval val ) {
 
 ArgValue& ArgValue::operator=( const jsval &val ) {
 
+	// clean up first
+	if ( type == TypeString && this->value.stringValue ) {
+		delete this->value.stringValue;
+	} else if ( type == TypeArray && this->value.arrayValue ) {
+		delete this->value.arrayValue;
+	}
+	
 	type = TypeUndefined; value.intValue = 0;
 	if ( val.isBoolean() ) {
 		type = TypeBool;

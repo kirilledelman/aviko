@@ -21,7 +21,7 @@ Image::Image( ScriptArguments* args ) {
 		if ( args->ReadArguments( 2, TypeInt, &w, TypeInt, &h, TypeObject, &obj ) ) {
 			this->width = max( 0, w );
 			this->height = max( 0, h );
-			this->image = this->_MakeImage();
+			this->MakeImage();
 			if ( obj ) {
 				GameObject* go = script.GetInstance<GameObject>( obj );
 				if ( go ) this->Draw( go );
@@ -42,6 +42,7 @@ Image::~Image() {
 	
 	// clean up
 	if ( this->image ) {
+		GPU_FreeTarget( this->image->target );
 		GPU_FreeImage( this->image );
 		this->image = NULL;
 	}
@@ -362,7 +363,10 @@ bool Image::FromDataURL( string &s ) {
 	if ( !img ) return false;
 	
 	// set
-	if ( this->image ) GPU_FreeImage( this->image );
+	if ( this->image ) {
+		GPU_FreeTarget( this->image->target );
+		GPU_FreeImage( this->image );
+	}
 	this->image = img;
 	this->width = this->image->base_w;
 	this->height = this->image->base_h;
@@ -383,26 +387,37 @@ void Image::Save( const char *filename ) {
 
 
 /// helper to make image and set flags
-GPU_Image* Image::_MakeImage() {
-	if ( this->width <= 0 || this->height <= 0 ) return NULL;
+bool Image::MakeImage() {
+	if ( this->width <= 0 || this->height <= 0 ) return false;
 	GPU_Image* img = GPU_CreateImage( this->width, this->height, GPU_FORMAT_RGBA );
 	if ( !img ) {
 		script.ReportError( "Failed to create Image with dimensions %d, %d", this->width, this->height );
-	} else {
-		GPU_UnsetImageVirtualResolution( img );
-		GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
-		GPU_SetSnapMode( img, GPU_SNAP_NONE );
-		GPU_LoadTarget( img );
-		GPU_AddDepthBuffer( img->target );
-		GPU_SetDepthTest( img->target, true );
-		GPU_SetDepthWrite( img->target, true );
-		GPU_AddDepthBuffer( img->target );
-		img->target->camera.z_near = -1024;
-		img->target->camera.z_far = 1024;
-		img->anchor_x = img->anchor_y = 0;
-		this->_sizeDirty = false;
+		return false;
 	}
-	return img;
+	
+	GPU_UnsetImageVirtualResolution( img );
+	GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
+	GPU_SetSnapMode( img, GPU_SNAP_NONE );
+	GPU_LoadTarget( img );
+	if ( this->image ) {
+		// copy old image to new
+		static SDL_Color clearColor = { 0, 0, 0, 0 };
+		GPU_ClearColor( img->target, clearColor );
+		GPU_Rect srcRect = { 0, 0, (float) this->image->base_w, (float) this->image->base_h };
+		GPU_Blit( this->image, &srcRect, img->target, 0, 0 );
+		GPU_FreeTarget( this->image->target );
+		GPU_FreeImage( this->image );
+	}
+	GPU_AddDepthBuffer( img->target );
+	GPU_SetDepthTest( img->target, true );
+	GPU_SetDepthWrite( img->target, true );
+	GPU_AddDepthBuffer( img->target );
+	img->target->camera.z_near = -1024;
+	img->target->camera.z_far = 1024;
+	img->anchor_x = img->anchor_y = 0;
+	this->_sizeDirty = false;
+	this->image = img;
+	return true;
 }
 
 /// returns updated image
@@ -425,7 +440,7 @@ void Image::Draw( GameObject* go ) {
 	if ( !this->image ) {
 		
 		// create
-		this->image = _MakeImage();
+		MakeImage();
 		if ( !image ) return;
 		
 	// otherwise, if resize is needed
@@ -433,21 +448,12 @@ void Image::Draw( GameObject* go ) {
 		
 		// create image of new size
 		this->_sizeDirty = false;
-		GPU_Image *img = _MakeImage();
-		if ( !img ) {
+		if ( !MakeImage() ) {
 			this->width = this->image->base_w;
 			this->height = this->image->base_h;
 			return;
 		}
 		
-		// copy old image to new
-		GPU_ClearColor( img->target, clearColor );
-		GPU_Rect srcRect = { 0, 0, (float) this->image->base_w, (float) this->image->base_h };
-		GPU_Blit( this->image, &srcRect, img->target, 0, 0 );
-		
-		// replace
-		GPU_FreeImage( this->image );
-		this->image = img;
 	}
 	
 	// if autodraw, clear

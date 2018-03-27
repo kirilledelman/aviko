@@ -41,10 +41,7 @@ include( './ui' );
 	var editing = false;
 	var scrolling = false;
 	var touched = false;
-	var offBackground = false;
-	var focusBackground = false;
-	var disabledBackground = false;
-	var scrollingBackground = false;
+	var background;
 	var autoGrow = false;
 	var numeric = false;
 	var integer = false;
@@ -52,8 +49,8 @@ include( './ui' );
 	var maxValue = Infinity;
 	var step = 1.0;
 	var constructing = true;
+	var allowed = null;
 	go.serializeMask = { 'ui':1, 'render':1 };
-
 
 	// API properties
 	var mappedProps = [
@@ -174,6 +171,9 @@ include( './ui' );
 		// (Boolean) maximum value for numeric input
 		[ 'integer',  function (){ return integer; }, function ( v ){ integer = v; } ],
 
+		// (RegExp) allow typing only these characters. Regular expression against which to compare incoming character, e.g. /[0-9a-z]/i
+		[ 'allowed',  function (){ return allowed; }, function ( a ){ allowed = a; } ],
+
 		// (Boolean) should text be antialiased
 		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
 
@@ -184,34 +184,25 @@ include( './ui' );
 		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; go.scrollCaretToView(); } ],
 
 		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'background',  function (){ return offBackground; }, function ( b ){
-			offBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when focused
-		[ 'focusBackground',  function (){ return focusBackground; }, function ( b ){
-			focusBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when disabled
-		[ 'disabledBackground',  function (){ return disabledBackground; }, function ( b ){
-			disabledBackground = b;
-			go.updateBackground();
-		} ],
-
-		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background when disabled
-		[ 'scrollingBackground',  function (){ return scrollingBackground; }, function ( b ){
-			scrollingBackground = b;
-			go.updateBackground();
+		[ 'background',  function (){ return background; }, function ( b ){
+			background = b;
+			// set look
+			if ( b === null || b === false ) {
+				go.render = null;
+			} else if ( typeof( b ) == 'string' ) {
+				bg.texture = b;
+				go.render = bg;
+			} else {
+				shp.color = b;
+				go.render = shp;
+			}
+			go.dispatch( 'layout' );
 		} ],
 
 		// (Number) corner roundness when background is solid color
 		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
 			shp.radius = b;
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-			go.updateBackground();
 		} ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
@@ -280,7 +271,7 @@ include( './ui' );
 		 function ( v ){
 			 ui.focusable = !(disabled = v) || acceptToEdit;
 			 if ( v && ui.focused ) ui.blur();
-			 go.updateBackground();
+			 go.state = 'disabled';
 			 go.dispatch( 'layout' );
 		 } ],
 
@@ -288,7 +279,7 @@ include( './ui' );
 		[ 'scrolling',  function (){ return scrolling; },
 		 function ( v ){
 			 scrolling = v;
-			 go.updateBackground();
+			 go.state = 'scrolling';
 		 } ],
 
 		// (Boolean) enable display ^code formatting (while not editing)
@@ -347,7 +338,7 @@ include( './ui' );
 	if ( !go.name ) go.name = "Textfield";
 
 	// background
-	bg = new RenderSprite( offBackground );
+	bg = new RenderSprite();
 	shp = new RenderShape( Shape.Rectangle );
 	shp.radius = 0; shp.centered = false;
 	shp.filled = true;
@@ -394,7 +385,7 @@ include( './ui' );
 	    if ( newFocus == ui ) {
 		    ui.autoMoveFocus = false;
 	        go.editing = !acceptToEdit;
-		    go.updateBackground();
+		    go.state = 'focus';
 		    go.scrollIntoView();
 		    Input.on( 'mouseDown', go.checkClickOutside );
 	    // blurred
@@ -402,11 +393,11 @@ include( './ui' );
 		    ui.autoMoveFocus = acceptToEdit;
 	        go.editing = false;
 		    go.scrolling = false;
-		    go.updateBackground();
+		    go.state = 'auto';
 		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
 		go.fire( 'focusChanged', newFocus );
-		go.dispatch( 'layout' );
+		// go.dispatch( 'layout' );
 	}
 
 	// navigation event
@@ -477,9 +468,10 @@ include( './ui' );
 	ui.mouseWheel = function ( wy, wx ) {
 
 		// if numeric and focused
-		if ( numeric && wy && ui.focused ){
+		if ( numeric && wy && ui.focused && !disabled ){
 			var val = wy < 0 ? -step : step;
 			go.value += val;
+			go.fire( 'change', go.value );
 			rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 			stopEvent();
 			return;
@@ -626,7 +618,8 @@ include( './ui' );
 
 		// normal character
 	    } else {
-		    // filter non-numeric
+		    // filters
+		    if ( allowed && !key.match( allowed ) ) return;
 		    if ( numeric ) {
 			    if ( integer && !key.match( /\d/) ) return;
 			    else if ( !key.match( /[0-9.\-]/ ) ) return;
@@ -782,6 +775,7 @@ include( './ui' );
 				if ( numeric ) {
 					go.value += ( code == Key.Up ? step : -step );
 					rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
+					go.fire( 'change', go.value );
 					return;
 				}
 
@@ -864,34 +858,6 @@ include( './ui' );
 		}
 	}
 
-	// sets current background based on state
-	go.updateBackground = function () {
-
-		// determine state
-		var prop;
-		if ( scrolling ) {
-			prop = scrollingBackground;
-		} else if ( ui.focused ) {
-			prop = focusBackground;
-		} else if ( disabled ) {
-			prop = disabledBackground;
-		} else {
-			prop = offBackground;
-		}
-
-		// set look
-		if ( prop === null || prop === false ) {
-			go.render = null;
-		} else if ( typeof( prop ) == 'string' ) {
-			bg.texture = prop;
-			go.render = bg;
-		} else {
-			shp.color = prop;
-			go.render = shp;
-		}
-
-	}
-
 	// makes sure caret is inside visible area
 	go.scrollCaretToView = function (){
 
@@ -930,7 +896,7 @@ include( './ui' );
 	// apply defaults
 	UI.base.applyProperties( go, UI.style.textfield );
 	go.constructing = false;
-
+	go.state = 'auto';
 })(this);
 
 

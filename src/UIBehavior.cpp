@@ -62,6 +62,10 @@ UIBehavior::UIBehavior() {
 
 // destructor
 UIBehavior::~UIBehavior() {
+	
+	if ( this->scene &&  this->scene->focusedUI == this ) {
+		this->scene->focusedUI = NULL;
+	}
 	// printf( "~UIBehavior\n" );
 }
 
@@ -145,7 +149,7 @@ void UIBehavior::InitClass() {
 			if ( go ) other = go->ui;
 		}
 		if ( !other && val ) {
-			script.ReportError( ".navigationLeft can only be set to null or instance of UIBehavior" );
+			script.ReportError( ".focusLeft can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
 		ui->navigationLeft = other;
@@ -163,7 +167,7 @@ void UIBehavior::InitClass() {
 			if ( go ) other = go->ui;
 		}
 		if ( !other && val ) {
-			script.ReportError( ".navigationRight can only be set to null or instance of UIBehavior" );
+			script.ReportError( ".focusRight can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
 		ui->navigationRight = other;
@@ -181,7 +185,7 @@ void UIBehavior::InitClass() {
 			if ( go ) other = go->ui;
 		}
 		if ( !other && val ) {
-			script.ReportError( ".navigationUp can only be set to null or instance of UIBehavior" );
+			script.ReportError( ".focusUp can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
 		ui->navigationUp = other;
@@ -199,7 +203,7 @@ void UIBehavior::InitClass() {
 			if ( go ) other = go->ui;
 		}
 		if ( !other && val ) {
-			script.ReportError( ".navigationDown can only be set to null or instance of UIBehavior" );
+			script.ReportError( ".focusDown can only be set to null or instance of UIBehavior" );
 			return (void*) NULL;
 		}
 		ui->navigationDown = other;
@@ -920,6 +924,9 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 	// found!
 	if ( other ) return other;
 	
+	// other is self, return null
+	if ( other == this ) return NULL;
+	
 	// get min,max of this control in global coords
 	float minX, minY, maxX, maxY;
 	this->gameObject->ConvertPoint( 0, 0, minX, minY, true );
@@ -934,12 +941,12 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 	if ( !uiElements.size() || ( uiElements.size() == 1 && uiElements[ 0 ] == this ) ) return NULL;
 	
 	// try until find a candidate or margin of search is too big
-	float maxMargin = fmax( maxX - minX, maxY - minY );
+	float maxMargin = fmin( maxX - minX, maxY - minY );
 	float extraMargin = fmin( maxX - minX, maxY - minY ) * 0.5;
 	while ( !candidates.size() && extraMargin < maxMargin ) {
 		for ( size_t i = 0, nc = uiElements.size(); i < nc; i++ ) {
 			other = uiElements[ i ];
-			if ( other == this || !other->focusable || other->navigationGroup.compare( navigationGroup ) != 0 || !other->Behavior::active() || !other->gameObject->active() ) continue;
+			if ( other == this || !other->focusable || other->navigationGroup.compare( navigationGroup ) != 0 || !other->Behavior::active() || !other->gameObject->activeRecursive() ) continue;
 			
 			// get min/max of other control
 			float otherMinX, otherMinY, otherMaxX, otherMaxY;
@@ -1092,13 +1099,34 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	behavior->CallEvent( e );
 	
 	// if layout process changed width/height/min/max
-	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight ||
-		behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight ) {
-		printf( "Change in %p (%s) retrigger layout\n", behavior, behavior->gameObject->name.c_str() );
+	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight
+		/* || behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight */ ) {
 		// request layout again
 		behavior->RequestLayout( ArgValue() );
 	}
 	
+}
+
+bool UIBehavior::IsStretchyX(){
+	UIBehavior* parentUI = this->gameObject->parent ? this->gameObject->parent->ui : NULL;
+	if ( !parentUI ) return false;
+	if ( parentUI->layoutType == LayoutType::Vertical ) {
+		return ( parentUI->axisAlignX == LayoutAlign::Stretch || this->selfAlign == LayoutAlign::Stretch );
+	} else if ( parentUI->layoutType == LayoutType::Horizontal ) {
+		return (flex != 0);
+	}
+	return false;
+}
+
+bool UIBehavior::IsStretchyY(){
+	UIBehavior* parentUI = this->gameObject->parent ? this->gameObject->parent->ui : NULL;
+	if ( !parentUI ) return false;
+	if ( parentUI->layoutType == LayoutType::Horizontal ) {
+		return ( parentUI->axisAlignY == LayoutAlign::Stretch || this->selfAlign == LayoutAlign::Stretch );
+	} else if ( parentUI->layoutType == LayoutType::Vertical ) {
+		return (flex != 0);
+	}
+	return false;
 }
 
 void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
@@ -1163,16 +1191,18 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 		
 	}
 	
-	// minimum height required for all rows
-	totalMinSize = currentRow->minSize + totalMinSize + ( rows.size() - 1 ) * spacingY;
+	// min/max size required for all rows
+	int numSpacers = (int) rows.size() - 1;
+	totalMinSize += currentRow->minSize + numSpacers * spacingY;
 	
 	// if stretching rows across, and there's more space than needed
-	if ( this->axisAlignY == LayoutAlign::Stretch && innerHeight > totalMinSize ) {
-		// expand all rows' maxSize to fill entire innerheight
-		float averageRowHeight = floor( (innerHeight - totalMinSize) / (float) rows.size() );
+	if ( innerHeight > totalMinSize && this->axisAlignY == LayoutAlign::Stretch ) {
+		float spaceLeft = innerHeight;
+		float averageRowHeight = floor( ( spaceLeft - numSpacers * spacingY ) / (float) rows.size() );
 		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
 			LayoutRow* currentRow = &rows[ r ];
-			currentRow->maxSize = averageRowHeight;
+			currentRow->maxSize = fmax( currentRow->minSize, averageRowHeight );
+			spaceLeft -= currentRow->maxSize;
 		}
 	}
 	
@@ -1271,15 +1301,17 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	
 	// if fit children is set, ensure children are contained, and min sizes set
 	if ( this->fitChildren ) {
-		this->layoutHeight = fmax( this->layoutHeight, maxY + this->padBottom );
-		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
+		if ( this->axisAlignY != LayoutAlign::Stretch && !this->IsStretchyY() ) this->layoutHeight = maxY + this->padBottom;
+		if ( !wrapEnabled && !this->IsStretchyX() ) {
+			this->layoutWidth = maxX + this->padRight;
+		}
 		if ( wrapEnabled ) {
 			this->minWidth = minChildSize + this->padLeft + this->padRight;
 		} else if ( this->axisAlignX != LayoutAlign::Stretch ){
 			this->minWidth = maxX + this->padRight;
 		}
 		if ( this->axisAlignY == LayoutAlign::Stretch ) {
-			this->minHeight = totalMinSize + this->padBottom;
+			this->minHeight = this->padTop + totalMinSize + this->padBottom;
 		} else {
 			this->minHeight = maxY + this->padBottom;
 		}
@@ -1353,16 +1385,18 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 		
 	}
 	
-	// minimum width required for all rows
-	totalMinSize = totalMinSize + ( rows.size() - 1 ) * spacingX;
+	// min/max size required for all rows
+	int numSpacers = (int) rows.size() - 1;
+	totalMinSize += currentRow->minSize + numSpacers * spacingX;
 	
-	// if stretching rows across, and there's more space than needed
-	if ( this->axisAlignX == LayoutAlign::Stretch && innerWidth > totalMinSize ) {
-		// expand all rows' maxSize to fill entire innerwidth
-		float averageRowWidth = floor( (innerWidth - totalMinSize) / (float) rows.size() );
+	// distribute extra space to rows maxSize
+	if ( this->axisAlignX == LayoutAlign::Stretch ) {
+		float spaceLeft = innerWidth;
+		float averageRowWidth = floor( ( spaceLeft - numSpacers * spacingX ) / (float) rows.size() );
 		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
 			LayoutRow* currentRow = &rows[ r ];
-			currentRow->maxSize = averageRowWidth;
+			currentRow->maxSize = fmax( currentRow->minSize, averageRowWidth );
+			spaceLeft -= currentRow->maxSize;
 		}
 	}
 	
@@ -1461,15 +1495,17 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	
 	// if fit children is set, ensure children are contained, and min sizes set
 	if ( this->fitChildren ) {
-		this->layoutHeight = fmax( this->layoutHeight, maxY + this->padBottom );
-		this->layoutWidth = fmax( this->layoutWidth, maxX + this->padRight );
+		if ( this->axisAlignX != LayoutAlign::Stretch && !this->IsStretchyX() ) this->layoutWidth = maxX + this->padRight;
+		if ( !wrapEnabled && !this->IsStretchyY() ) {
+			this->layoutHeight = maxY + this->padBottom;
+		}
 		if ( wrapEnabled ) {
 			this->minHeight = minChildSize + this->padTop + this->padBottom;
 		} else if ( this->axisAlignY != LayoutAlign::Stretch ){
 			 this->minHeight = maxY + this->padBottom;
 		}
 		if ( this->axisAlignX == LayoutAlign::Stretch ) {
-			this->minWidth = totalMinSize + this->padRight;
+			this->minWidth = this->padLeft + totalMinSize + this->padRight;
 		} else {
 			this->minWidth = maxX + this->padRight;
 		}

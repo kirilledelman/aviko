@@ -319,9 +319,9 @@ void RenderBehavior::InitShaders() {
 			void main(void){\n\
 				vec2 coord = texCoord;\n\
 			%s\n\
-				src = src * color;\n\
-				if ( src.a == 0.0 ) discard;\n\
-				fragColor = src + addColor;\n\
+					src = src * color;\n\
+					if ( src.a == 0.0 ) discard;\n\
+					fragColor = src + addColor;\n\
 			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
 	
 		}

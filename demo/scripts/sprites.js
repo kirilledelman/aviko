@@ -39,7 +39,7 @@ new (function (){
 		background: false,
 		cancelToBlur: false,
 		pad: 5,
-		marginBottom: 40,
+		// marginBottom: 40,
 		color: Color.Text,
 		width: 290,
 		wrap: true,
@@ -49,31 +49,33 @@ new (function (){
 	} );
 
 	// page selector scrollbar
-	var scrollbar = description.addChild( 'ui/scrollbar', {
+	var scrollbar = scene.addChild( 'ui/scrollbar', {
 		orientation: 'horizontal',
-		totalSize: 3,
+		width: 290,
+		totalSize: 4,
 		position: 0,
 		handleSize: 1,
 		anchorTop: 1,
 		top: -15,
-		bottom: -40,
+		bottom: -45,
 		left: -4,
 		right: -4,
 		discrete: true,
-		scroll: changePage
+		scroll: changePage,
 	});
 
 	// page number on scrollbar handle
 	var pageNumber = scrollbar.handle.addChild( 'ui/text', {
 		text: 'Page 1',
 		color: Color.Text,
+		marginTop: -6,
 		align: TextAlign.Center
 	} );
 
 	// back to main menu button
 	scene.addChild( 'ui/button', {
 		text: "Back to main menu",
-		selfAlign: LayoutAlign.Start,
+		selfAlign: LayoutAlign.Stretch,
 		forceWrap: true, // new column after this
 		click: function () {
 			App.popScene();
@@ -85,17 +87,18 @@ new (function (){
 	// example holder
 	var example = scene.addChild( 'ui/panel', {
 		flex: 1,
+		pad: 0,
 		width: 300,
-		background: 0xF0F0F0,
+		spacingY: 5,
+		background: 'checker.png',
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
-		layoutAlignY: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Start,
 	} );
 
 	// sample sprite
 	var spriteContainer = example.addChild( 'ui/scrollable', {
-		height: 200,
-		flex: 1,
+		height: 120,
 		layoutType: Layout.None,
 		scrollbars: false,
 		layout: function () {
@@ -106,25 +109,20 @@ new (function (){
 
 	var sprite = spriteContainer.addChild( {
 		render: new RenderSprite( 'queen.png' ),
-		scale: 0.5,
-		x: 150, y: 100,
+		scale: 0.2,
+		x: 150, y: 70,
 	} );
 	sprite.render.pivotX = sprite.render.pivotY = 0.5;
 
 	// properties
-	var propsContainer = example.addChild( 'ui/scrollable', {
+	var props = example.addChild( 'ui/property-list', {
 		flex: 1,
-		pad: 5,
 		valueWidth: 150,
-	} );
-
-	// add property list to scrollable container
-	var props = propsContainer.addChild( 'ui/property-list', {
 		showAll: false,
 		target: sprite.render,
-		layout: function () {
-			// resize to fit
-			propsContainer.scrollHeight = this.height + propsContainer.padTop + propsContainer.padBottom;
+		//updateInterval: 1,
+		change: function ( obj, prop, val, oldVal ) {
+			log ( obj, '.', prop, ' = ', val, ' from ', oldVal );
 		}
 	} );
 
@@ -145,34 +143,60 @@ new (function (){
 						{ text: "queen.png", value: "/textures/queen.png" },
 						{ text: "king.png", value: "/textures/king.png" },
 					] },
-					'flipX': true,
+					'originalWidth': { disabled: true },
+					'originalHeight': { disabled: true },
+					'width': { min: 0, max: Infinity, step: 1 },
+					'height': { min: 0, max: Infinity, step: 1 },
 				};
-				props.groups = [ { name: 'Texture', properties: [ 'texture' ] } ];
-				sprite.update = null;
-				sprite.angle = 0;
+				props.groups = [ { name: 'Texture', properties: [ 'texture', 'width', 'height', 'originalWidth', 'originalHeight' ] } ];
 
 				break;
 			case 1:
 				description.text =
-				"Sprites can be tiled in x or y direction, and flipped. Multiplicative " +
-				"and additive color tinting is supported, as well as opacity, and stippling."
+				"Sprites can be tiled, or flipped in horizontal or vertical direction."
 
 				props.properties = {
-					'flipX': true,
-					'flipY': true,
 					'pivotX': { min: 0, max: 1, step: 0.1 },
 					'pivotY': { min: 0, max: 1, step: 0.1 },
+					'flipX': true,
+					'flipY': true,
 					'tileX': true,
 					'tileY': true,
 				};
 				props.groups = [
 					{ name: "Flip", properties: [ 'flipX', 'flipY' ] },
-					{ name: "Pivot", properties: [ 'flipX', 'flipY' ] },
-					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] } ];
-				sprite.update = function( dt ) { this.angle += dt * 10; }
+					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] } ,
+					{ name: "Pivot", properties: [ 'pivotX', 'pivotY' ] },]
 
 				break;
 			case 2:
+				description.text = "Multiplicative and additive color tinting is supported, as well as opacity, and stippling.";
+				props.properties = {
+					'color': { inline: true,
+						showAll: false,
+						properties: {
+						'r': { min: 0, max: 1, step: 0.1 },
+						'g': { min: 0, max: 1, step: 0.1 },
+						'b': { min: 0, max: 1, step: 0.1 },
+						'a': { min: 0, max: 1, step: 0.1 }
+					} },
+					'addColor': { inline: true,
+						showAll: false,
+						properties: {
+						'r': { min: 0, max: 1, step: 0.1 },
+						'g': { min: 0, max: 1, step: 0.1 },
+						'b': { min: 0, max: 1, step: 0.1 },
+						'a': { min: 0, max: 1, step: 0.1 }
+					} },
+					'opacity': { min: 0, max: 1, step: 0.1 },
+					'stipple': { min: 0, max: 1, step: 0.1 },
+					'stippleAlpha': true,
+				};
+				props.groups = [
+					{ name: "Tint", properties: [ 'color', 'addColor' ] },
+					{ name: "Opacity", properties: [ 'opacity', 'stipple', 'stippleAlpha' ] },]
+				break;
+			case 3:
 				description.text =
 				"To help create user interface elements define stretchable regions on " +
 				"texture by setting ^Bslice^n property.";
@@ -182,7 +206,7 @@ new (function (){
 					'sliceBottom': true,
 					'sliceRight': true,
 				};
-				props.groups = [ { name: "9-slice", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]} ];
+				props.groups = [ { name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]} ];
 				sprite.update = null;
 				sprite.angle = 0;
 

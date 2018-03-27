@@ -180,7 +180,6 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 	
 	// destroy surface
 	SDL_FreeSurface( surface );
-	
 }
 
 
@@ -223,6 +222,9 @@ ImageResource::~ImageResource() {
 	// printf( "Unloading image %s\n", this->key.c_str() );
 
 	// unload
-	if ( this->image ) GPU_FreeImage( this->image );
+	if ( this->image ) {
+		GPU_FreeTarget( this->image->target );
+		GPU_FreeImage( this->image );
+	}
 	
 }

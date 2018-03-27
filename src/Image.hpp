@@ -29,8 +29,8 @@ public:
 	/// keeps track of last redraw
 	int lastRedrawFrame = 0;
 	
-	/// helper to make image
-	GPU_Image* _MakeImage();
+	/// helper to make/replace current image
+	bool MakeImage();
 	
 	/// draw gameobject
 	void Draw( GameObject* go );

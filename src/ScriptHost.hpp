@@ -912,9 +912,10 @@ public:
 		jsval rval;
 		int argc;
 		jsval* params = args.GetFunctionArguments( &argc );
-		/*if ( JS_IsExceptionPending( this->js ) ) {
+		if ( JS_IsExceptionPending( this->js ) ) {
+			JS_ReportPendingException( this->js );
 			return ArgValue();
-		}*/
+		}
 		if ( JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) funcObject, argc, params, &rval ) ) {
 			return ArgValue( rval );
 		} else return ArgValue();
@@ -1096,6 +1097,21 @@ public:
 		jsval* params = args.GetFunctionArguments( &argc );
 		if ( !JS_CallFunction(script.js, class_constructor, (JSFunction*) func, argc, params, &rval ) ) {
 			printf( "CallClassFunction: %s call failed\n", className );
+			return ArgValue();
+		}
+		return ArgValue( rval );
+	}
+	
+	/// calls a member function
+	ArgValue CallFunction( void* thisObj, const char *funcName, ScriptArguments& args ) {
+		JSAutoRequest req( this->js );
+		
+		// call
+		jsval rval;
+		int argc;
+		jsval* params = args.GetFunctionArguments( &argc );
+		if ( !JS_CallFunctionName(script.js, (JSObject*) thisObj, funcName, argc, params, &rval ) ) {
+			printf( "CallClassFunction: %s is not a function\n", funcName );
 			return ArgValue();
 		}
 		return ArgValue( rval );

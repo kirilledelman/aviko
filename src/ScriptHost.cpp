@@ -84,6 +84,14 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 			
 			// TODO - if need to save built in objects like "Date", or "RegExp", can add props here to re-initialize them upon load
 		
+			// regular expression
+			if ( strcmp( className, "RegExp" ) == 0 ) {
+				properties.emplace( "source" );
+				properties.emplace( "sticky" );
+				properties.emplace( "multiline" );
+				properties.emplace( "global" );
+				properties.emplace( "ignoreCase" );
+			}
 		}
 		
 		// add "__class__" property
@@ -259,6 +267,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 	// get ScriptableClass definition
 	JSClass* clp = JS_GetClass( (JSObject*) obj );
 	ClassDef* cdef = CDEF( string( clp->name ) );
+	className = clp->name;
 	
 	// add this object to alreadyInitialized ( if it has __id__ property )
 	_AddToAlreadyInitialized( obj, initObj, alreadyInitialized );
@@ -281,6 +290,22 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 			// add to awake list
 			ScriptableClass* instance = GetInstance<ScriptableClass>( obj );
 			if ( instance ) awakeList->push_back( instance );
+		// special cases for built in objects
+		} else if ( className.compare( "RegExp" ) == 0 ) {
+			ScriptArguments args;
+			ArgValue v = script.GetProperty( "source", initObj );
+			if ( v.type == TypeString ) args.AddStringArgument( v.value.stringValue->c_str() );
+			string flags;
+			v = script.GetProperty( "global", initObj );
+			if ( v.toBool() ) flags.append( "g" );
+			v = script.GetProperty( "ignoreCase", initObj );
+			if ( v.toBool() ) flags.append( "i" );
+			v = script.GetProperty( "sticky", initObj );
+			if ( v.toBool() ) flags.append( "y" );
+			v = script.GetProperty( "multiline", initObj );
+			if ( v.toBool() ) flags.append( "m" );
+			args.AddStringArgument( flags.c_str() );
+			script.CallFunction( obj, "compile", args );
 		}
 	}
 	
@@ -639,6 +664,9 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 	// this error is handled
 	JS_ClearPendingException( cx );
 	
+	// if already quitting, ignore
+	if ( !app.run ) return;
+	
 	// determine if there's error handler registered
 	ScriptableClass::EventListenersMap::iterator hit = app.eventListeners.find( string( EVENT_ERROR ) );
 	bool hasHandler = ( hit != app.eventListeners.end() && hit->second.size() > 0 );
@@ -669,8 +697,8 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 				   report->filename ? report->filename : "[top]",
 				   (unsigned int) report->lineno,
 				   preview.c_str(),
-				   message);			
-			exit( 1 );
+				   message);
+			app.run = false;
 			return;
 		}
 	}

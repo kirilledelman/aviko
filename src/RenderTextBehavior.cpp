@@ -14,6 +14,9 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	// add defaults
 	RenderBehavior::AddDefaults();
 	
+	//
+	this->blendMode = GPU_BLEND_PREMULTIPLIED_ALPHA;//GPU_BLEND_NORMAL;
+	
 	// create background object
 	Color* color = new Color( NULL );
 	color->SetInts( 255, 255, 255, 0 );
@@ -79,6 +82,7 @@ RenderTextBehavior::~RenderTextBehavior() {
 	
 	// release surface
 	if ( this->surface ) {
+		GPU_FreeTarget( this->surface->target );
 		GPU_FreeImage( this->surface );
 		this->surface = NULL;
 	}
@@ -847,6 +851,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 	
 	// clear old image
 	if ( this->surface && !justMeasure ) {
+		GPU_FreeTarget( this->surface->target );
 		GPU_FreeImage( this->surface );
 		this->surface = NULL;
 	}

@@ -43,7 +43,7 @@ include( './ui' );
 		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
 		[ 'scrollbars',  function (){ return scrollbars; }, function ( s ){
 			scrollbars = s;
-			go.debounce( 'updateScrollbars', go.updateScrollbars );
+			go.fireLate( 'updateScrollbars' );
 		} ],
 
 		// (Number) current width of the control
@@ -60,7 +60,7 @@ include( './ui' );
 		[ 'scrollWidth',  function (){ return container.ui.width; }, function ( w ){
 			if ( container.ui.width != w ) {
 				container.ui.width = w;
-				go.debounce( 'updateScrollbars', go.updateScrollbars );
+				go.fireLate( 'updateScrollbars' );
 			}
 		} ],
 
@@ -68,7 +68,7 @@ include( './ui' );
 		[ 'scrollHeight',  function (){ return container.ui.height; }, function ( h ){
 			if ( container.ui.height != h ) {
 				container.ui.height = h;
-				go.debounce( 'updateScrollbars', go.updateScrollbars );
+				go.fireLate( 'updateScrollbars' );
 			}
 		} ],
 
@@ -78,7 +78,7 @@ include( './ui' );
 			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), -t ) );
 			if ( py != container.y ) {
 				go.fireLate( 'scroll' );
-				go.debounce( 'updateScrollbars', go.updateScrollbars );
+				go.fireLate( 'updateScrollbars' );
 			}
 		} ],
 
@@ -88,7 +88,7 @@ include( './ui' );
 			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), -l ) );
 			if ( px != container.x ) {
 				go.fireLate( 'scroll' );
-				go.debounce( 'updateScrollbars', go.updateScrollbars );
+				go.fireLate( 'updateScrollbars' );
 			}
 		} ],
 
@@ -174,6 +174,7 @@ include( './ui' );
 	go.addChild = function() { return container.addChild.apply( container, arguments ); }
 	go.removeChild = function() { return container.removeChild.apply( container, arguments ); }
 	go.getChild = function() { return container.getChild.apply( container, arguments ); }
+	go.removeAllChildren = function() { return container.removeAllChildren.apply( container, arguments ); }
 
 	// create components
 
@@ -215,7 +216,8 @@ include( './ui' );
 				vsb.anchorLeft = -1;
 				vsb.right = -vsb.width;
 				vsb.scroll = function ( ny ) { go.scrollTop = ny; }
-			}
+				vsb.focusUp = vsb.focusDown = vsb;
+		}
 			// horizontal
 			if ( !hsb ) {
 				// position to the right
@@ -226,14 +228,16 @@ include( './ui' );
 				hsb.anchorTop = -1;
 				hsb.bottom = -hsb.height;
 				hsb.scroll = function ( nx ) { go.scrollLeft = nx; }
+				hsb.focusLeft = hsb.focusRight = hsb;
 			}
 		}
 
 		// update vertical scrollbars params
 		if ( vsb ) {
-			vsb.totalSize = container.ui.height;
-			vsb.handleSize = ui.height;
-			vsb.position = -container.y;
+			vsb.totalSize = Math.floor( container.ui.height );
+			vsb.handleSize = Math.floor( ui.height );
+			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), container.y ) );
+			vsb.position = Math.floor( -container.y );
 			// hide / show
 			var ac = (scrollbars == 'auto' ? (container.ui.height > ui.height) : scrollbars);
 			if ( ac != vsb.active ) {
@@ -243,9 +247,10 @@ include( './ui' );
 		}
 		// update horizontal scrollbars params
 		if ( hsb ) {
-			hsb.totalSize = container.ui.width;
-			hsb.handleSize = ui.width;
-			hsb.position = -container.x;
+			hsb.totalSize = Math.floor( container.ui.width );
+			hsb.handleSize = Math.floor( ui.width );
+			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), container.x ) );
+			hsb.position = Math.floor( -container.x );
 			// hide / show
 			var ac = (scrollbars == 'auto' ? (container.ui.width > ui.width) : scrollbars);
 			if ( ac != hsb.active ) {
@@ -257,24 +262,15 @@ include( './ui' );
 
 	// lay out components
 	ui.layout = function( w, h ) {
-
-		// auto-size container for lists
-		if ( container.ui.layoutType == Layout.Vertical  ) {
-			container.ui.width = Math.max( container.ui.minWidth, w );
-		} else if ( container.ui.layoutType == Layout.Horizontal ) {
-			container.ui.height = Math.max( container.ui.minHeight, h );
-		}
+		var sizeChanged = ( w != spr.width || h != spr.height );
 		spr.resize( w, h );
-		img.resize( w, h );
-		go.scrollLeft = go.scrollLeft; // use setter to clip value
-		go.scrollTop = go.scrollTop; // use setter to clip value
-
+		if ( sizeChanged ) go.updateScrollbars();
 		// refire
 		go.fire( 'layout', w, h );
 	}
 
 	// container resizing should update scrollbars
-	container.ui.layout = function() { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
+	container.ui.layout = function( w, h ) { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
 
 	// scrolling
 	ui.mouseWheel = function ( wy, wx ) {

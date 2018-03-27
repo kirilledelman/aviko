@@ -216,8 +216,9 @@ UI.style = UI.style ? UI.style : {
 
 		// style applied to dropdown button itself - ui/button.js
 		button: {
+			pad: 8,
 			label: {
-				size: 12
+				size: 12,
 			},
 			states: {
 				off: {
@@ -312,34 +313,32 @@ UI.style = UI.style ? UI.style : {
 		spacingX: 2, // distance between label and value
 		spacingY: 2, // distance between rows
 
+		padBottom: 4,
+
 		// applied to group label - note that first group's marginTop will be forced to 0
 		group: {
 			bold: true,
 			color: 0x333333,
-			align: TextAlign.Left,
-			margin: [ 8, 0, 4, 0 ]
+			align: TextAlign.Right,
+			marginTop: 8,
 		},
 
-		// applied to label
+		// applied to each field label
 		label: {
 			pad: 6,
 			align: TextAlign.Right,
 			color: 0x0,
+			marginTop: 2,
 		},
 
-		// applied to description
-		description: {
-
-		},
-
-		// applied to field value based on type
-		value: {
+		// applied to field values based on type
+		values: {
 			// all types
 			any: {
-				height: 20,
 				acceptToEdit: true,
 				cancelToBlur: false,
 				blurOnClickOutside: false,
+				marginRight: 4,
 			},
 			// Number - ui/textfield
 			number: {
@@ -350,15 +349,31 @@ UI.style = UI.style ? UI.style : {
 			string: {
 
 			},
-			// Object - ui/button
-			object: {
-
+			// Boolean - ui/checkbox
+			boolean: {
+				marginTop: 4,
 			},
 			// Enum - ui/dropdown
 			enum: {
+				pad: 5
+			},
+			// Object - ui/button
+			object: {
+				icon: './textures/ui:dropdown-arrow',
+				layoutAlignX: LayoutAlign.Start,
+				spacing: 4,
+				pad: 5,
+				height: 80,
+				label: { size: 12 },
+			},
+			// inline sub-property list ui/property-list
+			inline: {
+				padLeft: 10,
+				padRight: 0,
+				margin: 0,
+			},
 
-			}
-		}
+		},
 
 	},
 
@@ -609,6 +624,7 @@ UI.base = UI.base ? UI.base : {
 
 			// convert coordinate to scrollable's system
 			var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
+			var sw = scrollable.width, sh = scrollable.height;
 			var gp = this.localToGlobal( lpx, lpy );
 			var lp = scrollable.globalToLocal( gp.x, gp.y );
 			var t = lp.y + scrollable.scrollTop,
@@ -616,14 +632,19 @@ UI.base = UI.base ? UI.base : {
 			var l = lp.x + scrollable.scrollLeft,
 				r = l + lw;
 
+			// expand b-h and l-r a bit
+			var m = Math.min( lw, lh );
+			if ( lh + m * 2 < sh ) { t -= m; b += m; }
+			if ( lw + m * 2 < sw ) { l -= m; r += m; }
+
 			// make sure it's in view
-			if ( b > sy + scrollable.height ) { // bottom
-				scrollable.scrollTop = b - scrollable.height;
+			if ( b > sy + sh && b - t < sh ) { // bottom
+				scrollable.scrollTop = b - sh;
 			} else if ( t < sy ) { // top
 				scrollable.scrollTop = t;
 			}
-			if ( r > sx + scrollable.width ) { // right
-				scrollable.scrollLeft = r - scrollable.width;
+			if ( r > sx + sw && r - l < sw ) { // right
+				scrollable.scrollLeft = r - sw;
 			} else if ( l < sx ) { // left
 				scrollable.scrollLeft = l;
 			}

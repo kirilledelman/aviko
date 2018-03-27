@@ -44,8 +44,10 @@ new (function (){
 
 	// button click handler
 	var buttonClick = function () {
-		var sub = transitionScene( include( this.src ), scene, -1 );
-		App.pushScene( sub );
+		// load scene
+		var sub = App.pushScene( include( this.src ) );
+		// animate transition on first update
+		sub.on( 'update', function (){ transitionScene( sub, scene, -1 ); }, true );
 	};
 
 	buttons.addChild( 'ui/button', {

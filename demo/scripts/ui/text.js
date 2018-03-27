@@ -155,7 +155,7 @@ include( './ui' );
 		rt.width = w - ( ui.padLeft + ui.padRight );
 		rt.measure();
 		rt.height = rt.numLines * rt.lineHeight;
-		ui.minHeight = rt.height + ui.padTop + ui.padBottom;
+		ui.height = ui.minHeight = rt.height + ui.padTop + ui.padBottom;
 	}
 
 	// apply defaults

@@ -111,14 +111,15 @@ include( './ui' );
 	label = go.addChild( './text', {
 		name: "Label",
 		wrap: true,
-		flex: 1
+		flex: 1,
+		active: false
 	});
 
 	// UI
 	ui.autoMoveFocus = true;
 	ui.layoutType = Layout.Horizontal;
 	ui.layoutAlignX = LayoutAlign.Stretch;
-	ui.layoutAlignY = LayoutAlign.Start;
+	ui.layoutAlignY = LayoutAlign.Center;
 	ui.fitChildren = true;
 	ui.wrapEnabled = false;
 	ui.focusable = true;

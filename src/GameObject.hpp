@@ -214,6 +214,9 @@ public:
 	/// inactive objects are skipped for rendering, and event dispatches
 	bool active(){ return this->_active; } // getter
 	
+	/// recursively checks active
+	bool activeRecursive(){ return this->_active && ( this->parent ? this->parent->activeRecursive() : true ); } // getter
+	
     /// inactive objects are skipped for rendering, and event dispatches
 	bool active( bool ); // setter
 	

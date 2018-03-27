@@ -101,6 +101,30 @@ include( './ui' );
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		[ 'cancelToBlur',  function (){ return button.cancelToBlur; }, function ( cb ){ button.cancelToBlur = cb; } ],
 
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
+		[ 'pad',  function (){ return button.ui.pad; }, function ( v ){ button.ui.pad = v; } ],
+
+		// (Number) inner padding top
+		[ 'padTop',  function (){ return button.ui.padTop; }, function ( v ){ button.ui.padTop = v; }, true ],
+
+		// (Number) inner padding right
+		[ 'padRight',  function (){ return button.ui.padRight; }, function ( v ){ button.ui.padRight = v; }, true ],
+
+		// (Number) inner padding bottom
+		[ 'padBottom',  function (){ return button.ui.padBottom; }, function ( v ){ button.ui.padBottom = v; }, true ],
+
+		// (Number) inner padding left
+		[ 'padLeft',  function (){ return button.ui.padLeft; }, function ( v ){ button.ui.padLeft = v; }, true ],
+
+		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
+		[ 'spacing',  function (){ return button.ui.spacing; }, function ( v ){ button.ui.spacing = v; }, true ],
+
+		// (Number) spacing between children when layoutType is Vertical
+		[ 'spacingX',  function (){ return button.ui.spacingX; }, function ( v ){ button.ui.spacingX = v; } ],
+
+		// (Number) spacing between children when layoutType is Horizontal
+		[ 'spacingY',  function (){ return button.ui.spacingY; }, function ( v ){ button.ui.spacingY = v; } ],
+
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );
@@ -123,7 +147,10 @@ include( './ui' );
 	go.addChild( button );
 
 	// add dropdown arrow
-	arrowImage = new GameObject( './image' );
+	arrowImage = new GameObject( './image', {
+		selfAlign: LayoutAlign.Stretch,
+		mode: 'icon',
+	} );
 	button.label.flex = 1;
 	button.label.parent.addChild( arrowImage );
 
@@ -196,9 +223,11 @@ include( './ui' );
 					icon: items[ i ].icon,
 					text: items[ i ].text,
 					name: items[ i ].text,
+					width: button.width,
 					disabled: !!items[ i ].disabled,
 					focusGroup: 'dropdown',
 					click: go.itemSelected,
+					mouseOver: go.itemSetFocus,
 					navigation: go.itemNavigation,
 					style: UI.style.dropdown.item,
 				} );
@@ -206,6 +235,7 @@ include( './ui' );
 				if ( i == selectedIndex && go.itemCheck != undefined ) {
 					item.addChild( './image', go.itemCheck );
 				}
+				item.state = 'off';
 				dropdown.addChild( item );
 			}
 			// link top/bottom
@@ -257,9 +287,16 @@ include( './ui' );
 
 	go.itemSelected = function () {
 		stopAllEvents();
-		go.value = this.value;
 		go.showDropdown( false );
+		if ( go.value != this.value ) {
+			go.value = this.value;
+			go.fire( 'change', go.value );
+		}
 		button.focus();
+	}
+
+	go.itemSetFocus = function () {
+		if ( !this.disabled ) this.focus();
 	}
 
 	// click outside to close
