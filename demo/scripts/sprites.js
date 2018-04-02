@@ -1,5 +1,6 @@
 new (function (){
 
+	// create scene
 	var scene = new Scene( {
 		name: "Sprites",
 		backgroundColor: Color.Background
@@ -32,14 +33,15 @@ new (function (){
 	var description = scene.addChild( 'ui/textfield', {
 		size: 12,
 		disabled: true,
-		disabledBackground: false,
-		focusBackground: false,
-		scrollingBackground: 0xF0F0F0,
+		states:{
+			off: { background: false, },
+			scroll: { background: 0xF0F0F0 },
+			focus: { background: false },
+			disabled: { background: false },
+		},
 		cornerRadius: 2,
-		background: false,
 		cancelToBlur: false,
 		pad: 5,
-		// marginBottom: 40,
 		color: Color.Text,
 		width: 290,
 		wrap: true,
@@ -90,15 +92,14 @@ new (function (){
 		pad: 0,
 		width: 300,
 		spacingY: 5,
-		background: 'checker.png',
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Start,
 	} );
 
-	// sample sprite
+	// sample sprite container
 	var spriteContainer = example.addChild( 'ui/scrollable', {
-		height: 120,
+		height: 140,
 		layoutType: Layout.None,
 		scrollbars: false,
 		layout: function () {
@@ -107,9 +108,17 @@ new (function (){
 		}
 	} );
 
+	// background for sprite
+	spriteContainer.addChild( 'ui/image', {
+		width: 300,
+		height: 140,
+		mode: 'fit',
+		texture: 'checker.png',
+	} );
+
+	// sprite
 	var sprite = spriteContainer.addChild( {
-		render: new RenderSprite( 'queen.png' ),
-		scale: 0.2,
+		render: new RenderSprite( 'smiley.png' ),
 		x: 150, y: 70,
 	} );
 	sprite.render.pivotX = sprite.render.pivotY = 0.5;
@@ -120,10 +129,6 @@ new (function (){
 		valueWidth: 150,
 		showAll: false,
 		target: sprite.render,
-		//updateInterval: 1,
-		change: function ( obj, prop, val, oldVal ) {
-			log ( obj, '.', prop, ' = ', val, ' from ', oldVal );
-		}
 	} );
 
 	// multiple subsections of slide
@@ -140,8 +145,8 @@ new (function (){
 
 				props.properties = {
 					'texture': { enum: [
-						{ text: "queen.png", value: "/textures/queen.png" },
-						{ text: "king.png", value: "/textures/king.png" },
+						{ text: "smiley.png", value: "/textures/smiley.png" },
+						{ text: "clown.png", value: "/textures/clown.png" },
 					] },
 					'originalWidth': { disabled: true },
 					'originalHeight': { disabled: true },
@@ -156,17 +161,17 @@ new (function (){
 				"Sprites can be tiled, or flipped in horizontal or vertical direction."
 
 				props.properties = {
-					'pivotX': { min: 0, max: 1, step: 0.1 },
-					'pivotY': { min: 0, max: 1, step: 0.1 },
 					'flipX': true,
 					'flipY': true,
 					'tileX': true,
 					'tileY': true,
+					'autoTileX': true,
+					'autoTileY': true
 				};
 				props.groups = [
 					{ name: "Flip", properties: [ 'flipX', 'flipY' ] },
-					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] } ,
-					{ name: "Pivot", properties: [ 'pivotX', 'pivotY' ] },]
+					{ name: "Tile texture", properties: [ 'tileX', 'tileY', 'autoTileX', 'autoTileY' ] }
+				];
 
 				break;
 			case 2:
@@ -183,18 +188,16 @@ new (function (){
 					'addColor': { inline: true,
 						showAll: false,
 						properties: {
-						'r': { min: 0, max: 1, step: 0.1 },
-						'g': { min: 0, max: 1, step: 0.1 },
-						'b': { min: 0, max: 1, step: 0.1 },
-						'a': { min: 0, max: 1, step: 0.1 }
+						'r': { min: -1, max: 1, step: 0.1 },
+						'g': { min: -1, max: 1, step: 0.1 },
+						'b': { min: -1, max: 1, step: 0.1 },
 					} },
-					'opacity': { min: 0, max: 1, step: 0.1 },
-					'stipple': { min: 0, max: 1, step: 0.1 },
-					'stippleAlpha': true,
+					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
+					'stipple': { min: 0, max: 1, step: 0.1 }
 				};
 				props.groups = [
 					{ name: "Tint", properties: [ 'color', 'addColor' ] },
-					{ name: "Opacity", properties: [ 'opacity', 'stipple', 'stippleAlpha' ] },]
+					{ name: "Opacity", properties: [ 'opacity', 'stipple' ] },]
 				break;
 			case 3:
 				description.text =

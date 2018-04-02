@@ -16,7 +16,7 @@
 
 
 // set screen size and pixel doubling
-App.setWindowSize( 640, 360, 1 ); // 720p @ 2x
+App.setWindowSize( 640, 480, 1 ); // 720p @ 2x
 
 // auto-configure controller
 include( 'ui/controller-configurator', {
@@ -54,42 +54,11 @@ include( 'ui/controller-configurator', {
 	}
 } );
 
-/*
-var p = App.scene.addChild( new GameObject({
-	x: 10, y: 10,
-	ui: new UI ( {
-		layoutType: Layout.Vertical,
-		pad: 10, spacing: 5,
-		width: 200, height: 100,
-		wrapEnabled: true,
-		fitChildren: true,
-		layoutAlignX: LayoutAlign.Stretch,
-		layoutAlignY: LayoutAlign.Start,
-	} ),
-	render: new RenderShape( { shape: Shape.Rectangle, color: 0xA0A0A0, centered: false } )
-
-}) );
-
-for ( var i = 0; i < 20; i++ ) {
-	var t = p.addChild( 'ui/button', {
-		text: '[' + i + ']'
-	});
-}
-
-Input.mouseMove = function ( x, y ) {
-
-	if ( Input.get( Key.MouseButton ) && Input.get( Key.LeftShift ) ) {
-		p.ui.resize( x - p.x, y - p.y );
-	}
-
-}
-*/
-
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
 Input.on( 'mouseMove', function() { Input.showCursor = true; }, true );
 
-// set some constants
+// set some color globals
 Color.Background = 0xFFFFFF;
 Color.Title = 0x106633;
 Color.Text = 0x333333;

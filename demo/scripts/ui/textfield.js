@@ -584,8 +584,12 @@ include( './ui' );
 	// key press
 	ui.keyPress = function ( key, direction ) {
 
-		// if not editing, ignore
-		if ( !editing ) return;
+		// if not editing
+		if ( !editing ) {
+			// if it's a character, start editing
+			if ( !disabled && typeof( key ) == 'string' ) go.editing = true;
+			else return;
+		}
 
 		// get ready
 		var caretPosition = rt.caretPosition;

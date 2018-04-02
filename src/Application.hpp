@@ -92,7 +92,7 @@ public:
 	string soundsDirectory = "/sounds/";
 	string fontsDirectory = "/fonts/";
 	string scriptsDirectory = "/scripts/";
-	string defaultFontName = "expressway";
+	string defaultFontName = "Roboto-Regular";
 	
 	/// stores loaded textures
 	ResourceManager<ImageResource> textureManager;

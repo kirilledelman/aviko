@@ -106,16 +106,6 @@ void RenderBehavior::InitClass() {
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderBehavior*) b)->stippleAlpha = val ); }) );
 	
 	script.AddProperty<RenderBehavior>
-	( "tileX", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->tileX; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->tileX = val ); }) );
-	
-	script.AddProperty<RenderBehavior>
-	( "tileY", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->tileY; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->tileY = val ); }) );
-	
-	script.AddProperty<RenderBehavior>
 	( "pivotX", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );
@@ -132,11 +122,11 @@ void RenderBehavior::InitClass() {
  -------------------------------------------------------------------- */
 
 
-int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v, float w, float h ){
+int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v, float w, float h, float tx, float ty ){
 	
 	int shaderIndex = textured ? SHADER_TEXTURE : 0;
-	
-	if ( this->tileX != 1 || this->tileY != 1 ) shaderIndex |= SHADER_TILE;
+
+	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
 	
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
 	
@@ -171,11 +161,11 @@ int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v,
 	// tile
 	if ( variant.tileUniform >= 0 ) {
 		if ( rotated ) {
-			params[ 0 ] = this->tileY;
-			params[ 1 ] = this->tileX;
+			params[ 0 ] = ty;
+			params[ 1 ] = tx;
 		} else {
-			params[ 1 ] = this->tileY;
-			params[ 0 ] = this->tileX;
+			params[ 1 ] = ty;
+			params[ 0 ] = tx;
 		}
 		GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
 	}

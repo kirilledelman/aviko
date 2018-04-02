@@ -537,8 +537,7 @@ void UIBehavior::InitClass() {
 			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->padTop ) ) {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->padRight ) ) {
 					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->padBottom ) ) {
-						if ( val.value.arrayValue->size() >= 4 )
-							val.value.arrayValue->at( 3 ).toNumber( ui->padLeft );
+						if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 3 ).toNumber( ui->padLeft );
 					}
 				}
 			}
@@ -617,8 +616,7 @@ void UIBehavior::InitClass() {
 			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->marginTop ) ) {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->marginRight ) ) {
 					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( ui->marginBottom ) ) {
-						if ( val.value.arrayValue->size() >= 4 )
-							val.value.arrayValue->at( 3 ).toNumber( ui->marginLeft );
+						if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 3 ).toNumber( ui->marginLeft );
 					}
 				}
 			}

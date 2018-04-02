@@ -429,6 +429,9 @@ UI.base = UI.base ? UI.base : {
 			// (Boolean) allows keyboard / navigation focus
 			[ 'focusable',  function (){ return ui.focusable; }, function ( v ){ ui.focusable = v; } ],
 
+			// (Boolean) is field currently focused
+			[ 'focused',  function (){ return ui.focused; } ],
+
 			// (UI) or (GameObject) or null - object to focus to the left of this control
 			[ 'focusLeft',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
 

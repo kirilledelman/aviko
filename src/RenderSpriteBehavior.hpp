@@ -36,7 +36,13 @@ public:
 
 	/// flip vertically
 	bool flipY = false;
-		
+	
+	// tiling
+	float tileX = 1;
+	float tileY = 1;
+	bool autoTileX = false;
+	bool autoTileY = false;
+	
 // scripting
 	
 	/// registers class for scripting

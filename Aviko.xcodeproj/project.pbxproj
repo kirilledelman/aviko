@@ -204,7 +204,6 @@
 		710A47361F7EB4F300A89171 /* Color.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Color.hpp; path = src/Color.hpp; sourceTree = "<group>"; };
 		71130ED81F5494CD001D453E /* RigidBodyBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RigidBodyBehavior.cpp; path = src/RigidBodyBehavior.cpp; sourceTree = "<group>"; };
 		71130ED91F5494CD001D453E /* RigidBodyBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RigidBodyBehavior.hpp; path = src/RigidBodyBehavior.hpp; sourceTree = "<group>"; };
-		71257C601F520EFC006A8EEC /* fxport.jsfl */ = {isa = PBXFileReference; lastKnownFileType = text; path = fxport.jsfl; sourceTree = "<group>"; };
 		7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptResource.cpp; path = src/ScriptResource.cpp; sourceTree = "<group>"; };
 		7126DBBA1F8404B900BD4E44 /* ScriptResource.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptResource.hpp; path = src/ScriptResource.hpp; sourceTree = "<group>"; };
 		7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScriptHost.cpp; path = src/ScriptHost.cpp; sourceTree = "<group>"; };
@@ -468,7 +467,6 @@
 				71F343331F950B5D00A850A4 /* documentation.txt */,
 				71EB81A61F803BDF0087F25B /* makefile-opi */,
 				71EB81A71F803BDF0087F25B /* makefile-rpi */,
-				71257C601F520EFC006A8EEC /* fxport.jsfl */,
 				71BD96471FFBF44400F3919E /* demo */,
 				716245101F42261E0091E488 /* src */,
 				717C0CA31F40F92200AA54E7 /* Products */,

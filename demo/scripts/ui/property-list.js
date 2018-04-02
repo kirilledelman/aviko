@@ -214,9 +214,10 @@ include( './ui' );
 			for( var i in g.properties ) {
 				var pname = g.properties[ i ];
 				var pdef = properties[ pname ];
-				if ( target[ pname ] !== undefined && // target has property
+				if ( ( target[ pname ] !== undefined && // target has property
 					( ( showAll && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
-					( !showAll && pdef !== undefined && pdef !== false ) ) ) { // showing select properties, and prop is included
+					( !showAll && pdef !== undefined && pdef !== false ) ) ) || // showing select properties, and prop is included
+					( pdef && pdef.target ) ) { // or has overridden target
 						props.push( pname );
 						mappedProps[ pname ] = g.name;
 				}
@@ -234,6 +235,7 @@ include( './ui' );
 				}
 			}
 		}
+
 		// sort default group by name
 		regroup[ ' ' ].sort();
 
@@ -268,7 +270,8 @@ include( './ui' );
 				} );
 
 				// value/type
-				var fieldValue = target[ pname ];
+				var curTarget = ( pdef && pdef.target ? pdef.target : target );
+				var fieldValue = curTarget[ pname ];
 				var fieldType = typeof( fieldValue );
 
 				// check for enumeration
@@ -281,7 +284,7 @@ include( './ui' );
 					case 'number':
 						field = cont.addChild( './textfield', {
 							name: pname,
-							target: target,
+							target: curTarget,
 							change: go.fieldChanged,
 							numeric: true,
 							flex: 1,
@@ -298,7 +301,7 @@ include( './ui' );
 					case 'enum':
 						field = cont.addChild( './dropdown', {
 							name: pname,
-							target: target,
+							target: curTarget,
 							change: go.fieldChanged,
 							flex: 1,
 							value: fieldValue,
@@ -311,9 +314,9 @@ include( './ui' );
 					case 'boolean':
 						field = cont.addChild( './checkbox', {
 							name: pname,
-							target: target,
+							target: curTarget,
 							change: go.fieldChanged,
-							value: fieldValue,
+							checked: fieldValue,
 							disabled: disabled,
 							text: fieldValue ? "True" : "False",
 							flex: 1,
@@ -361,7 +364,7 @@ include( './ui' );
 					default:
 						field = cont.addChild( './text', {
 							name: pname,
-							target: target,
+							target: curTarget,
 							change: go.fieldChanged,
 							flex: 1,
 							text: fieldValue ? fieldValue.toString() : '',
@@ -374,9 +377,8 @@ include( './ui' );
 				if ( field ) {
 					allFields.push( field );
 					if ( pdef ) {
-						if ( pdef.disabled ) {
-							field.disabled = true;
-						}
+						// disabled
+						if ( pdef.disabled ) field.disabled = true;
 					}
 				}
 				numRows++;
@@ -413,6 +415,7 @@ include( './ui' );
 
 		// fire changed
 		go.fire( 'change', this.target, this.name, val, oldVal );
+		go.debounce( 'reload', go.reload );
 
 	}
 
@@ -424,6 +427,7 @@ include( './ui' );
 		// update fields
 		for ( var i in allFields ) {
 			var field = allFields[ i ];
+			if ( field.focused ) continue;
 			var val = target[ field.name ];
 			var tp = typeof( val ) ;
 			if ( tp == 'object' && field.reload ) {

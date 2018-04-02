@@ -204,7 +204,27 @@ void RenderSpriteBehavior::InitClass() {
 		else if ( rs->imageResource ) return (int) rs->imageResource->frame.actualHeight;
 		return 0;
 	}));
-
+	
+	script.AddProperty<RenderSpriteBehavior>
+	( "tileX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->tileX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->tileX = val ); }) );
+	
+	script.AddProperty<RenderSpriteBehavior>
+	( "tileY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->tileY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->tileY = val ); }) );
+	
+	script.AddProperty<RenderSpriteBehavior>
+	( "autoTileX",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->autoTileX; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->autoTileX = val; }) );
+	
+	script.AddProperty<RenderSpriteBehavior>
+	( "autoTileY",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->autoTileY; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->autoTileY = val; }) );
+	
 	script.AddProperty<RenderSpriteBehavior>
 	( "flipX",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderSpriteBehavior*) b)->flipX; }),
@@ -235,7 +255,7 @@ void RenderSpriteBehavior::InitClass() {
 			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( rs->slice.x ) ) {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( rs->slice.y ) ) {
 					if ( val.value.arrayValue->size() >= 3 && val.value.arrayValue->at( 2 ).toNumber( rs->slice.w ) ) {
-						if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 0 ).toNumber( rs->slice.h );
+						if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 3 ).toNumber( rs->slice.h );
 					}
 				}
 			}
@@ -335,6 +355,9 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	};
 	static RenderSlice slices[ 9 ];
 	
+	// effective tiling
+	float tileX = 1, tileY = 1;
+	
 	// texture
 	if ( behavior->imageResource ) {
 		
@@ -348,21 +371,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		rotated = frame->rotated;
 		trimmed = frame->trimmed;
 		
-		// activate shader
-		behavior->SelectShader
-		( true,
-		  frame->rotated,
-		  srcRect.x / image->base_w,
-		  srcRect.y / image->base_h,
-	      srcRect.w / image->base_w,
-		  srcRect.h / image->base_h );
-		
-		if ( sliced ) {
-			cx += frame->trimOffsetX;
-		} else {
-			cx += frame->trimOffsetX * sx;
-		}
-
 		// apply trim
 		effectiveWidth = fmax( 0, effectiveWidth - frame->trimWidth );
 		effectiveHeight = fmax( 0, effectiveHeight - frame->trimHeight );
@@ -391,7 +399,27 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			}
 			
 		}
-				
+		
+		// tiling
+		tileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
+		tileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+		
+		// activate shader
+		behavior->SelectShader
+		( true,
+		 frame->rotated,
+		 srcRect.x / image->base_w,
+		 srcRect.y / image->base_h,
+		 srcRect.w / image->base_w,
+		 srcRect.h / image->base_h,
+		 tileX, tileY );
+		
+		if ( sliced ) {
+			cx += frame->trimOffsetX;
+		} else {
+			cx += frame->trimOffsetX * sx;
+		}
+		
 	// Image instance
 	} else if ( behavior->imageInstance ) {
 		
@@ -414,8 +442,12 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		sy = behavior->height / srcRect.h;
 		sx = behavior->width / srcRect.w;
 		
+		// tiling
+		tileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
+		tileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+		
 		// activate shader
-		behavior->SelectShader( true );
+		behavior->SelectShader( true, 0, 0, 1, 1, tileX, tileY );
 		
 	}
 	
@@ -452,7 +484,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			
 			// clip
 			behavior->width = max( behavior->width, left + right + sliceMidX );
-			behavior->height = max( behavior->height, top + right + sliceMidY );
+			behavior->height = max( behavior->height, top + bottom + sliceMidY );
 			
 			// bottom left
 			int i = 0;
@@ -569,7 +601,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			
 			// clip
 			behavior->width = max( behavior->width, left + right + sliceMidX );
-			behavior->height = max( behavior->height, top + right + sliceMidY );
+			behavior->height = max( behavior->height, top + bottom + sliceMidY );
 			
 			// upper left
 			int i = 0;
@@ -691,7 +723,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 				sy *= -1;
 				cy += behavior->height;
 			}
-			
 		}
 		
 		// pivot
@@ -714,7 +745,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// transform
 		GPU_PushMatrix();
 		if ( behavior->flipX || behavior->flipY ) {
-			//if ( !behavior->centered ) GPU_Translate( behavior->flipX ? behavior->width : 0, behavior->flipY ? behavior->height : 0, 0 );
 			GPU_Scale( behavior->flipX ? -1 : 1, behavior->flipY ? -1 : 1, 1 );
 		}
 		GPU_Translate( -behavior->width * behavior->pivotX, -behavior->height * behavior->pivotY, 0 );
@@ -729,3 +759,13 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	}
 	
 }
+
+
+
+
+
+
+
+
+
+

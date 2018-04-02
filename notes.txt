@@ -1,3 +1,9 @@
+
+add .boldFont, .italicFont to RenderText, use those for glyphs
+
+property editor - default property descriptions etc, can be attached in UI.style section
+
+
 Image
 	save
 

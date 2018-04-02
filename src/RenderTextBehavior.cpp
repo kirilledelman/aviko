@@ -15,7 +15,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	RenderBehavior::AddDefaults();
 	
 	//
-	this->blendMode = GPU_BLEND_PREMULTIPLIED_ALPHA;//GPU_BLEND_NORMAL;
+	this->blendMode = GPU_BLEND_NORMAL;
 	
 	// create background object
 	Color* color = new Color( NULL );
@@ -829,15 +829,20 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 		// otherwise, render glyph
 		TTF_SetFontStyle( this->fontResource->font, (int) style );
 		TTF_SetFontOutline( this->fontResource->font, this->outlineWidth );
-		TTF_SetFontHinting( this->fontResource->font, TTF_HINTING_LIGHT );
+		TTF_SetFontHinting( this->fontResource->font, TTF_HINTING_NORMAL );
 		static SDL_Color white = { 255, 255, 255, 255 };
+		SDL_Surface* ss = NULL;
 		if ( antialias ) {
-			gi->surface = TTF_RenderGlyph_Blended( this->fontResource->font, c, white );
+			ss = TTF_RenderGlyph_Blended( this->fontResource->font, c, white );
 		} else {
-			SDL_Surface *pal = TTF_RenderGlyph_Solid( this->fontResource->font, c, white );
-			gi->surface = SDL_ConvertSurfaceFormat( pal, SDL_PIXELFORMAT_RGBA32, 0 );
-			SDL_FreeSurface( pal );
+			ss = TTF_RenderGlyph_Solid( this->fontResource->font, c, white );
 		}
+		gi->surface = GPU_CopyImageFromSurface( ss );
+		gi->surface->anchor_x = gi->surface->anchor_y = 0;
+		GPU_UnsetImageVirtualResolution( gi->surface );
+		GPU_SetImageFilter( gi->surface, GPU_FILTER_NEAREST );
+		GPU_SetSnapMode( gi->surface, GPU_SNAP_NONE );
+		SDL_FreeSurface( ss );
 	}
 	
 	// done
@@ -858,7 +863,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 	
 	if ( this->fontResource ) {
 		// redraw all lines
-		SDL_Surface* textSurface = NULL;
+		// SDL_Surface* textSurface = NULL;
 		this->lines.clear();
 		RenderTextLine* currentLine = NULL;
 		
@@ -1074,11 +1079,9 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 		size_t totalLines = (int) lines.size();
 		this->scrollHeight = (int) totalLines * lineHeight;
 		float x = 0, y = -scrollTop;
-		SDL_Rect rect;
+		GPU_Rect rect;
 		int selStart = this->selectionStart;
 		int selEnd = this->selectionEnd;
-		Uint32 selColorVal = 0;
-		SDL_Color selColor = this->selectionColor->rgba;
 		if ( selStart > selEnd ) { int tmp = selStart; selStart = selEnd; selEnd = tmp; }
 		
 		// check size
@@ -1088,17 +1091,27 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 		}
 		if ( width <= 0 || height <= 0 ) return;
 		
+		// create surface
 		if ( !justMeasure ) {
+			this->surface = GPU_CreateImage( width, height, GPU_FORMAT_RGBA );
+			if ( !this->surface ) return;			
+			GPU_UnsetImageVirtualResolution( this->surface );
+			GPU_SetImageFilter( this->surface, GPU_FILTER_NEAREST );
+			GPU_SetSnapMode( this->surface, GPU_SNAP_NONE );
+			GPU_LoadTarget( this->surface );
+			GPU_ClearColor( this->surface->target, backgroundColor->rgba );
+			this->surface->anchor_x = this->surface->anchor_y = 0; // reset
+			this->surfaceRect.w = this->surface->base_w;
+			this->surfaceRect.h = this->surface->base_h;
+			GPU_ActivateShaderProgram( 0, NULL );
 			
-			// create surface
-			textSurface = SDL_CreateRGBSurfaceWithFormat( 0, width, height, 32, SDL_PIXELFORMAT_RGBA32 );
-			if ( !textSurface ) return;
-			
-			SDL_Rect temp = { 0, 0, width, height };
-			Uint32 bgColorVal = SDL_MapRGBA( textSurface->format, backgroundColor->rgba.r, backgroundColor->rgba.g, backgroundColor->rgba.b, backgroundColor->rgba.a );
-			SDL_FillRect( textSurface, &temp, bgColorVal );
-			
-			selColorVal = SDL_MapRGBA( textSurface->format, selColor.r, selColor.g, selColor.b, selColor.a );
+			// push matrices
+			GPU_MatrixMode( GPU_PROJECTION );
+			GPU_PushMatrix();
+			GPU_LoadIdentity();
+			GPU_MatrixMode( GPU_MODELVIEW );
+			GPU_PushMatrix();
+			GPU_LoadIdentity();
 		}
 		
 		// for each line
@@ -1143,7 +1156,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 
 				// selection
 				if ( this->showSelection && drawCurrentLine && selStart != selEnd && characterPos >= selStart && characterPos < selEnd ) {
-					SDL_Rect selRect;
+					GPU_Rect selRect;
 					selRect.x = rect.x;
 					selRect.y = y - 1;
 					selRect.h = lineHeight + 1;
@@ -1153,12 +1166,13 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 						selRect.w = character->width;
 					}
 					
-					SDL_FillRect( textSurface, &selRect, selColorVal );
+					GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL );
+					GPU_RectangleFilled2( this->surface->target, selRect, this->selectionColor->rgba );
 				}
 				
                 // caret
 				bool drawCaret = false;
-				SDL_Rect caretRect;
+				GPU_Rect caretRect;
 				if ( character->pos == this->caretPosition - 1 ) {
 					// after current character?
 					caretRect.x = x + character->x + character->width;
@@ -1179,17 +1193,21 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					caretRect.y = y;
 					caretRect.h = lineHeight;
 					caretRect.w = max( 1.0f, this->fontSize * 0.1f );
-					SDL_FillRect( textSurface, &caretRect, SDL_MapRGB(textSurface->format, character->color.r, character->color.g, character->color.b ) );
+					GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL );
+					GPU_RectangleFilled2( this->surface->target, caretRect, character->color );
 				}
 				
 				// draw character
 				if ( drawCurrentLine &&
 					character->glyphInfo && character->glyphInfo->surface &&
 					!justMeasure && (character->pos >= revealStart && character->pos <= lastReveal ) ) {
+					
 					// set color
-					SDL_SetSurfaceColorMod( character->glyphInfo->surface, character->color.r, character->color.g, character->color.b );
+					GPU_SetColor( character->glyphInfo->surface, character->color );
+					GPU_SetBlendMode( this->surface, GPU_BLEND_MOD_ALPHA );
+					
 					// draw
-					SDL_UpperBlit(character->glyphInfo->surface, NULL, textSurface, &rect );
+					GPU_Blit( character->glyphInfo->surface, NULL, this->surface->target, rect.x, rect.y );
 				}
 				
 				// next character
@@ -1201,18 +1219,13 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			lineIndex++;
 		}
 		
-		// done measuring
-		if ( justMeasure ) return;
-		
-		// convert to GPU_Image
-		this->surface = GPU_CopyImageFromSurface( textSurface );
-		SDL_FreeSurface( textSurface );
-		
-		this->surface->anchor_x = this->surface->anchor_y = 0; // reset
-		GPU_SetImageFilter( this->surface, GPU_FILTER_NEAREST );
-		GPU_SetSnapMode( this->surface, GPU_SNAP_NONE );
-		this->surfaceRect.w = this->surface->base_w;
-		this->surfaceRect.h = this->surface->base_h;
+		// restore matrices
+		if ( !justMeasure ) {
+			GPU_MatrixMode( GPU_PROJECTION );
+			GPU_PopMatrix();
+			GPU_MatrixMode( GPU_MODELVIEW );
+			GPU_PopMatrix();
+		}
 		
 	}
 	

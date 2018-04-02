@@ -34,10 +34,6 @@ public:
 	Color *color = NULL;
 	Color *addColor = NULL;
 	
-	/// tiling
-	float tileX = 1;
-	float tileY = 1;
-	
 	// rendering pivot / offset ( range 0.0 - 1.0 )
 	float pivotX = 0;
 	float pivotY = 0;
@@ -78,7 +74,7 @@ public:
 	static SpriteShaderVariant shaders[ 8 ];
 
 	/// applies current shader + params
-	int SelectShader( bool textured, bool rotated = false, float u = 0, float v = 0, float w = 1, float h = 1 );
+	int SelectShader( bool textured, bool rotated = false, float u = 0, float v = 0, float w = 1, float h = 1, float tx = 1, float ty = 1 );
 
 	/// resets shader to default
 	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }

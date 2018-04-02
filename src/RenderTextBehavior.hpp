@@ -14,14 +14,15 @@ protected:
 	
 	// a prerendered single glyph
 	struct GlyphInfo {
-		SDL_Surface* surface = NULL;
+		//SDL_Surface* surface = NULL;
+		GPU_Image* surface = NULL;
 		int minX = 0;
 		int minY = 0;
 		int maxX = 0;
 		int maxY = 0;
 		int advance = 0;
 		GlyphInfo(){};
-		~GlyphInfo(){ if ( this->surface ) SDL_FreeSurface( this->surface ); };
+		~GlyphInfo(){ if ( this->surface ) { GPU_FreeTarget( this->surface->target ); GPU_FreeImage( this->surface ); } /* SDL_FreeSurface( this->surface ); */ };
 	};
 	
 	// single character
