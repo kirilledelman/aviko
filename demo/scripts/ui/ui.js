@@ -34,6 +34,10 @@ UI.style = UI.style ? UI.style : {
 
 	// text label - ui/text.js
 	text: {
+		font: 'Roboto-Regular',
+		boldFont: 'Roboto-Black',
+		italicFont: 'Roboto-Italic',
+		boldItalicFont: 'Roboto-BlackItalic',
 		size: 12,
 		textAlign: TextAlign.Left,
 		color: 0xFFFFFF,
@@ -41,6 +45,10 @@ UI.style = UI.style ? UI.style : {
 
 	// text input field - ui/textfield.js
 	textfield: {
+		font: 'Roboto-Regular',
+		boldFont: 'Roboto-Black',
+		italicFont: 'Roboto-Italic',
+		boldItalicFont: 'Roboto-BlackItalic',
 		size: 12,
 		color: 0x0,
 		selectionColor: 0x0073b9,
@@ -117,13 +125,14 @@ UI.style = UI.style ? UI.style : {
 	// button - ui/button.js
 	button: {
 		slice: 10,
-		pad: 8,
+		pad: 12,
 		focusRect: true,
 
 		// apply to button's label (ui/text.js)
 		label: {
-			color: 0x0,
-			size: 16
+			color: 0xFFFFFF,
+			size: 16,
+			bold: true,
 		},
 
 		// apply to icon image (ui/image.js)
@@ -148,9 +157,6 @@ UI.style = UI.style ? UI.style : {
 			},
 			disabled: {
 				background: './textures/ui:button-disabled',
-				label: {
-					color: 0x333333
-				}
 			},
 		}
 	},

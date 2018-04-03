@@ -63,6 +63,9 @@ public:
 	
 	/// font for drawing
 	FontResource* fontResource = NULL;
+	FontResource* fontBoldResource = NULL;
+	FontResource* fontItalicResource = NULL;
+	FontResource* fontBoldItalicResource = NULL;
 	
 	/// finished surface
 	GPU_Image* surface = NULL;
@@ -73,6 +76,9 @@ public:
 	
 	/// font name
 	string fontName;
+	string fontBoldName;
+	string fontItalicName;
+	string fontBoldItalicName;
 	
 	/// text
 	string text;
@@ -174,7 +180,7 @@ public:
 // methods
 	
 	/// assigns font
-	bool SetFont( const char* face, int size );
+	bool SetFont( const char* face, int size, bool b, bool i );
 	
 	/// repaints current text, clears dirty flag
 	void Repaint( bool justMeasure=false );

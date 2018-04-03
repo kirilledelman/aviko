@@ -135,10 +135,16 @@ include( './ui' );
 		} ],
 
 		// (string) font name
-		[ 'font',  function (){ return rt.font; }, function ( f ){
-			rt.font = f;
-			go.scrollCaretToView();
-		} ],
+		[ 'font',  function (){ return rt.font; }, function ( f ){ rt.font = f; go.scrollCaretToView(); } ],
+
+		// (string) optional bold font name (improves rendering)
+		[ 'boldFont',  function (){ return rt.boldFont; }, function ( f ){ rt.boldFont = f; go.scrollCaretToView(); } ],
+
+		// (string) optional italic font name (improves rendering)
+		[ 'italicFont',  function (){ return rt.italicFont; }, function ( f ){ rt.italicFont = f; go.scrollCaretToView(); } ],
+
+		// (string) optional bold+italic font name (improves rendering)
+		[ 'boldItalicFont',  function (){ return rt.boldItalicFont; }, function ( f ){ rt.boldItalicFont = f; go.scrollCaretToView(); } ],
 
 		// (Number) font size
 		[ 'size',  function (){ return rt.size; }, function ( s ){

@@ -48,7 +48,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 		int size = this->fontSize;
 		void* initObj = NULL;
 		if ( args->ReadArguments( 1, TypeString, &fname, TypeInt, &size ) ) {
-			SetFont( fname.c_str(), size );
+			SetFont( fname.c_str(), size, false, false );
 			return;
 		} else if ( args->ReadArguments( 1, TypeObject, &initObj ) ) {
 			script.CopyProperties( initObj, this->scriptObject );
@@ -56,7 +56,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 		}
 	}
 	// default
-	SetFont( app.defaultFontName.c_str(), this->fontSize );
+	SetFont( app.defaultFontName.c_str(), this->fontSize, false, false );
 	
 	// set default width, height
 	if ( !this->width ) this->width = this->fontSize * 10;
@@ -345,8 +345,73 @@ void RenderTextBehavior::InitClass() {
 			if ( rs->fontResource ) rs->fontResource->AdjustUseCount( -1 );
 			rs->fontResource = NULL;
 			rs->fontName = "";
+			rs->_dirty = true;
+			rs->ClearGlyphs();
 		} else if ( val.type == TypeString ) {
-			rs->SetFont( val.value.stringValue->c_str(), rs->fontSize );
+			rs->SetFont( val.value.stringValue->c_str(), rs->fontSize, false, false );
+		}
+		return val;
+	}));
+
+	script.AddProperty<RenderTextBehavior>
+	( "boldFont",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		return ArgValue( ( (RenderTextBehavior*) b )->fontBoldName.c_str() );
+	} ),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		// if clearing
+		if ( val.isNull() || val.type != TypeString ) {
+			// clear previous
+			if ( rs->fontBoldResource ) rs->fontBoldResource->AdjustUseCount( -1 );
+			rs->fontBoldResource = NULL;
+			rs->fontBoldName = "";
+			rs->_dirty = true;
+			rs->ClearGlyphs();
+		} else if ( val.type == TypeString ) {
+			rs->SetFont( val.value.stringValue->c_str(), rs->fontSize, true, false );
+		}
+		return val;
+	}));
+
+	script.AddProperty<RenderTextBehavior>
+	( "italicFont",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		return ArgValue( ( (RenderTextBehavior*) b )->fontItalicName.c_str() );
+	} ),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		// if clearing
+		if ( val.isNull() || val.type != TypeString ) {
+			// clear previous
+			if ( rs->fontItalicResource ) rs->fontItalicResource->AdjustUseCount( -1 );
+			rs->fontItalicResource = NULL;
+			rs->fontItalicName = "";
+			rs->_dirty = true;
+			rs->ClearGlyphs();
+		} else if ( val.type == TypeString ) {
+			rs->SetFont( val.value.stringValue->c_str(), rs->fontSize, false, true );
+		}
+		return val;
+	}));
+	
+	script.AddProperty<RenderTextBehavior>
+	( "boldItalicFont",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		return ArgValue( ( (RenderTextBehavior*) b )->fontBoldItalicName.c_str() );
+	} ),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		// if clearing
+		if ( val.isNull() || val.type != TypeString ) {
+			// clear previous
+			if ( rs->fontBoldItalicResource ) rs->fontBoldItalicResource->AdjustUseCount( -1 );
+			rs->fontBoldItalicResource = NULL;
+			rs->fontBoldItalicName = "";
+			rs->_dirty = true;
+			rs->ClearGlyphs();
+		} else if ( val.type == TypeString ) {
+			rs->SetFont( val.value.stringValue->c_str(), rs->fontSize, true, true );
 		}
 		return val;
 	}));
@@ -356,7 +421,11 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->fontSize; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		rs->SetFont( rs->fontName.c_str(), val );
+		// reload all font variants
+		if ( rs->fontResource && rs->fontResource->size != val ) rs->SetFont( rs->fontName.c_str(), val, false, false );
+		if ( rs->fontBoldResource && rs->fontBoldResource->size != val ) rs->SetFont( rs->fontBoldName.c_str(), val, true, false );
+		if ( rs->fontItalicResource && rs->fontItalicResource->size != val ) rs->SetFont( rs->fontItalicName.c_str(), val, false, true );
+		if ( rs->fontBoldItalicResource && rs->fontBoldItalicResource->size != val ) rs->SetFont( rs->fontBoldItalicName.c_str(), val, true, true );
 		return rs->fontSize;
 	 }));
 	
@@ -704,14 +773,14 @@ void RenderTextBehavior::ClearGlyphs() {
 }
 
 /// sets font
-bool RenderTextBehavior::SetFont( const char* face, int size ) {
+bool RenderTextBehavior::SetFont( const char* face, int size, bool b, bool i ) {
 
-	// trim
-	size = max( 1, min( 512, size ) );
-	
-	// load font
-	FontResource* fnt = NULL;
-	if ( face != NULL ) {
+	if ( face ) {
+		// trim
+		size = max( 1, min( 512, size ) );
+		
+		// load font
+		FontResource* fnt = NULL;
 		static char buf[ 128 ];
 		sprintf( buf, "%s,%d", face, size );
 		fnt = app.fontManager.Get( buf );
@@ -719,18 +788,34 @@ bool RenderTextBehavior::SetFont( const char* face, int size ) {
 		if ( fnt->error == ERROR_NONE ) {
 			fnt->AdjustUseCount( 1 );
 		} else return false;
-	}
 
-	// clear previous
-	if ( this->fontResource ) this->fontResource->AdjustUseCount( -1 );
+		// set appropriate font resource/name
+		TTF_SetFontKerning( fnt->font, 0 );
+		FontResource** thisResource = &this->fontResource;
+		string* thisFontName = &this->fontName;
+		
+		if ( b && i ) {
+			thisResource = &this->fontBoldItalicResource;
+			thisFontName = &this->fontBoldItalicName;
+		} else if ( b ) {
+			thisResource = &this->fontBoldResource;
+			thisFontName = &this->fontBoldName;
+		} else if ( i ) {
+			thisResource = &this->fontItalicResource;
+			thisFontName = &this->fontItalicName;
+		}
+		
+		// clear previous
+		if ( *thisResource != NULL ) (*thisResource)->AdjustUseCount( -1 );
+		
+		// set new
+		(*thisResource) = fnt;
+		(*thisFontName) = face;
+	}
 	
-	// set new
-	this->fontResource = fnt;
-	this->fontName = face;
 	this->fontSize = size;
 	this->_dirty = true;
 	this->ClearGlyphs();
-	TTF_SetFontKerning( fnt->font, 1 );
 	return true;
 	
 }
@@ -826,16 +911,48 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 	
 	// if printable character
 	if ( c >= 32 && TTF_GlyphMetrics( this->fontResource->font, c, &gi->minX, &gi->maxX, &gi->minY, &gi->maxY, &gi->advance ) == 0 ) {
-		// otherwise, render glyph
-		TTF_SetFontStyle( this->fontResource->font, (int) style );
-		TTF_SetFontOutline( this->fontResource->font, this->outlineWidth );
-		TTF_SetFontHinting( this->fontResource->font, TTF_HINTING_NORMAL );
+		// set font and style
+		FontResource* fres = this->fontResource;
+		if ( b && i ) {
+			if ( this->fontBoldItalicResource ) {
+				fres = this->fontBoldItalicResource;
+				TTF_SetFontStyle( fres->font, 0 );
+			} else if ( this->fontBoldResource ) {
+				fres = this->fontBoldResource;
+				TTF_SetFontStyle( fres->font, TTF_STYLE_ITALIC );
+			} else if ( this->fontItalicResource ) {
+				fres = this->fontItalicResource;
+				TTF_SetFontStyle( fres->font, TTF_STYLE_BOLD );
+			} else {
+				TTF_SetFontStyle( fres->font, (int) style );
+			}
+		} else if ( b ) {
+			if ( this->fontBoldResource ) {
+				fres = this->fontBoldResource;
+				TTF_SetFontStyle( fres->font, 0 );
+			} else {
+				TTF_SetFontStyle( fres->font, (int) style );
+			}
+		} else if ( i ) {
+			if ( this->fontItalicResource ) {
+				fres = this->fontItalicResource;
+				TTF_SetFontStyle( fres->font, 0 );
+			} else {
+				TTF_SetFontStyle( fres->font, (int) style );
+			}
+		} else {
+			TTF_SetFontStyle( fres->font, 0 );
+		}
+		
+		// draw
+		TTF_SetFontOutline( fres->font, this->outlineWidth );
+		TTF_SetFontHinting( fres->font, TTF_HINTING_NORMAL );
 		static SDL_Color white = { 255, 255, 255, 255 };
 		SDL_Surface* ss = NULL;
 		if ( antialias ) {
-			ss = TTF_RenderGlyph_Blended( this->fontResource->font, c, white );
+			ss = TTF_RenderGlyph_Blended( fres->font, c, white );
 		} else {
-			ss = TTF_RenderGlyph_Solid( this->fontResource->font, c, white );
+			ss = TTF_RenderGlyph_Solid( fres->font, c, white );
 		}
 		gi->surface = GPU_CopyImageFromSurface( ss );
 		gi->surface->anchor_x = gi->surface->anchor_y = 0;
