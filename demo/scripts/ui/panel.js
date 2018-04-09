@@ -22,6 +22,7 @@ include( './ui' );
 
 	// internal props
 	var ui = new UI(), bg, shp, background = false;
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -108,6 +109,8 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.panel );
+	go.baseStyle = Object.create( UI.style.panel );
+	UI.base.applyProperties( go, go.baseStyle );
+	constructing = false;
 
 })(this);

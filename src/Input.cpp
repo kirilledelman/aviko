@@ -446,8 +446,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_CTRL );
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_GUI );
 		event.scriptParams.AddBoolArgument( e.key.repeat > 0 );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_KEYUP ) {
 		joy = joysticks[ -9999 ];
 		event.name = EVENT_KEYUP;
@@ -458,16 +458,16 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_ALT );
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_CTRL );
 		event.scriptParams.AddBoolArgument( e.key.keysym.mod & KMOD_GUI );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_TEXTINPUT ) {
 		joy = joysticks[ -9999 ];
 		event.name = EVENT_KEYPRESS;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddStringArgument( e.text.text );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} /*else if ( etype == SDL_TEXTEDITING ) {
 		joy = joysticks[ -9999 ];
 		printf( "SDL_TEXTEDITING %s\n", e.edit.text );
@@ -484,8 +484,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddIntArgument( e.button.button );
 		event.scriptParams.AddFloatArgument( ( e.motion.x - app.backScreenDstRect.x ) * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( ( e.motion.y - app.backScreenDstRect.y ) * app.backscreenScale );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_MOUSEBUTTONUP ) {
 		event.name = EVENT_MOUSEUP;
 		event.behaviorParam = &e;
@@ -493,8 +493,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddIntArgument( e.button.button );
 		event.scriptParams.AddFloatArgument( ( e.motion.x - app.backScreenDstRect.x ) * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( ( e.motion.y - app.backScreenDstRect.y ) * app.backscreenScale );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_MOUSEMOTION ) {
 		event.name = EVENT_MOUSEMOVE;
 		event.behaviorParam = &e;
@@ -503,16 +503,16 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( ( e.motion.y - app.backScreenDstRect.y ) * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( e.motion.xrel * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( e.motion.yrel * app.backscreenScale );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_MOUSEWHEEL ) {
 		event.name = EVENT_MOUSEWHEEL;
 		event.behaviorParam = &e;
 		event.scriptParams.ResizeArguments( 0 );
 		event.scriptParams.AddFloatArgument( e.wheel.y * mouseWheelScale );
 		event.scriptParams.AddFloatArgument( e.wheel.x * mouseWheelScale );
-		CallEvent( event );
 		UIEvent( event );
+		CallEvent( event );
 	} else if ( etype == SDL_JOYDEVICEADDED ) {
 		// add to joysticks
 		SDL_Joystick* jck = SDL_JoystickOpen( e.jdevice.which );
@@ -586,7 +586,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 	}
 	
 	// if controller was found, pass the event
-	if ( joy ) {
+	if ( joy && !event.stopped ) {
 		joy->HandleEvent( e );
 	}
 	

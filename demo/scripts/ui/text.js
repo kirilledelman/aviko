@@ -20,6 +20,7 @@ include( './ui' );
 
 	// inner props
 	var ui = new UI(), tc, rt;
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -27,25 +28,9 @@ include( './ui' );
 
 		// (String) text
 		[ 'text',   function (){ return rt.text; }, function( t ){
-			if ( !rt.wrap || !ui.width ) {
-				rt.autoResize = true;
-				rt.text = t;
-				rt.measure();
-				ui.width = rt.width + ui.padLeft + ui.padRight;
-				ui.height = rt.height + ui.padTop + ui.padTop;
-				rt.autoResize = false;
-			} else {
-				rt.text = t;
-				ui.requestLayout( 'text' );
-			}
-
+			rt.text = t;
+			ui.requestLayout();
 		} ],
-
-		// (Number) current width of the control
-		[ 'width',  function (){ return ui.width; }, function ( w ){ ui.width = w; } ],
-
-		// (Number) current height of the control
-		[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; } ],
 
 		// (string) font name
 		[ 'font',  function (){ return rt.font; }, function ( f ){ rt.font = f; ui.requestLayout( 'font' ); } ],
@@ -69,7 +54,7 @@ include( './ui' );
 		[ 'align',  function (){ return rt.align; }, function ( w ){ rt.align = w; } ],
 
 		// (Number) extra spacing between characters
-		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; } ],
+		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; ui.requestLayout( 'characterSpacing' ); } ],
 
 		// (Number) multiLine line spacing
 		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){ rt.lineSpacing = v; ui.requestLayout( 'lineSpacing' ); } ],
@@ -122,6 +107,9 @@ include( './ui' );
 		// (Number) or (Color) ^9 color
 		[ 'color9',  function (){ return rt.color9; }, function ( v ){ rt.color9 = v; } ],
 
+		// (Number) or (Color) background color
+		[ 'backgroundColor',  function (){ return rt.backgroundColor; }, function ( v ){ rt.backgroundColor = v; } ],
+
 		// (Integer) characters to skip rendering from beginning of string
 		[ 'revealStart',  function (){ return rt.revealStart; }, function ( s ){ rt.revealStart = s; } ],
 
@@ -138,7 +126,7 @@ include( './ui' );
 	if ( !go.name ) go.name = "Text";
 
 	// text container
-	tc = new GameObject();
+	tc = go.addChild();
 	rt = new RenderText();
 	rt.autoResize = false;
 	rt.multiLine = true;
@@ -147,27 +135,37 @@ include( './ui' );
 	tc.serialized = false;
 
 	// UI
-	ui.layoutType = Layout.Anchors;
+	ui.layoutType = Layout.None;
 	ui.minWidth = 10; ui.minHeight = 10;
 	ui.focusable = false;
 	go.ui = ui;
 
-	// children are added after component is awake,
-	// because component's component-children may be overwritten on unserialize
-	go.awake = function () {
-		go.addChild( tc );
-	};
+	// immediate
+	go.updateSize = function() {
+		rt.autoResize = true;
+		if ( rt.wrap ) {
+			rt.width = ui.width - (ui.padLeft + ui.padRight);
+			rt.measure();
+			ui.minWidth = rt.size * 2 + (ui.padLeft + ui.padRight);
+		} else {
+			rt.measure();
+			ui.minWidth = rt.width + ui.padLeft + ui.padRight;
+		}
+		ui.minHeight = rt.height + (ui.padTop + ui.padBottom);
+		rt.width = ui.width - (ui.padLeft + ui.padRight);
+		rt.autoResize = false;
+	}
 
 	// layout components
 	ui.layout = function ( w, h ) {
 		tc.setTransform( ui.padLeft, ui.padTop );
-		rt.width = w - ( ui.padLeft + ui.padRight );
-		rt.measure();
-		rt.height = rt.numLines * rt.lineHeight;
-		ui.height = ui.minHeight = rt.height + ui.padTop + ui.padBottom;
+		go.updateSize();
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.text );
+	go.baseStyle = Object.create( UI.style.text );
+	UI.base.applyProperties( go, go.baseStyle );
+	go.updateSize();
+	constructing = false;
 
 })(this);

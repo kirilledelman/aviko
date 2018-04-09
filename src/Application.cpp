@@ -353,6 +353,13 @@ void Application::InitClass() {
 	}));
 	
 	script.AddProperty<Application>
+	("debugUI",
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.debugUI; }),
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){
+		return (app.debugUI = v);
+	}));
+	
+	script.AddProperty<Application>
 	("isUnserializing",
 	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.isUnserializing; }));
 	
@@ -1066,7 +1073,6 @@ void Application::GameLoop() {
 		
 		// copy to main screen and flip
 		GPU_ActivateShaderProgram(0, NULL);
-//		GPU_Clear( this->screen );
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );
 		GPU_Flip( this->screen );
 		
@@ -1084,7 +1090,7 @@ void Application::GameLoop() {
 
 
 /// add / replace event to run right before render, returns params member of LateEvent struct
-ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch ) {
+ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch, bool bubbles ) {
 	LateEvent* event = NULL;
 	
 	// find existing for this object
@@ -1096,10 +1102,12 @@ ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eve
 	if ( it != eventMap.end() ) {
 		event = &(it->second);
 		event->lateDispatch = dispatch;
+		event->bubbles = bubbles;
 	} else {
 		// otherwise emplace new
 		auto p = eventMap.emplace( ename, dispatch );
 		event = &(p.first->second);
+		event->bubbles = bubbles;
 	}
 	
 	// return result
@@ -1129,6 +1137,7 @@ void Application::RunLateEvents( int maxRepeats ) {
 			if ( obj->scriptObject ) {
 				LateEvent& le = it->second;
 				Event event( it->first.c_str() );
+				event.bubbles = le.bubbles;
 				// add params
 				for ( size_t i = 0, np = le.params.size(); i < np; i++ ) event.scriptParams.AddArgument( le.params[ i ] );
 				// call

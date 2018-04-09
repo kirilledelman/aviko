@@ -19,7 +19,7 @@
 App.setWindowSize( 640, 480, 1 ); // 720p @ 2x
 
 // auto-configure controller
-include( 'ui/controller-configurator', {
+/* include( 'ui/controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',
@@ -52,7 +52,7 @@ include( 'ui/controller-configurator', {
 			if ( this.get( 'select' ) && this.get( 'start' ) ) quit();
 		} );
 	}
-} );
+} );*/
 
 // auto-show mouse as soon as it moves
 Input.showCursor = false;

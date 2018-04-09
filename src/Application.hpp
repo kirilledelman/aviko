@@ -56,6 +56,9 @@ public:
 	
 	/// computed in UpdateBackscreen
 	float backscreenScale = 0.5;
+	
+	// draw UI debug data
+	bool debugUI = true;
 		
 	/// main display
 	GPU_Target* screen = NULL;
@@ -79,6 +82,7 @@ public:
 	
 	Input input;
 
+	// used to consume stdin input
 	struct termios _savedTerminal;
 	
 // resource managers
@@ -114,6 +118,7 @@ public:
 	// late events are run right before render (layout changes, dispatchLate )
 	struct LateEvent {
 		bool lateDispatch = false;
+		bool bubbles = false;
 		ArgValueVector params;
 		LateEvent( bool disp ) : lateDispatch( disp ) {};
 	};
@@ -127,7 +132,7 @@ public:
 	bool isUnserializing = false;
 	
 	/// add / replace event to run right before render
-	ArgValueVector* AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch=false );
+	ArgValueVector* AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch=false, bool bubbles=false );
 	
 	/// remove late events for object (on destruction)
 	void RemoveLateEvents( ScriptableClass* obj );

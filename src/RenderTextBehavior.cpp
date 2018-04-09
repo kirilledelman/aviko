@@ -790,7 +790,7 @@ bool RenderTextBehavior::SetFont( const char* face, int size, bool b, bool i ) {
 		} else return false;
 
 		// set appropriate font resource/name
-		TTF_SetFontKerning( fnt->font, 0 );
+		TTF_SetFontKerning( fnt->font, 1 );
 		FontResource** thisResource = &this->fontResource;
 		string* thisFontName = &this->fontName;
 		
@@ -943,6 +943,9 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 		} else {
 			TTF_SetFontStyle( fres->font, 0 );
 		}
+		
+		// ensure min advance
+		gi->advance = fmax( gi->advance, gi->maxX - gi->minX );
 		
 		// draw
 		TTF_SetFontOutline( fres->font, this->outlineWidth );
@@ -1118,7 +1121,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			// check if need word wrap
 			
 			// check if current line width will exceed max line width
-			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine && !autoResize ) {
+			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine /* && !autoResize */ ) {
 				// start new line
 				RenderTextLine* prevLine = currentLine;
 				lines.emplace_back();

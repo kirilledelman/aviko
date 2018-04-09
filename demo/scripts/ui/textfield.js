@@ -275,8 +275,8 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			 ui.focusable = !(disabled = v) || acceptToEdit;
-			 if ( v && ui.focused ) ui.blur();
+			 ui.disabled = !(disabled = v) || acceptToEdit;
+			 if ( v && editing ) go.editing = false;
 			 go.state = 'disabled';
 			 go.dispatch( 'layout' );
 		 } ],
@@ -390,8 +390,10 @@ include( './ui' );
 		// focused
 	    if ( newFocus == ui ) {
 		    ui.autoMoveFocus = false;
-	        go.editing = !acceptToEdit;
-		    go.state = 'focus';
+	        if ( !disabled ) {
+		        go.editing = !acceptToEdit;
+		        go.state = 'focus';
+	        }
 		    go.scrollIntoView();
 		    Input.on( 'mouseDown', go.checkClickOutside );
 	    // blurred
@@ -403,7 +405,6 @@ include( './ui' );
 		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
 		go.fire( 'focusChanged', newFocus );
-		// go.dispatch( 'layout' );
 	}
 
 	// navigation event
@@ -710,6 +711,7 @@ include( './ui' );
 				        // text changed?
 				        if ( txt != resetText ) go.fire( 'change', go.value );
 				        go.editing = false;
+				        stopEvent();
 			        }
 		        } else {
 			        ui.navigation( 'accept' );
@@ -783,7 +785,7 @@ include( './ui' );
 			case Key.Down:
 				// numeric
 				if ( numeric ) {
-					go.value += ( code == Key.Up ? step : -step );
+					go.value += ( code == Key.Up ? step : -step ) * ( shift ? 10 : 1 );
 					rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 					go.fire( 'change', go.value );
 					return;
@@ -904,9 +906,10 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.textfield );
-	go.constructing = false;
+	go.baseStyle = Object.create( UI.style.textfield );
+	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
+	constructing = false;
 })(this);
 
 

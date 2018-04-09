@@ -24,7 +24,7 @@ include( './ui' );
 (function(go) {
 
 	// internal props
-	var ui = new UI(), bg, shp, background;
+	var ui = new UI(), bg, shp, background, ticks, label;
 	var handle;
 	var cancelToBlur = false;
 	var acceptToCycle = false;
@@ -34,6 +34,7 @@ include( './ui' );
 	var totalSize = 100;
 	var handleSize = 20;
 	var orientation = 'vertical';
+	var constructing = true;
 	var dragging = false, grabX = 0, grabY = 0;
 	go.serializeMask = { 'ui':1, 'render':1, 'children': 1 };
 
@@ -44,8 +45,8 @@ include( './ui' );
 		[ 'orientation',  function (){ return orientation; }, function ( o ){
 			if ( o != 'vertical' && o != 'horizontal' ) return;
 			orientation = o;
-			// apply defaults
-			UI.base.applyProperties( go, UI.style.scrollbar[ orientation ] );
+			// re-apply style
+			UI.base.applyProperties( go, go.baseStyle[ orientation + 'Style' ] );
 			go.dispatchLate( 'layout' );
 		} ],
 
@@ -93,7 +94,7 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			 disabled = v;
+			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
 			 go.state = 'disabled';
@@ -105,17 +106,20 @@ include( './ui' );
 		// (String) or (Color) or (Number) or (null|false)- scrollbar background set to sprite, or solid color, or nothing
 		[ 'background',  function (){ return background; }, function ( b ){
 			background = b;
-			if ( b === null || b === false ) {
+			if ( background === null || background === false ) {
 				go.render = null;
-			} else if ( typeof( b ) == 'string' ) {
-				bg.texture = b;
+			} else if ( typeof( background ) == 'string' ) {
+				bg.texture = background;
 				bg.resize( ui.width, ui.height );
 				go.render = bg;
 			} else {
-				shp.color = b;
+				shp.color = background;
 				go.render = shp;
 			}
 		}],
+
+		// (ui/text.js) - reference to scroll handle
+		[ 'label',  function (){ return label; } ],
 
 		// (Number) corner roundness when background is solid color
 		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
@@ -162,11 +166,15 @@ include( './ui' );
 		disabled: true,
 		focusable: false,
 		layoutType: Layout.Anchors,
+		fixedPosition: true,
 		states: {}
 	} );
 
+	// label for slider style
+	label = new GameObject( './text' );
+
 	// UI
-	ui.layoutType = Layout.None;
+	ui.layoutType = Layout.Anchors;
 	ui.fitChildren = false;
 	ui.autoMoveFocus = false;
 	ui.focusable = true;
@@ -190,26 +198,26 @@ include( './ui' );
 		w = Math.max( w, ui.padLeft + ui.padRight );
 		h = Math.max( h, ui.padTop + ui.padBottom );
 		go.setTransform( x, y );
-		shp.width = bg.width = w;
-		shp.height = bg.height = h;
 
 		// hide handle if no scrolling needed
 		handle.active = handleSize < totalSize;
 
 		// position handle
 		if ( totalSize > 0 && handle.active ) {
+			shp.width = bg.width = w;
+			shp.height = bg.height = h;
 			if ( orientation == 'vertical' ) {
 				var availSize = h - ui.padTop - ui.padBottom;
 				handle.x = ui.padLeft;
+				handle.y = ui.padTop + Math.round( ( position / totalSize ) * availSize );
 				handle.width = w - ui.padLeft - ui.padRight;
 				handle.height = Math.round( ( handleSize / totalSize ) * availSize );
-				handle.y = ui.padTop + Math.round( ( position / totalSize ) * availSize );
 			} else {
 				var availSize = w - ui.padLeft - ui.padRight;
 				handle.y = ui.padTop;
+				handle.x = ui.padLeft + Math.round( ( position / totalSize ) * availSize );
 				handle.height = h - ui.padTop - ui.padBottom;
 				handle.width = Math.round( ( handleSize / totalSize ) * availSize );
-				handle.x = ui.padLeft + Math.round( ( position / totalSize ) * availSize );
 			}
 		}
 	}
@@ -296,7 +304,7 @@ include( './ui' );
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || dragging ) return;
 		stopAllEvents();
 		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
@@ -365,10 +373,10 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.scrollbar );
-
-	// apply orientation
+	go.baseStyle = Object.create( UI.style.scrollbar );
+	UI.base.applyProperties( go, go.baseStyle );
 	go.orientation = orientation;
 	go.state = 'auto';
+	constructing = false;
 
 })(this);

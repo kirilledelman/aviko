@@ -62,15 +62,14 @@ include( './ui' );
 		// (GameObject) instance of 'ui/text.js' used as label
 		[ 'label',  function (){ return label; } ],
 
-		// (GameObject) instance of 'ui/button.js' used as checkbox
+		// (GameObject) used as checkbox body
 		[ 'checkbox',  function (){ return checkbox; } ],
 
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			 disabled = v;
+			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
-
 			 if ( v && ui.focused ) ui.blur();
 			 go.state = 'disabled';
 			 label.opacity = v ? 0.6 : 1;
@@ -98,14 +97,18 @@ include( './ui' );
 		name: "Checkbox",
 		slice: 0,
 		pad: 0,
+		margin: 0,
 		layoutAlignX: LayoutAlign.Center,
 		layoutAlignY: LayoutAlign.Center,
 		states: {},
 		disabled: true,
 		focusable: false,
 	});
+	checkbox.image.pad = checkbox.image.margin = 0;
+	checkbox.label.active = false;
 	checkbox.image.opacity = 0;
 	checkbox.image.mode = 'icon';
+	checkbox.label.active = false;
 
 	// label
 	label = go.addChild( './text', {
@@ -210,8 +213,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.checkbox );
-	constructing = false;
+	go.baseStyle = Object.create( UI.style.checkbox );
+	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
+	constructing = false;
 
 })(this);

@@ -22,6 +22,7 @@ include( './ui' );
 	// internal props
 	var ui = new UI(), sc, rs, ri;
 	var mode = 'icon';
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -91,10 +92,10 @@ include( './ui' );
 			if ( go.parent && go.parent.ui ) {
 				// parent is vertical list, fit-x
 				if ( go.parent.ui.layoutType == Layout.Vertical ) {
-					ui.height = h = w * ( rs.width / rs.height );
+					ui.minHeight = h = w * ( rs.width / rs.height );
 				// parent is horizontal list, fit-y
 				} else if ( go.parent.ui.layoutType == Layout.Horizontal ) {
-					ui.width = w = h / ( rs.width / rs.height );
+					ui.minWidth = w = h / ( rs.width / rs.height );
 				}
 			}
 			sc.scale = Math.min( w / rs.width, h / rs.height );
@@ -132,6 +133,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.image );
+	go.baseStyle = Object.create( UI.style.image );
+	UI.base.applyProperties( go, go.baseStyle );
+	constructing = false;
+
 
 })(this);

@@ -26,10 +26,10 @@ UI.style = UI.style ? UI.style : {
 
 	// basic container panel - ui/panel.js
 	panel: {
-		slice: 0,
+		/*slice: 0,
 		layoutType: Layout.Anchors,
 		pad: 8,
-		spacing: 4,
+		spacing: 4,*/
 	},
 
 	// text label - ui/text.js
@@ -38,9 +38,10 @@ UI.style = UI.style ? UI.style : {
 		boldFont: 'Roboto-Black',
 		italicFont: 'Roboto-Italic',
 		boldItalicFont: 'Roboto-BlackItalic',
-		size: 12,
+		size: 14,
 		textAlign: TextAlign.Left,
 		color: 0xFFFFFF,
+		wrap: false,
 	},
 
 	// text input field - ui/textfield.js
@@ -49,7 +50,7 @@ UI.style = UI.style ? UI.style : {
 		boldFont: 'Roboto-Black',
 		italicFont: 'Roboto-Italic',
 		boldItalicFont: 'Roboto-BlackItalic',
-		size: 12,
+		size: 14,
 		color: 0x0,
 		selectionColor: 0x0073b9,
 		slice: 8,
@@ -83,14 +84,24 @@ UI.style = UI.style ? UI.style : {
 
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
-		slice: 6,
-		minWidth: 24,
-		minHeight: 24,
-		pad: 2,
+		slice: 5,
+		minWidth: 32,
+		minHeight: 32,
+		pad: 4,
 		focusRect: true,
+
 		handle: {
-			slice: 8
+			slice: 5
 		},
+
+		label: {
+			size: 10,
+			bold: true,
+			color: 0x0,
+			align: TextAlign.Center,
+			wrap: false,
+		},
+
 		states: {
 			off: {
 				background: './textures/ui:scrollbar-off',
@@ -105,7 +116,7 @@ UI.style = UI.style ? UI.style : {
 				}
 			},
 			disabled: {
-				background: './textures/ui:scrollbar-fisabled',
+				background: './textures/ui:scrollbar-disabled',
 				handle: {
 					background: './textures/ui:scrollbar-handle-disabled',
 				}
@@ -113,10 +124,44 @@ UI.style = UI.style ? UI.style : {
 		},
 
 		// apply only to horizontal
-		horizontal: { },
+		horizontalStyle: { },
 
 		// apply only to vertical
-		vertical: { },
+		verticalStyle: { },
+
+		// apply only when discrete=true (scrollbar with fixed values for adjusting values, slider style)
+		sliderStyle: {
+
+			handle: { slice: 0 },
+
+			horizontalStyle: {
+				background: './textures/ui:slider-tick-horizontal',
+			},
+
+			verticalStyle: {
+				background: './textures/ui:slider-tick-vertical',
+			},
+
+			states: {
+				off: {
+					handle: {
+						background: './textures/ui:slider-handle-off',
+					}
+				},
+				focus: {
+					handle: {
+						background: './textures/ui:slider-handle-focus',
+					}
+				},
+				disabled: {
+					handle: {
+						background: './textures/ui:slider-handle-disabled',
+					}
+				},
+			},
+
+		},
+
 	},
 
 	// image container - ui/image.js
@@ -139,7 +184,7 @@ UI.style = UI.style ? UI.style : {
 		image: {
 			width: 20,
 			height: 20,
-			mode: 'fit'
+			mode: 'icon'
 		},
 
 		states:{
@@ -165,21 +210,23 @@ UI.style = UI.style ? UI.style : {
 	checkbox: {
 
 		slice: 0,
-		pad: 0,
+		pad: 4,
 		focusRect: true,
 
 		// apply to checkbox label (ui/text.js)
 		label: {
 			color: 0x0,
-			size: 12,
-			marginLeft: 8,
-			pad: 2,
+			size: 14,
+			marginLeft: 4,
+			pad: 4,
 		},
 
 		// "checkbox" button (ui/button.js)
 		checkbox: {
 			// "checkmark" image
 			icon: './textures/ui:checkbox-check',
+			minWidth: 20,
+			minHeight: 20,
 		},
 
 		states: {
@@ -222,10 +269,12 @@ UI.style = UI.style ? UI.style : {
 
 		// style applied to dropdown button itself - ui/button.js
 		button: {
-			pad: 8,
 			label: {
-				size: 12,
+				bold: false,
+				size: 14,
+				color: 0x0
 			},
+			pad: 8,
 			states: {
 				off: {
 					background: './textures/ui:dropdown-off',
@@ -263,7 +312,7 @@ UI.style = UI.style ? UI.style : {
 		// items in the dropdown list (ui/button.js)
 		item: {
 			label: {
-				size: 12,
+				size: 14,
 				flex: 1
 			},
 			layoutAlignX: LayoutAlign.Start,
@@ -325,7 +374,7 @@ UI.style = UI.style ? UI.style : {
 		group: {
 			bold: true,
 			color: 0x333333,
-			align: TextAlign.Right,
+			align: TextAlign.Center,
 			marginTop: 8,
 		},
 
@@ -334,6 +383,7 @@ UI.style = UI.style ? UI.style : {
 			pad: 6,
 			align: TextAlign.Right,
 			color: 0x0,
+			backgroundColor: 'F0F0F066',
 			marginTop: 2,
 		},
 
@@ -344,7 +394,9 @@ UI.style = UI.style ? UI.style : {
 				acceptToEdit: true,
 				cancelToBlur: false,
 				blurOnClickOutside: false,
-				marginRight: 4,
+				margin: 0,
+				fitChildren: false,
+				minHeight: 30,
 			},
 			// Number - ui/textfield
 			number: {
@@ -357,20 +409,38 @@ UI.style = UI.style ? UI.style : {
 			},
 			// Boolean - ui/checkbox
 			boolean: {
-				marginTop: 4,
+				// marginTop: 4,
 			},
 			// Enum - ui/dropdown
 			enum: {
-				pad: 5
 			},
 			// Object - ui/button
 			object: {
 				icon: './textures/ui:dropdown-arrow',
 				layoutAlignX: LayoutAlign.Start,
 				spacing: 4,
-				pad: 5,
-				height: 80,
-				label: { size: 12 },
+				pad: 8,
+				label: { size: 14, color: 0x0 },
+				states: {
+					off: {
+						background: './textures/ui:dropdown-off',
+					},
+					over: {
+						background: './textures/ui:dropdown-over',
+					},
+					focus: {
+						background: './textures/ui:dropdown-focus',
+					},
+					down: {
+						background: './textures/ui:dropdown-down',
+					},
+					disabled: {
+						background: './textures/ui:dropdown-disabled',
+						label: {
+							color: 0x333333
+						},
+					},
+				}
 			},
 			// inline sub-property list ui/property-list
 			inline: {
@@ -386,28 +456,23 @@ UI.style = UI.style ? UI.style : {
 	// settings for focus rectangle (ui/panel.js)
 	focusRect: {
 
-		// default color
-		background: 0x0073b9,
+		// texture or color
+		background: './textures/ui:focus-rect',
+		slice: 8,
 
-		// rounded corner
-		cornerRadius: 2,
+		// rounded corner, if background is color
+		// cornerRadius: 2,
 
-		// stipple rendering
-		render: { stipple: 0.5 },
+		// outline thickness if background is color
+		// lineThickness: 2,
 
-		// outline thickness
-		lineThickness: 2,
+		// filled = solid rectangle, false = outline
+		// filled: false,
 
-		// filled = solid rectangle
-		filled: false,
-
-		// pixels outside control
-		offset: 2
+		// pixels offset outside focused control
+		offset: 4
 
 	}
-
-
-
 
 };
 
@@ -460,8 +525,8 @@ UI.base = UI.base ? UI.base : {
 					if ( ui.focusRect ) {
 						ui.focusRect.parent = null;
 						ui.focusRect = null;
-						ui.off( 'layout', layoutFocusRect );
-						ui.off( 'focusChanged', focusChangedRect );
+						ui.off( 'layout', _layoutFocusRect );
+						ui.off( 'focusChanged', _focusChangedRect );
 					}
 				// add
 				} else if ( !ui.focusRect ) {
@@ -470,8 +535,8 @@ UI.base = UI.base ? UI.base : {
 						fixedPosition: true,
 						style: UI.style.focusRect,
 					} );
-					ui.on( 'layout', layoutFocusRect );
-					ui.on( 'focusChanged', focusChangedRect );
+					ui.on( 'layout', _layoutFocusRect );
+					ui.on( 'focusChanged', _focusChangedRect );
 					go.addChild( ui.focusRect, 0 );
 				}
 			} ],
@@ -581,8 +646,12 @@ UI.base = UI.base ? UI.base : {
 			// (Number) spacing between children when layoutType is Horizontal
 			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ],
 
-			// (Object) used to apply style (collection of properties) other than default after creating / during init
-			[ 'style',  function (){ return null; }, function ( v ){ UI.base.applyProperties( go, v ); }, true ],
+			// (Object) used to override style (collection of properties) other than default after creating / during init
+			[ 'style',  function (){ return null; }, function ( v ){
+				// merge into current baseStyle
+				for ( var p in v ) go.baseStyle[ p ] = v[ p ];
+				UI.base.applyProperties( go, v );
+			}, true ],
 
 			// (Object) used to change state of control. Holds definitions from initialization
 			[ 'states',  function (){ return go._states; }, function ( v ){ go._states = clone( v ); }, true ],
@@ -660,7 +729,7 @@ UI.base = UI.base ? UI.base : {
 		}
 
 		// focus rectangle layout callback
-		function layoutFocusRect ( w, h ) {
+		function _layoutFocusRect ( w, h ) {
 			var fr = this.focusRect;
 			if ( !fr ) return;
 			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
@@ -668,7 +737,7 @@ UI.base = UI.base ? UI.base : {
 		};
 
 		// focus rectangle focus change callback
-		function focusChangedRect( nf ) {
+		function _focusChangedRect( nf ) {
 			if ( this.focusRect.active = (nf == this) ){
 				this.focusRect.dispatch( 'layout' );
 			}
@@ -680,6 +749,7 @@ UI.base = UI.base ? UI.base : {
 	applyProperties: function ( go, props ) {
 		if ( !props || !go ) return;
 		for ( var p in props ) {
+			if ( p == 'style' ) continue; // last
 			// object with same name?
 			if ( typeof( props[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' ) {
 				// apply properties to it
@@ -688,6 +758,11 @@ UI.base = UI.base ? UI.base : {
 				// just set property
 				go[ p ] = props[ p ];
 			}
+		}
+		// style is set last
+		if ( typeof( props[ 'style' ] ) == 'object' ) {
+			go.style = props.style;
+			go.state = 'auto'; // reset state
 		}
 	},
 

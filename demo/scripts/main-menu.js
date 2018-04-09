@@ -9,6 +9,7 @@ new (function (){
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
 		pad: 20,
+		fitChildren: false,
 		width: App.windowWidth,
 		height: App.windowHeight
 	} );
@@ -19,7 +20,8 @@ new (function (){
 		color: Color.Title,
 		align: TextAlign.Center,
 		marginBottom: 20,
-		text: "Aviko Demo"
+		text: "Aviko Demo",
+		name: "Title",
 	} );
 
 	// description
@@ -28,19 +30,23 @@ new (function (){
 		color: Color.Text,
 		align: TextAlign.Center,
 		wrap: true,
+		marginBottom: 20,
 		text: "Aviko is a simple 2D game engine, geared towards learning and rapid prototyping. This demo " +
-		"shows some of Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks."
+		"shows some of Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks.",
+		name: "Intro",
 	} );
 
 	// buttons container
 	var buttons = scene.addChild( 'ui/panel', {
 		name: "Buttons",
-		background: null,
+		backgroundColor: new Color( 'F0F0F066' ),
 		layoutType: Layout.Horizontal,
 		wrapEnabled: true,
 		spacing: 4,
-		flex: 1
+		flex: 1,
+		minHeight: 40,
 	} );
+
 
 	// button click handler
 	var buttonClick = function () {
@@ -114,6 +120,6 @@ new (function (){
 	} );
 
 	// focus on first button
-	buttons.getChild( 0 ).focus();
+	buttons.getChild( 0 ).focus(); //*/
 	return scene;
 })();

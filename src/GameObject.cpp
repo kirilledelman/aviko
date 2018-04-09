@@ -982,6 +982,8 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 // calls handler for event on each behavior
 void GameObject::CallEvent( Event &event ) {
 	
+	if ( event.stopped ) return;
+	
 	// for each behavior
 	for( BehaviorList::iterator i = this->behaviors.begin(), e = this->behaviors.end(); i != e; i++ ){
 		
@@ -1214,7 +1216,7 @@ float* GameObject::Transform() {
 		b2Vec2 pos; float angle;
 		this->body->GetBodyTransform( pos, angle );
 		GPU_MatrixIdentity( this->_worldTransform );
-		GPU_MatrixTranslate( this->_worldTransform, pos.x, pos.y, _z );
+		GPU_MatrixTranslate( this->_worldTransform, floor( pos.x ), floor( pos.y ), _z );
 		if ( angle != 0 ) GPU_MatrixRotate( this->_worldTransform, angle * RAD_TO_DEG, 0, 0, 1 );
 		if ( this->_scale.x != 1 || this->_scale.y != 1 ) GPU_MatrixScale( this->_worldTransform, this->_scale.x, this->_scale.y, 1 );
 		this->_worldTransformDirty = false;
@@ -1234,7 +1236,7 @@ float* GameObject::Transform() {
 		
 		// apply local transform
 		GPU_MatrixIdentity( this->_transform );
-		GPU_MatrixTranslate( this->_transform, this->_position.x, this->_position.y, _z );
+		GPU_MatrixTranslate( this->_transform, floor( this->_position.x ), floor( this->_position.y ), _z );
 		if ( this->_angle != 0 ) GPU_MatrixRotate( this->_transform, this->_angle, 0, 0, 1 );
 		if ( this->_scale.x != 1 || this->_scale.y != 1 ) GPU_MatrixScale( this->_transform, this->_scale.x, this->_scale.y, 1 );
 		if ( this->_skew.x != 0 || this->_skew.y != 0 ) MatrixSkew( this->_transform, _skew.x, _skew.y );
@@ -1964,6 +1966,9 @@ void GameObject::Render( Event& event ) {
 		BehaviorEventCallback func = this->render->GetCallbackForEvent( event.name );
 		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
 	}
+	
+	// debug ui
+	if ( this->ui && app.debugUI ) ui->DebugDraw( (GPU_Target*) event.behaviorParam );
 	
 	// descend into children
 	int numChildren = (int) this->children.size();

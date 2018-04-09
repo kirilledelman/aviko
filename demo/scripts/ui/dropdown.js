@@ -39,6 +39,7 @@ include( './ui' );
 	var items = [];
 	var arrowImage;
 	var dropdown;
+	var constructing = true;
 	var maxVisibleItems = 10;
 	go.serializeMask = { 'ui':1, 'render':1, 'children':1 };
 
@@ -95,7 +96,7 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return button.disabled; },
 		 function ( v ){
-			 button.disabled = v;
+			 ui.disabled = button.disabled = v;
 		 } ],
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
@@ -207,11 +208,11 @@ include( './ui' );
 				layoutAlignY: LayoutAlign.Start,
 				wrapEnabled: false,
 				height: button.height,
-				width: button.width,
+				minWidth: button.width,
 				update: go.updateDropdownPosition,
 				x: gp.x, y: gp.y + button.height,
 				opacity: 0,
-				style: UI.style.dropdown.menu,
+				style: go.baseStyle.menu,
 				ignoreCamera: true,
 				fixedPosition: true,
 			} );
@@ -223,13 +224,13 @@ include( './ui' );
 					icon: items[ i ].icon,
 					text: items[ i ].text,
 					name: items[ i ].text,
-					width: button.width,
+					minWidth: button.width,
 					disabled: !!items[ i ].disabled,
 					focusGroup: 'dropdown',
 					click: go.itemSelected,
 					mouseOver: go.itemSetFocus,
 					navigation: go.itemNavigation,
-					style: UI.style.dropdown.item,
+					style: go.baseStyle.item,
 				} );
 				if ( !i || i == selectedIndex ) selectedItem = item;
 				if ( i == selectedIndex && go.itemCheck != undefined ) {
@@ -315,7 +316,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.dropdown );
+	go.baseStyle = Object.create( UI.style.dropdown );
+	UI.base.applyProperties( go, go.baseStyle );
 	button.state = 'auto';
+	constructing = false;
 
 })(this);

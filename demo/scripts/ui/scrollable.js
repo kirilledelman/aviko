@@ -30,6 +30,7 @@ include( './ui' );
 	container.ui = new UI();
 	go.serializeMask = { 'ui':1, 'render':1 };
 	var scrollbars = false;
+	var constructing = true;
 	var vsb = null, hsb = null;
 
 	// API properties
@@ -42,8 +43,10 @@ include( './ui' );
 
 		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
 		[ 'scrollbars',  function (){ return scrollbars; }, function ( s ){
-			scrollbars = s;
-			go.fireLate( 'updateScrollbars' );
+			if ( s != scrollbars ) {
+				scrollbars = s;
+				go.fireLate( 'updateScrollbars' );
+			}
 		} ],
 
 		// (Number) current width of the control
@@ -264,6 +267,7 @@ include( './ui' );
 	ui.layout = function( w, h ) {
 		var sizeChanged = ( w != spr.width || h != spr.height );
 		spr.resize( w, h );
+		log( "scrollable layout ", w, h, sizeChanged );
 		if ( sizeChanged ) go.updateScrollbars();
 		// refire
 		go.fire( 'layout', w, h );
@@ -284,6 +288,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.scrollable );
+	go.baseStyle = Object.create( UI.style.scrollable );
+	UI.base.applyProperties( go, go.baseStyle );
+	go.state = 'auto';
+	constructing = false;
 
 })(this);

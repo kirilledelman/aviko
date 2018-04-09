@@ -24,14 +24,14 @@ include( './ui' );
 	var target = null;
 	var showAll = true;
 	var properties = {};
-	var labelWidth = 150;
+	var valueWidth = 150;
 	var disabled = false;
 	var topPropertyList = go;
 	var groups = [];
 	var allFields = [];
 	var updateInterval = 0;
-
 	var showAll = false;
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'target':1, 'children': 1 };
 
 	// API properties
@@ -76,9 +76,9 @@ include( './ui' );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Number) width of label field (input field stretches to fill the rest of space)
-		[ 'labelWidth',  function (){ return labelWidth; }, function ( v ) {
-			labelWidth = v;
+		// (Number) width of value fields
+		[ 'valueWidth',  function (){ return valueWidth; }, function ( v ) {
+			valueWidth = v;
 			go.debounce( 'refresh', go.refresh );
 		}],
 
@@ -94,7 +94,7 @@ include( './ui' );
 
 		// (Boolean) disable all fields
 		[ 'disabled',  function (){ return disabled; }, function ( v ) {
-			disabled = v;
+			ui.disabled = disabled = v;
 			go.debounce( 'refresh', go.refresh );
 		}],
 
@@ -181,11 +181,13 @@ include( './ui' );
 					wrapEnabled: true,
 					wrapAfter: 2,
 					acceptToCycle: true,
-					fitChildren: true
+					fitChildren: true,
 				} );
 			}
 			cont = scrollable;
 			ui.layoutType = Layout.Anchors;
+			scrollable.scrollbars = false;
+
 		} else {
 			if ( scrollable ) scrollable = null;
 			ui.layoutType = Layout.Horizontal;
@@ -250,9 +252,9 @@ include( './ui' );
 				// add group title
 				var groupTitle = cont.addChild( './text', {
 					forceWrap: true,
-					minWidth: labelWidth,
+					flex: 1,
 					text: (i < ng ? groups[ i ].name : ''),
-					style: UI.style.propertyList.group,
+					style: go.baseStyle.group,
 				} );
 				// clear top margin if first
 				if ( i == 0 ) groupTitle.marginTop = 0;
@@ -265,8 +267,9 @@ include( './ui' );
 				// add label
 				var label = cont.addChild( './text', {
 					text: ( ( pdef && pdef.description ) ? pdef.description : pname ),
-					minWidth: labelWidth,
-					style: UI.style.propertyList.label
+					flex: 1,
+					wrap: true,
+					style: go.baseStyle.label
 				} );
 
 				// value/type
@@ -287,29 +290,27 @@ include( './ui' );
 							target: curTarget,
 							change: go.fieldChanged,
 							numeric: true,
-							flex: 1,
+							minWidth: valueWidth,
 							integer: ( pdef && pdef.integer !== undefined ) ? pdef.integer : false,
 							min: ( pdef && pdef.min !== undefined ) ? pdef.min : -Infinity,
 							max: ( pdef && pdef.max !== undefined ) ? pdef.max : Infinity,
 							step: ( pdef && pdef.step !== undefined ) ? pdef.step : 1,
 							value: fieldValue,
-							disabled: disabled,
-							style: UI.style.propertyList.values.any
+							style: go.baseStyle.values.any
 						} );
-						field.style = UI.style.propertyList.values.number;
+						field.style = go.baseStyle.values.number;
 						break;
 					case 'enum':
 						field = cont.addChild( './dropdown', {
 							name: pname,
 							target: curTarget,
 							change: go.fieldChanged,
-							flex: 1,
+							minWidth: valueWidth,
 							value: fieldValue,
 							items: pdef.enum,
-							disabled: disabled,
-							style: UI.style.propertyList.values.any
+							style: go.baseStyle.values.any
 						} );
-						field.style = UI.style.propertyList.values.enum;
+						field.style = go.baseStyle.values.enum;
 						break;
 					case 'boolean':
 						field = cont.addChild( './checkbox', {
@@ -317,22 +318,21 @@ include( './ui' );
 							target: curTarget,
 							change: go.fieldChanged,
 							checked: fieldValue,
-							disabled: disabled,
 							text: fieldValue ? "True" : "False",
-							flex: 1,
-							style: UI.style.propertyList.values.any
+							minWidth: valueWidth,
+							style: go.baseStyle.values.any
 						} );
-						field.style = UI.style.propertyList.values.boolean;
+						field.style = go.baseStyle.values.boolean;
 						break;
 					case 'object':
 						field = cont.addChild( './button', {
 							text: String( fieldValue.constructor ? fieldValue.constructor.name : fieldValue ) + '...',
-							disabled: disabled,
-							style: UI.style.propertyList.values.any,
 							wrapEnabled: false,
-							flex: 1
+							minWidth: valueWidth,
+							style: go.baseStyle.values.any,
 						} );
-						field.style = UI.style.propertyList.values.object;
+						field.style = go.baseStyle.values.object;
+
 						// inline property list
 						if ( pdef && fieldValue && typeof( fieldValue ) == 'object' ){
 							if ( pdef.inline || pdef.properties ) {
@@ -341,10 +341,10 @@ include( './ui' );
 									showAll: true,
 									scrollable: false,
 									forceWrap: true,
-									style: UI.style.propertyList.values.any,
 									active: !!pdef.expanded,
+									style: go.baseStyle.values.any,
 								} );
-								sub.style = UI.style.propertyList.values.inline;
+								sub.style = go.baseStyle.values.inline;
 								if ( pdef.showAll !== undefined ) sub.showAll = pdef.showAll;
 								if ( pdef.properties !== undefined ) sub.properties = pdef.properties;
 								if ( pdef.groups !== undefined ) sub.groups = pdef.groups;
@@ -366,9 +366,10 @@ include( './ui' );
 							name: pname,
 							target: curTarget,
 							change: go.fieldChanged,
-							flex: 1,
+							minWidth: valueWidth,
+							wrap: true,
 							text: fieldValue ? fieldValue.toString() : '',
-							style: UI.style.propertyList.values.any
+							style: go.baseStyle.values.any
 						} );
 						break;
 
@@ -376,11 +377,9 @@ include( './ui' );
 				// common properties
 				if ( field ) {
 					allFields.push( field );
-					if ( pdef ) {
-						// disabled
-						if ( pdef.disabled ) field.disabled = true;
-					}
+					if ( disabled || ( pdef && pdef.disabled ) ) field.disabled = true;
 				}
+
 				numRows++;
 
 			}
@@ -392,13 +391,17 @@ include( './ui' );
 			var nope = cont.addChild( './text', {
 				selfAlign: LayoutAlign.Stretch,
 				text: "no editable properties",
-				style: UI.style.propertyList.group,
+				style: go.baseStyle.group,
 			} );
 			nope.align = TextAlign.Center;
 		}
 
 		// scroll to top
-		if ( scrollable ) scrollable.scrollLeft = scrollable.scrollTop = 0;
+		if ( scrollable ) {
+			scrollable.scrollLeft = scrollable.scrollTop = 0;
+			function _showScrollbars() { this.scrollbars = 'auto'; }
+			scrollable.debounce( 'showScrollbars', _showScrollbars );
+		}
 
 	}
 
@@ -460,6 +463,10 @@ include( './ui' );
 	} );
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.propertyList );
+	go.baseStyle = Object.create( UI.style.propertyList );
+	UI.base.applyProperties( go, go.baseStyle );
 	go.values = go.values || { };
+	go.state = 'auto';
+	constructing = false;
+
 })(this);

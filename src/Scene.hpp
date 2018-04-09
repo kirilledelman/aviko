@@ -19,7 +19,10 @@ public:
 // Javascript
 	
 	/// registers classes for scripting
-	static void InitClass();	
+	static void InitClass();
+	
+	/// garbage collection callback
+	void TraceProtectedObjects( vector<void **> &protectedObjects );
 
 // UI elements
 	

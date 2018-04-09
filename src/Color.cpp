@@ -419,6 +419,7 @@ void Color::SetInt( int val, bool withAlpha ) {
 		this->rgba.b = ( val & 0xFF );
 		this->rgba.g = ( ( val >> 8 ) & 0xFF );
 		this->rgba.r = ( ( val >> 16 ) & 0xFF );
+		this->rgba.a = 255;
 	}
 	
 	// update

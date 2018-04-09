@@ -63,10 +63,7 @@ UIBehavior::UIBehavior() {
 // destructor
 UIBehavior::~UIBehavior() {
 	
-	if ( this->scene &&  this->scene->focusedUI == this ) {
-		this->scene->focusedUI = NULL;
-	}
-	// printf( "~UIBehavior\n" );
+
 }
 
 
@@ -801,6 +798,7 @@ void UIBehavior::InitClass() {
 	("requestLayout",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
 		UIBehavior* self = (UIBehavior*) p;
+		// if passed argument, do request layout (called on top level parent)
 		if ( sa.args.size() )
 			self->RequestLayout( sa.args[ 0 ] );
 		else
@@ -1044,9 +1042,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	// remember current, to retrigger layout later if changed
 	float
 	oldWidth = behavior->layoutWidth,
-	oldHeight = behavior->layoutHeight,
-	oldMinWidth = behavior->minWidth,
-	oldMinHeight = behavior->minHeight;
+	oldHeight = behavior->layoutHeight;
 	
 	// collect children with active UI component
 	vector<UIBehavior*> childUIs;
@@ -1085,7 +1081,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 		}
 	}
 	
-	// dispatch layout event on this component
+	// dispatch layout event listeners on this component 
 	Event e ( EVENT_LAYOUT );
 	e.scriptParams.AddFloatArgument( behavior->layoutWidth );
 	e.scriptParams.AddFloatArgument( behavior->layoutHeight );
@@ -1097,10 +1093,22 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	behavior->CallEvent( e );
 	
 	// if layout process changed width/height/min/max
-	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight
-		/* || behavior->minWidth != oldMinWidth || behavior->minHeight != oldMinHeight */ ) {
-		// request layout again
-		behavior->RequestLayout( ArgValue() );
+	if ( behavior->layoutWidth != oldWidth || behavior->layoutHeight != oldHeight ) {
+		// layout again
+		if ( behavior->gameObject->parent &&
+			behavior->gameObject->parent->ui &&
+			behavior->gameObject->parent->ui->_active ) {
+			
+			// call directly on parent
+			UIBehavior::Layout( behavior->gameObject->parent->ui, p, event );
+			//behavior->gameObject->parent->ui->RequestLayout( ArgValue() );
+			
+		} else {
+			
+			//behavior->RequestLayout( ArgValue( "childSizeChanged" ) );
+			behavior->RequestLayout( ArgValue() );
+			
+		}
 	}
 	
 }
@@ -1133,6 +1141,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	float innerHeight = fmax( 0, this->layoutHeight - ( this->padTop + this->padBottom ) );
 	float totalMinSize = 0;
 	float minChildSize = 0;
+	float minSpaceUsed = 0;
 	float curX = 0;
 	float curY = 0;
 
@@ -1153,8 +1162,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
 		UIBehavior* childUI = childUIs[ i ];
 		float
-		w = ( childUI->flex ? childUI->minWidth : childUI->layoutWidth ) + childUI->marginLeft + childUI->marginRight,
-		h = childUI->layoutHeight + childUI->marginTop + childUI->marginBottom;
+		w = childUI->minWidth + ( childUI->marginLeft + childUI->marginRight ),
+		h = childUI->minHeight + ( childUI->marginTop + childUI->marginBottom );
 		
 		// if child won't fit in current row
 		if ( wrapEnabled && currentRow->items.size() > 0 && curX + w + this->spacingX >= innerWidth ) {
@@ -1174,6 +1183,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 		currentRow->spaceUsed = curX + w;
 		curX += w + spacingX;
 		minChildSize = fmax( minChildSize, w );
+		minSpaceUsed = fmax( minSpaceUsed, currentRow->spaceUsed );
 		if ( childUI->flex ) {
 			currentRow->flexed.push_back( childUI );
 			currentRow->totalFlex += childUI->flex;
@@ -1193,6 +1203,12 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	int numSpacers = (int) rows.size() - 1;
 	totalMinSize += currentRow->minSize + numSpacers * spacingY;
 	
+	// if fit children is set or size is 0
+	if ( this->fitChildren ) {
+		innerHeight = fmin( ( maxHeight > 0 ? maxHeight : 9999999 ) - ( this->padTop + this->padBottom ), fmax( totalMinSize, innerHeight ) );
+		innerWidth = fmin( ( maxWidth > 0 ? maxWidth : 9999999 ) - ( this->padLeft + this->padRight ), fmax( minSpaceUsed, innerWidth ) );
+	}
+
 	// if stretching rows across, and there's more space than needed
 	if ( innerHeight > totalMinSize && this->axisAlignY == LayoutAlign::Stretch ) {
 		float spaceLeft = innerHeight;
@@ -1218,7 +1234,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
 				if ( spaceLeft <= 0 ) break;
 				UIBehavior* f = currentRow->flexed[ i ];
-				spaceShare = floor( fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) ) );
+				spaceShare = fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) );
+				if ( f->maxWidth > 0 ) spaceShare = fmin( spaceShare, f->maxWidth - ( f->marginLeft + f->marginRight ) );
 				f->layoutWidth = f->minWidth + spaceShare;
 				spaceLeft -= spaceShare;
 			}
@@ -1256,8 +1273,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 			
 			// measure
 			x = curX + childUI->marginLeft;
-			w = childUI->layoutWidth;
-			h = childUI->layoutHeight;
+			w = (childUI->flex ? childUI->layoutWidth : childUI->minWidth);
+			h = childUI->minHeight;
 			LayoutAlign align = this->axisAlignY;
 			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
 			switch ( align ) {
@@ -1316,8 +1333,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// enforce min/max again
-	this->layoutWidth = fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) );
-	this->layoutHeight = fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) );
+	this->layoutWidth = ( fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) ) );
+	this->layoutHeight = ( fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) ) );
 	
 }
 
@@ -1327,6 +1344,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	float innerHeight = fmax( 0, this->layoutHeight - ( this->padTop + this->padBottom ) );
 	float totalMinSize = 0;
 	float minChildSize = 0;
+	float minSpaceUsed = 0;
 	float curX = 0;
 	float curY = 0;
 	
@@ -1347,8 +1365,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	for ( size_t i = 0, nc = childUIs.size(); i < nc; i++ ){
 		UIBehavior* childUI = childUIs[ i ];
 		float
-		w = childUI->layoutWidth + childUI->marginLeft + childUI->marginRight,
-		h = ( childUI->flex ? childUI->minHeight : childUI->layoutHeight ) + childUI->marginTop + childUI->marginBottom;
+		w = childUI->minWidth + ( childUI->marginLeft + childUI->marginRight ),
+		h = childUI->minHeight + ( childUI->marginTop + childUI->marginBottom );
 		
 		// if child won't fit in current row
 		if ( wrapEnabled && currentRow->items.size() > 0 && curY + h + this->spacingY >= innerHeight ) {
@@ -1368,6 +1386,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 		currentRow->spaceUsed = curY + h;
 		curY += h + spacingY;
 		minChildSize = fmax( minChildSize, h );
+		minSpaceUsed = fmax( minSpaceUsed, currentRow->spaceUsed );
 		if ( childUI->flex ) {
 			currentRow->flexed.push_back( childUI );
 			currentRow->totalFlex += childUI->flex;
@@ -1386,6 +1405,12 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	// min/max size required for all rows
 	int numSpacers = (int) rows.size() - 1;
 	totalMinSize += currentRow->minSize + numSpacers * spacingX;
+	
+	// if fit children is set or size is 0
+	if ( this->fitChildren ) {
+		innerHeight = fmin( ( maxHeight > 0 ? maxHeight : 9999999 ) - ( this->padTop + this->padBottom ), fmax( minSpaceUsed, innerHeight ) );
+		innerWidth = fmin( ( maxWidth > 0 ? maxWidth : 9999999 ) - ( this->padLeft + this->padRight ), fmax( totalMinSize, innerWidth ) );
+	}
 	
 	// distribute extra space to rows maxSize
 	if ( this->axisAlignX == LayoutAlign::Stretch ) {
@@ -1412,7 +1437,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
 				if ( spaceLeft <= 0 ) break;
 				UIBehavior* f = currentRow->flexed[ i ];
-				spaceShare = floor( fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) ) );
+				spaceShare = fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) );
+				if ( f->maxHeight > 0 ) spaceShare = fmin( spaceShare, f->maxHeight - ( f->marginTop + f->marginBottom ) );
 				f->layoutHeight = f->minHeight + spaceShare;
 				spaceLeft -= spaceShare;
 			}
@@ -1450,8 +1476,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 			
 			// measure
 			y = curY + childUI->marginTop;
-			w = childUI->layoutWidth;
-			h = childUI->layoutHeight;
+			w = childUI->minWidth;
+			h = (childUI->flex ? childUI->layoutHeight : childUI->minHeight);
 			LayoutAlign align = this->axisAlignX;
 			if ( childUI->selfAlign != LayoutAlign::Default ) align = childUI->selfAlign;
 			switch ( align ) {
@@ -1510,8 +1536,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// enforce min/max again
-	this->layoutWidth = fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) );
-	this->layoutHeight = fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) );
+	this->layoutWidth = ( fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) ) );
+	this->layoutHeight = ( fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) ) );
 
 }
 
@@ -1523,8 +1549,8 @@ void UIBehavior::LayoutAnchors( vector<UIBehavior *> &childUIs ) {
 		childUI->GetAnchoredPosition( this, x, y, w, h );
 		
 		childUI->gameObject->SetPosition( x, y );
-		childUI->layoutWidth = ( w );
-		childUI->layoutHeight = ( h );
+		childUI->layoutWidth = w;
+		childUI->layoutHeight = h;
 	}
 }
 
@@ -1639,10 +1665,26 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 
 /// debounces multiple layout requests
 void UIBehavior::RequestLayout( ArgValue trigger ) {
+	
+	if ( !this->gameObject ) return;
+	
 	// dispatch down
-	GameObject* top = ( this->fixedPosition ? this->gameObject : ( this->gameObject ? this->gameObject->GetScene() : NULL ) );
+	GameObject* top = NULL;
+	if ( this->fixedPosition ) {
+		
+		top = this->gameObject;
+	
+	} else if ( trigger.type == TypeUndefined ) {
+		
+		top = ( this->gameObject->parent ? this->gameObject->parent : this->gameObject );
+	
+	} else {
+		
+		top = ( this->gameObject ? this->gameObject->GetScene() : NULL );
+		
+	}
 	if ( top ) {
-		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true );
+		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false );
 		if ( trigger.type != TypeUndefined ) {
 			params->push_back( trigger );
 			params->push_back( ArgValue( this->scriptObject ) );
@@ -1650,6 +1692,57 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 	}
 }
 
+
+/* MARK:	-				Debug draw
+ -------------------------------------------------------------------- */
+
+
+/// draws ui bounds
+void UIBehavior::DebugDraw( GPU_Target* targ ) {
+	
+	static SDL_Color
+		bounds = { 255, 64, 64, 64 },
+		boundsMinMax = { 255, 128, 128, 64 },
+		padding = { 255, 255, 128, 64 },
+		margins = { 128, 128, 200, 64 };
+	GPU_ActivateShaderProgram( 0, NULL );
+	GPU_SetShapeBlendMode( GPU_BLEND_NORMAL );
+	GPU_SetLineThickness( 1 );
+	GPU_SetDepthTest( targ, false );
+	GPU_SetDepthWrite( targ, false );
+	
+	// bounds
+	GPU_Rectangle( targ, 0, 0, layoutWidth, layoutHeight, bounds );
+	
+	// padding
+	if ( padLeft != 0 || padRight != 0 || padTop != 0 || padBottom != 0 ) {
+		GPU_Rectangle( targ, padLeft, padTop, layoutWidth - padRight, layoutHeight - padBottom, padding );
+	}
+	
+	GPU_SetLineThickness( 2 );
+	
+	// min, max
+	if ( minWidth > 0 || minHeight > 0 ) {
+		GPU_Line( targ, minWidth, minHeight, minWidth, minHeight - 5, boundsMinMax );
+		GPU_Line( targ, minWidth, minHeight, minWidth - 5, minHeight, boundsMinMax );
+	}
+	if ( maxWidth > 0 || maxHeight > 0 ) {
+		GPU_Line( targ, maxWidth, maxHeight, maxWidth, maxHeight - 10, boundsMinMax );
+		GPU_Line( targ, maxWidth, maxHeight, maxWidth - 10, maxHeight, boundsMinMax );
+	}
+	
+	// margins
+	if ( marginLeft != 0 || marginRight != 0 || marginTop != 0 || marginBottom != 0 ) {
+		GPU_Line( targ, 0, -marginTop, layoutWidth, -marginTop, margins );
+		GPU_Line( targ, layoutWidth + marginRight, 0, layoutWidth + marginRight, layoutHeight, margins );
+		GPU_Line( targ, 0, layoutHeight + marginBottom, layoutWidth, layoutHeight + marginBottom, margins );
+		GPU_Line( targ, -marginLeft, 0, -marginLeft, layoutHeight, margins );
+	}
+	
+	GPU_SetDepthTest( targ, true );
+	GPU_SetDepthWrite( targ, true );
+	
+}
 
 
 /* MARK:	-				Clipping

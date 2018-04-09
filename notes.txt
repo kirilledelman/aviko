@@ -1,20 +1,16 @@
 
-add .boldFont, .italicFont to RenderText, use those for glyphs
+autotile for sliced images
+
+propertylist pad results in horiz scrollbars
 
 property editor - default property descriptions etc, can be attached in UI.style section
 
-
-Image
-	save
-
-Dropdown - jump to item by typing
+Scrollbar - discrete - alternate background / handle
 
 Image / child autoDraw is drawn normally when Image height = 0, should be hidden
 
 A way to limit which controllers can interact with UI/focus/autonavigate etc.
 	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events
-
-JS_CompileScript leaks memory via js_realloc..
 
 Demo project
 	Main screen
@@ -27,10 +23,15 @@ Demo project
 
 	Percussion playground
 
+Image - save
+
 Look into tile based physics
 
 Normalize error messages, add verbosity
 Remove unnecessary printfs
+JS_CompileScript leaks memory via js_realloc..
+
+
 
 
 =============================================
@@ -38,6 +39,8 @@ Remove unnecessary printfs
 Nice to have
 
 =============================================
+
+Dropdown - jump to item by typing
 
 Image
 	make gradient

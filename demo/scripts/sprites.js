@@ -8,13 +8,15 @@ new (function (){
 
 	scene.ui = new UI( {
 		layoutType: Layout.Vertical,
-		layoutAlignX: LayoutAlign.Start,
+		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Start,
 		pad: 20,
 		wrapEnabled: true,
+		fitChildren: false,
 		spacing: 10,
 		width: App.windowWidth,
-		height: App.windowHeight
+		height: App.windowHeight,
+		//layout: function ( w, h ) { log( "scene.layout", w, h ); }
 	} );
 
 	// title
@@ -25,13 +27,13 @@ new (function (){
 		bold: true,
 		align: TextAlign.Center,
 		wrap: false,
-		selfAlign: LayoutAlign.Stretch,
+		minWidth: 290,
 		text: "Sprites"
 	} );
 
 	// scrollable description
 	var description = scene.addChild( 'ui/textfield', {
-		size: 12,
+		size: 14,
 		disabled: true,
 		states:{
 			off: { background: false, },
@@ -43,7 +45,6 @@ new (function (){
 		cancelToBlur: false,
 		pad: 5,
 		color: Color.Text,
-		width: 290,
 		wrap: true,
 		flex: 1,
 		multiLine: true,
@@ -53,7 +54,6 @@ new (function (){
 	// page selector scrollbar
 	var scrollbar = scene.addChild( 'ui/scrollbar', {
 		orientation: 'horizontal',
-		width: 290,
 		totalSize: 4,
 		position: 0,
 		handleSize: 1,
@@ -65,14 +65,6 @@ new (function (){
 		discrete: true,
 		scroll: changePage,
 	});
-
-	// page number on scrollbar handle
-	var pageNumber = scrollbar.handle.addChild( 'ui/text', {
-		text: 'Page 1',
-		color: Color.Text,
-		marginTop: -6,
-		align: TextAlign.Center
-	} );
 
 	// back to main menu button
 	scene.addChild( 'ui/button', {
@@ -90,7 +82,7 @@ new (function (){
 	var example = scene.addChild( 'ui/panel', {
 		flex: 1,
 		pad: 0,
-		width: 300,
+		minWidth: 300,
 		spacingY: 5,
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
@@ -99,7 +91,7 @@ new (function (){
 
 	// sample sprite container
 	var spriteContainer = example.addChild( 'ui/scrollable', {
-		height: 140,
+		minHeight: 140,
 		layoutType: Layout.None,
 		scrollbars: false,
 		layout: function () {
@@ -128,12 +120,13 @@ new (function (){
 		flex: 1,
 		valueWidth: 150,
 		showAll: false,
+		//scrollable: false,
 		target: sprite.render,
 	} );
 
 	// multiple subsections of slide
 	function changePage( p ) {
-		pageNumber.text = 'page ' + (p + 1);
+		// scrollbar.label.text = 'Page ' + (p + 1);
 		switch ( p ){
 			case 0:
 				description.text =
@@ -204,10 +197,10 @@ new (function (){
 				"To help create user interface elements define stretchable regions on " +
 				"texture by setting ^Bslice^n property.";
 				props.properties = {
-					'sliceLeft': true,
-					'sliceTop': true,
-					'sliceBottom': true,
-					'sliceRight': true,
+					'sliceLeft': { min: 0, step: 1 },
+					'sliceTop': { min: 0, step: 1 },
+					'sliceBottom': { min: 0, step: 1 },
+					'sliceRight': { min: 0, step: 1 },
 				};
 				props.groups = [ { name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]} ];
 				sprite.update = null;

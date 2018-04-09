@@ -242,10 +242,10 @@ void RenderSpriteBehavior::InitClass() {
 		ArgValue v;
 		v.type = TypeArray;
 		v.value.arrayValue = new ArgValueVector();
-		v.value.arrayValue->emplace_back( ArgValue( rs->slice.x ) );
-		v.value.arrayValue->emplace_back( ArgValue( rs->slice.y ) );
-		v.value.arrayValue->emplace_back( ArgValue( rs->slice.w ) );
-		v.value.arrayValue->emplace_back( ArgValue( rs->slice.h ) );
+		v.value.arrayValue->emplace_back( ArgValue( fmax(0, rs->slice.x ) ) );
+		v.value.arrayValue->emplace_back( ArgValue( fmax(0, rs->slice.y ) ) );
+		v.value.arrayValue->emplace_back( ArgValue( fmax(0, rs->slice.w ) ) );
+		v.value.arrayValue->emplace_back( ArgValue( fmax(0, rs->slice.h ) ) );
 		return v;
 	}),
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
@@ -268,22 +268,22 @@ void RenderSpriteBehavior::InitClass() {
 	script.AddProperty<RenderSpriteBehavior>
 	( "sliceTop", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.x; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.x = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.x = fmax(0, val) ); }) );
 	
 	script.AddProperty<RenderSpriteBehavior>
 	( "sliceRight", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.y; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.y = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.y = fmax(0, val) ); }) );
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "sliceBottom", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.w; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.w = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.w = fmax(0, val) ); }) );
 
 	script.AddProperty<RenderSpriteBehavior>
 	( "sliceLeft", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->slice.h; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.h = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderSpriteBehavior*) b)->slice.h = fmax(0, val) ); }) );
 
 	// functions
 	
@@ -346,7 +346,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	if ( color.a == 0.0 ) return;
 	
 	// slices
-	bool sliced = ( behavior->slice.x != 0 || behavior->slice.y != 0 || behavior->slice.w != 0 || behavior->slice.h != 0 );
+	bool sliced = ( behavior->slice.x > 0 || behavior->slice.y > 0 || behavior->slice.w > 0 || behavior->slice.h > 0 );
 	bool trimmed = false;
 	struct RenderSlice {
 		GPU_Rect rect;

@@ -164,6 +164,9 @@ public:
 	void CheckClipping();
 	RenderSpriteBehavior* clippedBy = NULL;
 	
+	// debug draw
+	void DebugDraw( GPU_Target* targ );
+	
 	// scripting
 	
 	/// registers class for scripting

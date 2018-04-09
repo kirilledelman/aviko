@@ -237,6 +237,20 @@ void Scene::InitClass() {
 }
 
 
+/* MARK:	-				Garbage collection
+ -------------------------------------------------------------------- */
+
+
+void Scene::TraceProtectedObjects( vector<void **> &protectedObjects ) {
+	
+	// focused ui
+	if ( this->focusedUI ) protectedObjects.push_back( &this->focusedUI->scriptObject );
+	
+	// call super
+	GameObject::TraceProtectedObjects( protectedObjects );
+}
+
+
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
 

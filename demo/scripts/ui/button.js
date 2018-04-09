@@ -33,6 +33,7 @@ include( './ui' );
 	var label, image;
 	var disabled = false;
 	var cancelToBlur = false;
+	var constructing = true;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -51,28 +52,10 @@ include( './ui' );
 		} ],
 
 		// (GameObject) instance of 'ui/text.js' used as label
-		[ 'label',  function (){
-			if ( !label ) {
-				label = go.addChild( './text', {
-					name: "Label",
-					wrap: false,
-					active: false
-				}, 1 );
-			}
-			return label;
-		} ],
+		[ 'label',  function (){ return label; } ],
 
 		// (GameObject) instance of 'ui/image.js' used as icon
-		[ 'image',  function (){
-			if ( !image ) {
-				image = go.addChild( './image', {
-					name: "Icon",
-					mode: 'icon',
-					active: false
-				}, 0 );
-			}
-			return image;
-		} ],
+		[ 'image',  function (){ return image; } ],
 
 		// (Number) space between icon and label
 		[ 'gap',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
@@ -80,7 +63,7 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			 disabled = v;
+			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
 			 go.state = 'disabled';
@@ -147,6 +130,20 @@ include( './ui' );
 		centered: false
 	});
 
+	// label
+	label = go.addChild( './text', {
+		name: "Label",
+		wrap: false,
+		active: false
+	}, 1 );
+
+	// icons
+	image = go.addChild( './image', {
+		name: "Icon",
+		mode: 'icon',
+		active: false
+	}, 0 );
+
 	// UI
 	ui.autoMoveFocus = true;
 	ui.layoutType = Layout.Horizontal;
@@ -157,7 +154,7 @@ include( './ui' );
 	go.ui = ui;
 
 	// lay out components
-	ui.layout = function( w, h ) {
+	ui.layout = function( w, h, r ) {
 		shp.resize( w, h );
 		bg.resize( w, h );
 	}
@@ -244,7 +241,9 @@ include( './ui' );
 	}
 
 	// apply defaults
-	UI.base.applyProperties( go, UI.style.button );
+	go.baseStyle = Object.create( UI.style.button );
+	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
+	constructing = false;
 
 })(this);
