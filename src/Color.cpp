@@ -514,26 +514,34 @@ bool Color::SetHex( const char* s ) {
 	
 	string hex( s );
 	unsigned long val = 0;
+	size_t len = hex.length();
 	char* ptr = NULL;
 	
 	// strip # or 0x
-	if ( hex.length() >= 1 && hex[ 0 ] == '#' ) hex = hex.substr( 1 );
-	else if ( hex.length() >= 2 && hex[ 0 ] == '0' && ( hex[ 1 ] == 'x' || hex[ 1 ] == 'X' ) ) hex = hex.substr( 3 );
+	if ( len >= 1 && hex[ 0 ] == '#' ) {
+		if ( len == 1 ) hex = "";
+		else hex = hex.substr( 1 );
+	}
+	else if ( hex.length() >= 2 && hex[ 0 ] == '0' && ( hex[ 1 ] == 'x' || hex[ 1 ] == 'X' ) ) {
+		if ( len == 2 ) hex = "";
+		else hex = hex.substr( 3 );
+	}
 	
 	// convert from hex
+	len = hex.length();
 	val = SDL_strtoul( hex.c_str(), &ptr, 16 );
 
 	// short - 2 characters - solid color, same vals for all 3
-	if ( hex.size() <= 2 ) {
+	if ( len <= 2 ) {
 		this->rgba.r = this->rgba.g = this->rgba.b = ( val & 0xFF );
 		this->rgba.a = 255;
 	// rrggbb
-	} else if ( hex.size() == 6 ) {
+	} else if ( len == 6 ) {
 		this->rgba.b = ( val & 0xFF );
 		this->rgba.g = ( ( val >> 8 ) & 0xFF );
 		this->rgba.r = ( ( val >> 16 ) & 0xFF );
 	// rrggbbaa
-	} else if ( hex.size() >= 8 ) {
+	} else if ( len >= 8 ) {
 		this->rgba.a = ( val & 0xFF );
 		this->rgba.b = ( ( val >> 8 ) & 0xFF );
 		this->rgba.g = ( ( val >> 16 ) & 0xFF );

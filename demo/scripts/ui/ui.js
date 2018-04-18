@@ -25,12 +25,7 @@
 UI.style = UI.style ? UI.style : {
 
 	// basic container panel - ui/panel.js
-	panel: {
-		/*slice: 0,
-		layoutType: Layout.Anchors,
-		pad: 8,
-		spacing: 4,*/
-	},
+	panel: { },
 
 	// text label - ui/text.js
 	text: {
@@ -53,6 +48,7 @@ UI.style = UI.style ? UI.style : {
 		size: 14,
 		color: 0x0,
 		selectionColor: 0x0073b9,
+		selectionTextColor: 0xFFFFFF,
 		slice: 8,
 		pad: 8,
 		acceptToEdit: true,
@@ -91,15 +87,15 @@ UI.style = UI.style ? UI.style : {
 		focusRect: true,
 
 		handle: {
-			slice: 5
-		},
-
-		label: {
-			size: 10,
-			bold: true,
-			color: 0x0,
-			align: TextAlign.Center,
-			wrap: false,
+			slice: 5,
+			pad: 4,
+			label: {
+				size: 12,
+				color: 0x0,
+				bold: false,
+				align: TextAlign.Center,
+				wrap: false,
+			}
 		},
 
 		states: {
@@ -107,13 +103,20 @@ UI.style = UI.style ? UI.style : {
 				background: './textures/ui:scrollbar-off',
 				handle: {
 					background: './textures/ui:scrollbar-handle-off',
-				}
+				},
 			},
 			focus: {
 				background: './textures/ui:scrollbar-focus',
 				handle: {
 					background: './textures/ui:scrollbar-handle-focus',
 				}
+			},
+			scrolling: { // scrolling with directional keys mode with .acceptToScroll = true
+				handle: {
+					background: './textures/ui:focus-rect',
+				}
+			},
+			dragging: { // dragging handle with mouse
 			},
 			disabled: {
 				background: './textures/ui:scrollbar-disabled',
@@ -266,6 +269,7 @@ UI.style = UI.style ? UI.style : {
 	dropdown: {
 
 		maxVisibleItems: 5,
+		pad: 1,
 
 		// style applied to dropdown button itself - ui/button.js
 		button: {
@@ -274,7 +278,7 @@ UI.style = UI.style ? UI.style : {
 				size: 14,
 				color: 0x0
 			},
-			pad: 8,
+			pad: 7,
 			states: {
 				off: {
 					background: './textures/ui:dropdown-off',
@@ -366,9 +370,8 @@ UI.style = UI.style ? UI.style : {
 
 		valueWidth: 60, // width of value part. height of rows is set in value.AnyType
 		spacingX: 2, // distance between label and value
-		spacingY: 2, // distance between rows
-
-		padBottom: 4,
+		spacingY: 0, // distance between rows
+		pad: 4,
 
 		// applied to group label - note that first group's marginTop will be forced to 0
 		group: {
@@ -378,12 +381,19 @@ UI.style = UI.style ? UI.style : {
 			marginTop: 8,
 		},
 
+		// applied to "no editable properties" and "(null)" text
+		empty: {
+			bold: true,
+			color: 0x666666,
+			align: TextAlign.Center,
+			marginTop: 8,
+		},
+
 		// applied to each field label
 		label: {
 			pad: 6,
 			align: TextAlign.Right,
 			color: 0x0,
-			backgroundColor: 'F0F0F066',
 			marginTop: 2,
 		},
 
@@ -444,9 +454,7 @@ UI.style = UI.style ? UI.style : {
 			},
 			// inline sub-property list ui/property-list
 			inline: {
-				padLeft: 10,
-				padRight: 0,
-				margin: 0,
+				marginLeft: 10 // indent
 			},
 
 		},
@@ -651,6 +659,7 @@ UI.base = UI.base ? UI.base : {
 				// merge into current baseStyle
 				for ( var p in v ) go.baseStyle[ p ] = v[ p ];
 				UI.base.applyProperties( go, v );
+				go.state = 'auto'; // reset state
 			}, true ],
 
 			// (Object) used to change state of control. Holds definitions from initialization
@@ -658,9 +667,13 @@ UI.base = UI.base ? UI.base : {
 
 			// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc). Applies properties from object in .states style property
 			[ 'state',  function (){ return go._state ? go._state : 'off'; }, function ( v ){
-				if ( v == 'auto' ) v = ( ui.disabled ? 'disabled' : ( ui.focused ? 'focus' : ( ui.over ? 'over' : 'off' ) ) );
+				var sv = v;
+				if ( v == 'auto' ) {
+					sv = v = ( ui.disabled ? 'disabled' : ( ui.focused ? 'focus' : ( ui.over ? 'over' : 'off' ) ) );
+					if ( go._states !== undefined && go._states[ v ] == undefined ) sv = 'off'; // if no such state in states set to off
+				}
 				go._state = v;
-				if ( go._states !== undefined && go._states[ v ] !== undefined ) UI.base.applyProperties( go, go._states[ v ] );
+				if ( go._states !== undefined && go._states[ sv ] !== undefined ) UI.base.applyProperties( go, go._states[ sv ] );
 			}, true ],
 		];
 		// map them to gameObject
@@ -751,7 +764,7 @@ UI.base = UI.base ? UI.base : {
 		for ( var p in props ) {
 			if ( p == 'style' ) continue; // last
 			// object with same name?
-			if ( typeof( props[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' ) {
+			if ( typeof( props[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' && go[ p ] !== null ) {
 				// apply properties to it
 				UI.base.applyProperties( go[ p ], props[ p ] );
 			} else {
@@ -760,10 +773,7 @@ UI.base = UI.base ? UI.base : {
 			}
 		}
 		// style is set last
-		if ( typeof( props[ 'style' ] ) == 'object' ) {
-			go.style = props.style;
-			go.state = 'auto'; // reset state
-		}
+		if ( typeof( props[ 'style' ] ) == 'object' ) go.style = props.style;
 	},
 
 	// creates properties with getter/setters
@@ -778,3 +788,4 @@ UI.base = UI.base ? UI.base : {
 	}
 
 }
+

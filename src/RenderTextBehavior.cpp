@@ -26,10 +26,13 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	color = new Color( NULL );
 	script.SetProperty( "textColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
-	// create text selection color object
+	// create text selection color objects
 	color = new Color( NULL );
 	color->SetInt( 0x0070B0, false );
 	script.SetProperty( "selectionColor", ArgValue( color->scriptObject ), this->scriptObject );
+	color = new Color( NULL );
+	color->SetInt( 0xFFFFFF, false );
+	script.SetProperty( "selectionTextColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// create ^0 - ^9 colors
 	int defaultColors[ 10 ] = { 0x0, 0x3333FF, 0xFF3333, 0xFF33FF, 0x33FF33, 0x33FFFF, 0xFFFF33, 0xFFFFFF, 0xAAAAAA, 0x666666 };
@@ -160,6 +163,22 @@ void RenderTextBehavior::InitClass() {
 		}
 		rs->_dirty = true;
 		return rs->selectionColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "selectionTextColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		return ArgValue(((RenderTextBehavior*) b)->selectionTextColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderTextBehavior* rs = (RenderTextBehavior*) b;
+		if ( val.type == TypeObject ) { // replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->selectionTextColor = other;
+		} else {
+			rs->selectionTextColor->Set( val );
+		}
+		rs->_dirty = true;
+		return rs->selectionTextColor->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
@@ -1288,6 +1307,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					
 					GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL );
 					GPU_RectangleFilled2( this->surface->target, selRect, this->selectionColor->rgba );
+					character->color = this->selectionTextColor->rgba;
 				}
 				
                 // caret

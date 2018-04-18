@@ -1,6 +1,6 @@
 /*
 
-	Control for editing object's properties
+	Control for editing object's properties as a list
 
 	Usage:
 
@@ -32,6 +32,9 @@ include( './ui' );
 	var updateInterval = 0;
 	var showAll = false;
 	var constructing = true;
+	var pad = [ 0, 0, 0, 0 ];
+	var spacingX = 0, spacingY = 0;
+	var customInspector;
 	go.serializeMask = { 'ui':1, 'target':1, 'children': 1 };
 
 	// API properties
@@ -41,7 +44,7 @@ include( './ui' );
 		// if false, only ones in .properties
 		[ 'showAll',  function (){ return showAll; }, function ( v ){
 			showAll = v;
-			go.fireLate( 'refresh' );
+			go.debounce( 'refresh', go.refresh );
 		}],
 
 		// (Object) in form of { 'propertyName': PROPERTY_DEF, 'propertyName2': PROPERTY_DEF ... }
@@ -58,6 +61,7 @@ include( './ui' );
 		//          readOnly: (Boolean) force read only for this field
 		//          enum: [ { icon:"icon1", text:"text1", value:value1 }, { text:text2, value:value2 }, ... ] - shows dropdown
 		//          description: "text displayed for property instead of property name",
+		//          style: (Object) - apply properties in this object to resulting input field
 		//
 		[ 'properties',  function (){ return properties; }, function ( v ){
 			properties = v;
@@ -65,6 +69,8 @@ include( './ui' );
 		}],
 
 		// (Array) in form of [ { name: "Group name", properties: [ 'p1', 'p2', ... ] } ... ] to group and order properties
+		//      Properties not listed in groups will appear in an automatically generated group after listed groups, alphabetically
+		//      To override alphabetical order of default group, supply group without name: param
 		[ 'groups',  function (){ return groups; }, function ( v ){
 			groups = (v && typeof( v ) == 'object' && v.constructor == Array) ? v : [];
 			go.debounce( 'refresh', go.refresh );
@@ -78,7 +84,7 @@ include( './ui' );
 
 		// (Number) width of value fields
 		[ 'valueWidth',  function (){ return valueWidth; }, function ( v ) {
-			valueWidth = v;
+			valueWidth = Math.max( 45, v );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
@@ -116,29 +122,28 @@ include( './ui' );
 		[ 'topPropertyList',  function (){ return topPropertyList; }, function ( v ){ topPropertyList = v; } ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-		[ 'pad',  function (){ return (scrollable || ui).pad; }, function ( v ){ ui.pad = 0; (scrollable || ui).pad = v; } ],
+		[ 'pad',  function (){ return pad; }, function ( v ){ pad = v; ui.requestLayout(); } ],
 
 		// (Number) inner padding top
-		[ 'padTop',  function (){ return (scrollable || ui).padTop; }, function ( v ){ ui.padTop = 0; (scrollable || ui).padTop = v; }, true ],
+		[ 'padTop', function (){ return pad[ 0 ]; }, function ( v ){ pad[ 0 ] = v; ui.requestLayout(); }, true ],
 
 		// (Number) inner padding right
-		[ 'padRight',  function (){ return (scrollable || ui).padRight; }, function ( v ){ ui.padRight = 0; (scrollable || ui).padRight = v; }, true ],
+		[ 'padRight', function (){ return pad[ 1 ]; }, function ( v ){ pad[ 1 ] = v; ui.requestLayout(); }, true ],
 
 		// (Number) inner padding bottom
-		[ 'padBottom',  function (){ return (scrollable || ui).padBottom; }, function ( v ){ ui.padBottom = 0; (scrollable || ui).padBottom = v; }, true ],
+		[ 'padBottom', function (){ return pad[ 2 ]; }, function ( v ){ pad[ 2 ] = v; ui.requestLayout(); }, true ],
 
 		// (Number) inner padding left
-		[ 'padLeft',  function (){ return (scrollable || ui).padLeft; }, function ( v ){ ui.padLeft = 0; (scrollable || ui).padLeft = v; }, true ],
+		[ 'padLeft', function (){ return pad[ 3 ]; }, function ( v ){ pad[ 3 ] = v; ui.requestLayout(); }, true ],
 
 		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-		[ 'spacing',  function (){ return (scrollable || ui).spacing; }, function ( v ){ (scrollable || ui).spacing = v; }, true ],
+		[ 'spacing',  function (){ return Math.max( spacingX, spacingY ); }, function ( v ){ spacingX = spacingY = v; ui.requestLayout(); }, true ],
 
-		// (Number) spacing between children when layoutType is Vertical
-		[ 'spacingX',  function (){ return (scrollable || ui).spacingX; }, function ( v ){ (scrollable || ui).spacingX = v; } ],
+		// (Number) spacing between label and value
+		[ 'spacingX',  function (){ return spacingX; }, function ( v ){ spacingX = v; ui.requestLayout(); } ],
 
-		// (Number) spacing between children when layoutType is Horizontal
-		[ 'spacingY',  function (){ return (scrollable || ui).spacingY; }, function ( v ){ (scrollable || ui).spacingY = v; } ],
-
+		// (Number) spacing between rows
+		[ 'spacingY',  function (){ return spacingY; }, function ( v ){ spacingY = v; ui.requestLayout(); } ],
 
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
@@ -162,6 +167,14 @@ include( './ui' );
 			} else scrollable.marginRight = 0;
 			scrollable.scrollWidth = w - scrollable.marginRight;
 			scrollable.resize( scrollable.scrollWidth, h );
+			scrollable.spacingX = spacingX;
+			scrollable.spacingY = spacingY;
+			scrollable.pad = pad;
+			ui.pad = 0;
+		} else {
+			ui.spacingX = spacingX;
+			ui.spacingY = spacingY;
+			ui.pad = pad;
 		}
 		if ( go.render ) go.render.resize( w, h );
 		go.fire( 'layout' );
@@ -169,7 +182,7 @@ include( './ui' );
 
 	// recreates controls
 	go.refresh = function () {
-		// set up
+		// set up container
 		var cont = go;
 		if ( shouldScroll ) {
 			if ( !scrollable ) {
@@ -198,19 +211,69 @@ include( './ui' );
 			ui.fitChildren = true;
 		}
 
-		// remove previous
+		// remove previous elements
 		cont.removeAllChildren();
 		cont.ui.height = cont.ui.minHeight = 0;
 		allFields.length = 0;
-		if ( !target ) return;
+
+		// determine type of inspector to show
+
+		// if object constructor has propertyList inspector info (e.g. GameObject.propertyList)
+		var baseProperties;
+		if ( target && target.constructor && target.constructor.propertyList ) {
+			var tpl = target.constructor.propertyList;
+			// configure it with { inspector: Function(), properties: {}, groups: [] }
+			customInspector = tpl.inspector;
+			baseProperties = tpl.properties;
+			if ( tpl.showAll != undefined ) showAll = tpl.showAll;
+			groups = groups.length ? groups : ( tpl.groups ? tpl.groups : [] );
+		}
+
+		// merge base properties with our properties
+		if ( baseProperties ) {
+			for ( var a in baseProperties ) {
+				if ( properties[ a ] === undefined ) {
+					properties[ a ] = baseProperties[ a ];
+				}
+			}
+		}
+
+		// if displaying a custom inspector
+		if ( customInspector ) {
+			// initialize it
+			customInspector = customInspector( target, properties, groups );
+			customInspector.propertyList = go;
+			cont.addChild( customInspector );
+			return;
+		}
+
+		// displaying standard inspector
+
+		// empty target
+		if ( !target ) {
+			cont.addChild( './text', {
+				selfAlign: LayoutAlign.Stretch,
+				text: "(null)",
+				style: go.baseStyle.empty,
+			} );
+			return;
+		}
 
 		// sort properties into groups
 		var regroup = { ' ': [] }; // default (unsorted) group
+		var unsortedGroup = null; // if unnamed group was supplied it will be put here
 		var mappedProps = {};
 
 		// copy each specified group into regroup
+		var _groups = [];
 		for ( var i in groups ) {
 			var g = groups[ i ];
+			if ( g.name ) {
+				_groups.push( g );
+			} else {
+				unsortedGroup = g;
+				continue;
+			}
 			var props = regroup[ g.name ] = [];
 			// copy properties that exist in target and match showing criteria
 			for( var i in g.properties ) {
@@ -239,13 +302,17 @@ include( './ui' );
 		}
 
 		// sort default group by name
-		regroup[ ' ' ].sort();
+		if ( unsortedGroup ) {
+			//regroup[ ' ' ];
+		} else {
+			regroup[ ' ' ].sort();
+		}
 
 		// for each group
 		var field = null;
 		var numRows = 0, numGroups = 0;
-		for ( var i = 0, ng = groups.length; i <= ng; i++ ) {
-			var props = i < ng ? regroup[ groups[ i ].name ] : regroup[ ' ' ];
+		for ( var i = 0, ng = _groups.length; i <= ng; i++ ) {
+			var props = i < ng ? regroup[ _groups[ i ].name ] : regroup[ ' ' ];
 			if ( props === undefined || !props.length ) continue;
 			numGroups++;
 			if ( i < ng || numGroups > 1 ) {
@@ -253,7 +320,7 @@ include( './ui' );
 				var groupTitle = cont.addChild( './text', {
 					forceWrap: true,
 					flex: 1,
-					text: (i < ng ? groups[ i ].name : ''),
+					text: (i < ng ? _groups[ i ].name : ''),
 					style: go.baseStyle.group,
 				} );
 				// clear top margin if first
@@ -262,28 +329,29 @@ include( './ui' );
 			// for each property
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
-				var pdef = properties[ pname ];
+				var pdef = properties[ pname ] || {};
 
 				// add label
 				var label = cont.addChild( './text', {
-					text: ( ( pdef && pdef.description ) ? pdef.description : pname ),
+					text: ( pdef.description ? pdef.description : pname ),
 					flex: 1,
 					wrap: true,
 					style: go.baseStyle.label
 				} );
 
 				// value/type
-				var curTarget = ( pdef && pdef.target ? pdef.target : target );
+				var curTarget = ( pdef.target || target );
 				var fieldValue = curTarget[ pname ];
 				var fieldType = typeof( fieldValue );
 
 				// check for enumeration
-				if ( pdef && pdef.enum !== undefined ) {
-					fieldType = 'enum';
-				}
+				if ( pdef.enum !== undefined ) fieldType = 'enum';
 
 				// create appropriate control
 				switch ( fieldType ) {
+
+					// input fields:
+
 					case 'number':
 						field = cont.addChild( './textfield', {
 							name: pname,
@@ -300,6 +368,21 @@ include( './ui' );
 						} );
 						field.style = go.baseStyle.values.number;
 						break;
+
+					case 'string':
+						field = cont.addChild( './textfield', {
+							name: pname,
+							target: curTarget,
+							change: go.fieldChanged,
+							minWidth: valueWidth,
+							value: fieldValue,
+							style: go.baseStyle.values.any
+						} );
+						field.style = go.baseStyle.values.string;
+						break;
+
+					// dropdown:
+
 					case 'enum':
 						field = cont.addChild( './dropdown', {
 							name: pname,
@@ -312,6 +395,9 @@ include( './ui' );
 						} );
 						field.style = go.baseStyle.values.enum;
 						break;
+
+					// check box:
+
 					case 'boolean':
 						field = cont.addChild( './checkbox', {
 							name: pname,
@@ -324,42 +410,45 @@ include( './ui' );
 						} );
 						field.style = go.baseStyle.values.boolean;
 						break;
+
+					// inspector:
+
 					case 'object':
-						field = cont.addChild( './button', {
+
+						// button to show inspector
+						function togglePropList() { this.image.flipY = this.propList.active = !this.propList.active; }
+						var button = cont.addChild( './button', {
 							text: String( fieldValue.constructor ? fieldValue.constructor.name : fieldValue ) + '...',
+							pdef: pdef,
+							fieldValue: fieldValue,
 							wrapEnabled: false,
 							minWidth: valueWidth,
+							disabled: (disabled || ( pdef && pdef.disabled )),
+							click: togglePropList,
+							style: go.baseStyle.values.any
+						} );
+						button.style = go.baseStyle.values.object;
+
+						// embedded inspector
+						field = cont.addChild( './property-list', {
+							flex: 1,
+							showAll: true,
+							scrollable: false,
+							forceWrap: true,
+							active: !!pdef.expanded,
 							style: go.baseStyle.values.any,
 						} );
-						field.style = go.baseStyle.values.object;
+						field.style = go.baseStyle.values.inline;
+						field.valueWidth = valueWidth - field.marginLeft; // indent
+						if ( pdef.showAll !== undefined ) field.showAll = pdef.showAll;
+						if ( pdef.properties !== undefined ) field.properties = pdef.properties;
+						if ( pdef.groups !== undefined ) field.groups = pdef.groups;
+						field.target = fieldValue;
 
-						// inline property list
-						if ( pdef && fieldValue && typeof( fieldValue ) == 'object' ){
-							if ( pdef.inline || pdef.properties ) {
-								var sub = cont.addChild( './property-list', {
-									flex: 1,
-									showAll: true,
-									scrollable: false,
-									forceWrap: true,
-									active: !!pdef.expanded,
-									style: go.baseStyle.values.any,
-								} );
-								sub.style = go.baseStyle.values.inline;
-								if ( pdef.showAll !== undefined ) sub.showAll = pdef.showAll;
-								if ( pdef.properties !== undefined ) sub.properties = pdef.properties;
-								if ( pdef.groups !== undefined ) sub.groups = pdef.groups;
-								sub.target = fieldValue;
-								field.propList = sub;
-								field.image.flipY = sub.active;
-								function togglePropList() {
-									this.image.flipY = this.propList.active = !this.propList.active;
-								}
-								field.click = togglePropList;
-								field = sub;
-							}
-						} else {
-							// TODO - add button handler to push into object, or disable button
-						}
+						// button
+						button.propList = field;
+						button.image.flipY = field.active;
+
 						break;
 					default:
 						field = cont.addChild( './text', {
@@ -376,8 +465,12 @@ include( './ui' );
 				}
 				// common properties
 				if ( field ) {
-					allFields.push( field );
+					field.pdef = pdef;
 					if ( disabled || ( pdef && pdef.disabled ) ) field.disabled = true;
+					if ( pdef.style ) {
+						UI.base.applyProperties( field, pdef.style );
+					}
+					allFields.push( field );
 				}
 
 				numRows++;
@@ -388,19 +481,18 @@ include( './ui' );
 
 		// placeholder
 		if ( numRows == 0 ) {
-			var nope = cont.addChild( './text', {
+			cont.addChild( './text', {
 				selfAlign: LayoutAlign.Stretch,
 				text: "no editable properties",
-				style: go.baseStyle.group,
+				style: go.baseStyle.empty,
 			} );
-			nope.align = TextAlign.Center;
 		}
 
-		// scroll to top
+		// scroll to top, enable scrollbars
 		if ( scrollable ) {
 			scrollable.scrollLeft = scrollable.scrollTop = 0;
 			function _showScrollbars() { this.scrollbars = 'auto'; }
-			scrollable.debounce( 'showScrollbars', _showScrollbars );
+			scrollable.debounce( 'showScrollbars', _showScrollbars, 0.1 );
 		}
 
 	}
@@ -431,7 +523,7 @@ include( './ui' );
 		for ( var i in allFields ) {
 			var field = allFields[ i ];
 			if ( field.focused ) continue;
-			var val = target[ field.name ];
+			var val = field.target[ field.name ];
 			var tp = typeof( val ) ;
 			if ( tp == 'object' && field.reload ) {
 				field.reload();
@@ -470,3 +562,21 @@ include( './ui' );
 	constructing = false;
 
 })(this);
+
+/*
+
+Default inspector parameters for property list
+
+*/
+
+Color.propertyList = Color.propertyList ? Color.propertyList : {
+	showAll: false,
+	properties: {
+		'r': { min: 0, max: 1, step: 0.1 },
+		'g': { min: 0, max: 1, step: 0.1 },
+		'b': { min: 0, max: 1, step: 0.1 },
+		'a': { min: 0, max: 1, step: 0.1 },
+		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i } },
+	},
+	groups: [ { properties: [ 'r', 'g', 'b', 'a', 'hex' ] } ]
+}

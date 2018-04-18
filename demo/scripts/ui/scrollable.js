@@ -267,14 +267,17 @@ include( './ui' );
 	ui.layout = function( w, h ) {
 		var sizeChanged = ( w != spr.width || h != spr.height );
 		spr.resize( w, h );
-		log( "scrollable layout ", w, h, sizeChanged );
 		if ( sizeChanged ) go.updateScrollbars();
 		// refire
 		go.fire( 'layout', w, h );
 	}
 
-	// container resizing should update scrollbars
-	container.ui.layout = function( w, h ) { go.debounce( 'updateScrollbars', go.updateScrollbars ); }
+	// container resizing updates scrollbars
+	container.ui.layout = function() {
+
+		go.debounce( 'updateScrollbars', go.updateScrollbars );
+
+	}
 
 	// scrolling
 	ui.mouseWheel = function ( wy, wx ) {

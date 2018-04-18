@@ -103,6 +103,7 @@ include( './ui' );
 		states: {},
 		disabled: true,
 		focusable: false,
+		fitChildren: false,
 	});
 	checkbox.image.pad = checkbox.image.margin = 0;
 	checkbox.label.active = false;
@@ -121,7 +122,7 @@ include( './ui' );
 	// UI
 	ui.autoMoveFocus = true;
 	ui.layoutType = Layout.Horizontal;
-	ui.layoutAlignX = LayoutAlign.Stretch;
+	ui.layoutAlignX = LayoutAlign.Start;
 	ui.layoutAlignY = LayoutAlign.Center;
 	ui.fitChildren = true;
 	ui.wrapEnabled = false;
@@ -212,10 +213,12 @@ include( './ui' );
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
-	// apply defaults
-	go.baseStyle = Object.create( UI.style.checkbox );
-	UI.base.applyProperties( go, go.baseStyle );
-	go.state = 'auto';
-	constructing = false;
+	go.awake = function() {
+		// apply defaults
+		go.baseStyle = Object.create( UI.style.checkbox );
+		UI.base.applyProperties( go, go.baseStyle );
+		go.state = 'auto';
+		constructing = false;
+	}
 
 })(this);

@@ -63,6 +63,7 @@ new (function (){
 		left: -4,
 		right: -4,
 		discrete: true,
+		acceptToScroll: true,
 		scroll: changePage,
 	});
 
@@ -120,38 +121,41 @@ new (function (){
 		flex: 1,
 		valueWidth: 150,
 		showAll: false,
-		//scrollable: false,
-		target: sprite.render,
+		target: sprite.render
 	} );
 
 	// multiple subsections of slide
 	function changePage( p ) {
-		// scrollbar.label.text = 'Page ' + (p + 1);
+		scrollbar.handle.text = 'Page ' + (p + 1);
 		switch ( p ){
 			case 0:
 				description.text =
-				"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n" +
+				"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n\n" +
 				"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
 				"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
 				"Sprite sheets (texture atlases) in JSON format can be used to " +
-				"combine multiple small sprites into one texture to increase performance";
+				"combine multiple small sprites into one texture to increase performance.";
 
 				props.properties = {
 					'texture': { enum: [
 						{ text: "smiley.png", value: "/textures/smiley.png" },
 						{ text: "clown.png", value: "/textures/clown.png" },
+						{ text: "poop.png", value: "/textures/poop.png" },
 					] },
 					'originalWidth': { disabled: true },
 					'originalHeight': { disabled: true },
 					'width': { min: 0, max: Infinity, step: 1 },
 					'height': { min: 0, max: Infinity, step: 1 },
 				};
-				props.groups = [ { name: 'Texture', properties: [ 'texture', 'width', 'height', 'originalWidth', 'originalHeight' ] } ];
+				props.groups = [
+					{ name: 'Texture', properties: [ 'texture', 'width', 'height', 'originalWidth', 'originalHeight' ] },
+				];
 
 				break;
 			case 1:
 				description.text =
-				"Sprites can be tiled, or flipped in horizontal or vertical direction."
+				"Sprite texture can be tiled, or flipped in horizontal or vertical direction.\n\n" +
+				"Auto-tiling will keep the size of texture constant."
 
 				props.properties = {
 					'flipX': true,
@@ -170,21 +174,8 @@ new (function (){
 			case 2:
 				description.text = "Multiplicative and additive color tinting is supported, as well as opacity, and stippling.";
 				props.properties = {
-					'color': { inline: true,
-						showAll: false,
-						properties: {
-						'r': { min: 0, max: 1, step: 0.1 },
-						'g': { min: 0, max: 1, step: 0.1 },
-						'b': { min: 0, max: 1, step: 0.1 },
-						'a': { min: 0, max: 1, step: 0.1 }
-					} },
-					'addColor': { inline: true,
-						showAll: false,
-						properties: {
-						'r': { min: -1, max: 1, step: 0.1 },
-						'g': { min: -1, max: 1, step: 0.1 },
-						'b': { min: -1, max: 1, step: 0.1 },
-					} },
+					'color': true,
+					'addColor': { properties: { 'a': false } },
 					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
 					'stipple': { min: 0, max: 1, step: 0.1 }
 				};

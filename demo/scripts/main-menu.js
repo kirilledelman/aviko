@@ -36,6 +36,9 @@ new (function (){
 		name: "Intro",
 	} );
 
+	// scene.addChild( 'ui/checkbox', { text: 'False' });
+
+
 	// buttons container
 	var buttons = scene.addChild( 'ui/panel', {
 		name: "Buttons",

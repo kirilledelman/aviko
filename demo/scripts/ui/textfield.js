@@ -49,7 +49,7 @@ include( './ui' );
 	var maxValue = Infinity;
 	var step = 1.0;
 	var constructing = true;
-	var allowed = null;
+	var allowed = null, pattern = null;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -120,7 +120,7 @@ include( './ui' );
 				    rt.formatting = false;
 					resetText = rt.text;
 					if ( selectAllOnFocus && selectable ) {
-					    rt.selectionStart = 0; rt.selectionEnd = rt.text.positionLength();
+						rt.selectionStart = 0; rt.selectionEnd = rt.text.positionLength();
 				    }
 					go.fire( 'editStart' );
 				} else {
@@ -179,6 +179,9 @@ include( './ui' );
 
 		// (RegExp) allow typing only these characters. Regular expression against which to compare incoming character, e.g. /[0-9a-z]/i
 		[ 'allowed',  function (){ return allowed; }, function ( a ){ allowed = a; } ],
+
+		// (RegExp) only allow the text that matches this RegExp e.g. /^[0-9]{0,4}$/
+		[ 'pattern',  function (){ return pattern; }, function ( p ){ pattern = p; } ],
 
 		// (Boolean) should text be antialiased
 		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
@@ -477,7 +480,7 @@ include( './ui' );
 		// if numeric and focused
 		if ( numeric && wy && ui.focused && !disabled ){
 			var val = wy < 0 ? -step : step;
-			go.value += val;
+			go.value += (Input.get( Key.LeftShift ) ? 10 : 1 ) * val;
 			go.fire( 'change', go.value );
 			rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 			stopEvent();
@@ -526,14 +529,13 @@ include( './ui' );
 
 	// mouse down
 	ui.mouseDown = function ( btn, x, y ) {
-		// focus
-	    ui.focus();
 
 		// ignore if disabled
-		if ( disabled ) return;
-
-		// mouse always starts editing
-		go.editing = true;
+		if ( disabled ) {
+			// focus & return
+		    ui.focus();
+			return;
+		}
 
 		// offset by padding
 		x -= ui.padLeft; y -= ui.padTop;
@@ -546,6 +548,10 @@ include( './ui' );
 			// set cursor
 		    rt.selectionStart = rt.selectionEnd = rt.caretPosition = rt.caretPositionAt( x, y );
 		}
+
+		// mouse always starts editing
+		go.focus();
+		go.editing = true;
 
 		// double clicked word
 		var newMouseDownTime = new Date();
@@ -609,13 +615,16 @@ include( './ui' );
 		}
 		var selStartIndex = rt.text.positionToIndex( rt.selectionStart );
 		var selEndIndex = rt.text.positionToIndex( rt.selectionEnd );
+	    var txt = rt.text;
 
 		// delete character
 	    if ( key == -1 ) {
 
 			// delete selection
 			if ( replacingSelection ) {
-				rt.text = rt.text.substr( 0, selStartIndex ) + rt.text.substr( selEndIndex );
+				txt = rt.text.substr( 0, selStartIndex ) + rt.text.substr( selEndIndex );
+				if ( pattern && !txt.match( pattern ) ) return;
+				rt.text = txt;
 				caretPosition = rt.selectionStart;
 			}
 
@@ -623,19 +632,23 @@ include( './ui' );
 			else if ( direction < 0 ) {
 				if ( caretPosition <= 0 || caretIndex <= 0 ) return;
 				var prevCaretIndex = rt.text.positionToIndex( caretPosition - 1 );
-				rt.text = rt.text.substr( 0, prevCaretIndex ) + rt.text.substr( caretIndex );
+				txt = rt.text.substr( 0, prevCaretIndex ) + rt.text.substr( caretIndex );
+				if ( pattern && !txt.match( pattern ) ) return;
+				rt.text = txt;
 				caretPosition--;
 			}
 
 		// normal character
 	    } else {
 		    // filters
-		    if ( allowed && !key.match( allowed ) ) return;
+		    if ( allowed ) {
+			    var match = key.match( allowed );
+			    if ( !match || !match.length ) return;
+		    }
 		    if ( numeric ) {
-			    if ( integer && !key.match( /\d/) ) return;
+			    if ( integer && !key.match( /\d/ ) ) return;
 			    else if ( !key.match( /[0-9.\-]/ ) ) return;
 				// test new value
-			    var txt = rt.text;
 				if ( replacingSelection ) {
 					txt = rt.text.substr( 0, selStartIndex ) + key + rt.text.substr( selEndIndex );
 				} else {
@@ -643,17 +656,21 @@ include( './ui' );
 				}
 			    if ( txt == '.' || txt == '-' ) txt += '0';
 			    if ( (integer && isNaN( parseInt( txt ) ) ) || isNaN( parseFloat( txt ) ) ) return;
+			    if ( pattern && !txt.match( pattern ) ) return;
 
 		    }
 
 			// selection
 			if ( replacingSelection ) {
-				rt.text = rt.text.substr( 0, selStartIndex ) + key + rt.text.substr( selEndIndex );
+				txt = rt.text.substr( 0, selStartIndex ) + key + rt.text.substr( selEndIndex );
 				caretPosition = rt.selectionStart + key.positionLength();
 			} else {
-				rt.text = rt.text.substr( 0, caretIndex ) + key + rt.text.substr( caretIndex );
+				txt = rt.text.substr( 0, caretIndex ) + key + rt.text.substr( caretIndex );
 				caretPosition += key.positionLength();
 			}
+		    if ( pattern ) log ( txt, pattern, '=', txt.match( pattern ) );
+			if ( pattern && !txt.match( pattern ) ) return;
+			rt.text = txt;
 	    }
 		// update caret position
 	    rt.caretPosition = caretPosition;
@@ -910,6 +927,7 @@ include( './ui' );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;
+
 })(this);
 
 

@@ -102,7 +102,10 @@ public:
 	/// selection color
 	Color *selectionColor = NULL;
 	
-	///
+	/// selection color
+	Color *selectionTextColor = NULL;
+	
+	/// inline colors
 	Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	
 	// bg

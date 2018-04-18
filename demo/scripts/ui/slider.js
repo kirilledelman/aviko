@@ -24,21 +24,18 @@ include( './ui' );
 (function(go) {
 
 	// internal props
-	var ui = new UI(), bg, shp, background;
+	var ui = new UI(), bg, shp, background, label;
 	var handle;
 	var cancelToBlur = false;
 	var acceptToCycle = false;
-	var acceptToScroll = false;
-	var scrolling = false;
 	var disabled = false;
 	var position = 0;
 	var discrete = false;
 	var totalSize = 100;
 	var handleSize = 20;
 	var orientation = 'vertical';
-	var plusButton = null, minusButton = null;
 	var constructing = true;
-	var grabX = 0, grabY = 0;
+	var dragging = false, grabX = 0, grabY = 0;
 	go.serializeMask = { 'ui':1, 'render':1, 'children': 1 };
 
 	// API properties
@@ -91,12 +88,8 @@ include( './ui' );
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
 
-		// (Boolean) pressing Enter (or 'accept' controller button) will "pageDown" scrollbar page-by-page.
+		// (Boolean) pressing Enter (or 'accept' controller button) will "pageDown" scrollbar page-by-page. If false, controller direction can be used to scroll
 		[ 'acceptToCycle',  function (){ return acceptToCycle; }, function ( a ){ acceptToCycle = a; } ],
-
-		// (Boolean) pressing Enter (or 'accept' controller button) enters mode where directional buttons can be used to scroll.
-		// if true, unless in scrolling mode, directional buttons move focus instead.
-		[ 'acceptToScroll',  function (){ return acceptToScroll; }, function ( a ){ acceptToScroll = a; } ],
 
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
@@ -106,12 +99,6 @@ include( './ui' );
 			 if ( v && ui.focused ) ui.blur();
 			 go.state = 'disabled';
 		 } ],
-
-		// (ui/button) button serving as >> or 'pageUp' button
-		[ 'plusButton',  function (){ return plusButton; }, function ( b ){ plusButton = b; go.dispatchLate( 'layout' ); } ],
-
-		// (ui/button) button serving as << or 'pageDown' button
-		[ 'minusButton',  function (){ return minusButton; }, function ( b ){ minusButton = b; go.dispatchLate( 'layout' ); } ],
 
 		// (GameObject) - reference to scroll handle
 		[ 'handle',  function (){ return handle; } ],
@@ -130,6 +117,9 @@ include( './ui' );
 				go.render = shp;
 			}
 		}],
+
+		// (ui/text.js) - reference to scroll handle
+		[ 'label',  function (){ return label; } ],
 
 		// (Number) corner roundness when background is solid color
 		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
@@ -180,6 +170,9 @@ include( './ui' );
 		states: {}
 	} );
 
+	// label for slider style
+	label = new GameObject( './text' );
+
 	// UI
 	ui.layoutType = Layout.Anchors;
 	ui.fitChildren = false;
@@ -227,15 +220,11 @@ include( './ui' );
 				handle.width = Math.round( ( handleSize / totalSize ) * availSize );
 			}
 		}
-
-		// +-
-		if ( plusButton ) plusButton.disabled = !handle.active || ( position >= totalSize - handleSize );
-		if ( minusButton ) minusButton.disabled = !handle.active || ( position <= 0 );
 	}
 
 	// move handle while dragging
 	handle.ui.mouseMoveGlobal = function ( x, y ) {
-		if ( go.state == 'dragging' ) {
+		if ( dragging ) {
 			var lp = go.globalToLocal( x, y, true );
 			var newPos = prevPos = go.position;
 			if ( orientation == 'vertical' ) {
@@ -267,15 +256,15 @@ include( './ui' );
 		grabX = x; grabY = y;
 
 		// start drag
-		go.state = 'dragging';
+		dragging = true;
 		Input.on( 'mouseMove', handle.ui.mouseMoveGlobal );
 		Input.on( 'mouseUp', handle.ui.mouseUpGlobal );
 	}
 
 	// mouse up
 	handle.ui.mouseUpGlobal = function ( btn, x, y ) {
-		if ( go.state == 'dragging' ) {
-			go.state = 'auto';
+		if ( dragging ) {
+			dragging = false;
 			Input.off( 'mouseMove', handle.ui.mouseMoveGlobal );
 			Input.off( 'mouseUp', handle.ui.mouseUpGlobal );
 		}
@@ -302,7 +291,7 @@ include( './ui' );
 	// down on scroll pane
 	ui.mouseDown = function( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
-		if ( disabled || go.state == 'dragging' ) return;
+		if ( disabled || dragging ) return;
 		ui.focus();
 		go.state = 'down';
 
@@ -315,7 +304,7 @@ include( './ui' );
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		if ( disabled || go.state == 'dragging' ) return;
+		if ( disabled || dragging ) return;
 		stopAllEvents();
 		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
@@ -334,7 +323,7 @@ include( './ui' );
 		var prevPos = position;
 
 		// pressed direction in the same axis as is orientation
-		if ( name == orientation && ( !acceptToScroll || go.state == 'scrolling' ) ) {
+		if ( name == orientation ) {
 
 			go.async( function() {
 				if ( orientation == 'horizontal' ) {
@@ -349,16 +338,15 @@ include( './ui' );
 			} );
 
 		// blur
-		} else if ( name == 'cancel' ) {
+		} else if ( name == 'cancel' && cancelToBlur ) {
 
-			if ( cancelToBlur ) ui.blur();
-			else if ( acceptToScroll ) go.state = 'auto';
+			ui.blur();
 
 		// accept
 		} else if ( name == 'accept' ) {
 
-			// cycle scroll
 			if ( acceptToCycle ) {
+				// cycle scroll
 				go.async( function () {
 					if ( position < ( totalSize - handleSize ) ) {
 						go.position = position + handleSize;
@@ -367,21 +355,11 @@ include( './ui' );
 					}
 					go.fire( 'scroll', go.position );
 				} );
-
-			// enter manual scroll mode
-			} else if ( acceptToScroll ) {
-
-				go.state = go.state == 'scrolling' ? 'auto' : 'scrolling';
-
-
 			// work like tab
 			} else {
-
 				ui.moveFocus( 1 );
-
 			}
 
-		// move focus
 		} else if ( name == 'horizontal' ) {
 
 			ui.moveFocus( dir, 0 );
@@ -391,7 +369,6 @@ include( './ui' );
 			ui.moveFocus( 0, dir );
 
 		}
-
 
 	}
 

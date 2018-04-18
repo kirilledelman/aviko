@@ -1,16 +1,40 @@
+Propertylist
+	.showFunctions - bool
+	show functions in a separate group in the end
 
-autotile for sliced images
+Scrollbar
+	add .minusButton, .plusButton props,
+	add .fixedHandle - bool - whether to stretch handle
+		.fixedHandleFullRange - bool - whether fixed handle should snap to centers or endpoints
 
-propertylist pad results in horiz scrollbars
+Textfield
+	Numeric fields display 0.3 as 0.299999... etc - truncate/round to 3 digits after . ?
 
-property editor - default property descriptions etc, can be attached in UI.style section
+Image
+	child autoDraw is drawn normally when Image height = 0, should be hidden
 
-Scrollbar - discrete - alternate background / handle
+RenderBehavior
+	autotile for sliced images
+	Shader - gradients - can maybe have more than one per. Multiplies color by radial or linear grad btw 2 colors
 
-Image / child autoDraw is drawn normally when Image height = 0, should be hidden
+Top level / Application
+	serialize - save function objects, if Function .serialize = true or something
+	Dump current scene as sceneDump.json on error
+	A function to list files and directories in path -> [ 'filename', 'dirname/' ...  ]
+	Normalize error messages, add verbosity
+	Remove unnecessary printfs
+	'quit' event - dispatched right before exiting.
+	'log' - if event is stopped, don't printf, otherwise do.
 
-A way to limit which controllers can interact with UI/focus/autonavigate etc.
-	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events
+UILayout
+	add layoutOffsetX,Y - to apply "relative" offset to each child
+
+GameObject
+	updating z, or inserting/removing children should set _zOrderDirty on parent
+	_zSortedChildren array holds children
+	Render method should keep _zSortedChildren updated, draw in order
+
+Make sure all focusable components listen for Tab and Shift+Tab
 
 Demo project
 	Main screen
@@ -23,13 +47,9 @@ Demo project
 
 	Percussion playground
 
-Image - save
+Image
+	save to file
 
-Look into tile based physics
-
-Normalize error messages, add verbosity
-Remove unnecessary printfs
-JS_CompileScript leaks memory via js_realloc..
 
 
 
@@ -40,17 +60,23 @@ Nice to have
 
 =============================================
 
+RenderTileMap
+	Tile class for indiv tiles - x,y,z offset, texture, color/addcolor, rotation, flip, scale, etc.
+	children of gameobject rendered properly sorted with tiles individual z offsets
+
+Input class
+	A way to limit which controllers can interact with UI/focus/autonavigate etc.
+	add .uiControllers = Vector( Controller ) - if not empty - only controllers in list issue UI events
+
 Dropdown - jump to item by typing
 
 Image
+	colorAtPixel(x,y)
 	make gradient
-
-Raspberry Pi - pressing Alt disrupts subseq text entry
-
-autoTile = true/false, uses tileX, tileY as multiples from current w/h
-with special handling in sliced
+	shortcut GPU drawing methods - line, pixel, rects, arcs, etc..
 
 Textured shapes/polys
+	need to figure out how to compute uvs - maybe in shader based on screen coord?
 
 RenderSprite .texture = "https://...."
 
@@ -61,8 +87,6 @@ stopEvent should work with ui events / rollovers - ?
 add convenience anchor/placement methods
 
 UIBehavior / setparent - to accelerate UI event dispatching - add a counter to gameobject - "numChildrenWithUI" or something and maintain it
-
-Application 'quit' event - dispatched right before exiting.
 
 RenderBehavior
 	.renderAfterChildren
@@ -113,7 +137,6 @@ $( '../sibling' ) -> sibling named
 can extend later to filter by properties
 
 
-RenderTileMap
 
 RenderParticles - Liquidfun ParticleSystem , or series of points render behavior
 
@@ -132,6 +155,16 @@ Network class
 	downloading as string (can json-parse)
 	socket communication - ? - https://developers.google.com/talk/libjingle/developer_guide#about-the-libjingle-sdk
 
+=============================================
+
+Bugs
+
+=============================================
+
+
+JS_CompileScript leaks memory via js_realloc..
+
+Raspberry Pi - pressing Alt disrupts subseq text entry
 
 
 =============================================

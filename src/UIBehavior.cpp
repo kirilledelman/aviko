@@ -1210,7 +1210,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	}
 
 	// if stretching rows across, and there's more space than needed
-	if ( innerHeight > totalMinSize && this->axisAlignY == LayoutAlign::Stretch ) {
+	if ( innerHeight > totalMinSize && ( this->axisAlignY == LayoutAlign::Stretch || this->axisAlignY == LayoutAlign::Center ) ) {
 		float spaceLeft = innerHeight;
 		float averageRowHeight = floor( ( spaceLeft - numSpacers * spacingY ) / (float) rows.size() );
 		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){
@@ -1413,7 +1413,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// distribute extra space to rows maxSize
-	if ( this->axisAlignX == LayoutAlign::Stretch ) {
+	if ( innerWidth > totalMinSize && ( this->axisAlignX == LayoutAlign::Stretch || this->axisAlignX == LayoutAlign::Center ) ) {
 		float spaceLeft = innerWidth;
 		float averageRowWidth = floor( ( spaceLeft - numSpacers * spacingX ) / (float) rows.size() );
 		for ( size_t r = 0, nr = rows.size(); r < nr; r++ ){

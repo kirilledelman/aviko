@@ -58,7 +58,7 @@ public:
 	float backscreenScale = 0.5;
 	
 	// draw UI debug data
-	bool debugUI = true;
+	bool debugUI = false;
 		
 	/// main display
 	GPU_Target* screen = NULL;
