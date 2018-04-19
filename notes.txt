@@ -1,3 +1,7 @@
+To fix tiling, draw using blit( srcRect, destRect instead )?
+
+
+
 Propertylist
 	.showFunctions - bool
 	show functions in a separate group in the end

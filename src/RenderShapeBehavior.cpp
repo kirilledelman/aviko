@@ -563,8 +563,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	color.a *= behavior->gameObject->combinedOpacity;
 	if ( color.a == 0.0 ) return;
 	
-	// set shader
-	behavior->SelectShader( false );
+	// set textureless shader
+	behavior->SelectShader();
 	
 	// draw based on type
 	GPU_Rect rect;

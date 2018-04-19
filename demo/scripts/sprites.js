@@ -110,11 +110,23 @@ new (function (){
 	} );
 
 	// sprite
-	var sprite = spriteContainer.addChild( {
+	var sprite = example.addChild( { //spriteContainer.addChild( {
 		render: new RenderSprite( 'smiley.png' ),
 		x: 150, y: 70,
 	} );
 	sprite.render.pivotX = sprite.render.pivotY = 0.5;
+
+	Input.on('keyDown', function( k ) {
+		log( sprite.worldX, sprite.worldY );
+		if ( k == Key.LeftShift ) {
+			if ( sprite.parent == example ) {
+				spriteContainer.addChild( sprite );
+			} else {
+				example.addChild( sprite );
+			}
+			log ( sprite.parent );
+		}
+	});
 
 	// properties
 	var props = example.addChild( 'ui/property-list', {

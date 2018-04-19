@@ -1398,7 +1398,7 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	behavior->surface->color = color;
 	
 	// set shader
-	behavior->SelectShader( true );
+	behavior->SelectShader( behavior->surface->base_w, behavior->surface->base_h );
 	
 	// draw
 	float x = -behavior->surface->base_w * behavior->pivotX,

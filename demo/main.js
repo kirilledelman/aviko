@@ -66,6 +66,24 @@ Color.Text = 0x333333;
 // show main menu
 App.scene = include( 'main-menu' );
 
+/*var s = new GameObject( {
+	x: 100, y: 100,
+	render: new RenderSprite( {
+		texture: 'smiley',
+		slice: 10,
+		height: 129,
+	} ),
+	parent: App.scene
+} );
+
+Input.mouseWheel = function ( wy, wx ) {
+	wx = wx > 0 ? 1 : -1;
+	wy = wy > 0 ? 1 : -1;
+	s.render.tileX += wx;
+	log ( s.render.height += wy );
+
+}*/
+
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
 function transitionScene( newScene, oldScene, dir ) {
 	// draw old scene to image

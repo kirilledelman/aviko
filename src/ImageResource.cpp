@@ -175,6 +175,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 	this->image->anchor_x = this->image->anchor_y = 0; // reset
 	GPU_SetImageFilter( this->image, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->image, GPU_SNAP_NONE );
+	GPU_SetWrapMode( this->image, GPU_WRAP_NONE, GPU_WRAP_NONE );
 	
 	// printf( "Loaded %s - %p\n", path.c_str(), this->image );
 	

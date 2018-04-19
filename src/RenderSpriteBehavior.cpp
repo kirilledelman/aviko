@@ -358,7 +358,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	
 	// shader params
 	bool shaderRotated = false;
-	float shaderU = 0, shaderV = 0, shaderW = 1, shaderH = 1;
+	float shaderU = 0, shaderV = 0, shaderW = 0, shaderH = 0;
 	float shaderTileX = 1, shaderTileY = 1;
 	
 	// texture
@@ -407,10 +407,10 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
 		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
 		shaderRotated = frame->rotated;
-		shaderU = srcRect.x / image->base_w;
-		shaderV = srcRect.y / image->base_h;
-		shaderW = srcRect.w / image->base_w;
-		shaderH = srcRect.h / image->base_h;
+		shaderU = srcRect.x;
+		shaderV = srcRect.y;
+		shaderW = srcRect.w;
+		shaderH = srcRect.h;
 		
 		if ( sliced ) {
 			cx += frame->trimOffsetX;
@@ -433,8 +433,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		}
 		
 		// size
-		srcRect.w = image->base_w;
-		srcRect.h = image->base_h;
+		shaderW = srcRect.w = image->base_w;
+		shaderH = srcRect.h = image->base_h;
 		
 		// set scale
 		sy = behavior->height / srcRect.h;
@@ -444,6 +444,13 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
 		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
 		
+	}
+	
+	// swap if rotated
+	if ( shaderRotated ) {
+		float temp = shaderTileX;
+		shaderTileY = shaderTileX;
+		shaderTileX = temp;
 	}
 	
 	// bail if no image
@@ -744,7 +751,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		
 		// activate shader
 		behavior->SelectShader
-		( true, shaderRotated, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
+		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
 		
 		// round cx, cy
 		cx = floor( cx ); cy = floor( cy );
@@ -759,7 +766,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	if ( !tiling ) {
 		// activate shader
 		behavior->SelectShader
-		( true, shaderRotated, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
+		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, 1, 1 );
 	}
 	
 	// round cx, cy
@@ -787,17 +794,19 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// tiling is on
 		if ( tiling ) {
 			if ( shaderRotated ) {
+				
 				// TODO
 				behavior->SelectShader
-				( true, shaderRotated, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
+				( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
+				
 			} else {
 				// each slice has different tiling params
 				behavior->SelectShader
-				( true, shaderRotated,
-				 shaderU + ( rs.rect.x / image->base_w ),
-				 shaderV + ( rs.rect.y / image->base_h ),
-				 rs.rect.w / image->base_w,
-				 rs.rect.h / image->base_h,
+				( image->base_w, image->base_h,
+				 shaderU + rs.rect.x,
+				 shaderV + rs.rect.y,
+				 rs.rect.w,
+				 rs.rect.h,
 				 rs.tileX, rs.tileY );
 			}
 		}

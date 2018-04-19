@@ -55,6 +55,7 @@ public:
 		int addColorUniform;
 		int tileUniform;
 		int texInfoUniform;
+		int texSizeUniform;
 		int stippleUniform;
 		int stippleAlphaUniform;
 	} SpriteShaderVariant;
@@ -74,7 +75,7 @@ public:
 	static SpriteShaderVariant shaders[ 8 ];
 
 	/// applies current shader + params
-	int SelectShader( bool textured, bool rotated = false, float u = 0, float v = 0, float w = 1, float h = 1, float tx = 1, float ty = 1 );
+	int SelectShader( float tw = 0, float th = 0, float u = 0, float v = 0, float w = 0, float h = 0, float tx = 1, float ty = 1 );
 	
 	/// resets shader to default
 	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }

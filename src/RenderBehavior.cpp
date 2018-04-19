@@ -121,8 +121,70 @@ void RenderBehavior::InitClass() {
 /* MARK:	-				Shader methods
  -------------------------------------------------------------------- */
 
+int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w, float h, float tx, float ty ){
 
-int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v, float w, float h, float tx, float ty ){
+	int shaderIndex = 0;
+	
+	if ( tw != 0 || th != 0 ) shaderIndex |= SHADER_TEXTURE;
+	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
+	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
+	
+	SpriteShaderVariant &variant = shaders[ shaderIndex ];
+	
+	if ( !variant.shader ) {
+		printf( "Shader %d not compiled!\n", shaderIndex );
+	}
+	
+	// activate shader
+	GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
+	
+	// set params
+	float params[ 4 ];
+	
+	// addColor
+	
+	if ( variant.addColorUniform >= 0 ) {
+		params[ 0 ] = this->addColor->r;
+		params[ 1 ] = this->addColor->g;
+		params[ 2 ] = this->addColor->b;
+		params[ 3 ] = this->addColor->a;
+		GPU_SetUniformfv( variant.addColorUniform, 4, 1, params );
+	}
+	
+	// stipple
+	if ( variant.stippleUniform >= 0 || variant.stippleAlphaUniform >= 0 ) {
+		GPU_SetUniformi( variant.stippleUniform, 10000 * ( 1.0 - this->stipple ) );
+		GPU_SetUniformi( variant.stippleAlphaUniform, this->stippleAlpha ? 1 : 0 );
+	}
+	
+	// tile
+	if ( variant.tileUniform >= 0 ) {
+		params[ 1 ] = ty;
+		params[ 0 ] = tx;
+		GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
+	}
+	
+	// texture size
+	if ( variant.texSizeUniform >= 0 ) {
+		params[ 0 ] = tw;
+		params[ 1 ] = th;
+		GPU_SetUniformfv( variant.texSizeUniform, 2, 1, params );
+	}
+	
+	// slice on texture
+	if ( variant.texInfoUniform >= 0 ) {
+		params[ 0 ] = u;
+		params[ 1 ] = v;
+		params[ 2 ] = w;
+		params[ 3 ] = h;
+		GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
+	}
+	
+	return shaderIndex;
+	
+}
+
+/* int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v, float w, float h, float tx, float ty ){
 	
 	int shaderIndex = textured ? SHADER_TEXTURE : 0;
 
@@ -181,7 +243,7 @@ int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v,
 	
 	return shaderIndex;
 	
-}
+} */
 
 // init shaders
 void RenderBehavior::InitShaders() {
@@ -197,7 +259,7 @@ void RenderBehavior::InitShaders() {
 	%s\n\
 	void main(void){\n\
 		color = gpu_Color;\n\
-		texCoord = vec2(gpu_TexCoord);\n\
+        texCoord = vec2(gpu_TexCoord.x * texSize.x, gpu_TexCoord.y * texSize.y );\n\
 		gl_Position = gpu_ModelViewProjectionMatrix * vec4(gpu_Vertex, 0.0, 1.0);\n\
 	}",
 	renderer->min_shader_version,
@@ -206,6 +268,7 @@ void RenderBehavior::InitShaders() {
 	attribute vec2 gpu_Vertex;\n\
 	attribute vec2 gpu_TexCoord;\n\
 	attribute mediump vec4 gpu_Color;\n\
+	uniform vec2 texSize;\n\
 	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 	varying mediump vec4 color;\n\
 	varying vec2 texCoord;\n"
@@ -213,13 +276,15 @@ void RenderBehavior::InitShaders() {
 	"in vec2 gpu_Vertex;\n\
 	in vec2 gpu_TexCoord;\n\
 	in vec4 gpu_Color;\n\
+	uniform vec2 texSize;\n\
 	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 	out vec4 color;\n\
 	out vec2 texCoord;\n");
 	
 	// params
 	string tex =
-	"uniform sampler2D tex;\n";
+	"uniform sampler2D tex;\n\
+	uniform vec2 texSize;\n";
 	string tile =
 	"uniform vec2 tile;\n\
 	uniform vec4 texInfo;\n";
@@ -237,8 +302,8 @@ void RenderBehavior::InitShaders() {
 	
 	// features
 	tile =
-	"coord.x = mod((coord.x - texInfo.x) * tile.x, texInfo.z) + texInfo.x;\n\
-	coord.y = mod((coord.y - texInfo.y) * tile.y, texInfo.w) + texInfo.y;\n";
+	"coord.x = mod( (coord.x - texInfo.x) * tile.x, texInfo.z) + texInfo.x;\n\
+	coord.y = mod( (coord.y - texInfo.y) * tile.y, texInfo.w) + texInfo.y;\n";
 	
 	stipple =
 	"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
@@ -263,7 +328,9 @@ void RenderBehavior::InitShaders() {
 	else if (index >= 15) limit = 3750;\n\
 	if ( stippleValue < limit ) discard;";
 
-	string readPixel = glsles ? "vec4 src = texture2D(tex, coord);\n" : "vec4 src = texture(tex, coord);\n";
+	string readPixel = glsles ?
+	"vec4 src = texture2D(tex, coord / texSize );\n" :
+	"vec4 src = texture(tex, coord / texSize );\n";
 	string readColor = "vec4 src = color;";
 	string features[ 8 ];
 	features[ SHADER_BASE ] = readColor;
@@ -320,6 +387,7 @@ void RenderBehavior::InitShaders() {
 		if ( CompileShader( shaders[ i ].shader, shaders[ i ].shaderBlock, vertShader, fragShader ) ) {
 			shaders[ i ].tileUniform = GPU_GetUniformLocation( shaders[ i ].shader, "tile" );
 			shaders[ i ].texInfoUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texInfo" );
+			shaders[ i ].texSizeUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texSize" );
 			shaders[ i ].addColorUniform = GPU_GetUniformLocation( shaders[ i ].shader, "addColor" );
 			shaders[ i ].stippleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stipple" );
 			shaders[ i ].stippleAlphaUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stippleAlpha" );
