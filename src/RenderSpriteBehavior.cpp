@@ -357,9 +357,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	static RenderSlice slices[ 9 ];
 	
 	// shader params
-	bool shaderRotated = false;
 	float shaderU = 0, shaderV = 0, shaderW = 0, shaderH = 0;
-	float shaderTileX = 1, shaderTileY = 1;
 	
 	// texture
 	if ( behavior->imageResource ) {
@@ -404,9 +402,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		}
 		
 		// shader params
-		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
-		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
-		shaderRotated = frame->rotated;
 		shaderU = srcRect.x;
 		shaderV = srcRect.y;
 		shaderW = srcRect.w;
@@ -440,17 +435,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		sy = behavior->height / srcRect.h;
 		sx = behavior->width / srcRect.w;
 		
-		// tiling
-		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
-		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
-		
-	}
-	
-	// swap if rotated
-	if ( shaderRotated ) {
-		float temp = shaderTileX;
-		shaderTileY = shaderTileX;
-		shaderTileX = temp;
 	}
 	
 	// bail if no image
@@ -497,6 +481,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = 0;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	1;
 			
 			// left
 			i++;
@@ -508,6 +494,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = 0;
 			slices[ i ].sx = sliceMidY / midX;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
+			slices[ i ].tileY =	1;
 			
 			// upper left
 			i++;
@@ -519,6 +507,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = 0;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	1;
 			
 			// bottom
 			i++;
@@ -530,6 +520,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = sliceMidX / midY;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
 			
 			// mid
 			i++;
@@ -542,6 +534,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left;
 			slices[ i ].sx = sliceMidY / midX;
 			slices[ i ].sy = sliceMidX / midY;
+			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
+			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
 			
 			// top
 			i++;
@@ -554,6 +548,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = sliceMidX / midY;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
 			
 			// upper right
 			i++;
@@ -565,6 +561,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left + sliceMidX;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	1;
 			
 			// right
 			i++;
@@ -577,6 +575,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left + sliceMidX;
 			slices[ i ].sx = sliceMidY / midX;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
+			slices[ i ].tileY =	1;
 			
 			// bottom right
 			i++;
@@ -589,13 +589,15 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			slices[ i ].y = left + sliceMidX;
 			slices[ i ].sx = 1;
 			slices[ i ].sy = 1;
+			slices[ i ].tileX =	1;
+			slices[ i ].tileY =	1;
 			
 		} else {
 			// compute margins
-			top = floor( (behavior->slice.x < 1) ? (srcRect.h * behavior->slice.x) : behavior->slice.x );
-			left = floor( (behavior->slice.h < 1) ? (srcRect.w * behavior->slice.h) : behavior->slice.h );
-			bottom = floor( (behavior->slice.w < 1) ? (srcRect.h * behavior->slice.w) : behavior->slice.w );
-			right = floor( (behavior->slice.y < 1) ? (srcRect.w * behavior->slice.y) : behavior->slice.y );
+			top = ( (behavior->slice.x < 1) ? (srcRect.h * behavior->slice.x) : behavior->slice.x );
+			left = ( (behavior->slice.h < 1) ? (srcRect.w * behavior->slice.h) : behavior->slice.h );
+			bottom = ( (behavior->slice.w < 1) ? (srcRect.h * behavior->slice.w) : behavior->slice.w );
+			right = ( (behavior->slice.y < 1) ? (srcRect.w * behavior->slice.y) : behavior->slice.y );
 			midX = ( srcRect.w - (left + right) );
 			midY = ( srcRect.h - (top + bottom) );
 			sliceMidX = max( 0.0f, effectiveWidth - (left + right) );
@@ -746,15 +748,22 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		}
 		
 		// pivot
-		cx += -behavior->width * behavior->pivotX;
-		cy += -behavior->height * behavior->pivotY;
+		cx = floor( cx - behavior->width * behavior->pivotX );
+		cy = floor( cy - behavior->height * behavior->pivotY );
+		
+		// tiling
+		float shaderTileX, shaderTileY;
+		if ( rotated ) {
+			shaderTileX = behavior->autoTileY ? ( behavior->tileY * sx ) : behavior->tileY;
+			shaderTileY = behavior->autoTileX ? ( behavior->tileX * sy ) : behavior->tileX;
+		} else {
+			shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
+			shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+		}
 		
 		// activate shader
 		behavior->SelectShader
-		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
-		
-		// round cx, cy
-		cx = floor( cx ); cy = floor( cy );
+		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderH, shaderTileX, shaderTileY );
 		
 		// single slice
 		GPU_BlitTransform( image, &srcRect, target, cx, cy, r, sx, sy );
@@ -762,15 +771,12 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	}
 	
 	// if tiling is off
-	bool tiling = ( shaderTileX != 1 || shaderTileY != 1 );
+	bool tiling = ( behavior->tileX != 1 || behavior->tileY != 1 || behavior->autoTileY || behavior->autoTileX );
 	if ( !tiling ) {
-		// activate shader
+		// activate shader without tiling
 		behavior->SelectShader
-		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, 1, 1 );
+		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderH, 1, 1 );
 	}
-	
-	// round cx, cy
-	cx = floor( cx ); cy = floor( cy );
 	
 	// render each slice
 	int nslices = 9;
@@ -785,7 +791,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		if ( behavior->flipX || behavior->flipY ) {
 			GPU_Scale( behavior->flipX ? -1 : 1, behavior->flipY ? -1 : 1, 1 );
 		}
-		GPU_Translate( -behavior->width * behavior->pivotX, -behavior->height * behavior->pivotY, 0 );
+		GPU_Translate( -floor(behavior->width * behavior->pivotX), -floor(behavior->height * behavior->pivotY), 0 );
 		if ( rotated ) {
 			GPU_Translate( cx, cy, 0 );
 			GPU_Rotate( -90, 0, 0, 1 );
@@ -793,22 +799,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 
 		// tiling is on
 		if ( tiling ) {
-			if ( shaderRotated ) {
-				
-				// TODO
-				behavior->SelectShader
-				( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderV, shaderTileX, shaderTileY );
-				
-			} else {
-				// each slice has different tiling params
-				behavior->SelectShader
-				( image->base_w, image->base_h,
-				 shaderU + rs.rect.x,
-				 shaderV + rs.rect.y,
-				 rs.rect.w,
-				 rs.rect.h,
-				 rs.tileX, rs.tileY );
-			}
+			// each slice has different tiling params
+			behavior->SelectShader
+			( image->base_w, image->base_h,
+			 shaderU + rs.rect.x,
+			 shaderV + rs.rect.y,
+			 rs.rect.w,
+			 rs.rect.h,
+			 rs.tileX, rs.tileY );
 		}
 		
 		// render

@@ -530,6 +530,9 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		UIBehavior* ui = (UIBehavior*) b;
 		float sameVal = 0;
+		float padLeft = ui->padLeft, padRight = ui->padRight,
+			  padTop = ui->padTop, padBottom = ui->padBottom;
+		
 		if ( val.type == TypeArray ) {
 			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->padTop ) ) {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->padRight ) ) {
@@ -541,7 +544,11 @@ void UIBehavior::InitClass() {
 		} else if ( val.toNumber( sameVal ) ) {
 			ui->padTop = ui->padRight = ui->padBottom = ui->padLeft = sameVal;
 		}
-		ui->RequestLayout( ArgValue( "pad" ) );
+		
+		// check for change
+		if ( padLeft != ui->padLeft || padRight != ui->padRight ||
+			padTop != ui->padTop || padBottom != ui->padBottom ) ui->RequestLayout( ArgValue( "pad" ) );
+		
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE );
 	
@@ -609,6 +616,8 @@ void UIBehavior::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		UIBehavior* ui = (UIBehavior*) b;
 		float sameVal = 0;
+		float marginLeft = ui->marginLeft, marginRight = ui->marginRight,
+			  marginTop = ui->marginTop, marginBottom = ui->marginBottom;
 		if ( val.type == TypeArray ) {
 			if ( val.value.arrayValue->size() >= 1 && val.value.arrayValue->at( 0 ).toNumber( ui->marginTop ) ) {
 				if ( val.value.arrayValue->size() >= 2 && val.value.arrayValue->at( 1 ).toNumber( ui->marginRight ) ) {
@@ -620,7 +629,9 @@ void UIBehavior::InitClass() {
 		} else if ( val.toNumber( sameVal ) ) {
 			ui->marginTop = ui->marginRight = ui->marginBottom = ui->marginLeft = sameVal;
 		}
-		ui->RequestLayout( ArgValue( "margin" ) );
+		// change?
+		if ( marginLeft != ui->marginLeft || marginRight != ui->marginRight ||
+			marginTop != ui->marginTop || marginBottom != ui->marginBottom ) ui->RequestLayout( ArgValue( "margin" ) );
 		return val;
 	}), PROP_ENUMERABLE | PROP_NOSTORE  );
 	
@@ -1105,7 +1116,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 			
 		} else {
 			
-			//behavior->RequestLayout( ArgValue( "childSizeChanged" ) );
+			// behavior->RequestLayout( ArgValue( "childSizeChanged" ) );
 			behavior->RequestLayout( ArgValue() );
 			
 		}
@@ -1670,14 +1681,17 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 	
 	// dispatch down
 	GameObject* top = NULL;
+	// fixed position - same object
 	if ( this->fixedPosition ) {
 		
 		top = this->gameObject;
-	
+		
+	// no trigger - use parent
 	} else if ( trigger.type == TypeUndefined ) {
 		
 		top = ( this->gameObject->parent ? this->gameObject->parent : this->gameObject );
 	
+	// top level - scene
 	} else {
 		
 		top = ( this->gameObject ? this->gameObject->GetScene() : NULL );

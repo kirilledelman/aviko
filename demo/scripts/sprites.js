@@ -110,23 +110,11 @@ new (function (){
 	} );
 
 	// sprite
-	var sprite = example.addChild( { //spriteContainer.addChild( {
+	var sprite = spriteContainer.addChild( {
 		render: new RenderSprite( 'smiley.png' ),
 		x: 150, y: 70,
 	} );
 	sprite.render.pivotX = sprite.render.pivotY = 0.5;
-
-	Input.on('keyDown', function( k ) {
-		log( sprite.worldX, sprite.worldY );
-		if ( k == Key.LeftShift ) {
-			if ( sprite.parent == example ) {
-				spriteContainer.addChild( sprite );
-			} else {
-				example.addChild( sprite );
-			}
-			log ( sprite.parent );
-		}
-	});
 
 	// properties
 	var props = example.addChild( 'ui/property-list', {
@@ -153,6 +141,8 @@ new (function (){
 						{ text: "smiley.png", value: "/textures/smiley.png" },
 						{ text: "clown.png", value: "/textures/clown.png" },
 						{ text: "poop.png", value: "/textures/poop.png" },
+						{ text: "normal", value: "/textures/test:test1" },
+						{ text: "rotated", value: "/textures/test:test" },
 					] },
 					'originalWidth': { disabled: true },
 					'originalHeight': { disabled: true },
@@ -214,8 +204,6 @@ new (function (){
 		}
 
 	}
-
-	Input.keyDown = function () { App.scene.ui.requestLayout(); }
 
 	// show first page
 	changePage( 0 );

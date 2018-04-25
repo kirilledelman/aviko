@@ -1,6 +1,6 @@
-To fix tiling, draw using blit( srcRect, destRect instead )?
-
-
+Finish slicing display, check in
+	convert to in-shader slicing
+	add backbuffer texture param
 
 Propertylist
 	.showFunctions - bool
@@ -63,6 +63,9 @@ Image
 Nice to have
 
 =============================================
+
+RenderBehavior
+	replace BlendMode with blend modes based on mixing framebuffer w sprite - Burn, Multiply, Darken, Lighten etc.
 
 RenderTileMap
 	Tile class for indiv tiles - x,y,z offset, texture, color/addcolor, rotation, flip, scale, etc.

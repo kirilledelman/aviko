@@ -184,67 +184,6 @@ int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w,
 	
 }
 
-/* int RenderBehavior::SelectShader( bool textured, bool rotated, float u, float v, float w, float h, float tx, float ty ){
-	
-	int shaderIndex = textured ? SHADER_TEXTURE : 0;
-
-	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
-	
-	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
-	
-	SpriteShaderVariant &variant = shaders[ shaderIndex ];
-	
-	if ( !variant.shader ) {
-		printf( "Shader %d not compiled!\n", shaderIndex );
-	}
-	
-	// activate shader
-	GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
-	
-	// set params
-	float params[ 4 ];
-	
-	// addColor
-
-	if ( variant.addColorUniform >= 0 ) {
-		params[ 0 ] = this->addColor->r;
-		params[ 1 ] = this->addColor->g;
-		params[ 2 ] = this->addColor->b;
-		params[ 3 ] = this->addColor->a;
-		GPU_SetUniformfv( variant.addColorUniform, 4, 1, params );
-	}
-	
-	// stipple
-	if ( variant.stippleUniform >= 0 || variant.stippleAlphaUniform >= 0 ) {
-		GPU_SetUniformi( variant.stippleUniform, 10000 * ( 1.0 - this->stipple ) );
-		GPU_SetUniformi( variant.stippleAlphaUniform, this->stippleAlpha ? 1 : 0 );
-	}
-	
-	// tile
-	if ( variant.tileUniform >= 0 ) {
-		if ( rotated ) {
-			params[ 0 ] = ty;
-			params[ 1 ] = tx;
-		} else {
-			params[ 1 ] = ty;
-			params[ 0 ] = tx;
-		}
-		GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
-	}
-	
-	// texInfo
-	if ( variant.texInfoUniform >= 0 ) {
-		params[ 0 ] = u;
-		params[ 1 ] = v;
-		params[ 2 ] = w;
-		params[ 3 ] = h;
-		GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
-	}
-	
-	return shaderIndex;
-	
-} */
-
 // init shaders
 void RenderBehavior::InitShaders() {
 	
@@ -302,8 +241,8 @@ void RenderBehavior::InitShaders() {
 	
 	// features
 	tile =
-	"coord.x = mod( (coord.x - texInfo.x) * tile.x, texInfo.z) + texInfo.x;\n\
-	coord.y = mod( (coord.y - texInfo.y) * tile.y, texInfo.w) + texInfo.y;\n";
+	"if ( tile.x != 1.0 ) coord.x = mod( (coord.x - texInfo.x) * tile.x, texInfo.z ) + texInfo.x;\n\
+	if ( tile.y != 1.0 ) coord.y = mod( (coord.y - texInfo.y) * tile.y, texInfo.w ) + texInfo.y;\n";
 	
 	stipple =
 	"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\

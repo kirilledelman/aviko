@@ -122,28 +122,28 @@ include( './ui' );
 		[ 'topPropertyList',  function (){ return topPropertyList; }, function ( v ){ topPropertyList = v; } ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-		[ 'pad',  function (){ return pad; }, function ( v ){ pad = v; ui.requestLayout(); } ],
+		[ 'pad',  function (){ return pad; }, function ( v ){ pad = v; ui.requestLayout( 'pad' ); } ],
 
 		// (Number) inner padding top
-		[ 'padTop', function (){ return pad[ 0 ]; }, function ( v ){ pad[ 0 ] = v; ui.requestLayout(); }, true ],
+		[ 'padTop', function (){ return pad[ 0 ]; }, function ( v ){ pad[ 0 ] = v; ui.requestLayout( 'padTop' ); }, true ],
 
 		// (Number) inner padding right
-		[ 'padRight', function (){ return pad[ 1 ]; }, function ( v ){ pad[ 1 ] = v; ui.requestLayout(); }, true ],
+		[ 'padRight', function (){ return pad[ 1 ]; }, function ( v ){ pad[ 1 ] = v; ui.requestLayout( 'padRight' ); }, true ],
 
 		// (Number) inner padding bottom
-		[ 'padBottom', function (){ return pad[ 2 ]; }, function ( v ){ pad[ 2 ] = v; ui.requestLayout(); }, true ],
+		[ 'padBottom', function (){ return pad[ 2 ]; }, function ( v ){ pad[ 2 ] = v; ui.requestLayout( 'padBottom' ); }, true ],
 
 		// (Number) inner padding left
-		[ 'padLeft', function (){ return pad[ 3 ]; }, function ( v ){ pad[ 3 ] = v; ui.requestLayout(); }, true ],
+		[ 'padLeft', function (){ return pad[ 3 ]; }, function ( v ){ pad[ 3 ] = v; ui.requestLayout( 'padLeft' ); }, true ],
 
 		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-		[ 'spacing',  function (){ return Math.max( spacingX, spacingY ); }, function ( v ){ spacingX = spacingY = v; ui.requestLayout(); }, true ],
+		[ 'spacing',  function (){ return Math.max( spacingX, spacingY ); }, function ( v ){ spacingX = spacingY = v; ui.requestLayout( 'spacing' ); }, true ],
 
 		// (Number) spacing between label and value
-		[ 'spacingX',  function (){ return spacingX; }, function ( v ){ spacingX = v; ui.requestLayout(); } ],
+		[ 'spacingX',  function (){ return spacingX; }, function ( v ){ spacingX = v; ui.requestLayout( 'spacingX' ); } ],
 
 		// (Number) spacing between rows
-		[ 'spacingY',  function (){ return spacingY; }, function ( v ){ spacingY = v; ui.requestLayout(); } ],
+		[ 'spacingY',  function (){ return spacingY; }, function ( v ){ spacingY = v; ui.requestLayout( 'spacingY' ); } ],
 
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
