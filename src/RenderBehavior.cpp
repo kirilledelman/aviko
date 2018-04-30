@@ -2,7 +2,7 @@
 #include "GameObject.hpp"
 
 // static
-RenderBehavior::SpriteShaderVariant RenderBehavior::shaders[ 8 ];
+RenderBehavior::SpriteShaderVariant RenderBehavior::shaders[ 32 ];
 
 
 /* MARK:	-				Init / destroy
@@ -121,13 +121,18 @@ void RenderBehavior::InitClass() {
 /* MARK:	-				Shader methods
  -------------------------------------------------------------------- */
 
-int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w, float h, float tx, float ty ){
+int RenderBehavior::SelectTexturedShader(
+		float tw, float th,
+		float u, float v, float w, float h,
+		float st, float sr, float sb, float sl,
+		float sx, float sy,
+		float tx, float ty, GPU_Target* targ ){
 
-	int shaderIndex = 0;
+	int shaderIndex = SHADER_TEXTURE;
 	
-	if ( tw != 0 || th != 0 ) shaderIndex |= SHADER_TEXTURE;
 	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
+	if ( st != 0 || sr != 0 || sl != 0 || sb != 0 ) shaderIndex |= SHADER_SLICE;
 	
 	SpriteShaderVariant &variant = shaders[ shaderIndex ];
 	
@@ -164,6 +169,11 @@ int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w,
 		GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
 	}
 	
+	// pad
+	if ( variant.texPadUniform >= 0 ) {
+		GPU_SetUniformi( variant.texPadUniform, this->texturePad );
+	}
+	
 	// texture size
 	if ( variant.texSizeUniform >= 0 ) {
 		params[ 0 ] = tw;
@@ -171,7 +181,7 @@ int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w,
 		GPU_SetUniformfv( variant.texSizeUniform, 2, 1, params );
 	}
 	
-	// slice on texture
+	// sprite on texture
 	if ( variant.texInfoUniform >= 0 ) {
 		params[ 0 ] = u;
 		params[ 1 ] = v;
@@ -180,6 +190,63 @@ int RenderBehavior::SelectShader( float tw, float th, float u, float v, float w,
 		GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
 	}
 	
+	// slicing
+	if ( variant.sliceUniform >= 0 ) {
+		params[ 0 ] = st;
+		params[ 1 ] = sr;
+		params[ 2 ] = sb;
+		params[ 3 ] = sl;
+		GPU_SetUniformfv( variant.sliceUniform, 4, 1, params );
+	}
+	
+	// slicing: sprite scaling
+	if ( variant.sliceScaleUniform >= 0 ) {
+		params[ 0 ] = sx;
+		params[ 1 ] = sy;
+		GPU_SetUniformfv( variant.sliceScaleUniform, 2, 1, params );
+	}
+	
+	 // TODO - add render target as texture, set size, blend mode
+										 
+	return shaderIndex;
+	
+}
+
+int RenderBehavior::SelectUntexturedShader( GPU_Target* targ ) {
+	
+	int shaderIndex = 0;
+	
+	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
+	
+	SpriteShaderVariant &variant = shaders[ shaderIndex ];
+	
+	if ( !variant.shader ) {
+		printf( "Shader %d not compiled!\n", shaderIndex );
+	}
+	
+	// activate shader
+	GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
+	
+	// set params
+	float params[ 4 ];
+	
+	// addColor
+	if ( variant.addColorUniform >= 0 ) {
+		params[ 0 ] = this->addColor->r;
+		params[ 1 ] = this->addColor->g;
+		params[ 2 ] = this->addColor->b;
+		params[ 3 ] = this->addColor->a;
+		GPU_SetUniformfv( variant.addColorUniform, 4, 1, params );
+	}
+	
+	// stipple
+	if ( variant.stippleUniform >= 0 || variant.stippleAlphaUniform >= 0 ) {
+		GPU_SetUniformi( variant.stippleUniform, 10000 * ( 1.0 - this->stipple ) );
+		GPU_SetUniformi( variant.stippleAlphaUniform, this->stippleAlpha ? 1 : 0 );
+	}
+	
+	// TODO - add render target as texture, set size, blend mode
+ 
 	return shaderIndex;
 	
 }
@@ -190,15 +257,14 @@ void RenderBehavior::InitShaders() {
 	GPU_Renderer* renderer = GPU_GetCurrentRenderer();
 	bool glsles = ( renderer->shader_language == GPU_LANGUAGE_GLSLES );
 	
-	// create shader combinations w sets of different features
-	
+	// vertex shader
 	char vertShader[ 4096 ];
 	sprintf ( vertShader,
 	"#version %d\n\
 	%s\n\
 	void main(void){\n\
 		color = gpu_Color;\n\
-        texCoord = vec2(gpu_TexCoord.x * texSize.x, gpu_TexCoord.y * texSize.y );\n\
+        texCoord = vec2( gpu_TexCoord.x, gpu_TexCoord.y );\n\
 		gl_Position = gpu_ModelViewProjectionMatrix * vec4(gpu_Vertex, 0.0, 1.0);\n\
 	}",
 	renderer->min_shader_version,
@@ -207,7 +273,6 @@ void RenderBehavior::InitShaders() {
 	attribute vec2 gpu_Vertex;\n\
 	attribute vec2 gpu_TexCoord;\n\
 	attribute mediump vec4 gpu_Color;\n\
-	uniform vec2 texSize;\n\
 	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 	varying mediump vec4 color;\n\
 	varying vec2 texCoord;\n"
@@ -215,78 +280,137 @@ void RenderBehavior::InitShaders() {
 	"in vec2 gpu_Vertex;\n\
 	in vec2 gpu_TexCoord;\n\
 	in vec4 gpu_Color;\n\
-	uniform vec2 texSize;\n\
 	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
 	out vec4 color;\n\
 	out vec2 texCoord;\n");
 	
-	// params
-	string tex =
-	"uniform sampler2D tex;\n\
-	uniform vec2 texSize;\n";
-	string tile =
-	"uniform vec2 tile;\n\
-	uniform vec4 texInfo;\n";
-	string stipple =
-	"uniform int stipple; uniform int stippleAlpha;\n";
-	string params[ 8 ];
-	params[ SHADER_BASE ] = "";
-	params[ SHADER_TEXTURE ] = tex;
-	// params[ SHADER_TILE ] = tile;
-	params[ SHADER_STIPPLE ] = stipple;
-	params[ SHADER_STIPPLE | SHADER_TILE ] = stipple + tile;
-	params[ SHADER_TILE | SHADER_TEXTURE ] = tile + tex;
-	params[ SHADER_STIPPLE | SHADER_TEXTURE ] = stipple + tex;
-	params[ SHADER_STIPPLE | SHADER_TILE | SHADER_TEXTURE ] = stipple + tile + tex;
+	// create shader combinations w sets of different features
 	
-	// features
-	tile =
-	"if ( tile.x != 1.0 ) coord.x = mod( (coord.x - texInfo.x) * tile.x, texInfo.z ) + texInfo.x;\n\
-	if ( tile.y != 1.0 ) coord.y = mod( (coord.y - texInfo.y) * tile.y, texInfo.w ) + texInfo.y;\n";
-	
-	stipple =
-	"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
-	int limit = 0;\n\
-	int stippleValue = stipple; \n\
-	if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
-	if (index == 0) limit = 625;\n\
-	else if (index == 1) limit = 5625;\n\
-	else if (index == 2) limit = 1875;\n\
-	else if (index == 3) limit = 6875;\n\
-	else if (index == 4) limit = 8125;\n\
-	else if (index == 5) limit = 3125;\n\
-	else if (index == 6) limit = 9375;\n\
-	else if (index == 7) limit = 4375;\n\
-	else if (index == 8) limit = 2500;\n\
-	else if (index == 9) limit = 7500;\n\
-	else if (index == 10) limit = 1250;\n\
-	else if (index == 11) limit = 6250;\n\
-	else if (index == 12) limit = 10000;\n\
-	else if (index == 13) limit = 5000;\n\
-	else if (index == 14) limit = 8750;\n\
-	else if (index >= 15) limit = 3750;\n\
-	if ( stippleValue < limit ) discard;";
-
-	string readPixel = glsles ?
-	"vec4 src = texture2D(tex, coord / texSize );\n" :
-	"vec4 src = texture(tex, coord / texSize );\n";
-	string readColor = "vec4 src = color;";
-	string features[ 8 ];
-	features[ SHADER_BASE ] = readColor;
-	features[ SHADER_TEXTURE ] = readPixel;
-	features[ SHADER_TILE | SHADER_TEXTURE ] = tile + readPixel;
-	features[ SHADER_STIPPLE | SHADER_TEXTURE ] = readPixel + stipple;
-	features[ SHADER_STIPPLE | SHADER_TILE | SHADER_TEXTURE ] = tile + readPixel + stipple;
-	// features[ SHADER_TILE ] = tile + readColor;
-	features[ SHADER_STIPPLE ] = readColor + stipple;
-	// features[ SHADER_STIPPLE | SHADER_TILE ] = tile + readColor + stipple;
-	
-	/// sprite rendering shaders
-	char fragShader[ 8192 ];
-	for ( Uint8 i = 0; i < 8; i++ ){
+	// shader permutations
+	string params[ 32 ];
+	string features[ 32 ];
+	string funcs[ 32 ];
+	string post[ 32 ];
+	for ( int i = 0; i < 32; i++ ) {
+		if ( i & SHADER_TEXTURE ) {
+			params[ i ] +=
+			"uniform sampler2D tex;\n\
+			uniform vec2 texSize;\n\
+			uniform vec4 texInfo;\n\
+			uniform int texPad;";
+			funcs[ i ] =
+			"vec4 readPixel( vec2 uv ){\n\
+				uv = uv * texSize - texInfo.xy;\n\
+				if ( texPad > 0 ){\n\
+					float texPad2 = 2.0 * texPad;\n\
+					uv.x = uv.x * ( ( texInfo.z + texPad2 ) / texInfo.z ) - texPad;\n\
+					uv.y = uv.y * ( ( texInfo.w + texPad2 ) / texInfo.w ) - texPad;\n\
+				}\n\
+				if ( uv.x < 0.0 || uv.x >= texInfo.z || uv.y < 0.0 || uv.y >= texInfo.w ) return vec4(0.0,0.0,0.0,0.0);\n";
+			
+			// sliced
+			if ( i & SHADER_SLICE ) {
+				params[ i ] +=
+				"uniform vec4 slice;\n\
+				uniform vec2 sliceScale;";
+				funcs[ i ] +=
+				"vec2 suv = uv * sliceScale;\n\
+				vec2 actSize = texInfo.zw * sliceScale;\n\
+				vec2 sliceRightBottom = vec2( texInfo.z - slice.y, texInfo.w - slice.z );\n\
+				vec2 actRightBottom = vec2( actSize.x - slice.y, actSize.y - slice.z );\n\
+				vec2 sliceMid = vec2 ( sliceRightBottom.x - slice.w, sliceRightBottom.y - slice.x );\n\
+				vec2 actMid = vec2 ( actRightBottom.x - slice.w, actRightBottom.y - slice.x );\n";
+				
+				// with tiling
+				if ( i & SHADER_TILE ) {
+					params[ i ] +=
+					"uniform vec2 tile;";
+					funcs[ i ] +=
+					"if ( suv.x < slice.w ) uv.x = suv.x;\n\
+					else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
+					else uv.x = slice.w + mod( tile.x * sliceMid.x * ( suv.x - slice.w ) / actMid.x, sliceMid.x );\n\
+					if ( suv.y < slice.x ) uv.y = suv.y;\n\
+					else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
+					else uv.y = slice.x + mod( tile.y * sliceMid.y * ( suv.y - slice.x ) / actMid.y, sliceMid.y );\n";
+				// slicing without tiling
+				} else {
+					funcs[ i ] +=
+					"if ( suv.x < slice.w ) uv.x = suv.x;\n\
+					else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
+					else uv.x = slice.w + sliceMid.x * ( suv.x - slice.w ) / actMid.x;\n\
+					if ( suv.y < slice.x ) uv.y = suv.y;\n\
+					else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
+					else uv.y = slice.x + sliceMid.y * ( suv.y - slice.x ) / actMid.y;\n";
+				}
+				
+			// not sliced, but tiled
+			} else if ( i & SHADER_TILE ) {
+				params[ i ] +=
+				"uniform vec2 tile;";
+				funcs[ i ] +=
+				"if ( tile.x != 1.0 ) uv.x = mod( uv.x * tile.x, texInfo.z );\n\
+				if ( tile.y != 1.0 ) uv.y = mod( uv.y * tile.y, texInfo.w );\n";
+			}
+			
+			// finish read pixel func
+			funcs[ i ] += glsles ?
+			"return texture2D( tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
+			"return texture( tex, ( uv + texInfo.xy ) / texSize );\n}\n";
+			
+			// read pixel color
+			features[ i ] +=
+			"src = readPixel( coord ) * color + addColor;\n";
+		} else {
+			features[ i ] +=
+			"src = color + addColor;";
+		}
 		
-		// skip ones with tile but without tex
-		if ( ( i & SHADER_TILE ) && !( i & SHADER_TEXTURE ) ) continue;
+		
+		if ( i & SHADER_BLEND ) {
+			params[ i ] +=
+			"uniform sampler2D background;\n\
+			uniform vec2 backgroundSize;\n\
+			uniform int blendMode;";
+			features[ i ] +=
+			""; // TODO
+		}
+		
+		if ( i & SHADER_STIPPLE ) {
+			params[ i ] +=
+			"uniform int stipple;\n\
+			uniform int stippleAlpha;\n";
+			features[ i ] +=
+			"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
+			int limit = 0;\n\
+			int stippleValue = stipple; \n\
+			if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
+			if (index == 0) limit = 625;\n\
+			else if (index == 1) limit = 5625;\n\
+			else if (index == 2) limit = 1875;\n\
+			else if (index == 3) limit = 6875;\n\
+			else if (index == 4) limit = 8125;\n\
+			else if (index == 5) limit = 3125;\n\
+			else if (index == 6) limit = 9375;\n\
+			else if (index == 7) limit = 4375;\n\
+			else if (index == 8) limit = 2500;\n\
+			else if (index == 9) limit = 7500;\n\
+			else if (index == 10) limit = 1250;\n\
+			else if (index == 11) limit = 6250;\n\
+			else if (index == 12) limit = 10000;\n\
+			else if (index == 13) limit = 5000;\n\
+			else if (index == 14) limit = 8750;\n\
+			else if (index >= 15) limit = 3750;\n\
+			if ( stippleValue < limit ) discard;";
+		}
+
+	}
+	
+	/// pixel shaders
+	char fragShader[ 16384 ];
+	for ( Uint8 i = 0; i < 32; i++ ){
+		
+		// skip ones with tile, or slice but without tex
+		if ( ( i & SHADER_TILE || i & SHADER_SLICE ) && !( i & SHADER_TEXTURE ) ) continue;
 		
 		if ( glsles ) {
 			sprintf( fragShader,
@@ -296,13 +420,14 @@ void RenderBehavior::InitShaders() {
 			varying vec2 texCoord;\n\
 			uniform vec4 addColor;\n\
 			%s\n\
-			void main(void){\n\
-				vec2 coord = texCoord;\n\
 			%s\n\
-				src = src * color;\n\
-				if ( src.a == 0.0 ) discard;\n\
-				gl_FragColor = src + addColor;\n\
-			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
+			void main(void){\n\
+				vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+				vec2 coord = texCoord;\n\
+				%s\n\
+				%s\n\
+				gl_FragColor = src;\n\
+			}", renderer->min_shader_version, params[ i ].c_str(), funcs[ i ].c_str(), features[ i ].c_str(), post[ i ].c_str() );
 		} else {
 			sprintf( fragShader,
 			"#version %d\n\
@@ -312,27 +437,35 @@ void RenderBehavior::InitShaders() {
 			uniform vec4 addColor;\n\
 			out vec4 fragColor;\n\
 			%s\n\
-			void main(void){\n\
-				vec2 coord = texCoord;\n\
 			%s\n\
-					src = src * color;\n\
-					if ( src.a == 0.0 ) discard;\n\
-					fragColor = src + addColor;\n\
-			}", renderer->min_shader_version, params[ i ].c_str(), features[ i ].c_str() );
+			void main(void){\n\
+				vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+				vec2 coord = texCoord;\n\
+				%s\n\
+				%s\n\
+				fragColor = src;\n\
+			}", renderer->min_shader_version, params[ i ].c_str(), funcs[ i ].c_str(), features[ i ].c_str(), post[ i ].c_str() );
 	
 		}
 		
 		// compile variant
 		if ( CompileShader( shaders[ i ].shader, shaders[ i ].shaderBlock, vertShader, fragShader ) ) {
+			shaders[ i ].addColorUniform = GPU_GetUniformLocation( shaders[ i ].shader, "addColor" );
 			shaders[ i ].tileUniform = GPU_GetUniformLocation( shaders[ i ].shader, "tile" );
 			shaders[ i ].texInfoUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texInfo" );
 			shaders[ i ].texSizeUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texSize" );
-			shaders[ i ].addColorUniform = GPU_GetUniformLocation( shaders[ i ].shader, "addColor" );
+			shaders[ i ].texPadUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texPad" );
+			shaders[ i ].sliceUniform = GPU_GetUniformLocation( shaders[ i ].shader, "slice" );
+			shaders[ i ].sliceScaleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "sliceScale" );
 			shaders[ i ].stippleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stipple" );
 			shaders[ i ].stippleAlphaUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stippleAlpha" );
+			shaders[ i ].backgroundUniform = GPU_GetUniformLocation( shaders[ i ].shader, "background" );
+			shaders[ i ].backgroundSizeUniform = GPU_GetUniformLocation( shaders[ i ].shader, "backgroundSize" );
+			shaders[ i ].blendUniform = GPU_GetUniformLocation( shaders[ i ].shader, "blendMode" );
 		} else {
-			printf ( "Shader error: %s\n", GPU_GetShaderMessage() );
+			printf ( "Shader error: %s\nin shaders[%d]:\n%s\n%s\n", GPU_GetShaderMessage(), i, fragShader, vertShader );
 			memset( &shaders[ i ], 0, sizeof( SpriteShaderVariant ) );
+			exit(1);
 		}
 	}
 	

@@ -177,7 +177,13 @@ new (function (){
 				description.text = "Multiplicative and additive color tinting is supported, as well as opacity, and stippling.";
 				props.properties = {
 					'color': true,
-					'addColor': { properties: { 'a': false } },
+					'addColor': {
+						properties: {
+							'r': { min: -1, max: 1, step: 0.1 },
+							'g': { min: -1, max: 1, step: 0.1 },
+							'b': { min: -1, max: 1, step: 0.1 },
+							'a': false,
+						} },
 					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
 					'stipple': { min: 0, max: 1, step: 0.1 }
 				};

@@ -1398,13 +1398,20 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	behavior->surface->color = color;
 	
 	// set shader
-	behavior->SelectShader( behavior->surface->base_w, behavior->surface->base_h );
+	behavior->SelectTexturedShader(
+		behavior->surface->base_w, behavior->surface->base_h,
+	    0, 0, behavior->surface->base_w, behavior->surface->base_h,
+		0, 0, 0, 0,
+	    0, 0,
+		1, 1, target );
 	
 	// draw
-	float x = -behavior->surface->base_w * behavior->pivotX,
-		  y = -behavior->surface->base_h * behavior->pivotY;
-	
-	GPU_Blit( behavior->surface, &behavior->surfaceRect, target, x, y );
+	GPU_Rect dest = {
+		-behavior->surfaceRect.w * behavior->pivotX - behavior->texturePad,
+		-behavior->surfaceRect.h * behavior->pivotY - behavior->texturePad,
+		behavior->surfaceRect.w + behavior->texturePad * 2,
+		behavior->surfaceRect.h + behavior->texturePad * 2 };
+	GPU_BlitRect( behavior->surface, &behavior->surfaceRect, target, &dest );
 	
 }
 

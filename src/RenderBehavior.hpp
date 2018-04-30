@@ -7,8 +7,10 @@
 // shader features mask
 #define SHADER_BASE		0x0
 #define SHADER_TEXTURE	0x1
-#define SHADER_TILE		0x2
-#define SHADER_STIPPLE	0x4
+#define SHADER_BLEND	0x2
+#define SHADER_SLICE	0x4
+#define SHADER_TILE		0x8
+#define SHADER_STIPPLE	0x10
 
 /// rendering behaviors should inherit from this class and override getBounds method
 class RenderBehavior : public Behavior {
@@ -39,6 +41,9 @@ public:
 	float pivotY = 0;
 	bool _pivotDirty = true;
 
+	// texture padding
+	int texturePad = 0;
+	
 	// stipple transparency
 	float stipple = 0;
 	
@@ -54,10 +59,16 @@ public:
 		GPU_ShaderBlock shaderBlock;
 		int addColorUniform;
 		int tileUniform;
-		int texInfoUniform;
-		int texSizeUniform;
+		int texInfoUniform; // x,y,w,h of sprite on texture, in px
+		int texSizeUniform; // w,h of whole texture in px, not incl texPad
+		int texPadUniform; // empty margin added around texture in px
+		int sliceUniform; // top, right, bottom, left slice margins in px, from respective sides
+		int sliceScaleUniform; // scale of actual sprite without pad in px
 		int stippleUniform;
 		int stippleAlphaUniform;
+		int backgroundUniform;
+		int backgroundSizeUniform;
+		int blendUniform;
 	} SpriteShaderVariant;
 	
 	
@@ -72,10 +83,18 @@ public:
 // shaders
 	
 	///
-	static SpriteShaderVariant shaders[ 8 ];
+	static SpriteShaderVariant shaders[ 32 ];
 
 	/// applies current shader + params
-	int SelectShader( float tw = 0, float th = 0, float u = 0, float v = 0, float w = 0, float h = 0, float tx = 1, float ty = 1 );
+	int SelectTexturedShader(
+					 float tw = 0, float th = 0,
+					 float u = 0, float v = 0, float w = 0, float h = 0,
+					 float st = 0, float sr = 0, float sb = 0, float sl = 0,
+					 float sw = 0, float sh = 0,
+					 float tx = 1, float ty = 1, GPU_Target* targ = NULL );
+	
+	/// selects untextured shader
+	int SelectUntexturedShader( GPU_Target* targ = NULL );
 	
 	/// resets shader to default
 	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }

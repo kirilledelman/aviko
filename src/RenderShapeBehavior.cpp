@@ -564,7 +564,7 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	if ( color.a == 0.0 ) return;
 	
 	// set textureless shader
-	behavior->SelectShader();
+	behavior->SelectUntexturedShader();
 	
 	// draw based on type
 	GPU_Rect rect;

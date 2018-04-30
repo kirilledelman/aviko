@@ -68,18 +68,18 @@ App.scene = include( 'main-menu' );
 
 /*var s = new GameObject( {
 	render: new RenderSprite( {
-		texture: 'test:test',
-		slice: 9,
-		width: 200, height: 100,
+		//texture: 'test:test',
+		texture: 'smiley',
 	} ),
+	x: 100, y: 100,
 	parent: App.scene,
 } );
 
 Input.mouseWheel = function( wy, wx ) {
-	if ( wy ) s.render.tileY += ( wy > 0 ? 1 : -1 );
-	if ( wx ) s.render.tileX += ( wx > 0 ? 1 : -1 );
+	if ( wy ) s.render.sliceLeft += ( wy > 0 ? 1 : -1 );
+	if ( wx ) s.render.sliceRight += ( wx > 0 ? 1 : -1 );
 
-	log ( s.render.tileX, s.render.tileY );
+	//log ( s.render.tileX, s.render.tileY );
 }*/
 
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation

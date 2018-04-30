@@ -339,25 +339,16 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	GPU_Image* image = NULL;
 	GPU_Rect srcRect = { 0, 0, 0, 0 };
 	bool rotated = false;
-	float cx = 0, cy = 0, sx = 1, sy = 1, r = 0;
-	float effectiveWidth = behavior->width, effectiveHeight = behavior->height;
+	bool sliced = ( behavior->slice.x > 0 || behavior->slice.y > 0 || behavior->slice.w > 0 || behavior->slice.h > 0 );
+	float cx = 0, cy = 0, sx = 1, sy = 1;
+	float effectiveWidth = behavior->width,
+		  effectiveHeight = behavior->height;
 	SDL_Color color = behavior->color->rgba;
 	color.a *= behavior->gameObject->combinedOpacity;
 	if ( color.a == 0.0 ) return;
 	
-	// slices
-	bool sliced = ( behavior->slice.x > 0 || behavior->slice.y > 0 || behavior->slice.w > 0 || behavior->slice.h > 0 );
-	bool trimmed = false;
-	struct RenderSlice {
-		GPU_Rect rect;
-		float x, y;
-		float sx, sy;
-		float tileX, tileY;
-	};
-	static RenderSlice slices[ 9 ];
-	
 	// shader params
-	float shaderU = 0, shaderV = 0, shaderW = 0, shaderH = 0;
+	float shaderU = 0, shaderV = 0, shaderW = 0, shaderH = 0; // bounds of texture slice
 	
 	// texture
 	if ( behavior->imageResource ) {
@@ -370,7 +361,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		// current frame
 		srcRect = frame->locationOnTexture;
 		rotated = frame->rotated;
-		trimmed = frame->trimmed;
 		
 		// apply trim
 		effectiveWidth = fmax( 0, effectiveWidth - frame->trimWidth );
@@ -378,27 +368,26 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		
 		// draw rotated
 		if ( rotated ) {
-			
 			sy = effectiveWidth / (frame->actualWidth - frame->trimWidth);
 			sx = effectiveHeight / (frame->actualHeight - frame->trimHeight);
 			if ( sliced ) {
-				cy += (frame->locationOnTexture.w) * sx + frame->trimOffsetY;
+				cx = frame->trimOffsetX;
+				cy = frame->locationOnTexture.w * sx + frame->trimOffsetY;
 			} else {
-				cy += (frame->locationOnTexture.w + frame->trimOffsetY) * sx;
+				cx = frame->trimOffsetX * sy;
+				cy = ( frame->locationOnTexture.w + frame->trimOffsetY ) * sx;
 			}
-			r = -90;
-	
 		// normal
 		} else {
-			
 			sx = effectiveWidth / (frame->actualWidth - frame->trimWidth);
 			sy = effectiveHeight / (frame->actualHeight - frame->trimHeight);
 			if ( sliced ) {
-				cy += frame->trimOffsetY;
+				cx = frame->trimOffsetX;
+				cy = frame->trimOffsetY;
 			} else {
-				cy += frame->trimOffsetY * sy;
+				cx = frame->trimOffsetX * sx;
+				cy = frame->trimOffsetY * sy;
 			}
-			
 		}
 		
 		// shader params
@@ -407,12 +396,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		shaderW = srcRect.w;
 		shaderH = srcRect.h;
 		
-		if ( sliced ) {
-			cx += frame->trimOffsetX;
-		} else {
-			cx += frame->trimOffsetX * sx;
-		}
-		
 	// Image instance
 	} else if ( behavior->imageInstance ) {
 		
@@ -420,9 +403,9 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		image = behavior->imageInstance->GetImage();
 		if ( !image ) return;
 		
-		// if autodraw and is direct child of this behavior's gameObject
+		// if autodraw and this is a direct child of this behavior's gameObject
 		if ( behavior->imageInstance->autoDraw && behavior->imageInstance->autoDraw->parent == behavior->gameObject ){
-			// tell render to not draw it (since we just drew it to texture)
+			// tell render loop to not draw it (since we just drew it to texture)
 			event->skipObject = behavior->imageInstance->autoDraw;
 			event->skipObject->DirtyTransform();
 		}
@@ -437,7 +420,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		
 	}
 	
-	// bail if no image
+	// bail if nothing to draw
 	if ( !image ) return;
 	
 	// blend mode and color
@@ -453,366 +436,80 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	image->color = color;
 
 	// slices
+	float top = 0, right = 0, bottom = 0, left = 0;
 	if ( sliced ) {
-		float top, right, bottom, left;
-		float midX = 0, midY = 0, sliceMidX = 0, sliceMidY = 0;
-		
+		// compute slices in pixels
 		if ( rotated ) {
-			// compute margins
-			top = ( (behavior->slice.x < 1) ? (srcRect.w * behavior->slice.x) : behavior->slice.x );
-			left = ( (behavior->slice.h < 1) ? (srcRect.h * behavior->slice.h) : behavior->slice.h );
-			bottom = ( (behavior->slice.w < 1) ? (srcRect.w * behavior->slice.w) : behavior->slice.w );
-			right = ( (behavior->slice.y < 1) ? (srcRect.h * behavior->slice.y) : behavior->slice.y );
-			midX = ( srcRect.w - (top + bottom) );
-			midY = ( srcRect.h - (left + right) );
-			sliceMidX = max( 0.0f, effectiveWidth - (left + right) );
-			sliceMidY = max( 0.0f, effectiveHeight - (top + bottom) );
-			
-			// clip
-			behavior->width = max( behavior->width, left + right + sliceMidX );
-			behavior->height = max( behavior->height, top + bottom + sliceMidY );
-			
-			// bottom left
-			int i = 0;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.w = bottom;
-			slices[ i ].rect.h = left;
-			slices[ i ].x = 0;
-			slices[ i ].y = 0;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	1;
-			
-			// left
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = left;
-			slices[ i ].x = bottom;
-			slices[ i ].y = 0;
-			slices[ i ].sx = sliceMidY / midX;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
-			slices[ i ].tileY =	1;
-			
-			// upper left
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + midX;
-			slices[ i ].rect.w = top;
-			slices[ i ].rect.h = left;
-			slices[ i ].x = bottom + sliceMidY;
-			slices[ i ].y = 0;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	1;
-			
-			// bottom
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += left;
-			slices[ i ].rect.w = bottom;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = 0;
-			slices[ i ].y = left;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidX / midY;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
-			
-			// mid
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom;
-			slices[ i ].rect.y += left;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = bottom;
-			slices[ i ].y = left;
-			slices[ i ].sx = sliceMidY / midX;
-			slices[ i ].sy = sliceMidX / midY;
-			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
-			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
-			
-			// top
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + midX;
-			slices[ i ].rect.y += left;
-			slices[ i ].rect.w = top;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = sliceMidY + bottom;
-			slices[ i ].y = left;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidX / midY;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sy ) : behavior->tileX;
-			
-			// upper right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += left + midY;
-			slices[ i ].rect.w = bottom;
-			slices[ i ].rect.h = right;
-			slices[ i ].x = 0;
-			slices[ i ].y = left + sliceMidX;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	1;
-			
-			// right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom;
-			slices[ i ].rect.y += left + midY;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = right;
-			slices[ i ].x = bottom;
-			slices[ i ].y = left + sliceMidX;
-			slices[ i ].sx = sliceMidY / midX;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sx ) : behavior->tileY;
-			slices[ i ].tileY =	1;
-			
-			// bottom right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += bottom + midX;
-			slices[ i ].rect.y += left + midY;
-			slices[ i ].rect.w = top;
-			slices[ i ].rect.h = right;
-			slices[ i ].x = bottom + sliceMidY;
-			slices[ i ].y = left + sliceMidX;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	1;
-			
+			right = ( (behavior->slice.x < 1) ? (srcRect.w * behavior->slice.x) : behavior->slice.x );
+			bottom = ( (behavior->slice.y < 1) ? (srcRect.h * behavior->slice.y) : behavior->slice.y );
+			left = ( (behavior->slice.w < 1) ? (srcRect.w * behavior->slice.w) : behavior->slice.w );
+			top = ( (behavior->slice.h < 1) ? (srcRect.h * behavior->slice.h) : behavior->slice.h );
+			behavior->width = max( behavior->width, top + bottom );
+			behavior->height = max( behavior->height, left + right );
 		} else {
-			// compute margins
 			top = ( (behavior->slice.x < 1) ? (srcRect.h * behavior->slice.x) : behavior->slice.x );
 			left = ( (behavior->slice.h < 1) ? (srcRect.w * behavior->slice.h) : behavior->slice.h );
 			bottom = ( (behavior->slice.w < 1) ? (srcRect.h * behavior->slice.w) : behavior->slice.w );
 			right = ( (behavior->slice.y < 1) ? (srcRect.w * behavior->slice.y) : behavior->slice.y );
-			midX = ( srcRect.w - (left + right) );
-			midY = ( srcRect.h - (top + bottom) );
-			sliceMidX = max( 0.0f, effectiveWidth - (left + right) );
-			sliceMidY = max( 0.0f, effectiveHeight - (top + bottom) );
-			
-			// clip
-			behavior->width = max( behavior->width, left + right + sliceMidX );
-			behavior->height = max( behavior->height, top + bottom + sliceMidY );
-			
-			// upper left
-			int i = 0;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.w = left;
-			slices[ i ].rect.h = top;
-			slices[ i ].x = cx;
-			slices[ i ].y = cy;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX = 1;
-			slices[ i ].tileY = 1;
-			
-			// top
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += left;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = top;
-			slices[ i ].x = cx + left;
-			slices[ i ].y = cy;
-			slices[ i ].sx = sliceMidX / midX;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sx ) : behavior->tileX;
-			slices[ i ].tileY =	1;
-			
-			// upper right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += slices[ i ].rect.w - right;
-			slices[ i ].rect.w = right;
-			slices[ i ].rect.h = top;
-			slices[ i ].x = cx + sliceMidX + left;
-			slices[ i ].y = cy;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX = 1;
-			slices[ i ].tileY = 1;
-			
-			// left
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += top;
-			slices[ i ].rect.w = left;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = cx;
-			slices[ i ].y = cy + top;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidY / midY;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sy ) : behavior->tileY;
-			
-			// mid
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += left;
-			slices[ i ].rect.y += top;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = cx + left;
-			slices[ i ].y = cy + top;
-			slices[ i ].sx = sliceMidX / midX;
-			slices[ i ].sy = sliceMidY / midY;
-			slices[ i ].tileX =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sx ) : behavior->tileX;
-			slices[ i ].tileY =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sy ) : behavior->tileY;
-			
-			// right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += slices[ i ].rect.w - right;
-			slices[ i ].rect.y += top;
-			slices[ i ].rect.w = right;
-			slices[ i ].rect.h = midY;
-			slices[ i ].x = cx + sliceMidX + left;
-			slices[ i ].y = cy + top;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = sliceMidY / midY;
-			slices[ i ].tileX =	1;
-			slices[ i ].tileY =	behavior->autoTileY ? ( behavior->tileY * slices[ i ].sy ) : behavior->tileY;
-			
-			// bottom left
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.y += top + midY;
-			slices[ i ].rect.w = left;
-			slices[ i ].rect.h = bottom;
-			slices[ i ].x = cx;
-			slices[ i ].y = cy + top + sliceMidY;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX = 1;
-			slices[ i ].tileY = 1;
-			
-			// bottom
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += left;
-			slices[ i ].rect.y += top + midY;
-			slices[ i ].rect.w = midX;
-			slices[ i ].rect.h = bottom;
-			slices[ i ].x = cx + left;
-			slices[ i ].y = cy + top + sliceMidY;
-			slices[ i ].sx = sliceMidX / midX;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX =	behavior->autoTileX ? ( behavior->tileX * slices[ i ].sx ) : behavior->tileX;
-			slices[ i ].tileY =	1;
-			
-			// bottom right
-			i++;
-			slices[ i ].rect = srcRect;
-			slices[ i ].rect.x += left + midX;
-			slices[ i ].rect.y += top + midY;
-			slices[ i ].rect.w = right;
-			slices[ i ].rect.h = bottom;
-			slices[ i ].x = cx + left + sliceMidX;
-			slices[ i ].y = cy + top + sliceMidY;
-			slices[ i ].sx = 1;
-			slices[ i ].sy = 1;
-			slices[ i ].tileX = 1;
-			slices[ i ].tileY = 1;
+			behavior->width = max( behavior->width, left + right );
+			behavior->height = max( behavior->height, top + bottom );
 		}
+	}
 		
-	// no slices
-	} else {
-		
-		// set flip
-		if ( behavior->flipX ) {
-			if ( rotated ) sy *= -1; else sx *= -1;
-			cx += behavior->width;
-
-		}
-		if ( behavior->flipY ) {
-			if ( rotated ) {
-				sx *= -1;
-				cy -= behavior->height;
-			} else {
-				sy *= -1;
-				cy += behavior->height;
-			}
-		}
-		
-		// pivot
-		cx = floor( cx - behavior->width * behavior->pivotX );
-		cy = floor( cy - behavior->height * behavior->pivotY );
-		
-		// tiling
-		float shaderTileX, shaderTileY;
+	// flip
+	if ( behavior->flipX ) {
+		if ( rotated ) sy *= -1; else sx *= -1;
+		cx += behavior->width;
+	}
+	if ( behavior->flipY ) {
 		if ( rotated ) {
-			shaderTileX = behavior->autoTileY ? ( behavior->tileY * sx ) : behavior->tileY;
-			shaderTileY = behavior->autoTileX ? ( behavior->tileX * sy ) : behavior->tileX;
+			sx *= -1;
+			cy -= behavior->height;
 		} else {
-			shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
-			shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+			sy *= -1;
+			cy += behavior->height;
 		}
-		
-		// activate shader
-		behavior->SelectShader
-		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderH, shaderTileX, shaderTileY );
-		
-		// single slice
-		GPU_BlitTransform( image, &srcRect, target, cx, cy, r, sx, sy );
-		return;
 	}
 	
-	// if tiling is off
-	bool tiling = ( behavior->tileX != 1 || behavior->tileY != 1 || behavior->autoTileY || behavior->autoTileX );
-	if ( !tiling ) {
-		// activate shader without tiling
-		behavior->SelectShader
-		( image->base_w, image->base_h, shaderU, shaderV, shaderW, shaderH, 1, 1 );
+	// pivot
+	if ( rotated ) {
+		cx = floor( cx - ( behavior->width * behavior->pivotX + behavior->texturePad * sy ) );
+		cy = floor( cy - ( behavior->height * behavior->pivotY - behavior->texturePad * sx ) );
+	} else {
+		cx = floor( cx - ( behavior->width * behavior->pivotX + behavior->texturePad * sx ) );
+		cy = floor( cy - ( behavior->height * behavior->pivotY + behavior->texturePad * sy ) );
 	}
 	
-	// render each slice
-	int nslices = 9;
-	while( --nslices >= 0 ) {
-		RenderSlice &rs = slices[ nslices ];
-		
-		// skip if not visible
-		if ( rs.rect.w <= 0 || rs.rect.h <= 0 ) continue;
-		
-		// transform
-		GPU_PushMatrix();
-		if ( behavior->flipX || behavior->flipY ) {
-			GPU_Scale( behavior->flipX ? -1 : 1, behavior->flipY ? -1 : 1, 1 );
-		}
-		GPU_Translate( -floor(behavior->width * behavior->pivotX), -floor(behavior->height * behavior->pivotY), 0 );
-		if ( rotated ) {
-			GPU_Translate( cx, cy, 0 );
-			GPU_Rotate( -90, 0, 0, 1 );
-		}
+	// tiling, slicing
+	float shaderTileX, shaderTileY;
+	float sliceScaleX, sliceScaleY;
+	if ( rotated ) {
+		shaderTileX = behavior->autoTileY ? ( behavior->tileY * sx ) : behavior->tileY;
+		shaderTileY = behavior->autoTileX ? ( behavior->tileX * sy ) : behavior->tileX;
+		sliceScaleY = behavior->width / srcRect.h;
+		sliceScaleX = behavior->height / srcRect.w;
 
-		// tiling is on
-		if ( tiling ) {
-			// each slice has different tiling params
-			behavior->SelectShader
-			( image->base_w, image->base_h,
-			 shaderU + rs.rect.x,
-			 shaderV + rs.rect.y,
-			 rs.rect.w,
-			 rs.rect.h,
-			 rs.tileX, rs.tileY );
-		}
-		
-		// render
-		GPU_BlitTransform( image, &rs.rect, target, rs.x, rs.y, 0, rs.sx, rs.sy );
-		GPU_PopMatrix();
+	} else {
+		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
+		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+		sliceScaleX = behavior->width / srcRect.w;
+		sliceScaleY = behavior->height / srcRect.h;
 	}
+	
+	// activate shader
+	behavior->SelectTexturedShader(
+		image->base_w, image->base_h,
+	    shaderU, shaderV, shaderW, shaderH,
+		top, right, bottom, left,
+		sliceScaleX, sliceScaleY,
+	    shaderTileX, shaderTileY, target );
+	
+	GPU_Rect dest = {
+		cx, cy,
+		( srcRect.w + behavior->texturePad * 2 ) * sx,
+		( srcRect.h + behavior->texturePad * 2 ) * sy
+	};
+	GPU_BlitRectX( image, &srcRect, target, &dest, rotated ? -90 : 0, 0, 0, GPU_FLIP_NONE );
 	
 }
 
