@@ -32,6 +32,7 @@ struct Event {
 	
 	/// param passed to behaviors
 	void* behaviorParam = NULL;
+	void* behaviorParam2 = NULL;
 	
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;

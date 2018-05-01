@@ -10,6 +10,7 @@ public:
 	
 	// render target
 	GPU_Image* image = NULL;
+	GPU_Target* blendTarget = NULL;
 	
 	// stored width / height
 	int width = 0;

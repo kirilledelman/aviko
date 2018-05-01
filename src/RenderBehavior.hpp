@@ -50,8 +50,24 @@ public:
 	// apply stipple pattern to alpha channel
 	bool stippleAlpha = false;
 	
-	/// blend mode
-	Uint8 blendMode = GPU_BLEND_NORMAL; //GPU_BLEND_PREMULTIPLIED_ALPHA;
+	/// blend modes
+	enum BlendMode {
+		Normal = 0,
+		Add = 1,
+		Subtract = 2,
+		Multiply = 3,
+		Screen = 4,
+		Burn = 5,
+		Dodge = 6,
+		Invert = 7,
+		Hue = 8,
+		Saturation = 9,
+		Luminosity = 10,
+		Refract = 11,
+		Cut = 12
+	};
+	
+	BlendMode blendMode = BlendMode::Normal;
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)
 	typedef struct {
@@ -91,10 +107,14 @@ public:
 					 float u = 0, float v = 0, float w = 0, float h = 0,
 					 float st = 0, float sr = 0, float sb = 0, float sl = 0,
 					 float sw = 0, float sh = 0,
-					 float tx = 1, float ty = 1, GPU_Target* targ = NULL );
+					 float tx = 1, float ty = 1,
+					 GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
+	
+	/// draws target to blendTarget
+	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
 	
 	/// selects untextured shader
-	int SelectUntexturedShader( GPU_Target* targ = NULL );
+	int SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// resets shader to default
 	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }

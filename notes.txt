@@ -1,6 +1,8 @@
-Finish slicing display, check in
-	convert to in-shader slicing
-	add backbuffer texture param
+To make advanced blending work
+	if shader uses adv blending, copy current FBO to a texture, use that as tex.
+	
+
+
 
 Propertylist
 	.showFunctions - bool

@@ -85,7 +85,7 @@ Application::Application( ScriptArguments* ) {
 
 Application::~Application() {
 	
-	// printf( "(frames:%d, seconds:%f) average FPS: %f\n", this->frames, this->unscaledTime, ((float) this->frames / (float) this->unscaledTime) );
+	printf( "(frames:%d, seconds:%f) average FPS: %f\n", this->frames, this->unscaledTime, ((float) this->frames / (float) this->unscaledTime) );
 	
 	// close mixer
 	Mix_CloseAudio();
@@ -183,6 +183,14 @@ void Application::UpdateBackscreen() {
 		GPU_FreeImage( this->backScreen );
 	}
 	
+	// clear blend target
+	if ( this->blendTarget ) {
+		GPU_FreeImage( this->blendTarget->image );
+		GPU_FreeTarget( this->blendTarget );
+		this->blendTarget = NULL;
+		printf( "UpdateBackscreen reset blendTarg\n");
+	}
+	
 	// create backscreen
 	this->backScreen = GPU_CreateImage( this->windowWidth / this->windowScalingFactor, this->windowHeight / this->windowScalingFactor, GPU_FORMAT_RGBA );
 	this->backScreenSrcRect = { 0, 0, (float) this->backScreen->base_w, (float) this->backScreen->base_h };
@@ -234,18 +242,19 @@ void Application::InitClass() {
 	
 	void* constants = script.NewObject();
 	script.AddGlobalNamedObject( "BlendMode", constants );
-	script.SetProperty( "Normal", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL ), constants );
-	script.SetProperty( "PremultipliedAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_PREMULTIPLIED_ALPHA ), constants );
-	script.SetProperty( "Multiply", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_MULTIPLY ), constants );
-	script.SetProperty( "Add", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_ADD ), constants );
-	script.SetProperty( "Subtract", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SUBTRACT ), constants );
-	script.SetProperty( "ModAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_MOD_ALPHA ), constants );
-	script.SetProperty( "SetAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SET_ALPHA ), constants );
-	script.SetProperty( "Set", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_SET ), constants );
-	script.SetProperty( "NormalKeepAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_KEEP_ALPHA ), constants );
-	script.SetProperty( "NormalAddAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_ADD_ALPHA ), constants );
-	script.SetProperty( "NormalFactorAlpha", ArgValue( GPU_BlendPresetEnum::GPU_BLEND_NORMAL_FACTOR_ALPHA ), constants );
-	script.SetProperty( "CutAlpha", ArgValue( GPU_BLEND_CUT_ALPHA ), constants );
+	script.SetProperty( "Normal", ArgValue( RenderBehavior::BlendMode::Normal ), constants );
+	script.SetProperty( "Add", ArgValue( RenderBehavior::BlendMode::Add ), constants );
+	script.SetProperty( "Subtract", ArgValue( RenderBehavior::BlendMode::Subtract ), constants );
+	script.SetProperty( "Multiply", ArgValue( RenderBehavior::BlendMode::Multiply ), constants );
+	script.SetProperty( "Screen", ArgValue( RenderBehavior::BlendMode::Screen ), constants );
+	script.SetProperty( "Burn", ArgValue( RenderBehavior::BlendMode::Burn ), constants );
+	script.SetProperty( "Dodge", ArgValue( RenderBehavior::BlendMode::Dodge ), constants );
+	script.SetProperty( "Invert", ArgValue( RenderBehavior::BlendMode::Invert ), constants );
+	script.SetProperty( "Hue", ArgValue( RenderBehavior::BlendMode::Hue ), constants );
+	script.SetProperty( "Luminosity", ArgValue( RenderBehavior::BlendMode::Luminosity ), constants );
+	script.SetProperty( "Saturation", ArgValue( RenderBehavior::BlendMode::Saturation ), constants );
+	script.SetProperty( "Refract", ArgValue( RenderBehavior::BlendMode::Refract ), constants );
+	script.SetProperty( "Cut", ArgValue( RenderBehavior::BlendMode::Cut ), constants );
 	script.FreezeObject( constants );
 	
 	// properties
@@ -1065,6 +1074,7 @@ void Application::GameLoop() {
 			// render to backscreen
 			event.name = EVENT_RENDER;
 			event.behaviorParam = this->backScreen->target;
+			event.behaviorParam2 = &this->blendTarget;
 			scene->Render( event );
 			event.behaviorParam = NULL;
 			event.skipObject = NULL;

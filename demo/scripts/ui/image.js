@@ -42,6 +42,9 @@ include( './ui' );
 		// (String) texture path
 		[ 'texture', function (){ return rs.texture; }, function ( v ){ rs.texture = v; go.updateParams(); } ],
 
+		// (Render) image render component
+		[ 'imageRender',  function (){ return rs; } ],
+
 		// (Image) instance of Image object (alternative to .texture property)
 		[ 'image',  function (){ return rs.image; }, function ( v ){ rs.image = v; go.updateParams(); } ],
 

@@ -20,9 +20,6 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	// add defaults
 	RenderBehavior::AddDefaults();	
 	
-	// shapes' opacity works best with normal
-	this->blendMode = GPU_BlendPresetEnum::GPU_BLEND_NORMAL;
-	
 	// read params
 	int pShape = 0;
 	vector<ArgValue>* pArray = NULL;
@@ -549,14 +546,13 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	GPU_SetLineThickness( behavior->lineThickness );
 	
 	// blend
-	if ( behavior->blendMode <= GPU_BLEND_NORMAL_FACTOR_ALPHA ) {
-		// normal mode
-		GPU_SetShapeBlendMode( (GPU_BlendPresetEnum) behavior->blendMode );
-		// special mode
-	} else if ( behavior->blendMode == GPU_BLEND_CUT_ALPHA ) {
+	if ( behavior->blendMode == BlendMode::Cut ) {
 		// cut alpha
 		GPU_SetShapeBlendFunction( GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
 		GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
+	} else {
+		// normal mode
+		GPU_SetShapeBlendMode( GPU_BLEND_NORMAL );
 	}
 	
 	SDL_Color color = behavior->color->rgba;
@@ -564,7 +560,7 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	if ( color.a == 0.0 ) return;
 	
 	// set textureless shader
-	behavior->SelectUntexturedShader();
+	behavior->SelectUntexturedShader( target, (GPU_Target**) event->behaviorParam2 );
 	
 	// draw based on type
 	GPU_Rect rect;

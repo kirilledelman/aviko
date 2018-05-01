@@ -93,7 +93,7 @@ void RenderBehavior::InitClass() {
 	script.AddProperty<RenderBehavior>
 	( "blendMode",
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderBehavior*) b)->blendMode; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderBehavior*) b)->blendMode = (GPU_BlendPresetEnum) val ); }) );
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ( ((RenderBehavior*) b)->blendMode = (RenderBehavior::BlendMode) val ); }) );
 	
 	script.AddProperty<RenderBehavior>
 	( "stipple",
@@ -121,24 +121,72 @@ void RenderBehavior::InitClass() {
 /* MARK:	-				Shader methods
  -------------------------------------------------------------------- */
 
+void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTarg ) {
+	
+	if ( targ && targ->image && blendTarg ) {
+		
+		// create new if none avail
+		if ( !*blendTarg ) {
+			GPU_Image* img = GPU_CreateImage( targ->base_w, targ->base_h, targ->image->format );
+			if ( img ) {
+				GPU_UnsetImageVirtualResolution( img );
+				GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
+				GPU_SetSnapMode( img, GPU_SNAP_NONE );
+				GPU_LoadTarget( img );
+				if ( img->target ) {
+					*blendTarg = img->target;
+					printf( "Created blend targ %dx%d\n", img->base_w, img->base_h );
+				} else {
+					GPU_FreeImage( img );
+				}
+			}
+		}
+		// if have target
+		if ( *blendTarg ) {
+			// push view matrices
+			GPU_MatrixMode( GPU_PROJECTION );
+			GPU_PushMatrix();
+			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+			GPU_MatrixMode( GPU_MODELVIEW );
+			GPU_PushMatrix();
+			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+			// draw target
+			GPU_Rect srcRect = { 0, 0, (float) targ->base_w, (float) targ->base_h };
+			GPU_Blit( targ->image, &srcRect, *blendTarg, 0, 0 );
+			// pop
+			GPU_MatrixMode( GPU_PROJECTION );
+			GPU_PopMatrix();
+			GPU_MatrixMode( GPU_MODELVIEW );
+			GPU_PopMatrix();
+		}
+		
+	}
+}
+
 int RenderBehavior::SelectTexturedShader(
 		float tw, float th,
 		float u, float v, float w, float h,
 		float st, float sr, float sb, float sl,
 		float sx, float sy,
-		float tx, float ty, GPU_Target* targ ){
+		float tx, float ty, GPU_Target* targ, GPU_Target** blendTarg ){
 
 	int shaderIndex = SHADER_TEXTURE;
 	
 	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
 	if ( st != 0 || sr != 0 || sl != 0 || sb != 0 ) shaderIndex |= SHADER_SLICE;
+	if ( this->blendMode != BlendMode::Normal && this->blendMode != BlendMode::Cut ) {
+		shaderIndex |= SHADER_BLEND;
+		this->_UpdateBlendTarget( targ, blendTarg );
+	}
 	
 	SpriteShaderVariant &variant = shaders[ shaderIndex ];
 	
 	if ( !variant.shader ) {
 		printf( "Shader %d not compiled!\n", shaderIndex );
 	}
+	
+	//
 	
 	// activate shader
 	GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
@@ -171,7 +219,7 @@ int RenderBehavior::SelectTexturedShader(
 	
 	// pad
 	if ( variant.texPadUniform >= 0 ) {
-		GPU_SetUniformi( variant.texPadUniform, this->texturePad );
+		GPU_SetUniformf( variant.texPadUniform, (float) this->texturePad );
 	}
 	
 	// texture size
@@ -206,17 +254,36 @@ int RenderBehavior::SelectTexturedShader(
 		GPU_SetUniformfv( variant.sliceScaleUniform, 2, 1, params );
 	}
 	
-	 // TODO - add render target as texture, set size, blend mode
-										 
+	// blend mode
+	if ( variant.blendUniform >= 0 ) {
+		GPU_SetUniformi( variant.blendUniform, this->blendMode );
+	}
+
+	// background
+	if ( variant.backgroundUniform >= 0 && blendTarg && *blendTarg ) {
+		GPU_SetShaderImage( (*blendTarg)->image, variant.backgroundUniform, 1 );
+	}
+	
+	// background size
+	if ( variant.backgroundSizeUniform >= 0 ) {
+		params[ 0 ] = targ->base_w;
+		params[ 1 ] = targ->base_h;
+		GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
+	}
+	
 	return shaderIndex;
 	
 }
 
-int RenderBehavior::SelectUntexturedShader( GPU_Target* targ ) {
+int RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blendTarg ) {
 	
 	int shaderIndex = 0;
 	
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
+	if ( this->blendMode != BlendMode::Normal && this->blendMode != BlendMode::Cut ) {
+		shaderIndex |= SHADER_BLEND;
+		this->_UpdateBlendTarget( targ, blendTarg );
+	}
 	
 	SpriteShaderVariant &variant = shaders[ shaderIndex ];
 	
@@ -245,7 +312,22 @@ int RenderBehavior::SelectUntexturedShader( GPU_Target* targ ) {
 		GPU_SetUniformi( variant.stippleAlphaUniform, this->stippleAlpha ? 1 : 0 );
 	}
 	
-	// TODO - add render target as texture, set size, blend mode
+	// blend mode
+	if ( variant.blendUniform >= 0 ) {
+		GPU_SetUniformi( variant.blendUniform, this->blendMode );
+	}
+	
+	// background
+	if ( variant.backgroundUniform >= 0 && blendTarg && *blendTarg ) {
+		GPU_SetShaderImage( (*blendTarg)->image, variant.backgroundUniform, 1 );
+	}
+	
+	// background size
+	if ( variant.backgroundSizeUniform >= 0 ) {
+		params[ 0 ] = targ->base_w;
+		params[ 1 ] = targ->base_h;
+		GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
+	}
  
 	return shaderIndex;
 	
@@ -297,11 +379,11 @@ void RenderBehavior::InitShaders() {
 			"uniform sampler2D tex;\n\
 			uniform vec2 texSize;\n\
 			uniform vec4 texInfo;\n\
-			uniform int texPad;";
+			uniform float texPad;";
 			funcs[ i ] =
 			"vec4 readPixel( vec2 uv ){\n\
 				uv = uv * texSize - texInfo.xy;\n\
-				if ( texPad > 0 ){\n\
+				if ( texPad > 0.0 ){\n\
 					float texPad2 = 2.0 * texPad;\n\
 					uv.x = uv.x * ( ( texInfo.z + texPad2 ) / texInfo.z ) - texPad;\n\
 					uv.y = uv.y * ( ( texInfo.w + texPad2 ) / texInfo.w ) - texPad;\n\
@@ -371,8 +453,53 @@ void RenderBehavior::InitShaders() {
 			"uniform sampler2D background;\n\
 			uniform vec2 backgroundSize;\n\
 			uniform int blendMode;";
+			funcs[ i ] +=
+			"vec3 rgb2hsv(vec3 c) {\n\
+				vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\
+				vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\
+				vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\
+				float d = q.x - min(q.w, q.y);\n\
+				float e = 1.0e-10;\n\
+				return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\
+			} \n\
+			vec3 hsv2rgb(vec3 c) { \n\
+				vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0); \n\
+				vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www); \n\
+				return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y); \n\
+			}";
 			features[ i ] +=
-			""; // TODO
+			"vec2 fragCoord = gl_FragCoord.xy;\n\
+			if ( blendMode == 11 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
+			features[ i ] += glsles ?
+			"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
+			"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
+			features[ i ] +=
+			"if ( blendMode == 1 ) src.rgb += bg.rgb;\n\
+			else if ( blendMode == 2 ) src.rgb = bg.rgb - src.rgb;\n\
+			else if ( blendMode == 3 ) src.rgb = bg.rgb * src.rgb;\n\
+			else if ( blendMode == 4 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
+			else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb;\n\
+			else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb);\n\
+			else if ( blendMode == 7 ) src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb ) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
+			else if ( blendMode == 8 ) {\n\
+				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+				src.rgb = hsv2rgb( vec3( srcHSV.x, bgHSV.y, bgHSV.z ) );\n\
+			} else if ( blendMode == 9 ) {\n\
+				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+				src.rgb = hsv2rgb( vec3( bgHSV.x, srcHSV.y, bgHSV.z ) );\n\
+			} else if ( blendMode == 10 ) {\n\
+				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+				src.rgb = hsv2rgb( vec3( bgHSV.x, bgHSV.y, srcHSV.z ) );\n\
+			} else if ( blendMode == 11 ) src.rgb = bg.rgb;\n\
+			\n";
+		}
+		
+		if ( i & SHADER_TEXTURE ) {
+			features[ i ] +=
+			"if ( src.a == 0.0 ) discard; // for z-fighting sprites \n";
 		}
 		
 		if ( i & SHADER_STIPPLE ) {

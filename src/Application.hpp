@@ -66,6 +66,7 @@ public:
 
 	/// downscaled render target
 	GPU_Image* backScreen = NULL;
+	GPU_Target* blendTarget = NULL;
 	GPU_Rect backScreenDstRect;
 	GPU_Rect backScreenSrcRect;
 	

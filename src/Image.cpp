@@ -46,6 +46,12 @@ Image::~Image() {
 		GPU_FreeImage( this->image );
 		this->image = NULL;
 	}
+	if ( this->blendTarget ) {
+		GPU_FreeImage( this->blendTarget->image );
+		GPU_FreeTarget( this->blendTarget );
+		this->blendTarget = NULL;
+		printf( "~Image reset blendTarg\n");
+	}
 	
 }
 
@@ -389,20 +395,19 @@ void Image::Save( const char *filename ) {
 /// helper to make image and set flags
 bool Image::MakeImage() {
 	if ( this->width <= 0 || this->height <= 0 ) return false;
-	GPU_Image* img = GPU_CreateImage( this->width, this->height, GPU_FORMAT_RGBA );
+	// new image
+	GPU_Image* img = GPU_CreateImage( this->width, this->height, app.backScreen->format );
 	if ( !img ) {
 		script.ReportError( "Failed to create Image with dimensions %d, %d", this->width, this->height );
 		return false;
 	}
-	
 	GPU_UnsetImageVirtualResolution( img );
 	GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( img, GPU_SNAP_NONE );
 	GPU_LoadTarget( img );
 	if ( this->image ) {
 		// copy old image to new
-		static SDL_Color clearColor = { 0, 0, 0, 0 };
-		GPU_ClearColor( img->target, clearColor );
+		GPU_Clear( img->target );
 		GPU_Rect srcRect = { 0, 0, (float) this->image->base_w, (float) this->image->base_h };
 		GPU_Blit( this->image, &srcRect, img->target, 0, 0 );
 		GPU_FreeTarget( this->image->target );
@@ -411,12 +416,18 @@ bool Image::MakeImage() {
 	GPU_AddDepthBuffer( img->target );
 	GPU_SetDepthTest( img->target, true );
 	GPU_SetDepthWrite( img->target, true );
-	GPU_AddDepthBuffer( img->target );
 	img->target->camera.z_near = -1024;
 	img->target->camera.z_far = 1024;
 	img->anchor_x = img->anchor_y = 0;
 	this->_sizeDirty = false;
 	this->image = img;
+	// reset blend target
+	if ( this->blendTarget ) {
+		GPU_FreeImage( this->blendTarget->image );
+		GPU_FreeTarget( this->blendTarget );
+		this->blendTarget = NULL;
+		printf( "Image MakeImage reset blendTarg\n");
+	}
 	return true;
 }
 
@@ -434,8 +445,6 @@ GPU_Image* Image::GetImage() {
 
 /// draws gameobject
 void Image::Draw( GameObject* go ) {
-	static SDL_Color clearColor = { 0, 0, 0, 0 };
-	
 	// make sure image exists
 	if ( !this->image ) {
 		
@@ -458,7 +467,7 @@ void Image::Draw( GameObject* go ) {
 	
 	// if autodraw, clear
 	if ( this->autoDraw ) {
-		GPU_ClearColor( this->image->target, clearColor );
+		GPU_Clear( this->image->target );
 	}
 	
 	// transform
@@ -483,6 +492,7 @@ void Image::Draw( GameObject* go ) {
 	Event renderEvent;
 	renderEvent.name = EVENT_RENDER;
 	renderEvent.behaviorParam = this->image->target;
+	renderEvent.behaviorParam2 = &this->blendTarget;
 	GPU_MatrixMode( GPU_MODELVIEW );
 	go->Render( renderEvent );
 	

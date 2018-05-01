@@ -675,6 +675,7 @@ UI.base = UI.base ? UI.base : {
 				go._state = v;
 				if ( go._states !== undefined && go._states[ sv ] !== undefined ) UI.base.applyProperties( go, go._states[ sv ] );
 			}, true ],
+
 		];
 		// map them to gameObject
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
@@ -692,7 +693,7 @@ UI.base = UI.base ? UI.base : {
 		go[ 'resize' ] = function ( w, h ) { ui.resize( w, h ); }
 
 		// called from "focusChanged" to scroll this component into view
-		go[ 'scrollIntoView' ] = function() {
+		go[ 'scrollIntoView' ] = function( expandAmount ) {
 			var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
 			// params are used by input to scroll caret into view
 			if ( arguments.length != 0 ) {
@@ -724,7 +725,7 @@ UI.base = UI.base ? UI.base : {
 				r = l + lw;
 
 			// expand b-h and l-r a bit
-			var m = Math.min( lw, lh );
+			var m = Math.min( lw, lh ) * ( expandAmount ? expandAmount : 0 );
 			if ( lh + m * 2 < sh ) { t -= m; b += m; }
 			if ( lw + m * 2 < sw ) { l -= m; r += m; }
 

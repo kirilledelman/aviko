@@ -16,11 +16,10 @@ new (function (){
 		spacing: 10,
 		width: App.windowWidth,
 		height: App.windowHeight,
-		//layout: function ( w, h ) { log( "scene.layout", w, h ); }
 	} );
 
 	// title
-	scene.addChild( 'ui/text', {
+	var title = scene.addChild( 'ui/text', {
 		name: "Title",
 		size: 30,
 		color: Color.Title,
@@ -28,7 +27,7 @@ new (function (){
 		align: TextAlign.Center,
 		wrap: false,
 		minWidth: 290,
-		text: "Sprites"
+		text: "Sprites",
 	} );
 
 	// scrollable description
@@ -98,7 +97,7 @@ new (function (){
 		layout: function () {
 			this.scrollWidth = this.width;
 			this.scrollHeight = this.height;
-		}
+		},
 	} );
 
 	// background for sprite
@@ -115,6 +114,17 @@ new (function (){
 		x: 150, y: 70,
 	} );
 	sprite.render.pivotX = sprite.render.pivotY = 0.5;
+
+	// rotate checkbox
+	spriteContainer.addChild( 'ui/checkbox', {
+		text: "Spin",
+		change: function () {
+			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
+			else sprite.update = function ( dt ) {
+				sprite.angle += 10 * dt;
+			}
+		}
+	} );
 
 	// properties
 	var props = example.addChild( 'ui/property-list', {
@@ -185,9 +195,25 @@ new (function (){
 							'a': false,
 						} },
 					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
-					'stipple': { min: 0, max: 1, step: 0.1 }
+					'stipple': { min: 0, max: 1, step: 0.1 },
+					'blendMode': { enum: [
+						{ text: "Normal", value: BlendMode.Normal },
+						{ text: "Add", value: BlendMode.Add },
+						{ text: "Subtract", value: BlendMode.Subtract },
+						{ text: "Multiply", value: BlendMode.Multiply },
+						{ text: "Screen", value: BlendMode.Screen },
+						{ text: "Burn", value: BlendMode.Burn },
+						{ text: "Dodge", value: BlendMode.Dodge },
+						{ text: "Invert", value: BlendMode.Invert },
+						{ text: "Hue", value: BlendMode.Hue },
+						{ text: "Saturation", value: BlendMode.Saturation },
+						{ text: "Luminosity", value: BlendMode.Luminosity },
+						{ text: "Refract", value: BlendMode.Refract },
+						{ text: "Cut", value: BlendMode.Cut },
+					] },
 				};
 				props.groups = [
+					{ name: "Blending", properties: [ 'blendMode' ] },
 					{ name: "Tint", properties: [ 'color', 'addColor' ] },
 					{ name: "Opacity", properties: [ 'opacity', 'stipple' ] },]
 				break;

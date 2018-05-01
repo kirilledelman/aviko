@@ -13,9 +13,6 @@ RenderSpriteBehavior::RenderSpriteBehavior( ScriptArguments* args ) : RenderSpri
 	// add scriptObject
 	script.NewScriptObject<RenderSpriteBehavior>( this );
 	
-	// set to normal
-	this->blendMode = GPU_BLEND_NORMAL;
-	
 	// add defaults
 	RenderBehavior::AddDefaults();	
 	
@@ -424,14 +421,13 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	if ( !image ) return;
 	
 	// blend mode and color
-	if ( behavior->blendMode <= GPU_BLEND_NORMAL_FACTOR_ALPHA ) {
-		// normal mode
-		GPU_SetBlendMode( image, (GPU_BlendPresetEnum) behavior->blendMode );
-	// special mode
-	} else if ( behavior->blendMode == GPU_BLEND_CUT_ALPHA ) {
+	if ( behavior->blendMode == BlendMode::Cut ) {
 		// cut alpha
-		GPU_SetBlendFunction( image,  GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
+		GPU_SetBlendFunction( image, GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
 		GPU_SetBlendEquation( image, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
+	} else {
+		// normal mode
+		GPU_SetBlendMode( image, GPU_BLEND_NORMAL );
 	}
 	image->color = color;
 
@@ -502,13 +498,15 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	    shaderU, shaderV, shaderW, shaderH,
 		top, right, bottom, left,
 		sliceScaleX, sliceScaleY,
-	    shaderTileX, shaderTileY, target );
+	    shaderTileX, shaderTileY,
+	    target, (GPU_Target**) event->behaviorParam2 );
 	
 	GPU_Rect dest = {
 		cx, cy,
 		( srcRect.w + behavior->texturePad * 2 ) * sx,
 		( srcRect.h + behavior->texturePad * 2 ) * sy
 	};
+	
 	GPU_BlitRectX( image, &srcRect, target, &dest, rotated ? -90 : 0, 0, 0, GPU_FLIP_NONE );
 	
 }

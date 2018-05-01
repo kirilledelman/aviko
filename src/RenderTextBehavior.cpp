@@ -13,10 +13,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	
 	// add defaults
 	RenderBehavior::AddDefaults();
-	
-	//
-	this->blendMode = GPU_BLEND_NORMAL;
-	
+		
 	// create background object
 	Color* color = new Color( NULL );
 	color->SetInts( 255, 255, 255, 0 );
@@ -1386,14 +1383,13 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	if ( !behavior->surface ) return;
 	
 	// set params
-	if ( behavior->blendMode <= GPU_BLEND_NORMAL_FACTOR_ALPHA ) {
-		// normal mode
-		GPU_SetBlendMode( behavior->surface, (GPU_BlendPresetEnum) behavior->blendMode );
-		// special mode
-	} else if ( behavior->blendMode == GPU_BLEND_CUT_ALPHA ) {
+	if ( behavior->blendMode == BlendMode::Cut ) {
 		// cut alpha
-		GPU_SetBlendFunction( behavior->surface,  GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
+		GPU_SetBlendFunction( behavior->surface, GPU_FUNC_ZERO, GPU_FUNC_DST_ALPHA, GPU_FUNC_ONE, GPU_FUNC_ONE );
 		GPU_SetBlendEquation( behavior->surface, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
+	} else {
+		// normal mode
+		GPU_SetBlendMode( behavior->surface, GPU_BLEND_NORMAL );
 	}
 	behavior->surface->color = color;
 	
@@ -1403,7 +1399,8 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	    0, 0, behavior->surface->base_w, behavior->surface->base_h,
 		0, 0, 0, 0,
 	    0, 0,
-		1, 1, target );
+		1, 1,
+	    target, (GPU_Target**) event->behaviorParam2 );
 	
 	// draw
 	GPU_Rect dest = {
