@@ -19,7 +19,7 @@
 App.setWindowSize( 640, 480, 1 ); // 720p @ 2x
 
 // auto-configure controller
-/* include( 'ui/controller-configurator', {
+include( 'ui/controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',
@@ -52,7 +52,7 @@ App.setWindowSize( 640, 480, 1 ); // 720p @ 2x
 			if ( this.get( 'select' ) && this.get( 'start' ) ) quit();
 		} );
 	}
-} );*/
+} );
 
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
@@ -68,13 +68,13 @@ App.scene = include( 'main-menu' );
 
 /*var s = new GameObject( {
 	render: new RenderSprite( {
-		//texture: 'test:test',
-		texture: 'smiley',
+		texture: 'test:test',
+		//texture: 'smiley',
 	} ),
 	x: 100, y: 100,
 	parent: App.scene,
 } );
-
+log ( s.render.texture );
 Input.mouseWheel = function( wy, wx ) {
 	if ( wy ) s.render.sliceLeft += ( wy > 0 ? 1 : -1 );
 	if ( wx ) s.render.sliceRight += ( wx > 0 ? 1 : -1 );

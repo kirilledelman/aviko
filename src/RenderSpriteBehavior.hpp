@@ -42,7 +42,7 @@ public:
 	float tileY = 1;
 	bool autoTileX = false;
 	bool autoTileY = false;
-	
+		
 // scripting
 	
 	/// registers class for scripting

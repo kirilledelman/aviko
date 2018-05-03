@@ -41,6 +41,11 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 		script.SetProperty( clrProp, ArgValue( colors[ i ]->scriptObject ), this->scriptObject );
 	}
 	
+	// create effect color object
+	color = new Color( NULL );
+	color->SetInts( 0, 0, 0, 255 );
+	script.SetProperty( "effectColor", ArgValue( color->scriptObject ), this->scriptObject );
+	
 	// with arguments
 	if ( args ) {
 		/// load font
@@ -735,6 +740,79 @@ void RenderTextBehavior::InitClass() {
         rs->_dirty = true;
         return val;
     }) );
+
+	script.AddProperty<RenderTextBehavior>
+	( "effectColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->effectColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderBehavior* rs = (RenderBehavior*) b;
+		if ( val.type == TypeObject ) {
+			// replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->effectColor = other;
+		} else {
+			rs->effectColor->Set( val );
+		}
+		return rs->effectColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectType",
+	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderBehavior*) b)->effect; }),
+	 static_cast<ScriptIntCallback>([](void *b, int val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->effect != (RenderBehavior::FX) val ) {
+			rs->effect = (RenderBehavior::FX) val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectOffsetX",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->effectOffsetX != val ) {
+			rs->effectOffsetX = val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectOffsetY",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->effectOffsetY != val ) {
+			rs->effectOffsetY = val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectOffsetZ",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetZ; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->effectOffsetZ = val ); }) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectRadius",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectRadius; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->effectRadius != val ) {
+			rs->effectRadius = val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "effectFalloff",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectFalloff; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->effectFalloff = val ); }) );
 	
 	// functions
 	
@@ -1400,7 +1478,7 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 		0, 0, 0, 0,
 	    0, 0,
 		1, 1,
-	    target, (GPU_Target**) event->behaviorParam2 );
+	    behavior->surface, target, (GPU_Target**) event->behaviorParam2 );
 	
 	// draw
 	GPU_Rect dest = {

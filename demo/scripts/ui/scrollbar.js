@@ -392,6 +392,12 @@ include( './ui' );
 
 		}
 
+	}
+
+	// tab
+	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
+
+		if ( code == Key.Tab ) ui.moveFocus( shift ? -1 : 1 );
 
 	}
 

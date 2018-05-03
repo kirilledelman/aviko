@@ -50,7 +50,6 @@ Image::~Image() {
 		GPU_FreeImage( this->blendTarget->image );
 		GPU_FreeTarget( this->blendTarget );
 		this->blendTarget = NULL;
-		printf( "~Image reset blendTarg\n");
 	}
 	
 }
@@ -426,7 +425,6 @@ bool Image::MakeImage() {
 		GPU_FreeImage( this->blendTarget->image );
 		GPU_FreeTarget( this->blendTarget );
 		this->blendTarget = NULL;
-		printf( "Image MakeImage reset blendTarg\n");
 	}
 	return true;
 }

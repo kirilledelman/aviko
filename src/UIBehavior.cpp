@@ -391,6 +391,30 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
+	( "offsetX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutOffsetX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutOffsetX != val ) {
+			ui->layoutOffsetX = val;
+			ui->RequestLayout( ArgValue( "offsetX" ) );
+		}
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
+	( "offsetY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((UIBehavior*) b)->layoutOffsetY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutOffsetY != val ) {
+			ui->layoutOffsetY = val;
+			ui->RequestLayout( ArgValue( "offsetY" ) );
+		}
+		return val;
+	}));
+	
+	script.AddProperty<UIBehavior>
 	( "layoutType",
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return (int) ((UIBehavior*) b)->layoutType; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
@@ -768,7 +792,7 @@ void UIBehavior::InitClass() {
 		// one? try both direction
 		} else {
 		
-			sa.ReturnBool( self->Navigate( dirX, 0 ) || self->Navigate( 0, dirX ) );
+			sa.ReturnBool( self->Navigate( 0, dirX ) || self->Navigate( dirX, 0 ) );
 		}
 		return true;
 	} ));
@@ -1314,7 +1338,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 			curX += w + childUI->marginLeft + childUI->marginRight + spacing;
 
 			// set/store
-			childUI->gameObject->SetPosition( x, y );
+			childUI->gameObject->SetPosition( x + childUI->layoutOffsetX, y + childUI->layoutOffsetY );
 			childUI->layoutWidth = w;
 			childUI->layoutHeight = h;
 			
@@ -1517,7 +1541,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 			curY += h + childUI->marginTop + childUI->marginBottom + spacing;
 			
 			// set/store
-			childUI->gameObject->SetPosition( x, y );
+			childUI->gameObject->SetPosition( x + childUI->layoutOffsetX, y + childUI->layoutOffsetY );
 			childUI->layoutWidth = w;
 			childUI->layoutHeight = h;
 			
@@ -1559,7 +1583,7 @@ void UIBehavior::LayoutAnchors( vector<UIBehavior *> &childUIs ) {
 		
 		childUI->GetAnchoredPosition( this, x, y, w, h );
 		
-		childUI->gameObject->SetPosition( x, y );
+		childUI->gameObject->SetPosition( x + childUI->layoutOffsetX, y + childUI->layoutOffsetY );
 		childUI->layoutWidth = w;
 		childUI->layoutHeight = h;
 	}

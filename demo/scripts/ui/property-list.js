@@ -24,7 +24,7 @@ include( './ui' );
 	var target = null;
 	var showAll = true;
 	var properties = {};
-	var valueWidth = 150;
+	var valueWidth = 130;
 	var disabled = false;
 	var topPropertyList = go;
 	var groups = [];

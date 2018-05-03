@@ -91,7 +91,7 @@ new (function (){
 
 	// sample sprite container
 	var spriteContainer = example.addChild( 'ui/scrollable', {
-		minHeight: 140,
+		minHeight: 150,
 		layoutType: Layout.None,
 		scrollbars: false,
 		layout: function () {
@@ -103,7 +103,7 @@ new (function (){
 	// background for sprite
 	spriteContainer.addChild( 'ui/image', {
 		width: 300,
-		height: 140,
+		height: 150,
 		mode: 'fit',
 		texture: 'checker.png',
 	} );
@@ -117,7 +117,8 @@ new (function (){
 
 	// rotate checkbox
 	spriteContainer.addChild( 'ui/checkbox', {
-		text: "Spin",
+		text: "^BSpin",
+		x: 120, y: 120,
 		change: function () {
 			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
 			else sprite.update = function ( dt ) {
@@ -129,7 +130,7 @@ new (function (){
 	// properties
 	var props = example.addChild( 'ui/property-list', {
 		flex: 1,
-		valueWidth: 150,
+		valueWidth: 130,
 		showAll: false,
 		target: sprite.render
 	} );
@@ -205,15 +206,29 @@ new (function (){
 						{ text: "Burn", value: BlendMode.Burn },
 						{ text: "Dodge", value: BlendMode.Dodge },
 						{ text: "Invert", value: BlendMode.Invert },
+						{ text: "Color", value: BlendMode.Color },
 						{ text: "Hue", value: BlendMode.Hue },
 						{ text: "Saturation", value: BlendMode.Saturation },
 						{ text: "Luminosity", value: BlendMode.Luminosity },
 						{ text: "Refract", value: BlendMode.Refract },
 						{ text: "Cut", value: BlendMode.Cut },
 					] },
+					'effectType': { enum: [
+						{ text: "None", value: Effect.None },
+						{ text: "Outline", value: Effect.Outline },
+						{ text: "Outer", value: Effect.Outer },
+						{ text: "Inner", value: Effect.Inner },
+						{ text: "Blur", value: Effect.Blur },
+					] },
+					'effectColor': {},
+					'effectOffsetX': { step: 1 },
+					'effectOffsetY': { step: 1 },
+					'effectOffsetZ': { step: 1 },
+					'effectRadius': { min: 0, max: 16, step: 0.1 },
+					'effectFalloff': { min: 0, max: 1, step: 0.1 },
 				};
 				props.groups = [
-					{ name: "Blending", properties: [ 'blendMode' ] },
+					{ name: "Blending", properties: [ 'blendMode', 'effectType', 'effectColor', 'effectOffsetX', 'effectOffsetY', 'effectOffsetZ', 'effectRadius', 'effectFalloff' ] },
 					{ name: "Tint", properties: [ 'color', 'addColor' ] },
 					{ name: "Opacity", properties: [ 'opacity', 'stipple' ] },]
 				break;

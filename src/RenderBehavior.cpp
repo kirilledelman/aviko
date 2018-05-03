@@ -2,7 +2,7 @@
 #include "GameObject.hpp"
 
 // static
-RenderBehavior::SpriteShaderVariant RenderBehavior::shaders[ 32 ];
+RenderBehavior::ShaderVariant RenderBehavior::shaders[ SHADER_MAXVAL ];
 
 
 /* MARK:	-				Init / destroy
@@ -25,7 +25,7 @@ void RenderBehavior::AddDefaults() {
 	color = new Color( NULL );
 	color->SetInts( 0, 0, 0, 0 );
 	script.SetProperty( "addColor", ArgValue( color->scriptObject ), this->scriptObject );
-	
+		
 }
 
 RenderBehavior::~RenderBehavior() {
@@ -60,6 +60,36 @@ void RenderBehavior::InitClass() {
 	// register class
 	script.RegisterClass<RenderBehavior>( "Behavior", true );
 
+	// constants
+	
+	void* constants = script.NewObject();
+	script.AddGlobalNamedObject( "BlendMode", constants );
+	script.SetProperty( "Normal", ArgValue( RenderBehavior::BlendMode::Normal ), constants );
+	script.SetProperty( "Add", ArgValue( RenderBehavior::BlendMode::Add ), constants );
+	script.SetProperty( "Subtract", ArgValue( RenderBehavior::BlendMode::Subtract ), constants );
+	script.SetProperty( "Multiply", ArgValue( RenderBehavior::BlendMode::Multiply ), constants );
+	script.SetProperty( "Screen", ArgValue( RenderBehavior::BlendMode::Screen ), constants );
+	script.SetProperty( "Burn", ArgValue( RenderBehavior::BlendMode::Burn ), constants );
+	script.SetProperty( "Dodge", ArgValue( RenderBehavior::BlendMode::Dodge ), constants );
+	script.SetProperty( "Invert", ArgValue( RenderBehavior::BlendMode::Invert ), constants );
+	script.SetProperty( "Hue", ArgValue( RenderBehavior::BlendMode::Hue ), constants );
+	script.SetProperty( "Color", ArgValue( RenderBehavior::BlendMode::Colorize ), constants );
+	script.SetProperty( "Luminosity", ArgValue( RenderBehavior::BlendMode::Luminosity ), constants );
+	script.SetProperty( "Saturation", ArgValue( RenderBehavior::BlendMode::Saturation ), constants );
+	script.SetProperty( "Refract", ArgValue( RenderBehavior::BlendMode::Refract ), constants );
+	script.SetProperty( "Cut", ArgValue( RenderBehavior::BlendMode::Cut ), constants );
+	script.FreezeObject( constants );
+
+	constants = script.NewObject();
+	script.AddGlobalNamedObject( "Effect", constants );
+	script.SetProperty( "None", ArgValue( RenderBehavior::FX::None ), constants );
+	script.SetProperty( "Outline", ArgValue( RenderBehavior::FX::Outline ), constants );
+	script.SetProperty( "Outer", ArgValue( RenderBehavior::FX::Outer ), constants );
+	script.SetProperty( "Inner", ArgValue( RenderBehavior::FX::Inner ), constants );
+	script.SetProperty( "Blur", ArgValue( RenderBehavior::FX::Blur ), constants );
+	script.FreezeObject( constants );
+	
+	// properties
 	script.AddProperty<RenderBehavior>
 	( "color",
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->color->scriptObject); }),
@@ -115,6 +145,24 @@ void RenderBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotY; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotY = val ); }) );
 
+	// clear shaders structure
+	memset( &shaders, 0, sizeof( shaders ) );
+
+}
+
+
+/* MARK:	-				Padding
+ -------------------------------------------------------------------- */
+
+
+void RenderBehavior::UpdateTexturePad() {
+	if ( this->effect == FX::Blur ) {
+		texturePad = effectRadius * 1.5;
+	} else if ( this->effect == FX::Outline ){
+		texturePad = 1 + effectRadius * 1.5;
+	} else if ( this->effect == FX::Outer ){
+		texturePad = effectRadius * 1.5 + fmax( effectOffsetX, effectOffsetY );
+	} else texturePad = 0; // inner or none
 }
 
 
@@ -135,7 +183,6 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 				GPU_LoadTarget( img );
 				if ( img->target ) {
 					*blendTarg = img->target;
-					printf( "Created blend targ %dx%d\n", img->base_w, img->base_h );
 				} else {
 					GPU_FreeImage( img );
 				}
@@ -163,14 +210,15 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 	}
 }
 
-int RenderBehavior::SelectTexturedShader(
+size_t RenderBehavior::SelectTexturedShader(
 		float tw, float th,
 		float u, float v, float w, float h,
 		float st, float sr, float sb, float sl,
 		float sx, float sy,
-		float tx, float ty, GPU_Target* targ, GPU_Target** blendTarg ){
+		float tx, float ty,
+		GPU_Image *image, GPU_Target* targ, GPU_Target** blendTarg ){
 
-	int shaderIndex = SHADER_TEXTURE;
+	size_t shaderIndex = SHADER_TEXTURE;
 	
 	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
@@ -179,12 +227,13 @@ int RenderBehavior::SelectTexturedShader(
 		shaderIndex |= SHADER_BLEND;
 		this->_UpdateBlendTarget( targ, blendTarg );
 	}
-	
-	SpriteShaderVariant &variant = shaders[ shaderIndex ];
-	
-	if ( !variant.shader ) {
-		printf( "Shader %d not compiled!\n", shaderIndex );
+	if ( this->effect != FX::None ) {
+		shaderIndex |= SHADER_FX;
 	}
+	if ( image ) GPU_SetImageFilter( image, this->effect != FX::None ? GPU_FILTER_LINEAR : GPU_FILTER_NEAREST );
+	
+	ShaderVariant &variant = shaders[ shaderIndex ];
+	if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );
 	
 	//
 	
@@ -271,13 +320,40 @@ int RenderBehavior::SelectTexturedShader(
 		GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
 	}
 	
+	// fx
+	if ( variant.fxUniform >= 0 ) {
+		GPU_SetUniformi( variant.fxUniform, this->effect );
+	}
+	
+	// fx color
+	if ( variant.fxColorUniform >= 0 ) {
+		params[ 0 ] = this->effectColor->r;
+		params[ 1 ] = this->effectColor->g;
+		params[ 2 ] = this->effectColor->b;
+		params[ 3 ] = this->effectColor->a;
+		GPU_SetUniformfv( variant.fxColorUniform, 4, 1, params );
+	}
+	
+	// fx params
+	if ( variant.fxOffsetUniform >= 0 ) {
+		params[ 0 ] = this->effectOffsetX;
+		params[ 1 ] = this->effectOffsetY;
+		params[ 2 ] = this->effectOffsetZ;
+		GPU_SetUniformfv( variant.fxOffsetUniform, 3, 1, params );
+	}
+	if ( variant.fxRadiusFalloffUniform >= 0 ) {
+		params[ 0 ] = this->effectRadius;
+		params[ 1 ] = this->effectFalloff;
+		GPU_SetUniformfv( variant.fxRadiusFalloffUniform, 2, 1, params );
+	}
+	
 	return shaderIndex;
 	
 }
 
-int RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blendTarg ) {
+size_t RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blendTarg ) {
 	
-	int shaderIndex = 0;
+	size_t shaderIndex = 0;
 	
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
 	if ( this->blendMode != BlendMode::Normal && this->blendMode != BlendMode::Cut ) {
@@ -285,11 +361,8 @@ int RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blend
 		this->_UpdateBlendTarget( targ, blendTarg );
 	}
 	
-	SpriteShaderVariant &variant = shaders[ shaderIndex ];
-	
-	if ( !variant.shader ) {
-		printf( "Shader %d not compiled!\n", shaderIndex );
-	}
+	ShaderVariant &variant = shaders[ shaderIndex ];
+	if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );
 	
 	// activate shader
 	GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
@@ -333,8 +406,8 @@ int RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blend
 	
 }
 
-// init shaders
-void RenderBehavior::InitShaders() {
+// compiles shader with features
+RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t featuresMask ) {
 	
 	GPU_Renderer* renderer = GPU_GetCurrentRenderer();
 	bool glsles = ( renderer->shader_language == GPU_LANGUAGE_GLSLES );
@@ -366,237 +439,397 @@ void RenderBehavior::InitShaders() {
 	out vec4 color;\n\
 	out vec2 texCoord;\n");
 	
-	// create shader combinations w sets of different features
+	// assemble fragment shader source
+	char fragShader[ 32768 ];
+	string params;
+	string features;
+	string funcs;
 	
-	// shader permutations
-	string params[ 32 ];
-	string features[ 32 ];
-	string funcs[ 32 ];
-	string post[ 32 ];
-	for ( int i = 0; i < 32; i++ ) {
-		if ( i & SHADER_TEXTURE ) {
-			params[ i ] +=
-			"uniform sampler2D tex;\n\
-			uniform vec2 texSize;\n\
-			uniform vec4 texInfo;\n\
-			uniform float texPad;";
-			funcs[ i ] =
-			"vec4 readPixel( vec2 uv ){\n\
-				uv = uv * texSize - texInfo.xy;\n\
-				if ( texPad > 0.0 ){\n\
-					float texPad2 = 2.0 * texPad;\n\
-					uv.x = uv.x * ( ( texInfo.z + texPad2 ) / texInfo.z ) - texPad;\n\
-					uv.y = uv.y * ( ( texInfo.w + texPad2 ) / texInfo.w ) - texPad;\n\
-				}\n\
-				if ( uv.x < 0.0 || uv.x >= texInfo.z || uv.y < 0.0 || uv.y >= texInfo.w ) return vec4(0.0,0.0,0.0,0.0);\n";
+	// has texture
+	if ( featuresMask & SHADER_TEXTURE ) {
+		params +=
+		"uniform sampler2D tex;\n\
+		uniform vec2 texSize;\n\
+		uniform vec4 texInfo;\n\
+		uniform float texPad;";
+		funcs =
+		"vec4 readPixel( vec2 uv ){\n\
+			uv = uv - texInfo.xy;\n\
+			if ( texPad > 0.0 ){\n\
+				float texPad2 = 2.0 * texPad;\n\
+				uv.x = uv.x * ( ( texInfo.z + texPad2 ) / texInfo.z ) - texPad;\n\
+				uv.y = uv.y * ( ( texInfo.w + texPad2 ) / texInfo.w ) - texPad;\n\
+			}\n\
+			if ( uv.x < 0.0 || uv.x >= texInfo.z || uv.y < 0.0 || uv.y >= texInfo.w ) return vec4(0.0,0.0,0.0,0.0);\n";
+		
+		// sliced
+		if ( featuresMask & SHADER_SLICE ) {
+			params +=
+			"uniform vec4 slice;\n\
+			uniform vec2 sliceScale;";
+			funcs +=
+			"vec2 suv = uv * sliceScale;\n\
+			vec2 actSize = texInfo.zw * sliceScale;\n\
+			vec2 sliceRightBottom = vec2( texInfo.z - slice.y, texInfo.w - slice.z );\n\
+			vec2 actRightBottom = vec2( actSize.x - slice.y, actSize.y - slice.z );\n\
+			vec2 sliceMid = vec2 ( sliceRightBottom.x - slice.w, sliceRightBottom.y - slice.x );\n\
+			vec2 actMid = vec2 ( actRightBottom.x - slice.w, actRightBottom.y - slice.x );\n";
 			
-			// sliced
-			if ( i & SHADER_SLICE ) {
-				params[ i ] +=
-				"uniform vec4 slice;\n\
-				uniform vec2 sliceScale;";
-				funcs[ i ] +=
-				"vec2 suv = uv * sliceScale;\n\
-				vec2 actSize = texInfo.zw * sliceScale;\n\
-				vec2 sliceRightBottom = vec2( texInfo.z - slice.y, texInfo.w - slice.z );\n\
-				vec2 actRightBottom = vec2( actSize.x - slice.y, actSize.y - slice.z );\n\
-				vec2 sliceMid = vec2 ( sliceRightBottom.x - slice.w, sliceRightBottom.y - slice.x );\n\
-				vec2 actMid = vec2 ( actRightBottom.x - slice.w, actRightBottom.y - slice.x );\n";
-				
-				// with tiling
-				if ( i & SHADER_TILE ) {
-					params[ i ] +=
-					"uniform vec2 tile;";
-					funcs[ i ] +=
-					"if ( suv.x < slice.w ) uv.x = suv.x;\n\
-					else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
-					else uv.x = slice.w + mod( tile.x * sliceMid.x * ( suv.x - slice.w ) / actMid.x, sliceMid.x );\n\
-					if ( suv.y < slice.x ) uv.y = suv.y;\n\
-					else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
-					else uv.y = slice.x + mod( tile.y * sliceMid.y * ( suv.y - slice.x ) / actMid.y, sliceMid.y );\n";
-				// slicing without tiling
-				} else {
-					funcs[ i ] +=
-					"if ( suv.x < slice.w ) uv.x = suv.x;\n\
-					else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
-					else uv.x = slice.w + sliceMid.x * ( suv.x - slice.w ) / actMid.x;\n\
-					if ( suv.y < slice.x ) uv.y = suv.y;\n\
-					else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
-					else uv.y = slice.x + sliceMid.y * ( suv.y - slice.x ) / actMid.y;\n";
-				}
-				
-			// not sliced, but tiled
-			} else if ( i & SHADER_TILE ) {
-				params[ i ] +=
+			// with tiling
+			if ( featuresMask & SHADER_TILE ) {
+				params +=
 				"uniform vec2 tile;";
-				funcs[ i ] +=
-				"if ( tile.x != 1.0 ) uv.x = mod( uv.x * tile.x, texInfo.z );\n\
-				if ( tile.y != 1.0 ) uv.y = mod( uv.y * tile.y, texInfo.w );\n";
+				funcs +=
+				"if ( suv.x < slice.w ) uv.x = suv.x;\n\
+				else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
+				else uv.x = slice.w + mod( tile.x * sliceMid.x * ( suv.x - slice.w ) / actMid.x, sliceMid.x );\n\
+				if ( suv.y < slice.x ) uv.y = suv.y;\n\
+				else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
+				else uv.y = slice.x + mod( tile.y * sliceMid.y * ( suv.y - slice.x ) / actMid.y, sliceMid.y );\n";
+			// sliced without tiling
+			} else {
+				funcs +=
+				"if ( suv.x < slice.w ) uv.x = suv.x;\n\
+				else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
+				else uv.x = slice.w + sliceMid.x * ( suv.x - slice.w ) / actMid.x;\n\
+				if ( suv.y < slice.x ) uv.y = suv.y;\n\
+				else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
+				else uv.y = slice.x + sliceMid.y * ( suv.y - slice.x ) / actMid.y;\n";
 			}
 			
-			// finish read pixel func
-			funcs[ i ] += glsles ?
-			"return texture2D( tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
-			"return texture( tex, ( uv + texInfo.xy ) / texSize );\n}\n";
-			
-			// read pixel color
-			features[ i ] +=
-			"src = readPixel( coord ) * color + addColor;\n";
-		} else {
-			features[ i ] +=
-			"src = color + addColor;";
+		// not sliced, but tiled
+		} else if ( featuresMask & SHADER_TILE ) {
+			params +=
+			"uniform vec2 tile;";
+			funcs +=
+			"if ( tile.x != 1.0 ) uv.x = mod( uv.x * tile.x, texInfo.z );\n\
+			if ( tile.y != 1.0 ) uv.y = mod( uv.y * tile.y, texInfo.w );\n";
 		}
 		
+		// finish read pixel func
+		funcs += glsles ?
+		"return texture2D( tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
+		"return texture( tex, ( uv + texInfo.xy ) / texSize );\n}\n";
 		
-		if ( i & SHADER_BLEND ) {
-			params[ i ] +=
-			"uniform sampler2D background;\n\
-			uniform vec2 backgroundSize;\n\
-			uniform int blendMode;";
-			funcs[ i ] +=
-			"vec3 rgb2hsv(vec3 c) {\n\
-				vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\
-				vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\
-				vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\
-				float d = q.x - min(q.w, q.y);\n\
-				float e = 1.0e-10;\n\
-				return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\
-			} \n\
-			vec3 hsv2rgb(vec3 c) { \n\
-				vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0); \n\
-				vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www); \n\
-				return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y); \n\
-			}";
-			features[ i ] +=
-			"vec2 fragCoord = gl_FragCoord.xy;\n\
-			if ( blendMode == 11 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
-			features[ i ] += glsles ?
-			"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
-			"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
-			features[ i ] +=
-			"if ( blendMode == 1 ) src.rgb += bg.rgb;\n\
-			else if ( blendMode == 2 ) src.rgb = bg.rgb - src.rgb;\n\
-			else if ( blendMode == 3 ) src.rgb = bg.rgb * src.rgb;\n\
-			else if ( blendMode == 4 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
-			else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb;\n\
-			else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb);\n\
-			else if ( blendMode == 7 ) src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb ) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
-			else if ( blendMode == 8 ) {\n\
-				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-				src.rgb = hsv2rgb( vec3( srcHSV.x, bgHSV.y, bgHSV.z ) );\n\
-			} else if ( blendMode == 9 ) {\n\
-				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-				src.rgb = hsv2rgb( vec3( bgHSV.x, srcHSV.y, bgHSV.z ) );\n\
-			} else if ( blendMode == 10 ) {\n\
-				vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-				vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-				src.rgb = hsv2rgb( vec3( bgHSV.x, bgHSV.y, srcHSV.z ) );\n\
-			} else if ( blendMode == 11 ) src.rgb = bg.rgb;\n\
-			\n";
-		}
+		// read pixel color
+		features +=
+		"src = readPixel( coord * texSize ) * color + addColor;\n";
+	} else {
+		features +=
+		"src = color + addColor;";
+	}
+	
+	// blending with background modes
+	if ( featuresMask & SHADER_BLEND ) {
+		params +=
+		"uniform sampler2D background;\n\
+		uniform vec2 backgroundSize;\n\
+		uniform int blendMode;";
+		funcs +=
+		"vec3 rgb2hsv(vec3 c) {\n\
+			vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\
+			vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\
+			vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\
+			float d = q.x - min(q.w, q.y);\n\
+			float e = 1.0e-10;\n\
+			return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\
+		} \n\
+		vec3 hsv2rgb(vec3 c) { \n\
+			vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0); \n\
+			vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www); \n\
+			return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y); \n\
+		}";
+		features +=
+		"vec2 fragCoord = gl_FragCoord.xy;\n\
+		if ( blendMode == 12 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
+		features += glsles ?
+		"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
+		"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
+		features +=
+		"if ( blendMode == 1 ) src.rgb += bg.rgb; // add \n\
+		else if ( blendMode == 2 ) src.rgb = bg.rgb - src.rgb; // sub \n\
+		else if ( blendMode == 3 ) src.rgb = bg.rgb * src.rgb; // mul \n\
+		else if ( blendMode == 4 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) * (vec3(1.0,1.0,1.0) - src.rgb); // screen \n\
+		else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb; // burn \n\
+		else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb); // dodge\n\
+		else if ( blendMode == 7 ) { // invert \n\
+			src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb ) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
+		} else if ( blendMode == 8 ) { // colorize \n\
+			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+			src.rgb = hsv2rgb( vec3( srcHSV.x, srcHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 9 ) { // hue \n\
+			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+			src.rgb = hsv2rgb( vec3( srcHSV.x, bgHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 10 ) { // sat \n\
+			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+			src.rgb = hsv2rgb( vec3( bgHSV.x, srcHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 11 ) { // lum \n\
+			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+			src.rgb = hsv2rgb( vec3( bgHSV.x, bgHSV.y, srcHSV.z ) );\n\
+		} else if ( blendMode == 12 ) src.rgb = bg.rgb; // refract \n\
+		\n";
+	}
+	
+	// stippling
+	if ( featuresMask & SHADER_STIPPLE ) {
+		params +=
+		"uniform int stipple;\n\
+		uniform int stippleAlpha;\n";
+		features +=
+		"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
+		int limit = 0;\n\
+		int stippleValue = stipple; \n\
+		if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
+		if (index == 0) limit = 625;\n\
+		else if (index == 1) limit = 5625;\n\
+		else if (index == 2) limit = 1875;\n\
+		else if (index == 3) limit = 6875;\n\
+		else if (index == 4) limit = 8125;\n\
+		else if (index == 5) limit = 3125;\n\
+		else if (index == 6) limit = 9375;\n\
+		else if (index == 7) limit = 4375;\n\
+		else if (index == 8) limit = 2500;\n\
+		else if (index == 9) limit = 7500;\n\
+		else if (index == 10) limit = 1250;\n\
+		else if (index == 11) limit = 6250;\n\
+		else if (index == 12) limit = 10000;\n\
+		else if (index == 13) limit = 5000;\n\
+		else if (index == 14) limit = 8750;\n\
+		else if (index >= 15) limit = 3750;\n\
+		if ( stippleValue < limit ) discard;";
+	}
+	
+	// effects
+	if ( featuresMask & ( SHADER_FX | SHADER_TEXTURE ) ) {
+		params +=
+		"uniform int fx;\n\
+		uniform vec4 fxColor;\n\
+		uniform vec3 fxOffset;\n\
+		uniform vec2 fxRadiusFalloff;";
 		
-		if ( i & SHADER_TEXTURE ) {
-			features[ i ] +=
-			"if ( src.a == 0.0 ) discard; // for z-fighting sprites \n";
-		}
-		
-		if ( i & SHADER_STIPPLE ) {
-			params[ i ] +=
-			"uniform int stipple;\n\
-			uniform int stippleAlpha;\n";
-			features[ i ] +=
-			"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
-			int limit = 0;\n\
-			int stippleValue = stipple; \n\
-			if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
-			if (index == 0) limit = 625;\n\
-			else if (index == 1) limit = 5625;\n\
-			else if (index == 2) limit = 1875;\n\
-			else if (index == 3) limit = 6875;\n\
-			else if (index == 4) limit = 8125;\n\
-			else if (index == 5) limit = 3125;\n\
-			else if (index == 6) limit = 9375;\n\
-			else if (index == 7) limit = 4375;\n\
-			else if (index == 8) limit = 2500;\n\
-			else if (index == 9) limit = 7500;\n\
-			else if (index == 10) limit = 1250;\n\
-			else if (index == 11) limit = 6250;\n\
-			else if (index == 12) limit = 10000;\n\
-			else if (index == 13) limit = 5000;\n\
-			else if (index == 14) limit = 8750;\n\
-			else if (index >= 15) limit = 3750;\n\
-			if ( stippleValue < limit ) discard;";
-		}
+		funcs +=
+		"float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\
+		float noise(vec2 p) { \n\
+			vec2 ip = floor(p); \n\
+			vec2 u = fract(p); \n\
+			u = u*u*(3.0-2.0*u); \n\
+			float res = mix(mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x), mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y); \n\
+			return res*res - 0.5; \n\
+		} \n\
+		vec2 randVecOffset( float nx, float ny, float dist ) { \n\
+			return vec2( nx + dist * noise( gl_FragCoord.xy + vec2( nx, ny ) ), ny + dist * noise( texCoord * texSize + vec2( ny, nx ) ) );\n\
+		}\n\
+		vec4 areaSample( vec2 coord ){\n\
+			vec4 result = readPixel( coord ); \n\
+			float numRings = floor( min( fxRadiusFalloff.x * 0.25, 4.0 ) ); // num of rings to sample up to 4 \n\
+			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			float c1 = 0, c2 = 0, c3 = 0, c4 = 0; \n\
+			float ringStep = fxRadiusFalloff.x / numRings; \n\
+			float ringRadius; \n\
+			if ( numRings >= 4.0 ) { \n\
+				ringRadius = ringStep * 4.0; \n\
+				c4 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
+				r4 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( 0.3 * ringStep, -ringStep, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( ringStep, 0.3 * ringStep, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 3.0 ) { \n\
+				ringRadius = ringStep * 3.0; \n\
+				c3 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
+				r3 = readPixel( coord + randVecOffset( 0.0, -ringRadius, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( ringRadius, 0.0, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( 0.0, ringRadius, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( -ringRadius, 0.0, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( -ringRadius, -ringRadius, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 2.0 ) { \n\
+				ringRadius = ringStep * 2.0; \n\
+				c2 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
+				r2 = readPixel( coord + randVecOffset( -ringRadius, -ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 1.0 ) { \n\
+				c1 = ( 1.0 - fxRadiusFalloff.y / ringStep ); \n\
+				r1 = readPixel( coord + randVecOffset( 0.0, -ringStep, ringStep ) );\n\
+				r1 += readPixel( coord + randVecOffset( ringStep, 0.0, ringStep ) );\n\
+				r1 += readPixel( coord + randVecOffset( 0.0, ringStep, ringStep ) );\n\
+				r1 += readPixel( coord + randVecOffset( -ringStep, 0.0, ringStep ) );\n\
+			}\n\
+			return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 4.0 * ( c1 + c2 ) + 6.0 * ( c3 + c4 ) );\n\
+		}\n\
+		vec4 outlineSample( vec2 coord ){\n\
+			vec4 result = readPixel( coord ); \n\
+			float numRings = fxRadiusFalloff.x >= 2.0 ? 2.0 : 1.0;\n\
+			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			float c1 = 0, c2 = 0; \n\
+			float ringStep = fxRadiusFalloff.x / numRings; \n\
+			float ringRadius; \n\
+			if ( numRings >= 2.0 ) { \n\
+				ringRadius = fxRadiusFalloff.x * 0.7; \n\
+				c2 = 1.0;\n\
+				r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 1.0 ) { \n\
+				c1 = 1.0; \n\
+				r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
+				r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
+				r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
+				r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
+			}\n\
+			return (result + r1 * c1 + r2 * c2 ) / ( 1.0 + 4.0 * ( c1 + c2 ) );\n\
+		}";
+		features +=
+		"if ( fx == 4 ) { // blur \n\
+			src = areaSample( coord * texSize );\n\
+		} else if ( fx == 1 && fxRadiusFalloff.x > 0.0 ) { //outline \n\
+			vec4 smp = outlineSample( coord * texSize );\n\
+			src.rgb = mix( fxColor.rgb, src.rgb, src.a );\n\
+			src.a = step( 0.0001, max( smp.a, src.a ) );\n\
+		}";
+	}
+	
+	// add discarding when alpha = 0
+	if ( featuresMask & SHADER_TEXTURE ) {
+		features +=
+		"if ( src.a == 0.0 ) discard; // for z-fighting sprites \n";
+	}
+	
+	// put it together
+	if ( glsles ) {
+		sprintf( fragShader,
+		"#version %d\n\
+		precision mediump int;\nprecision mediump float;\n\
+		varying mediump vec4 color;\n\
+		varying vec2 texCoord;\n\
+		uniform vec4 addColor;\n\
+		%s\n\
+		%s\n\
+		void main(void){\n\
+			vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			vec2 coord = texCoord;\n\
+			%s\n\
+			gl_FragColor = src;\n\
+		}", renderer->min_shader_version, params.c_str(), funcs.c_str(), features.c_str() );
+	} else {
+		sprintf( fragShader,
+		"#version %d\n\
+		in vec4 color;\n\
+		in vec2 texCoord;\n\
+		in vec4 gl_FragCoord;\n\
+		uniform vec4 addColor;\n\
+		out vec4 fragColor;\n\
+		%s\n\
+		%s\n\
+		void main(void){\n\
+			vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			vec2 coord = texCoord;\n\
+			%s\n\
+			fragColor = src;\n\
+		}", renderer->min_shader_version, params.c_str(), funcs.c_str(), features.c_str() );
 
 	}
-	
-	/// pixel shaders
-	char fragShader[ 16384 ];
-	for ( Uint8 i = 0; i < 32; i++ ){
 		
-		// skip ones with tile, or slice but without tex
-		if ( ( i & SHADER_TILE || i & SHADER_SLICE ) && !( i & SHADER_TEXTURE ) ) continue;
-		
-		if ( glsles ) {
-			sprintf( fragShader,
-			"#version %d\n\
-			precision mediump int;\nprecision mediump float;\n\
-			varying mediump vec4 color;\n\
-			varying vec2 texCoord;\n\
-			uniform vec4 addColor;\n\
-			%s\n\
-			%s\n\
-			void main(void){\n\
-				vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-				vec2 coord = texCoord;\n\
-				%s\n\
-				%s\n\
-				gl_FragColor = src;\n\
-			}", renderer->min_shader_version, params[ i ].c_str(), funcs[ i ].c_str(), features[ i ].c_str(), post[ i ].c_str() );
-		} else {
-			sprintf( fragShader,
-			"#version %d\n\
-			in vec4 color;\n\
-			in vec2 texCoord;\n\
-			in vec4 gl_FragCoord;\n\
-			uniform vec4 addColor;\n\
-			out vec4 fragColor;\n\
-			%s\n\
-			%s\n\
-			void main(void){\n\
-				vec4 src = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-				vec2 coord = texCoord;\n\
-				%s\n\
-				%s\n\
-				fragColor = src;\n\
-			}", renderer->min_shader_version, params[ i ].c_str(), funcs[ i ].c_str(), features[ i ].c_str(), post[ i ].c_str() );
-	
-		}
-		
-		// compile variant
-		if ( CompileShader( shaders[ i ].shader, shaders[ i ].shaderBlock, vertShader, fragShader ) ) {
-			shaders[ i ].addColorUniform = GPU_GetUniformLocation( shaders[ i ].shader, "addColor" );
-			shaders[ i ].tileUniform = GPU_GetUniformLocation( shaders[ i ].shader, "tile" );
-			shaders[ i ].texInfoUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texInfo" );
-			shaders[ i ].texSizeUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texSize" );
-			shaders[ i ].texPadUniform = GPU_GetUniformLocation( shaders[ i ].shader, "texPad" );
-			shaders[ i ].sliceUniform = GPU_GetUniformLocation( shaders[ i ].shader, "slice" );
-			shaders[ i ].sliceScaleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "sliceScale" );
-			shaders[ i ].stippleUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stipple" );
-			shaders[ i ].stippleAlphaUniform = GPU_GetUniformLocation( shaders[ i ].shader, "stippleAlpha" );
-			shaders[ i ].backgroundUniform = GPU_GetUniformLocation( shaders[ i ].shader, "background" );
-			shaders[ i ].backgroundSizeUniform = GPU_GetUniformLocation( shaders[ i ].shader, "backgroundSize" );
-			shaders[ i ].blendUniform = GPU_GetUniformLocation( shaders[ i ].shader, "blendMode" );
-		} else {
-			printf ( "Shader error: %s\nin shaders[%d]:\n%s\n%s\n", GPU_GetShaderMessage(), i, fragShader, vertShader );
-			memset( &shaders[ i ], 0, sizeof( SpriteShaderVariant ) );
-			exit(1);
-		}
+	// compile variant
+	ShaderVariant& variant = shaders[ featuresMask ];
+	if ( CompileShader( variant.shader, variant.shaderBlock, vertShader, fragShader ) ) {
+		variant.addColorUniform = GPU_GetUniformLocation( variant.shader, "addColor" );
+		variant.tileUniform = GPU_GetUniformLocation( variant.shader, "tile" );
+		variant.texInfoUniform = GPU_GetUniformLocation( variant.shader, "texInfo" );
+		variant.texSizeUniform = GPU_GetUniformLocation( variant.shader, "texSize" );
+		variant.texPadUniform = GPU_GetUniformLocation( variant.shader, "texPad" );
+		variant.sliceUniform = GPU_GetUniformLocation( variant.shader, "slice" );
+		variant.sliceScaleUniform = GPU_GetUniformLocation( variant.shader, "sliceScale" );
+		variant.stippleUniform = GPU_GetUniformLocation( variant.shader, "stipple" );
+		variant.stippleAlphaUniform = GPU_GetUniformLocation( variant.shader, "stippleAlpha" );
+		variant.backgroundUniform = GPU_GetUniformLocation( variant.shader, "background" );
+		variant.backgroundSizeUniform = GPU_GetUniformLocation( variant.shader, "backgroundSize" );
+		variant.blendUniform = GPU_GetUniformLocation( variant.shader, "blendMode" );
+		variant.fxUniform = GPU_GetUniformLocation( variant.shader, "fx" );
+		variant.fxColorUniform = GPU_GetUniformLocation( variant.shader, "fxColor" );
+		variant.fxOffsetUniform = GPU_GetUniformLocation( variant.shader, "fxOffset" );
+		variant.fxRadiusFalloffUniform = GPU_GetUniformLocation( variant.shader, "fxRadiusFalloff" );
+	} else {
+		printf ( "Shader error: %s\nin shaders[%zu]:\n%s\n%s\n", GPU_GetShaderMessage(), featuresMask, fragShader, vertShader );
+		exit(1);
 	}
 	
+	return variant;
+	
 }
+
+/*
+ funcs +=
+ "vec4 areaSample( vec2 coord ){\n\
+ vec4 result = readPixel( coord ); \n\
+ vec4 accum; \n\
+ float numRings = ceil( min( fxRadiusFalloff.x, 4.0 ) ); // num of rings to sample up to 4 \n\
+ vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+ r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+ r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+ r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+ float c1 = 0, c2 = 0, c3 = 0, c4 = 0; \n\
+ float ringStep = fxRadiusFalloff.x / numRings; \n\
+ float ringRadius; \n\
+ if ( numRings >= 4.0 ) { \n\
+ ringRadius = ringStep * 4.0; \n\
+ c4 = ( 1.0 - fxRadiusFalloff.y * 0.8 ); \n\
+ r4 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
+ r4 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
+ r4 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
+ r4 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
+ r4 += readPixel( coord + vec2( 0.0, -ringStep ) );\n\
+ r4 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
+ r4 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
+ r4 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
+ }\n\
+ if ( numRings >= 3.0 ) { \n\
+ ringRadius = ringStep * 3.0; \n\
+ c3 = ( 1.0 - fxRadiusFalloff.y * 0.6 ); \n\
+ r3 = readPixel( coord + vec2( 0.0, -ringRadius ) );\n\
+ r3 += readPixel( coord + vec2( ringRadius, 0.0 ) );\n\
+ r3 += readPixel( coord + vec2( 0.0, ringRadius ) );\n\
+ r3 += readPixel( coord + vec2( -ringRadius, 0.0 ) );\n\
+ r3 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
+ r3 += readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
+ }\n\
+ if ( numRings >= 2.0 ) { \n\
+ ringRadius = ringStep * 2.0; \n\
+ c2 = ( 1.0 - fxRadiusFalloff.y * 0.4 ); \n\
+ r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
+ r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
+ r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
+ r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
+ r2 += readPixel( coord + vec2( 0.0, ringRadius ) );\n\
+ r2 += readPixel( coord + vec2( ringRadius, 0.0 ) );\n\
+ }\n\
+ if ( numRings >= 1.0 ) { \n\
+ c1 = ( 1.0 - fxRadiusFalloff.y * 0.2 ); \n\
+ r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
+ r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
+ r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
+ r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
+ }\n\
+ return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 4.0 * c1 + 6.0 * c2 + 6.0 * c3 + 8.0 * c4 );\n\
+ }";
+*/
+
 
 /// helper method
 bool RenderBehavior::CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader ){

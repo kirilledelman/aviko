@@ -197,7 +197,14 @@ string ImageResource::ResolveKey( const char* ckey, string& fullpath, string& ex
 	}
 	
 	fullpath = ResolvePath( okey.c_str(), "json,png,jpg,jpeg", extension, app.texturesDirectory.c_str() );
-	return fullpath.substr( app.currentDirectory.length() ) + frame;
+	// strip .json extension
+	if ( extension.compare( "json" ) == 0 ) {
+		size_t cdl = app.currentDirectory.length();
+		return fullpath.substr( cdl, fullpath.length() - ( cdl + extension.length() + 1 ) ) + frame;
+	} else {
+		// return resolved key
+		return fullpath.substr( app.currentDirectory.length() ) + frame;
+	}
 	
 }
 

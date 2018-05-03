@@ -79,11 +79,13 @@ include( './ui' );
 				if ( integer ) v = Math.round( v );
 				v = Math.min( maxValue, Math.max( minValue, v ) );
 				if ( !integer ) {
+					// rounding
+					v = Math.round( parseFloat( v.toFixed( 3 ) ) * 10000 ) * 0.0001;
 					v = v.toFixed( 3 ).replace( /(0+)$/, '' ).replace( /\.$/, '' ); // delete trailing zeros, and .
-
 				}
 			}
-			go.text = v;
+			rt.text = v;
+			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
 		} ],
 
 		// (Number) current width of the control
@@ -162,7 +164,10 @@ include( './ui' );
 		// (Boolean) only accepts numbers
 		[ 'numeric',  function (){ return numeric; }, function ( n ){
 			numeric = n;
-			if ( n ) rt.multiLine = false;
+			if ( n ) {
+				rt.multiLine = false;
+				go.value = go.text; // update value
+			}
 		} ],
 
 		// (Number) minimum value for numeric input

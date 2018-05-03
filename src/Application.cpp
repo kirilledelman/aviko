@@ -188,7 +188,6 @@ void Application::UpdateBackscreen() {
 		GPU_FreeImage( this->blendTarget->image );
 		GPU_FreeTarget( this->blendTarget );
 		this->blendTarget = NULL;
-		printf( "UpdateBackscreen reset blendTarg\n");
 	}
 	
 	// create backscreen
@@ -237,25 +236,6 @@ void Application::InitClass() {
 	
 	// register class
 	script.RegisterClass<Application>( "ScriptableObject", true );
-	
-	// constants
-	
-	void* constants = script.NewObject();
-	script.AddGlobalNamedObject( "BlendMode", constants );
-	script.SetProperty( "Normal", ArgValue( RenderBehavior::BlendMode::Normal ), constants );
-	script.SetProperty( "Add", ArgValue( RenderBehavior::BlendMode::Add ), constants );
-	script.SetProperty( "Subtract", ArgValue( RenderBehavior::BlendMode::Subtract ), constants );
-	script.SetProperty( "Multiply", ArgValue( RenderBehavior::BlendMode::Multiply ), constants );
-	script.SetProperty( "Screen", ArgValue( RenderBehavior::BlendMode::Screen ), constants );
-	script.SetProperty( "Burn", ArgValue( RenderBehavior::BlendMode::Burn ), constants );
-	script.SetProperty( "Dodge", ArgValue( RenderBehavior::BlendMode::Dodge ), constants );
-	script.SetProperty( "Invert", ArgValue( RenderBehavior::BlendMode::Invert ), constants );
-	script.SetProperty( "Hue", ArgValue( RenderBehavior::BlendMode::Hue ), constants );
-	script.SetProperty( "Luminosity", ArgValue( RenderBehavior::BlendMode::Luminosity ), constants );
-	script.SetProperty( "Saturation", ArgValue( RenderBehavior::BlendMode::Saturation ), constants );
-	script.SetProperty( "Refract", ArgValue( RenderBehavior::BlendMode::Refract ), constants );
-	script.SetProperty( "Cut", ArgValue( RenderBehavior::BlendMode::Cut ), constants );
-	script.FreezeObject( constants );
 	
 	// properties
 	script.AddProperty<Application>
@@ -695,7 +675,7 @@ void Application::InitClass() {
 			sa.ReturnValue( ret );
 			return true;
 		} else {
-			printf( "returning false\n");
+			// printf( "returning false\n");
 			return false;
 		}
 	}) );
@@ -869,7 +849,6 @@ void Application::InitClass() {
 	RigidBodyJoint::InitClass();
 	Behavior::InitClass();
 	RenderBehavior::InitClass();
-	RenderBehavior::InitShaders();
 	RenderShapeBehavior::InitClass();
 	RenderSpriteBehavior::InitClass();
 	RenderTextBehavior::InitClass();

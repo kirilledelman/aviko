@@ -11,6 +11,8 @@
 #define SHADER_SLICE	0x4
 #define SHADER_TILE		0x8
 #define SHADER_STIPPLE	0x10
+#define SHADER_FX		0x20
+#define SHADER_MAXVAL	0x40
 
 /// rendering behaviors should inherit from this class and override getBounds method
 class RenderBehavior : public Behavior {
@@ -44,6 +46,9 @@ public:
 	// texture padding
 	int texturePad = 0;
 	
+	/// called after effect type of params change to reserve appropriate padding
+	void UpdateTexturePad();
+	
 	// stipple transparency
 	float stipple = 0;
 	
@@ -60,14 +65,39 @@ public:
 		Burn = 5,
 		Dodge = 6,
 		Invert = 7,
-		Hue = 8,
-		Saturation = 9,
-		Luminosity = 10,
-		Refract = 11,
-		Cut = 12
+		Colorize = 8,
+		Hue = 9,
+		Saturation = 10,
+		Luminosity = 11,
+		Refract = 12,
+		Cut = 13
 	};
 	
 	BlendMode blendMode = BlendMode::Normal;
+	
+	/// FX
+	enum FX {
+		None = 0,
+		Outline = 1,
+		Outer = 2,
+		Inner = 3,
+		Blur = 4,
+	};
+	
+	FX effect = FX::None;
+	Color *effectColor = NULL;
+	float effectOffsetX = 0, effectOffsetY = 0, effectOffsetZ = 0;
+	float effectRadius = 0, effectFalloff = 0;
+	
+// scripting
+	
+	/// registers class for scripting
+	static void InitClass();
+	
+	/// creates color objects
+	void AddDefaults();
+	
+// shaders
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)
 	typedef struct {
@@ -85,44 +115,37 @@ public:
 		int backgroundUniform;
 		int backgroundSizeUniform;
 		int blendUniform;
-	} SpriteShaderVariant;
-	
-	
-// scripting
-	
-	/// registers class for scripting
-	static void InitClass();
-	
-	/// creates color objects
-	void AddDefaults();
-	
-// shaders
-	
-	///
-	static SpriteShaderVariant shaders[ 32 ];
+		int fxUniform;
+		int fxColorUniform;
+		int fxOffsetUniform;
+		int fxRadiusFalloffUniform;
+	} ShaderVariant;
 
+	/// shader permutations
+	static ShaderVariant shaders[ SHADER_MAXVAL ];
+
+	/// draws target to blendTarget
+	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
+	
 	/// applies current shader + params
-	int SelectTexturedShader(
+	size_t SelectTexturedShader(
 					 float tw = 0, float th = 0,
 					 float u = 0, float v = 0, float w = 0, float h = 0,
 					 float st = 0, float sr = 0, float sb = 0, float sl = 0,
 					 float sw = 0, float sh = 0,
 					 float tx = 1, float ty = 1,
-					 GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
-	
-	/// draws target to blendTarget
-	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
+					 GPU_Image *image = NULL, GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// selects untextured shader
-	int SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
+	size_t SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// resets shader to default
 	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }
 	
-	/// creates common shaders
-	static void InitShaders();
-	
-	/// helper method
+	/// compiles shader for feature mask
+	static ShaderVariant& CompileShaderWithFeatures( size_t featuresMask );
+
+	/// helper method for shader compilation
 	static bool CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader );
 	
 };

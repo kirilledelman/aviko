@@ -91,6 +91,10 @@ public:
 	float layoutWidth = 0;
 	float layoutHeight = 0;
 	
+	// offset from layout position
+	float layoutOffsetX = 0;
+	float layoutOffsetY = 0;
+	
 	// stretch this element to fill empty space in vertical and horizontal layouts, where fitChildren = false
 	float flex = 0;
 	
