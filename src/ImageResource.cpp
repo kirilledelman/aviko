@@ -6,11 +6,28 @@
 
 ImageResource::ImageResource( const char* originalKey, string& path, string& ext ) {
 	
+	// string key
+	string okey = originalKey;
+	
 	// clear frame struct
 	memset( &this->frame, 0, sizeof( ImageFrame ) );
 	
+	// if it's a data url
+	if ( originalKey[ 0 ] == '#' ) {
+		// convert from base64 using Image class
+		Image* img = new Image();
+		img->FromDataURL( okey );
+		if ( img->image ) {
+			this->frame.actualWidth = this->frame.locationOnTexture.w = img->image->base_w;
+			this->frame.actualHeight = this->frame.locationOnTexture.h = img->image->base_h;
+			this->image = img->image;
+			img->image = NULL;
+		}
+		delete img;
+		return;
+	}
+	
 	// if it's a frame
-	string okey = originalKey;
 	string::size_type colPos = okey.find_last_of( ':' );
 	if ( colPos != string::npos ) {
 		// separate name and frame
@@ -161,6 +178,7 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 	SDL_Surface* surface = IMG_Load( path.c_str() );
 	if ( surface == NULL ) {
 		printf( "%s - Texture %s was not found\n", GetScriptNameAndLine().c_str(), path.c_str() );
+		this->mainResource = NULL;
 		this->error = ERROR_NOT_FOUND;
 		return;
 	}

@@ -28,8 +28,11 @@ Image::Image( ScriptArguments* args ) {
 			}
 		// string
 		} else if ( args->ReadArguments( 1, TypeString, &url ) ){
-			// try
-			this->FromDataURL( url );
+			// try from data
+			if ( !this->FromDataURL( url ) ) {
+				// otherwise try from texture
+				this->FromTexture( url );
+			}
 		}
 		
 	}
@@ -308,7 +311,7 @@ void Image::InitClass() {
 }
 
 
-/* MARK:	-				Saving
+/* MARK:	-				Saving / Loading
  -------------------------------------------------------------------- */
 
 size_t _ImageRWOpsWrite(SDL_RWops *context, const void *ptr, size_t size, size_t num) {
@@ -349,9 +352,9 @@ bool Image::ToDataURL( ArgValue &val ) {
 	
 	// encode
 	val.type = TypeString;
-	val.value.stringValue = new string();
+	val.value.stringValue = new string( "#" );
 	string *src = ( ( string* ) rwops->hidden.unknown.data1 );
-	*val.value.stringValue = base64_encode( (unsigned char const*) src->data(), (int) src->size() );
+	*val.value.stringValue += base64_encode( (unsigned char const*) src->data(), (int) src->size() );
 	
 	// done
 	SDL_RWclose( rwops );
@@ -361,8 +364,10 @@ bool Image::ToDataURL( ArgValue &val ) {
 /// inits image from base64 encoded png
 bool Image::FromDataURL( string &s ) {
 	
+	if ( s.length() < 1 || s.substr( 0, 1 ).compare( "#" ) != 0 ) return false;
+	
 	// decode
-	string decoded = base64_decode( s );
+	string decoded = base64_decode( s.substr( 1 ) );
 	SDL_RWops* rwops = SDL_RWFromMem( (void*) decoded.data(), (int) decoded.size() );
 	GPU_Image* img = GPU_LoadImage_RW( rwops, true );
 	if ( !img ) return false;
@@ -379,6 +384,54 @@ bool Image::FromDataURL( string &s ) {
 	
 }
 
+bool Image::FromTexture( string &s ) {
+	// load texture
+	ImageResource* res = app.textureManager.Get( s.c_str() );
+	if ( res && res->error == ResourceError::ERROR_NONE ) {
+		
+		// push view matrices
+		GPU_MatrixMode( GPU_PROJECTION );
+		GPU_PushMatrix();
+		GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+		GPU_MatrixMode( GPU_MODELVIEW );
+		GPU_PushMatrix();
+		GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+		
+		// make image
+		GPU_Image* src = res->mainResource ? res->mainResource->image : res->image;
+		GPU_Image* img = GPU_CreateImage( res->frame.actualWidth, res->frame.actualHeight, app.backScreen->format );
+		if ( !img ) return false;
+		img->anchor_x = img->anchor_y = 0;
+		GPU_UnsetImageVirtualResolution( img );
+		GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
+		GPU_SetSnapMode( img, GPU_SNAP_NONE );
+		GPU_LoadTarget( img );
+		
+		// draw to it
+		if ( res->frame.rotated ) {
+			GPU_BlitRotate( src, &res->frame.locationOnTexture, img->target, res->frame.trimOffsetX, res->frame.trimOffsetY + res->frame.locationOnTexture.w, -90 );
+		} else {
+			GPU_Blit( src, &res->frame.locationOnTexture, img->target, res->frame.trimOffsetX, res->frame.trimOffsetY );
+		}
+		
+		// clear previous
+		if ( this->image ) {
+			GPU_FreeTarget( this->image->target );
+			GPU_FreeImage( this->image );
+		}
+		// assign
+		this->image = img;
+		this->width = img->base_w;
+		this->height = img->base_h;
+		
+		// pop
+		GPU_MatrixMode( GPU_PROJECTION );
+		GPU_PopMatrix();
+		GPU_MatrixMode( GPU_MODELVIEW );
+		GPU_PopMatrix();
+		return true;
+	} else return false;
+}
 
 void Image::Save( const char *filename ) {
 

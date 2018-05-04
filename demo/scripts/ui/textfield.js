@@ -219,6 +219,19 @@ include( './ui' );
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
 		} ],
 
+		// (Number) outline thickness when background is solid color
+		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
+			shp.lineThickness = b;
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
+		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
+			shp.outlineColor = (c === false ? '00000000' : c );
+		} ],
+
+		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
+		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
 		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
 
@@ -673,7 +686,6 @@ include( './ui' );
 				txt = rt.text.substr( 0, caretIndex ) + key + rt.text.substr( caretIndex );
 				caretPosition += key.positionLength();
 			}
-		    if ( pattern ) log ( txt, pattern, '=', txt.match( pattern ) );
 			if ( pattern && !txt.match( pattern ) ) return;
 			rt.text = txt;
 	    }

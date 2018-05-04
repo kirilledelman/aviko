@@ -41,14 +41,14 @@ include( './ui' );
 
 		// (String) text on button
 		[ 'text',  function (){ return label.text; }, function ( v ){
-			go.label.text = v;
-			go.label.active = !!v;
+			label.text = v;
+			label.active = !!v;
 		} ],
 
 		// (String) or null - texture on icon
 		[ 'icon',  function (){ return image.texture; }, function ( v ){
-			go.image.texture = v;
-			go.image.active = !!v;
+			image.texture = v;
+			image.active = !!v;
 		} ],
 
 		// (GameObject) instance of 'ui/text.js' used as label
@@ -94,6 +94,19 @@ include( './ui' );
 			shp.radius = b;
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
 		} ],
+
+		// (Number) outline thickness when background is solid color
+		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
+			shp.lineThickness = b;
+		} ],
+
+		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
+		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
+			shp.outlineColor = (c === false ? '00000000' : c );
+		} ],
+
+		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
+		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
 		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],

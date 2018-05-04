@@ -42,11 +42,14 @@ include( './ui' );
 		// (String) texture path
 		[ 'texture', function (){ return rs.texture; }, function ( v ){ rs.texture = v; go.updateParams(); } ],
 
-		// (Render) image render component
-		[ 'imageRender',  function (){ return rs; } ],
+		// (GameObject) object displaying the image
+		[ 'imageObject',  function (){ return sc; } ],
 
 		// (Image) instance of Image object (alternative to .texture property)
-		[ 'image',  function (){ return rs.image; }, function ( v ){ rs.image = v; go.updateParams(); } ],
+		[ 'image',  function (){ return rs.image; }, function ( v ){
+			rs.image = v;
+			go.updateParams();
+		} ],
 
 		// (String) 'icon', 'fit', 'fill', or 'stretch'
 		[ 'mode',  function (){ return mode; }, function ( v ){ mode = v; go.updateParams(); } ],

@@ -701,7 +701,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		} else if ( fx == 1 && fxRadiusFalloff.x > 0.0 ) { //outline \n\
 			vec4 smp = outlineSample( coord * texSize );\n\
 			src.rgb = mix( fxColor.rgb, src.rgb, src.a );\n\
-			src.a = step( 0.0001, max( smp.a, src.a ) );\n\
+			src.a = color.a * step( 0.0001, max( smp.a, src.a ) );\n\
 		}";
 	}
 	

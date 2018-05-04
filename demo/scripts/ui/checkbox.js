@@ -62,7 +62,7 @@ include( './ui' );
 		// (GameObject) instance of 'ui/text.js' used as label
 		[ 'label',  function (){ return label; } ],
 
-		// (GameObject) used as checkbox body
+		// (GameObject) instance of 'ui/button.js' used as checkbox body
 		[ 'checkbox',  function (){ return checkbox; } ],
 
 		// (Boolean) input disabled

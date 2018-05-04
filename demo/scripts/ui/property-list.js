@@ -12,6 +12,7 @@
 
 	Events:
 		'change' - a property has changed - callback( targetObject, propertyName, newValue, oldValue )
+		TODO - add "final" param to 'change' event to facilitate undo system
 
 */
 
@@ -59,10 +60,10 @@ include( './ui' );
 		//          integer: (Boolean) if numeric - only allows integers
 		//          multiLine: (Boolean) if string - allow multi-line text input
 		//          readOnly: (Boolean) force read only for this field
-		//          enum: [ { icon:"icon1", text:"text1", value:value1 }, { text:text2, value:value2 }, ... ] - shows dropdown
-		//          description: "text displayed for property instead of property name",
+		//          enum: [ { icon:"icon1", text:"text1", value:value1 }, { text:text2, value:value2 }, ... ] - shows select dropdown menu
+		//          label: (String) "text displayed for property instead of property name", or (Function) to transform propname to text
 		//          style: (Object) - apply properties in this object to resulting input field
-		//
+		//          hidden: (Function) - return true to conditionally hide this field. Function's only param is target
 		[ 'properties',  function (){ return properties; }, function ( v ){
 			properties = v;
 			go.debounce( 'refresh', go.refresh );
@@ -332,8 +333,11 @@ include( './ui' );
 				var pdef = properties[ pname ] || {};
 
 				// add label
+				var labelText = pname;
+				if ( typeof( pdef.label ) === 'function' ) labelText = pdef.label( pname );
+				else if ( typeof ( pdef.label ) === 'string' ) labelText = pdef.label;
 				var label = cont.addChild( './text', {
-					text: ( pdef.description ? pdef.description : pname ),
+					text: labelText,
 					flex: 1,
 					wrap: true,
 					style: go.baseStyle.label
@@ -343,6 +347,7 @@ include( './ui' );
 				var curTarget = ( pdef.target || target );
 				var fieldValue = curTarget[ pname ];
 				var fieldType = typeof( fieldValue );
+				var button = null;
 
 				// check for enumeration
 				if ( pdef.enum !== undefined ) fieldType = 'enum';
@@ -384,7 +389,7 @@ include( './ui' );
 					// dropdown:
 
 					case 'enum':
-						field = cont.addChild( './dropdown', {
+						field = cont.addChild( './select', {
 							name: pname,
 							target: curTarget,
 							change: go.fieldChanged,
@@ -416,27 +421,33 @@ include( './ui' );
 					case 'object':
 
 						// button to show inspector
-						function togglePropList() { this.image.flipY = this.propList.active = !this.propList.active; }
-						var button = cont.addChild( './button', {
+						function togglePropList() {
+							this.toggleState = this.propList.active = !this.propList.active;
+							this.image.imageObject.angle = (this.propList.active ? 0 : -90);
+						}
+						button = cont.addChild( './button', {
 							text: String( fieldValue.constructor ? fieldValue.constructor.name : fieldValue ) + '...',
-							pdef: pdef,
 							fieldValue: fieldValue,
 							wrapEnabled: false,
 							minWidth: valueWidth,
 							disabled: (disabled || ( pdef && pdef.disabled )),
 							click: togglePropList,
-							style: go.baseStyle.values.any
+							target: curTarget,
+							style: go.baseStyle.values.any,
+							toggleState: !!pdef.expanded
 						} );
 						button.style = go.baseStyle.values.object;
 
 						// embedded inspector
 						field = cont.addChild( './property-list', {
 							flex: 1,
+							pdef: pdef,
 							showAll: true,
 							scrollable: false,
 							forceWrap: true,
 							active: !!pdef.expanded,
 							style: go.baseStyle.values.any,
+							fieldButton: button,
 						} );
 						field.style = go.baseStyle.values.inline;
 						field.valueWidth = valueWidth - field.marginLeft; // indent
@@ -444,6 +455,7 @@ include( './ui' );
 						if ( pdef.properties !== undefined ) field.properties = pdef.properties;
 						if ( pdef.groups !== undefined ) field.groups = pdef.groups;
 						field.target = fieldValue;
+						button.image.imageObject.angle = (field.active ? 0 : -90);
 
 						// button
 						button.propList = field;
@@ -466,9 +478,20 @@ include( './ui' );
 				// common properties
 				if ( field ) {
 					field.pdef = pdef;
+					field.fieldLabel = label;
 					if ( disabled || ( pdef && pdef.disabled ) ) field.disabled = true;
-					if ( pdef.style ) {
+					if ( typeof( pdef.style ) === 'object' ) {
 						UI.base.applyProperties( field, pdef.style );
+					}
+					if ( typeof( pdef.hidden ) === 'function' ) {
+						var shown = !pdef.hidden( curTarget );
+						field.fieldLabel.active = shown;
+						if ( field.fieldButton ) {
+							field.fieldButton.active = shown;
+							field.active = (shown && field.fieldButton.toggleState );
+						} else {
+							field.active = shown;
+						}
 					}
 					allFields.push( field );
 				}
@@ -522,7 +545,21 @@ include( './ui' );
 		// update fields
 		for ( var i in allFields ) {
 			var field = allFields[ i ];
-			if ( field.focused ) continue;
+			var pdef = field.pdef;
+			// have def
+			if ( pdef !== undefined ) {
+				// have conditional hiding - apply
+				if ( typeof( pdef.hidden ) === 'function' ) {
+					if ( typeof( field.fieldButton ) !== 'undefined' ){
+						field.fieldLabel.active = field.fieldButton.active = !pdef.hidden( field.fieldButton.target );
+						field.active = (field.fieldButton.active && field.fieldButton.toggleState );
+					} else {
+						field.fieldLabel.active = field.active = !pdef.hidden( field.target );
+					}
+				}
+			}
+			// skip focused and hidden fields
+			if ( field.focused || !field.active ) continue;
 			var val = field.target[ field.name ];
 			var tp = typeof( val ) ;
 			if ( tp == 'object' && field.reload ) {

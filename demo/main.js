@@ -66,6 +66,7 @@ Color.Text = 0x333333;
 // show main menu
 App.scene = include( 'main-menu' );
 
+
 /*var s = new GameObject( {
 	render: new RenderSprite( {
 		texture: 'test:test',

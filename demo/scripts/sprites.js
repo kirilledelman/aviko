@@ -34,6 +34,7 @@ new (function (){
 	var description = scene.addChild( 'ui/textfield', {
 		size: 14,
 		disabled: true,
+		bold: false,
 		states:{
 			off: { background: false, },
 			scroll: { background: 0xF0F0F0 },
@@ -154,7 +155,7 @@ new (function (){
 						{ text: "poop.png", value: "/textures/poop.png" },
 						{ text: "normal", value: "/textures/test:test1" },
 						{ text: "rotated", value: "/textures/test:test" },
-					] },
+					]},
 					'originalWidth': { disabled: true },
 					'originalHeight': { disabled: true },
 					'width': { min: 0, max: Infinity, step: 1 },
@@ -220,12 +221,11 @@ new (function (){
 						{ text: "Inner", value: Effect.Inner },
 						{ text: "Blur", value: Effect.Blur },
 					] },
-					'effectColor': {},
-					'effectOffsetX': { step: 1 },
-					'effectOffsetY': { step: 1 },
-					'effectOffsetZ': { step: 1 },
-					'effectRadius': { min: 0, max: 16, step: 0.1 },
-					'effectFalloff': { min: 0, max: 1, step: 0.1 },
+					'effectColor': { hidden: function( t ){ return (t.effectType == Effect.None || t.effectType == Effect.Blur ); } },
+					'effectOffsetX': { step: 1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
+					'effectOffsetY': { step: 1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
+					'effectRadius': { min: 0, max: 16, step: 0.1, hidden: function( t ){ return t.effectType == Effect.None; }  },
+					'effectFalloff': { min: 0, max: 1, step: 0.1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
 				};
 				props.groups = [
 					{ name: "Blending", properties: [ 'blendMode', 'effectType', 'effectColor', 'effectOffsetX', 'effectOffsetY', 'effectOffsetZ', 'effectRadius', 'effectFalloff' ] },

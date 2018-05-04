@@ -45,6 +45,9 @@ public:
 	/// inits image from base64 encoded png
 	bool FromDataURL( string &s );
 	
+	/// creates image from texture
+	bool FromTexture( string &s );
+	
 	/// returns updated image
 	GPU_Image* GetImage();
 	

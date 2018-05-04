@@ -7,7 +7,7 @@
 
 	Usage:
 
-		App.scene.addChild( 'ui/dropdown', {
+		App.scene.addChild( 'ui/select', {
 		items: [
 			{ value: "First", text: "Item 1", icon: "optional_icon" },
 			{ value: "Second", text: "Item 2", icon: "optional_icon_2" },
@@ -136,7 +136,7 @@ include( './ui' );
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Dropdown";
+	if ( !go.name ) go.name = "Select";
 
 	// main button
 	button = new GameObject( './button', {
@@ -144,12 +144,13 @@ include( './ui' );
 		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Center,
 		wrapEnabled: false,
+		flex: 1
 	} );
 	go.addChild( button );
 
 	// add dropdown arrow
 	arrowImage = new GameObject( './image', {
-		selfAlign: LayoutAlign.Stretch,
+		selfAlign: LayoutAlign.Center,
 		mode: 'icon',
 	} );
 	button.label.flex = 1;
@@ -161,7 +162,7 @@ include( './ui' );
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Vertical;
 	ui.layoutAlignX = LayoutAlign.Stretch;
-	ui.layoutAlignY = LayoutAlign.Start;
+	ui.layoutAlignY = LayoutAlign.Stretch;
 	ui.focusable = false;
 	go.ui = ui;
 
@@ -316,7 +317,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.dropdown );
+	go.baseStyle = Object.create( UI.style.select );
 	UI.base.applyProperties( go, go.baseStyle );
 	button.state = 'auto';
 	constructing = false;

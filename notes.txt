@@ -1,3 +1,6 @@
+effectColor - editing hex, leaving page, coming back changes order of fields
+
+
 
 GameObject
 updating z, or inserting/removing children should set _zOrderDirty on parent

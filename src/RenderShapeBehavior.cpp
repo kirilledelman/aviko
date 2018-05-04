@@ -20,6 +20,11 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	// add defaults
 	RenderBehavior::AddDefaults();	
 	
+	// outline color
+	Color* color = new Color( NULL );
+	color->SetInts( 0, 0, 0, 0 );
+	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
+	
 	// read params
 	int pShape = 0;
 	vector<ArgValue>* pArray = NULL;
@@ -202,6 +207,21 @@ void RenderShapeBehavior::InitClass() {
 		rb->filled = val;
 		rb->_renderPointsDirty = ( val && rb->shapeType == Polygon );
 		return val;
+	}) );
+	
+	script.AddProperty<RenderShapeBehavior>
+	( "outlineColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderShapeBehavior*) b)->outlineColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderShapeBehavior* rs = (RenderShapeBehavior*) b;
+		if ( val.type == TypeObject ) {
+			// replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->outlineColor = other;
+		} else {
+			rs->outlineColor->Set( val );
+		}
+		return rs->outlineColor->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderShapeBehavior>
@@ -556,8 +576,10 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	}
 	
 	SDL_Color color = behavior->color->rgba;
+	SDL_Color outlineColor = behavior->outlineColor->rgba;
 	color.a *= behavior->gameObject->combinedOpacity;
-	if ( color.a == 0.0 ) return;
+	outlineColor.a *= behavior->gameObject->combinedOpacity;
+	if ( color.a == 0 && ( outlineColor.a == 0 && behavior->lineThickness == 0.0 ) ) return;
 	
 	// set textureless shader
 	behavior->SelectUntexturedShader( target, (GPU_Target**) event->behaviorParam2 );
@@ -573,6 +595,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		case ShapeType::Arc:
 			if ( behavior->filled ) {
 				GPU_ArcFilled( target, behavior->x, behavior->y, behavior->radius, behavior->startAngle, behavior->endAngle, color );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_Arc( target, behavior->x, behavior->y, behavior->radius, behavior->startAngle, behavior->endAngle, outlineColor );
 			} else {
 				GPU_Arc( target, behavior->x, behavior->y, behavior->radius, behavior->startAngle, behavior->endAngle, color );
 			}
@@ -582,12 +606,16 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			if ( behavior->centered ) {
 				if ( behavior->filled ) {
 					GPU_CircleFilled( target, 0, 0, behavior->radius, color );
+					if ( outlineColor.a && behavior->lineThickness > 0.0 )
+						GPU_Circle( target, 0, 0, behavior->radius, outlineColor );
 				} else {
 					GPU_Circle( target, 0, 0, behavior->radius, color );
 				}
 			} else {
 				if ( behavior->filled ) {
 					GPU_CircleFilled( target, behavior->radius, behavior->radius, behavior->radius, color );
+					if ( outlineColor.a && behavior->lineThickness > 0.0 )
+						GPU_Circle( target, behavior->radius, behavior->radius, behavior->radius, outlineColor );
 				} else {
 					GPU_Circle( target, behavior->radius, behavior->radius, behavior->radius, color );
 				}
@@ -598,12 +626,16 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			if ( behavior->centered ) {
 				if ( behavior->filled ) {
 					GPU_EllipseFilled( target, 0, 0, behavior->x, behavior->y, 0, color );
+					if ( outlineColor.a && behavior->lineThickness > 0.0 )
+						GPU_Ellipse( target, 0, 0, behavior->x, behavior->y, 0, outlineColor );
 				} else {
 					GPU_Ellipse( target, 0, 0, behavior->x, behavior->y, 0, color );
 				}
 			} else {
 				if ( behavior->filled ) {
 					GPU_EllipseFilled( target, behavior->x, behavior->y, behavior->x, behavior->y, 0, color );
+					if ( outlineColor.a && behavior->lineThickness > 0.0 )
+						GPU_Ellipse( target, behavior->x, behavior->y, behavior->x, behavior->y, 0, outlineColor );
 				} else {
 					GPU_Ellipse( target, behavior->x, behavior->y, behavior->x, behavior->y, 0, color );
 				}
@@ -613,6 +645,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		case ShapeType::Sector:
 			if ( behavior->filled ) {
 				GPU_SectorFilled( target, behavior->x, behavior->y, behavior->innerRadius, behavior->radius, behavior->startAngle, behavior->endAngle, color );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_Sector( target, behavior->x, behavior->y, behavior->innerRadius, behavior->radius, behavior->startAngle, behavior->endAngle, outlineColor );
 			} else {
 				GPU_Sector( target, behavior->x, behavior->y, behavior->innerRadius, behavior->radius, behavior->startAngle, behavior->endAngle, color );
 			}
@@ -621,6 +655,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		case ShapeType::Triangle:
 			if ( behavior->filled ) {
 				GPU_TriFilled( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, color );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_Tri( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, outlineColor );
 			} else {
 				GPU_Tri( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, color );
 			}
@@ -634,6 +670,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			}
 			if ( behavior->filled ) {
 				GPU_RectangleFilled2( target, rect, color );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_Rectangle2( target, rect, outlineColor );
 			} else {
 				GPU_Rectangle2( target, rect, color );
 			}
@@ -647,6 +685,8 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 			}
 			if ( behavior->filled ) {
 				GPU_RectangleRoundFilled2( target, rect, behavior->radius, color );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_RectangleRound2( target, rect, behavior->radius, outlineColor );
 			} else {
 				GPU_RectangleRound2( target, rect, behavior->radius, color );
 			}
@@ -673,12 +713,12 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 				// unset color
 				target->color = { 255, 255, 255, 255 };
 				target->use_color = false;
+				if ( outlineColor.a && behavior->lineThickness > 0.0 )
+					GPU_Polyline( target, (int) points->size() / 2, points->data(), outlineColor, ( behavior->shapeType == Polygon ) );
 				
-				//points = behavior->polyPoints->ToFloatVector();
-				//GPU_PolygonFilled( target, (int) points->size() / 2, points->data(), color );
 			} else {
 				vector<float>* fv = behavior->polyPoints->ToFloatVector();
-				GPU_Polyline( target, (int) fv->size() / 2, fv->data(), behavior->color->rgba, ( behavior->shapeType == Polygon ) );
+				GPU_Polyline( target, (int) fv->size() / 2, fv->data(), color, ( behavior->shapeType == Polygon ) );
 			}
 			break;
 		

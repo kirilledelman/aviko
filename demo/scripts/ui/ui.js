@@ -45,26 +45,32 @@ UI.style = UI.style ? UI.style : {
 		boldFont: 'Roboto-Black',
 		italicFont: 'Roboto-Italic',
 		boldItalicFont: 'Roboto-BlackItalic',
-		size: 14,
+		bold: true,
+		size: 12,
 		color: 0x0,
-		selectionColor: 0x0073b9,
+		selectionColor: 0x0066a5,
 		selectionTextColor: 0xFFFFFF,
-		slice: 8,
-		pad: 8,
+		outlineColor: 0x0066a5,
+		pad: 4,
+		cornerRadius: 2,
 		acceptToEdit: true,
 		focusRect: true,
 		states:{
 			off: {
-				background: './textures/ui:text-off',
+				background: 0xf6f6f6,
+				lineThickness: 0,
 			},
 			scroll: {
-				background: './textures/ui:text-scroll'
+				background: 0xe5eff4,
+				lineThickness: 2,
 			},
 			focus: {
-				background: './textures/ui:text-focus',
+				background: 0xd9e2e7,
+				lineThickness: 2,
 			},
 			disabled: {
-				background: './textures/ui:text-disabled'
+				background: 0xcccccc,
+				lineThickness: 0,
 			},
 		}
 	},
@@ -80,15 +86,13 @@ UI.style = UI.style ? UI.style : {
 
 	// scrollbar - ui/scrollbar.js
 	scrollbar: {
-		slice: 5,
-		minWidth: 32,
-		minHeight: 32,
-		pad: 4,
+		minWidth: 20,
+		minHeight: 20,
+		pad: 2,
 		focusRect: true,
 
 		handle: {
-			slice: 5,
-			pad: 4,
+			pad: 0,
 			label: {
 				size: 12,
 				color: 0x0,
@@ -100,28 +104,32 @@ UI.style = UI.style ? UI.style : {
 
 		states: {
 			off: {
-				background: './textures/ui:scrollbar-off',
+				background: 0xd7d7d7,
 				handle: {
-					background: './textures/ui:scrollbar-handle-off',
+					background: 0xb6b6b6,
 				},
 			},
 			focus: {
-				background: './textures/ui:scrollbar-focus',
+				background: 0xe3e3e3,
 				handle: {
-					background: './textures/ui:scrollbar-handle-focus',
+					background: 0xcecccc,
 				}
 			},
 			scrolling: { // scrolling with directional keys mode with .acceptToScroll = true
 				handle: {
-					background: './textures/ui:focus-rect',
+					background: 0xFFFFFF,
 				}
 			},
 			dragging: { // dragging handle with mouse
-			},
-			disabled: {
-				background: './textures/ui:scrollbar-disabled',
 				handle: {
-					background: './textures/ui:scrollbar-handle-disabled',
+					background: 0xb6b6b6,
+				}
+			},
+
+			disabled: {
+				background: 0xcccccc,
+				handle: {
+					background: 0xcfcfcf,
 				}
 			},
 		},
@@ -132,39 +140,6 @@ UI.style = UI.style ? UI.style : {
 		// apply only to vertical
 		verticalStyle: { },
 
-		// apply only when discrete=true (scrollbar with fixed values for adjusting values, slider style)
-		sliderStyle: {
-
-			handle: { slice: 0 },
-
-			horizontalStyle: {
-				background: './textures/ui:slider-tick-horizontal',
-			},
-
-			verticalStyle: {
-				background: './textures/ui:slider-tick-vertical',
-			},
-
-			states: {
-				off: {
-					handle: {
-						background: './textures/ui:slider-handle-off',
-					}
-				},
-				focus: {
-					handle: {
-						background: './textures/ui:slider-handle-focus',
-					}
-				},
-				disabled: {
-					handle: {
-						background: './textures/ui:slider-handle-disabled',
-					}
-				},
-			},
-
-		},
-
 	},
 
 	// image container - ui/image.js
@@ -172,9 +147,9 @@ UI.style = UI.style ? UI.style : {
 
 	// button - ui/button.js
 	button: {
-		slice: 10,
 		pad: 12,
 		focusRect: true,
+		cornerRadius: 3,
 
 		// apply to button's label (ui/text.js)
 		label: {
@@ -192,19 +167,19 @@ UI.style = UI.style ? UI.style : {
 
 		states:{
 			off: {
-				background: './textures/ui:button-off',
+				background: 0x0066a5,
 			},
 			over: {
-				background: './textures/ui:button-over',
+				background: 0x006eb2,
 			},
 			focus: {
-				background: './textures/ui:button-focus',
+				background: 0x006eb2,
 			},
 			down: {
-				background: './textures/ui:button-down',
+				background: 0x004b7a,
 			},
 			disabled: {
-				background: './textures/ui:button-disabled',
+				background: 0xe0e0e0,
 			},
 		}
 	},
@@ -212,91 +187,91 @@ UI.style = UI.style ? UI.style : {
 	// checkbox - ui/checkbox.js
 	checkbox: {
 
-		slice: 0,
-		pad: 4,
+		pad: 0,
 		focusRect: true,
 
 		// apply to checkbox label (ui/text.js)
 		label: {
 			color: 0x0,
-			size: 14,
+			size: 12,
 			marginLeft: 4,
-			pad: 4,
+			pad: 0,
 		},
 
 		// "checkbox" button (ui/button.js)
 		checkbox: {
 			// "checkmark" image
-			icon: './textures/ui:checkbox-check',
+			icon: '#iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAG0lEQVR4XmMgFjBCFf4noIGRiVgTR6ZCogMcAHcwARAJJhF3AAAAAElFTkSuQmCC ',
 			minWidth: 20,
 			minHeight: 20,
 		},
 
 		states: {
 			off: {
-				checkbox: {
-					background: './textures/ui:checkbox-off',
-				}
+				checkbox: { background: 0xf6f6f6, },
+				label: { color: 0x0 }
 			},
 			over: {
-				checkbox: {
-					background: './textures/ui:checkbox-over',
-				}
+				checkbox: { background: 0xe5eff4, },
+				label: { color: 0x0 }
 			},
 			focus: {
-				checkbox: {
-					background: './textures/ui:checkbox-focus',
-				}
+				checkbox: { background: 0xd9e2e7, },
+				label: { color: 0x0 }
 			},
 			down: {
-				checkbox: {
-					background: './textures/ui:checkbox-down',
-				}
+				checkbox: { background: 0x0066a5, },
+				label: { color: 0x0 }
 			},
 			disabled: {
-				checkbox: {
-					background: './textures/ui:checkbox-disabled',
-				},
-				label: {
-					color: 0x333333
-				}
+				checkbox: { background: 0xcccccc, },
+				label: { color: 0x333333 }
 			},
 		}
 
 	},
 
-	// select-style dropdown menu - ui/dropdown.js
-	dropdown: {
+	// select-style dropdown menu - ui/select.js
+	select: {
 
 		maxVisibleItems: 5,
-		pad: 1,
+		pad: 0,
 
 		// style applied to dropdown button itself - ui/button.js
 		button: {
 			label: {
-				bold: false,
-				size: 14,
+				bold: true,
+				size: 12,
 				color: 0x0
 			},
-			pad: 7,
+			pad: 4,
+			outlineColor: 0x0066a5,
+			cornerRadius: 2,
 			states: {
 				off: {
-					background: './textures/ui:dropdown-off',
+					background: 0xf6f6f6,
+					lineThickness: 0,
+					label: { color: 0x0 }
 				},
 				over: {
-					background: './textures/ui:dropdown-over',
-				},
-				focus: {
-					background: './textures/ui:dropdown-focus',
+					background: 0xf6f6f6,
+					lineThickness: 0,
+					label: { color: 0x0 }
 				},
 				down: {
-					background: './textures/ui:dropdown-down',
+					background: 0x0066a5,
+					lineThickness: 0,
+					label: { color: 0xFFFFFF }
+				},
+				focus: {
+					background: 0xd9e2e7,
+					lineThickness: 2,
+					label: { color: 0x0 }
 				},
 				disabled: {
-					background: './textures/ui:dropdown-disabled',
-					label: {
-						color: 0x333333
-					}
+					background: 0xcccccc,
+					lineThickness: 0,
+					label: { color: 0x333333 }
 				},
 			}
 		},
@@ -304,61 +279,58 @@ UI.style = UI.style ? UI.style : {
 		// image used for arrow on the right side of the dropdown - ui/image.js
 		arrowImage: {
 			marginLeft: 4,
-			texture: './textures/ui:dropdown-arrow',
+			pad: 0,
+			texture: '#iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHCAYAAAA8sqwkAAAANElEQVR4XmMgF7gANf4ngF1QDBcREQnDpQEqh+kYbJpwKoZpR9ZEUDFMk6ysbCIIM1ADAABNKxlRej1XTAAAAABJRU5ErkJggg==',
 		},
 
 		// scrollable container with items (ui/scrollable.js)
 		menu: {
 			spacingY: 0,
 			pad: 0,
+			render: { // shadow
+				effectType: Effect.Outer,
+				effectRadius: 4,
+				effectOffsetY: 4
+			}
 		},
 
 		// items in the dropdown list (ui/button.js)
 		item: {
 			label: {
-				size: 14,
+				size: 12,
 				flex: 1
 			},
 			layoutAlignX: LayoutAlign.Start,
 			focusRect: false,
+			cornerRadius: 0,
 			pad: [ 4, 8, 4, 8 ],
 			states:{
 				off: {
-					background: './textures/ui:item-off',
-					label: {
-						color: 0x0
-					}
+					background: 0xFFFFFF,
+					label: { color: 0x0 }
 				},
 				over: {
-					background: './textures/ui:item-over',
-					label: {
-						color: 0xFFFFFF
-					}
+					background: 0x006eb2,
+					label: { color: 0xFFFFFF }
 				},
 				focus: {
-					background: './textures/ui:item-focus',
-					label: {
-						color: 0xFFFFFF
-					}
+					background: 0x0066a5,
+					label: { color: 0xFFFFFF }
 				},
 				down: {
-					background: './textures/ui:item-down',
-					label: {
-						color: 0xFFFFFF
-					}
+					background: 0x004b7a,
+					label: { color: 0xFFFFFF }
 				},
 				disabled: {
-					background: './textures/ui:item-disabled',
-					label: {
-						color: 0x333333
-					}
+					background: 0xf6f6f6,
+					label: { color: 0x333333 }
 				},
 			}
 		},
 
 		// currently selected item checkmark (ui/image.js)
 		itemCheck: {
-			texture: './textures/ui:item-check',
+			texture: '#iVBORw0KGgoAAAANSUhEUgAAAA4AAAAKCAYAAACE2W/HAAAAqElEQVR4XmOgB1ABWjIJiFnRLePHY7suUO4rEP8H4g5kdfJAzlsgrgNiJjQDLID8nyBNLCws52RkZISQ5dNAElDcC6RhznEHsv+CxNnZ2Q+rqqqiaGLg4OBgEBISKkDSPA/IjofxgfKb1dTU+BiwASYmJgZRUdF4JM0g//zn4uJaCrSJm4EQkJCQ8Ic5j5eXd4qkpCQrA7FASUnJQ1xcvJOfn5+JgdoAAB8wISrAnWSvAAAAAElFTkSuQmCC',
 			mode: 'icon',
 			marginLeft: 4,
 		}
@@ -368,9 +340,9 @@ UI.style = UI.style ? UI.style : {
 	// property list for editors (ui/property-list.js)
 	propertyList: {
 
-		valueWidth: 60, // width of value part. height of rows is set in value.AnyType
+		valueWidth: 130, // width of value part. height of rows is set in value.AnyType
 		spacingX: 2, // distance between label and value
-		spacingY: 0, // distance between rows
+		spacingY: 4, // distance between rows
 		pad: 4,
 
 		// applied to group label - note that first group's marginTop will be forced to 0
@@ -378,7 +350,7 @@ UI.style = UI.style ? UI.style : {
 			bold: true,
 			color: 0x333333,
 			align: TextAlign.Center,
-			marginTop: 8,
+			marginTop: 4,
 		},
 
 		// applied to "no editable properties" and "(null)" text
@@ -386,15 +358,15 @@ UI.style = UI.style ? UI.style : {
 			bold: true,
 			color: 0x666666,
 			align: TextAlign.Center,
-			marginTop: 8,
+			marginTop: 4,
 		},
 
 		// applied to each field label
 		label: {
-			pad: 6,
+			pad: [ 4, 4, 0, 0 ],
 			align: TextAlign.Right,
+			size: 12,
 			color: 0x0,
-			marginTop: 2,
 		},
 
 		// applied to field values based on type
@@ -404,9 +376,8 @@ UI.style = UI.style ? UI.style : {
 				acceptToEdit: true,
 				cancelToBlur: false,
 				blurOnClickOutside: false,
-				margin: 0,
 				fitChildren: false,
-				minHeight: 30,
+				minHeight: 25,
 			},
 			// Number - ui/textfield
 			number: {
@@ -415,43 +386,55 @@ UI.style = UI.style ? UI.style : {
 			},
 			// String - ui/textfield
 			string: {
-
 			},
 			// Boolean - ui/checkbox
 			boolean: {
-				// marginTop: 4,
 			},
 			// Enum - ui/dropdown
 			enum: {
 			},
 			// Object - ui/button
 			object: {
-				icon: './textures/ui:dropdown-arrow',
+				icon: '#iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHCAYAAAA8sqwkAAAANElEQVR4XmMgF7gANf4ngF1QDBcREQnDpQEqh+kYbJpwKoZpR9ZEUDFMk6ysbCIIM1ADAABNKxlRej1XTAAAAABJRU5ErkJggg==',
 				layoutAlignX: LayoutAlign.Start,
 				spacing: 4,
-				pad: 8,
-				label: { size: 14, color: 0x0 },
+				label: {
+					bold: true,
+					size: 12,
+					color: 0x0
+				},
+				pad: 4,
+				outlineColor: 0x0066a5,
+				cornerRadius: 2,
 				states: {
 					off: {
-						background: './textures/ui:dropdown-off',
+						background: 0xf6f6f6,
+						lineThickness: 0,
+						label: { color: 0x0 }
 					},
 					over: {
-						background: './textures/ui:dropdown-over',
-					},
-					focus: {
-						background: './textures/ui:dropdown-focus',
+						background: 0xf6f6f6,
+						lineThickness: 0,
+						label: { color: 0x0 }
 					},
 					down: {
-						background: './textures/ui:dropdown-down',
+						background: 0x0066a5,
+						lineThickness: 0,
+						label: { color: 0xFFFFFF }
+					},
+					focus: {
+						background: 0xd9e2e7,
+						lineThickness: 2,
+						label: { color: 0x0 }
 					},
 					disabled: {
-						background: './textures/ui:dropdown-disabled',
-						label: {
-							color: 0x333333
-						},
+						background: 0xcccccc,
+						lineThickness: 0,
+						label: { color: 0x333333 }
 					},
 				}
 			},
+
 			// inline sub-property list ui/property-list
 			inline: {
 				marginLeft: 10 // indent
@@ -465,20 +448,21 @@ UI.style = UI.style ? UI.style : {
 	focusRect: {
 
 		// texture or color
-		background: './textures/ui:focus-rect',
-		slice: 8,
+		background: 0x0066a5,
+
+		opacity: 0.5,
 
 		// rounded corner, if background is color
-		// cornerRadius: 2,
+		cornerRadius: 4,
 
 		// outline thickness if background is color
-		// lineThickness: 2,
+		lineThickness: 2,
 
 		// filled = solid rectangle, false = outline
-		// filled: false,
+		filled: false,
 
 		// pixels offset outside focused control
-		offset: 4
+		offset: 2
 
 	}
 
@@ -631,7 +615,7 @@ UI.base = UI.base ? UI.base : {
 			[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
 
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v; } ],
+			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v;} ],
 
 			// (Number) inner padding top
 			[ 'padTop',  function (){ return ui.padTop; }, function ( v ){ ui.padTop = v; }, true ],
@@ -653,6 +637,12 @@ UI.base = UI.base ? UI.base : {
 
 			// (Number) spacing between children when layoutType is Horizontal
 			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ],
+
+			// (Number) relative X offset from object's layout position
+			[ 'offsetX',  function (){ return ui.offsetX; }, function ( v ){ ui.offsetX = v; } ],
+
+			// (Number) relative Y offset from object's layout position
+			[ 'offsetY',  function (){ return ui.offsetY; }, function ( v ){ ui.offsetY = v; } ],
 
 			// (Object) used to override style (collection of properties) other than default after creating / during init
 			[ 'style',  function (){ return null; }, function ( v ){
@@ -764,8 +754,9 @@ UI.base = UI.base ? UI.base : {
 		if ( !props || !go ) return;
 		for ( var p in props ) {
 			if ( p == 'style' ) continue; // last
-			// object with same name?
-			if ( typeof( props[ p ] ) == 'object' && typeof( go[ p ] ) == 'object' && go[ p ] !== null ) {
+			// object with same name (but not an array)?
+			if ( typeof( props[ p ] ) == 'object' && props[ p ].constructor != Array &&
+				typeof( go[ p ] ) == 'object' && go[ p ] !== null ) {
 				// apply properties to it
 				UI.base.applyProperties( go[ p ], props[ p ] );
 			} else {

@@ -89,6 +89,9 @@ public:
 	
 	/// line thickness
 	float lineThickness = 2;
+	
+	/// if color alpha != 0 draws outline
+	Color *outlineColor = NULL;
 		
 // scripting
 	
