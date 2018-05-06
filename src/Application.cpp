@@ -544,9 +544,18 @@ void Application::InitClass() {
 			stringifyArgs.AddArgument( val.toValue() );
 		}
 		
-		// add other params, if given
-		if ( sa.args.size() >= 2 ) stringifyArgs.AddArgument( sa.args[ 1 ] );
-		if ( sa.args.size() >= 3 ) stringifyArgs.AddArgument( sa.args[ 2 ] );
+		// second param should be a boolean, indicating whether to pretty print
+		if ( sa.args.size() >= 2 ) {
+			if ( sa.args[ 1 ].type == TypeBool ) {
+				if ( sa.args[ 1 ].value.boolValue ) {
+					stringifyArgs.AddBoolArgument( false );
+					stringifyArgs.AddStringArgument( "\t" );
+				}
+			} else {
+				script.ReportError( "usage: stringify( Object object, [Boolean prettyPrint] )" );
+				return false;
+			}
+		}
 		
 		// call original stringify function and return result
 		sa.ReturnValue( script.CallClassFunction( "JSON", jsonStringify.value.objectValue, stringifyArgs ) );

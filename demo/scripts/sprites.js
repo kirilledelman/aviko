@@ -119,7 +119,7 @@ new (function (){
 	// rotate checkbox
 	spriteContainer.addChild( 'ui/checkbox', {
 		text: "^BSpin",
-		x: 120, y: 120,
+		x: 230, y: 125,
 		change: function () {
 			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
 			else sprite.update = function ( dt ) {
@@ -191,11 +191,13 @@ new (function (){
 					'color': true,
 					'addColor': {
 						properties: {
-							'r': { min: -1, max: 1, step: 0.1 },
-							'g': { min: -1, max: 1, step: 0.1 },
-							'b': { min: -1, max: 1, step: 0.1 },
-							'a': false,
-						} },
+							'r': { min: 0, max: 1, step: 0.1 },
+							'g': { min: 0, max: 1, step: 0.1 },
+							'b': { min: 0, max: 1, step: 0.1 },
+							'a': { min: 0, max: 1, step: 0.1 },
+							'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i } },
+						}
+					},
 					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
 					'stipple': { min: 0, max: 1, step: 0.1 },
 					'blendMode': { enum: [

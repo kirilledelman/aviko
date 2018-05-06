@@ -26,7 +26,7 @@ new (function (){
 
 	// description
 	scene.addChild( 'ui/text', {
-		size: 15,
+		size: 16,
 		color: Color.Text,
 		align: TextAlign.Center,
 		wrap: true,
@@ -45,7 +45,7 @@ new (function (){
 		backgroundColor: new Color( 'F0F0F066' ),
 		layoutType: Layout.Horizontal,
 		wrapEnabled: true,
-		spacing: 4,
+		spacing: 8,
 		flex: 1,
 		minHeight: 40,
 	} );

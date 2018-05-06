@@ -7,6 +7,22 @@
 		var p = App.scene.addChild( 'ui/property-list' );
 		p.target = myObject;
 
+	This component is configured mainly via .properties, .groups, and .showAll properties
+
+	When target is set, the properties displayed are a combination of:
+		target.constructor.__propertyListConfig object, if exists, combined+overridden with
+		target.__propertyListConfig object, if exists, combined+overridden with
+		propertyList's own .properties, .groups, and .showAll values
+		where __propertyListConfig is object with all optional fields {
+			properties: (Object)
+			groups: (Array),
+			showAll: (Boolean),
+			inspector: (Function) - function that returns a new GameObject with UI to use as custom
+			            inspector for this object. Function's params are
+			            (thisPropertyList, target, properties, groups, showAll)
+			}
+
+
 	look at mappedProps in source code below for additional properties
 	also has shared layout properties from ui/ui.js
 
@@ -23,7 +39,7 @@ include( './ui' );
 	var ui = new UI();
 	var scrollable, shouldScroll = true;
 	var target = null;
-	var showAll = true;
+	var showAll = undefined;
 	var properties = {};
 	var valueWidth = 130;
 	var disabled = false;
@@ -31,11 +47,10 @@ include( './ui' );
 	var groups = [];
 	var allFields = [];
 	var updateInterval = 0;
-	var showAll = false;
 	var constructing = true;
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
-	var customInspector;
+	var customInspector, inspector;
 	go.serializeMask = { 'ui':1, 'target':1, 'children': 1 };
 
 	// API properties
@@ -64,6 +79,12 @@ include( './ui' );
 		//          label: (String) "text displayed for property instead of property name", or (Function) to transform propname to text
 		//          style: (Object) - apply properties in this object to resulting input field
 		//          hidden: (Function) - return true to conditionally hide this field. Function's only param is target
+		//
+		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
+		//          properties: (Object) - apply properties to sub-property-list
+		//          groups: (Object) - apply groups to sub-property-list
+		//          showAll: (Boolean) - apply showAll param to sub-property-list
+		//
 		[ 'properties',  function (){ return properties; }, function ( v ){
 			properties = v;
 			go.debounce( 'refresh', go.refresh );
@@ -217,34 +238,63 @@ include( './ui' );
 		cont.ui.height = cont.ui.minHeight = 0;
 		allFields.length = 0;
 
-		// determine type of inspector to show
-
-		// if object constructor has propertyList inspector info (e.g. GameObject.propertyList)
-		var baseProperties;
-		if ( target && target.constructor && target.constructor.propertyList ) {
-			var tpl = target.constructor.propertyList;
-			// configure it with { inspector: Function(), properties: {}, groups: [] }
-			customInspector = tpl.inspector;
-			baseProperties = tpl.properties;
-			if ( tpl.showAll != undefined ) showAll = tpl.showAll;
-			groups = groups.length ? groups : ( tpl.groups ? tpl.groups : [] );
-		}
-
-		// merge base properties with our properties
-		if ( baseProperties ) {
-			for ( var a in baseProperties ) {
-				if ( properties[ a ] === undefined ) {
-					properties[ a ] = baseProperties[ a ];
+		// configure / merge properties with config in
+		// target.constructor.__propertyListConfig and target.__propertyListConfig
+		var _properties = {};
+		var _showAll = undefined;
+		var _groups = [];
+		var _customInspector = null;
+		function mergeConfig( other ) {
+			// merge properties
+			if ( typeof( other.properties ) === 'object' ) {
+				for ( var a in other.properties ) {
+					if ( _properties[ a ] === undefined || (_properties[ a ] !== undefined && other.properties[ a ] !== true ) ) {
+						_properties[ a ] = other.properties[ a ];
+					}
 				}
 			}
+			// merge groups
+			if ( typeof( other.groups ) === 'object' ) {
+				for ( var i = 0; i < other.groups.length; i++ ) {
+					var g = other.groups[ i ];
+					var found = false;
+					for ( var j = 0; j < _groups.length; j++ ) {
+						if ( _groups[ j ].name === g.name ) {
+							_groups[ j ] = g;
+							found = true;
+							break;
+						}
+					}
+					if ( !found ) _groups.push( g );
+				}
+			}
+			// showAll
+			if ( typeof ( other.showAll ) === 'boolean' ) _showAll = other.showAll;
+			// custom inspector
+			if ( typeof ( other.inspector ) === 'function' ) _customInspector = other.inspector;
+		}
+
+		if ( target ) {
+			// merge constructor's __propertyListConfig
+			if ( target.constructor && target.constructor.__propertyListConfig ) {
+				mergeConfig( target.constructor.__propertyListConfig );
+			}
+			// merge object's __propertyListConfig
+			if ( target.__propertyListConfig ) {
+				mergeConfig( target.constructor.__propertyListConfig );
+			}
+			// merge current properties etc
+			mergeConfig( { properties: properties, groups: groups, showAll: showAll, inspector: customInspector } );
+
+			// if properties are empty, set showall to true
+			if ( !Object.keys( _properties ).length && _showAll === undefined ) _showAll = true;
 		}
 
 		// if displaying a custom inspector
-		if ( customInspector ) {
+		if ( _customInspector ) {
 			// initialize it
-			customInspector = customInspector( target, properties, groups );
-			customInspector.propertyList = go;
-			cont.addChild( customInspector );
+			inspector = _customInspector( go, target, _properties, _groups, _showAll );
+			cont.addChild( inspector );
 			return;
 		}
 
@@ -266,11 +316,11 @@ include( './ui' );
 		var mappedProps = {};
 
 		// copy each specified group into regroup
-		var _groups = [];
-		for ( var i in groups ) {
-			var g = groups[ i ];
+		var _gs = [];
+		for ( var i in _groups ) {
+			var g = _groups[ i ];
 			if ( g.name ) {
-				_groups.push( g );
+				_gs.push( g );
 			} else {
 				unsortedGroup = g;
 				continue;
@@ -281,8 +331,8 @@ include( './ui' );
 				var pname = g.properties[ i ];
 				var pdef = properties[ pname ];
 				if ( ( target[ pname ] !== undefined && // target has property
-					( ( showAll && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
-					( !showAll && pdef !== undefined && pdef !== false ) ) ) || // showing select properties, and prop is included
+					( ( _showAll === true && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
+					( _showAll !== true && pdef !== undefined && pdef !== false ) ) ) || // showing select properties, and prop is included
 					( pdef && pdef.target ) ) { // or has overridden target
 						props.push( pname );
 						mappedProps[ pname ] = g.name;
@@ -291,9 +341,9 @@ include( './ui' );
 		}
 		// for each property name in target object
 		for ( var p in target ) {
-			var pdef = properties[ p ];
-			if ( ( showAll && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
-				( !showAll && pdef !== undefined && pdef !== false ) ) { // showing select properties, and prop is included
+			var pdef = _properties[ p ];
+			if ( ( _showAll === true && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
+				( _showAll !== true && pdef !== undefined && pdef !== false ) ) { // showing select properties, and prop is included
 				// property not in any groups
 				if ( mappedProps[ p ] === undefined ) {
 					// put in default group
@@ -302,18 +352,16 @@ include( './ui' );
 			}
 		}
 
-		// sort default group by name
-		if ( unsortedGroup ) {
-			//regroup[ ' ' ];
-		} else {
+		// if order of ungrouped properties isn't provided, sort default group by name
+		if ( !unsortedGroup ) {
 			regroup[ ' ' ].sort();
 		}
 
 		// for each group
 		var field = null;
 		var numRows = 0, numGroups = 0;
-		for ( var i = 0, ng = _groups.length; i <= ng; i++ ) {
-			var props = i < ng ? regroup[ _groups[ i ].name ] : regroup[ ' ' ];
+		for ( var i = 0, ng = _gs.length; i <= ng; i++ ) {
+			var props = i < ng ? regroup[ _gs[ i ].name ] : regroup[ ' ' ];
 			if ( props === undefined || !props.length ) continue;
 			numGroups++;
 			if ( i < ng || numGroups > 1 ) {
@@ -321,7 +369,7 @@ include( './ui' );
 				var groupTitle = cont.addChild( './text', {
 					forceWrap: true,
 					flex: 1,
-					text: (i < ng ? _groups[ i ].name : ''),
+					text: (i < ng ? _gs[ i ].name : ''),
 					style: go.baseStyle.group,
 				} );
 				// clear top margin if first
@@ -330,7 +378,7 @@ include( './ui' );
 			// for each property
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
-				var pdef = properties[ pname ] || {};
+				var pdef = _properties[ pname ] || {};
 
 				// add label
 				var labelText = pname;
@@ -441,8 +489,6 @@ include( './ui' );
 						// embedded inspector
 						field = cont.addChild( './property-list', {
 							flex: 1,
-							pdef: pdef,
-							showAll: true,
 							scrollable: false,
 							forceWrap: true,
 							active: !!pdef.expanded,
@@ -606,7 +652,7 @@ Default inspector parameters for property list
 
 */
 
-Color.propertyList = Color.propertyList ? Color.propertyList : {
+Color.__propertyListConfig = Color.__propertyListConfig ? Color.__propertyListConfig : {
 	showAll: false,
 	properties: {
 		'r': { min: 0, max: 1, step: 0.1 },

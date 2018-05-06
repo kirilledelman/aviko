@@ -125,7 +125,7 @@ void Color::InitClass() {
 
 	script.AddProperty<Color>
 	( "hex",
-	 static_cast<ScriptStringCallback>([]( void* self, string val ) { return ((Color*) self)->GetHex( true ); }),
+	 static_cast<ScriptStringCallback>([]( void* self, string val ) { return ((Color*) self)->GetHex(); }),
 	 static_cast<ScriptStringCallback>([]( void* self, string val ) {
 		Color* clr = (Color*) self;
 		clr->SetHex( val.c_str() );
@@ -556,22 +556,15 @@ bool Color::SetHex( const char* s ) {
 
 }
 
-string Color::GetHex( bool withAlpha ) {
+string Color::GetHex() {
 	char str[ 16 ];
-	unsigned int val = 0;
-	withAlpha = withAlpha && this->rgba.a < 1;
-	if ( withAlpha ) {
-		val = ( this->rgba.a & 0xFF ) +
+	unsigned int val =
+		( this->rgba.a & 0xFF ) +
 		(( this->rgba.b & 0xFF ) << 8 ) +
 		(( this->rgba.g & 0xFF ) << 16 ) +
 		(( this->rgba.r & 0xFF ) << 24 );
-	} else {
-		val = ( this->rgba.b & 0xFF ) +
-		(( this->rgba.g & 0xFF ) << 8 ) +
-		(( this->rgba.r & 0xFF ) << 16 );
-	}
 	string s = "00000000" + string( SDL_uitoa( val, str, 16 ) );
-	return s.substr( withAlpha ? s.length() - 8 : s.length() - 6 );
+	return s.substr( s.length() - 8 );
 }
 
 void Color::SetInts( int red, int green, int blue, int alpha ) {

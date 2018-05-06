@@ -40,8 +40,8 @@ public:
 	
 	static void FromInt( int clr, float &r, float &g, float &b );
 	
-	/// returns hexadecimal RRGGBB(AA) integer value as string
-	string GetHex( bool withAlpha );
+	/// returns hexadecimal RRGGBBAA integer value as string
+	string GetHex();
 	
 	/// returns hexadecimal RRGGBB(AA) integer value as string
 	bool SetHex( const char* hex );

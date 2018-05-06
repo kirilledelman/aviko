@@ -46,7 +46,7 @@ UI.style = UI.style ? UI.style : {
 		italicFont: 'Roboto-Italic',
 		boldItalicFont: 'Roboto-BlackItalic',
 		bold: true,
-		size: 12,
+		size: 14,
 		color: 0x0,
 		selectionColor: 0x0066a5,
 		selectionTextColor: 0xFFFFFF,
@@ -90,9 +90,11 @@ UI.style = UI.style ? UI.style : {
 		minHeight: 20,
 		pad: 2,
 		focusRect: true,
+		borderRadius: 2,
 
 		handle: {
 			pad: 0,
+			borderRadius: 0,
 			label: {
 				size: 12,
 				color: 0x0,
@@ -154,7 +156,7 @@ UI.style = UI.style ? UI.style : {
 		// apply to button's label (ui/text.js)
 		label: {
 			color: 0xFFFFFF,
-			size: 16,
+			size: 18,
 			bold: true,
 		},
 
@@ -187,23 +189,23 @@ UI.style = UI.style ? UI.style : {
 	// checkbox - ui/checkbox.js
 	checkbox: {
 
-		pad: 0,
+		pad: 2,
 		focusRect: true,
 
 		// apply to checkbox label (ui/text.js)
 		label: {
 			color: 0x0,
-			size: 12,
+			size: 14,
 			marginLeft: 4,
-			pad: 0,
+			padTop: -1,
 		},
 
 		// "checkbox" button (ui/button.js)
 		checkbox: {
 			// "checkmark" image
 			icon: '#iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAG0lEQVR4XmMgFjBCFf4noIGRiVgTR6ZCogMcAHcwARAJJhF3AAAAAElFTkSuQmCC ',
-			minWidth: 20,
-			minHeight: 20,
+			minWidth: 16,
+			minHeight: 16,
 		},
 
 		states: {
@@ -241,7 +243,7 @@ UI.style = UI.style ? UI.style : {
 		button: {
 			label: {
 				bold: true,
-				size: 12,
+				size: 14,
 				color: 0x0
 			},
 			pad: 4,
@@ -297,7 +299,7 @@ UI.style = UI.style ? UI.style : {
 		// items in the dropdown list (ui/button.js)
 		item: {
 			label: {
-				size: 12,
+				size: 14,
 				flex: 1
 			},
 			layoutAlignX: LayoutAlign.Start,
@@ -365,7 +367,7 @@ UI.style = UI.style ? UI.style : {
 		label: {
 			pad: [ 4, 4, 0, 0 ],
 			align: TextAlign.Right,
-			size: 12,
+			size: 14,
 			color: 0x0,
 		},
 
@@ -400,7 +402,7 @@ UI.style = UI.style ? UI.style : {
 				spacing: 4,
 				label: {
 					bold: true,
-					size: 12,
+					size: 14,
 					color: 0x0
 				},
 				pad: 4,

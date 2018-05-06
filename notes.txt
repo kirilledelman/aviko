@@ -1,4 +1,6 @@
 effectColor - editing hex, leaving page, coming back changes order of fields
+make hex always return alpha - see if fixes ^
+
 
 
 
