@@ -44,7 +44,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	// create effect color object
 	color = new Color( NULL );
 	color->SetInts( 0, 0, 0, 255 );
-	script.SetProperty( "effectColor", ArgValue( color->scriptObject ), this->scriptObject );
+	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// with arguments
 	if ( args ) {
@@ -742,77 +742,55 @@ void RenderTextBehavior::InitClass() {
     }) );
 
 	script.AddProperty<RenderTextBehavior>
-	( "effectColor",
-	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->effectColor->scriptObject); }),
+	( "outlineColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->outlineColor->scriptObject); }),
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
 		RenderBehavior* rs = (RenderBehavior*) b;
 		if ( val.type == TypeObject ) {
 			// replace if it's a color
 			Color* other = script.GetInstance<Color>( val.value.objectValue );
-			if ( other ) rs->effectColor = other;
+			if ( other ) rs->outlineColor = other;
 		} else {
-			rs->effectColor->Set( val );
+			rs->outlineColor->Set( val );
 		}
-		return rs->effectColor->scriptObject;
+		return rs->outlineColor->scriptObject;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "effectType",
-	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderBehavior*) b)->effect; }),
-	 static_cast<ScriptIntCallback>([](void *b, int val ){
-		RenderBehavior *rs = (RenderBehavior*) b;
-		if ( rs->effect != (RenderBehavior::FX) val ) {
-			rs->effect = (RenderBehavior::FX) val;
-			rs->UpdateTexturePad();
-		}
-		return val;
-	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "effectOffsetX",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetX; }),
+	( "outlineOffsetX",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetX; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RenderBehavior *rs = (RenderBehavior*) b;
-		if ( rs->effectOffsetX != val ) {
-			rs->effectOffsetX = val;
+		if ( rs->outlineOffsetX != val ) {
+			rs->outlineOffsetX = val;
 			rs->UpdateTexturePad();
 		}
 		return val;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "effectOffsetY",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetY; }),
+	( "outlineOffsetY",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetY; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RenderBehavior *rs = (RenderBehavior*) b;
-		if ( rs->effectOffsetY != val ) {
-			rs->effectOffsetY = val;
+		if ( rs->outlineOffsetY != val ) {
+			rs->outlineOffsetY = val;
 			rs->UpdateTexturePad();
 		}
 		return val;
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "effectOffsetZ",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectOffsetZ; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->effectOffsetZ = val ); }) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "effectRadius",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectRadius; }),
+	( "outlineRadius",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineRadius; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RenderBehavior *rs = (RenderBehavior*) b;
-		if ( rs->effectRadius != val ) {
-			rs->effectRadius = val;
+		if ( rs->outlineRadius != val ) {
+			rs->outlineRadius = fmax( -16, fmin( val, 16 ) );
 			rs->UpdateTexturePad();
 		}
 		return val;
 	}) );
-	
-	script.AddProperty<RenderTextBehavior>
-	( "effectFalloff",
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->effectFalloff; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->effectFalloff = val ); }) );
 	
 	// functions
 	

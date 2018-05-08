@@ -1,14 +1,15 @@
-effectColor - editing hex, leaving page, coming back changes order of fields
-make hex always return alpha - see if fixes ^
 
 
+ScriptableObject
+	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
 
 
 GameObject
-updating z, or inserting/removing children should set _zOrderDirty on parent
-_zSortedChildren array holds children
-Render method should keep _zSortedChildren updated, draw in order
-a function to get bounds of gameobject + all vis children
+	GameObject.getChildrenInside( x,y,w,h ) - will be used to pick objects in editor
+	updating z, or inserting/removing children should set _zOrderDirty on parent
+	_zSortedChildren array holds children
+	Render method should keep _zSortedChildren updated, draw in order
+	a function to get bounds of gameobject + all vis children
 
 Make sure all focusable components listen for Tab and Shift+Tab
 
@@ -18,9 +19,7 @@ Propertylist
 	show functions in a separate group in the end
 
 Scrollbar
-	add .minusButton, .plusButton props,
-	add .fixedHandle - bool - whether to stretch handle
-		.fixedHandleFullRange - bool - whether fixed handle should snap to centers or endpoints
+	.minusButton, .plusButton - add disabling, and paging handler funcs
 
 
 Image
@@ -36,9 +35,6 @@ Top level / Application
 	'quit' event - dispatched right before exiting.
 	'log' - if event is stopped, don't printf, otherwise do.
 
-
-RenderBehavior
-	Shader - gradients - can maybe have more than one per. Multiplies color by radial or linear grad btw 2 colors
 
 
 Demo project
@@ -65,8 +61,13 @@ Nice to have
 
 =============================================
 
+Physics - texture to shape, some sort of shrinkwrap
+	http://www.deluge.co/?q=box2d-tracing-shape-outlines
+
 RenderBehavior
-	replace BlendMode with blend modes based on mixing framebuffer w sprite - Burn, Multiply, Darken, Lighten etc.
+	Shader - gradients - can maybe have more than one per. Multiplies color by radial or linear grad btw 2 colors
+	Make sure it's possible to use `render` event to draw stuff during actual render, ideally to screen or Image of texture
+
 
 RenderTileMap
 	Tile class for indiv tiles - x,y,z offset, texture, color/addcolor, rotation, flip, scale, etc.
@@ -81,14 +82,12 @@ Dropdown - jump to item by typing
 Image
 	colorAtPixel(x,y)
 	make gradient
-	shortcut GPU drawing methods - line, pixel, rects, arcs, etc..
+	shortcut GPU drawing methods - sprite, line, pixel, rects, arcs, etc..
 
 Textured shapes/polys
 	need to figure out how to compute uvs - maybe in shader based on screen coord?
 
 RenderSprite .texture = "https://...."
-
-shader - dropshadow, outline
 
 stopEvent should work with ui events / rollovers - ?
 

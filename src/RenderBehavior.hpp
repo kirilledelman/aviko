@@ -11,7 +11,7 @@
 #define SHADER_SLICE	0x4
 #define SHADER_TILE		0x8
 #define SHADER_STIPPLE	0x10
-#define SHADER_FX		0x20
+#define SHADER_OUTLINE	0x20
 #define SHADER_MAXVAL	0x40
 
 /// rendering behaviors should inherit from this class and override getBounds method
@@ -54,7 +54,7 @@ public:
 	
 	// apply stipple pattern to alpha channel
 	bool stippleAlpha = false;
-	
+		
 	/// blend modes
 	enum BlendMode {
 		Normal = 0,
@@ -75,19 +75,9 @@ public:
 	
 	BlendMode blendMode = BlendMode::Normal;
 	
-	/// FX
-	enum FX {
-		None = 0,
-		Outline = 1,
-		Outer = 2,
-		Inner = 3,
-		Blur = 4,
-	};
-	
-	FX effect = FX::None;
-	Color *effectColor = NULL;
-	float effectOffsetX = 0, effectOffsetY = 0, effectOffsetZ = 0;
-	float effectRadius = 0, effectFalloff = 0;
+	Color *outlineColor = NULL;
+	float outlineOffsetX = 0, outlineOffsetY = 0;
+	float outlineRadius = 0;
 	
 // scripting
 	
@@ -115,10 +105,8 @@ public:
 		int backgroundUniform;
 		int backgroundSizeUniform;
 		int blendUniform;
-		int fxUniform;
-		int fxColorUniform;
-		int fxOffsetUniform;
-		int fxRadiusFalloffUniform;
+		int outlineColorUniform;
+		int outlineOffsetRadiusUniform;
 	} ShaderVariant;
 
 	/// shader permutations

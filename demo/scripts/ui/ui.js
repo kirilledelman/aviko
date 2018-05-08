@@ -289,10 +289,10 @@ UI.style = UI.style ? UI.style : {
 		menu: {
 			spacingY: 0,
 			pad: 0,
-			render: { // shadow
-				effectType: Effect.Outer,
-				effectRadius: 4,
-				effectOffsetY: 4
+			render: {
+				outlineColor: '00000033',
+				outlineOffsetY: 1,
+				outlineRadius: 2
 			}
 		},
 

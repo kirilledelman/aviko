@@ -175,6 +175,12 @@ void GameObject::InitClass() {
 		go->opacity = max( 0.0f, min( 1.0f, val ) );
 		return go->opacity;
 	}));
+
+	script.AddProperty<GameObject>
+	( "renderAfterChildren",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((GameObject*) b)->renderAfterChildren; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((GameObject*) b)->renderAfterChildren = val ); }) );
+	
 	
 	script.AddProperty<GameObject>
 	( "x",
@@ -1960,8 +1966,9 @@ void GameObject::Render( Event& event ) {
 		
 	}
 	
-	// if have rendering behavior
-	if ( this->render != NULL && this->render->active() ) {
+	// render before children?
+	bool doRender = (this->render != NULL && this->render->active());
+	if ( doRender && !this->renderAfterChildren ) {
 		// find function
 		BehaviorEventCallback func = this->render->GetCallbackForEvent( event.name );
 		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
@@ -1977,6 +1984,13 @@ void GameObject::Render( Event& event ) {
 		// recurse if render behavior didn't ask to skip it
 		if ( obj->active() && obj != event.skipObject ) obj->Render( event );
 	}	
+	
+	// render after children?
+	if ( doRender && this->renderAfterChildren ) {
+		// find function
+		BehaviorEventCallback func = this->render->GetCallbackForEvent( event.name );
+		if ( func != NULL ) (*func)( this->render, event.behaviorParam, &event );
+	}
 	
 	// pop matrices
 	GPU_MatrixMode( GPU_MODELVIEW );

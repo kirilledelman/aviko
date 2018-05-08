@@ -205,7 +205,10 @@ public:
 	
 	/// object's own opacity
 	float opacity = 1;
-	
+
+	/// set to true to draw last
+	bool renderAfterChildren = false;
+		
 // behavior
 	
 	// can access private fields

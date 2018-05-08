@@ -153,40 +153,33 @@ new (function (){
 						{ text: "smiley.png", value: "/textures/smiley.png" },
 						{ text: "clown.png", value: "/textures/clown.png" },
 						{ text: "poop.png", value: "/textures/poop.png" },
-						{ text: "normal", value: "/textures/test:test1" },
-						{ text: "rotated", value: "/textures/test:test" },
 					]},
 					'originalWidth': { disabled: true },
 					'originalHeight': { disabled: true },
-					'width': { min: 0, max: Infinity, step: 1 },
-					'height': { min: 0, max: Infinity, step: 1 },
 				};
 				props.groups = [
-					{ name: 'Texture', properties: [ 'texture', 'width', 'height', 'originalWidth', 'originalHeight' ] },
+					{ name: 'Texture', properties: [ 'texture', 'originalWidth', 'originalHeight' ] },
 				];
 
 				break;
 			case 1:
 				description.text =
-				"Sprite texture can be tiled, or flipped in horizontal or vertical direction.\n\n" +
-				"Auto-tiling will keep the size of texture constant."
+				"Sprite texture can be flipped and tiled in horizontal or vertical direction."
 
 				props.properties = {
 					'flipX': true,
 					'flipY': true,
 					'tileX': true,
 					'tileY': true,
-					'autoTileX': true,
-					'autoTileY': true
 				};
 				props.groups = [
 					{ name: "Flip", properties: [ 'flipX', 'flipY' ] },
-					{ name: "Tile texture", properties: [ 'tileX', 'tileY', 'autoTileX', 'autoTileY' ] }
+					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] }
 				];
 
 				break;
 			case 2:
-				description.text = "Multiplicative and additive color tinting is supported, as well as opacity, and stippling.";
+				description.text = "Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.";
 				props.properties = {
 					'color': true,
 					'addColor': {
@@ -216,35 +209,32 @@ new (function (){
 						{ text: "Refract", value: BlendMode.Refract },
 						{ text: "Cut", value: BlendMode.Cut },
 					] },
-					'effectType': { enum: [
-						{ text: "None", value: Effect.None },
-						{ text: "Outline", value: Effect.Outline },
-						{ text: "Outer", value: Effect.Outer },
-						{ text: "Inner", value: Effect.Inner },
-						{ text: "Blur", value: Effect.Blur },
-					] },
-					'effectColor': { hidden: function( t ){ return (t.effectType == Effect.None || t.effectType == Effect.Blur ); } },
-					'effectOffsetX': { step: 1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
-					'effectOffsetY': { step: 1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
-					'effectRadius': { min: 0, max: 16, step: 0.1, hidden: function( t ){ return t.effectType == Effect.None; }  },
-					'effectFalloff': { min: 0, max: 1, step: 0.1, hidden: function( t ){ return (t.effectType != Effect.Outer && t.effectType != Effect.Inner ); } },
+					'outlineColor': { hidden: function( t ){ return (t.outlineRadius === 0); } },
+					'outlineOffsetX': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
+					'outlineOffsetY': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
+					'outlineRadius': { min: -16, max: 16, step: 1 },
 				};
 				props.groups = [
-					{ name: "Blending", properties: [ 'blendMode', 'effectType', 'effectColor', 'effectOffsetX', 'effectOffsetY', 'effectOffsetZ', 'effectRadius', 'effectFalloff' ] },
+					{ name: "Blending", properties: [ 'blendMode', 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ] },
 					{ name: "Tint", properties: [ 'color', 'addColor' ] },
 					{ name: "Opacity", properties: [ 'opacity', 'stipple' ] },]
 				break;
 			case 3:
 				description.text =
 				"To help create user interface elements define stretchable regions on " +
-				"texture by setting ^Bslice^n property.";
+				"texture by setting ^Bslice^n properties.";
 				props.properties = {
 					'sliceLeft': { min: 0, step: 1 },
 					'sliceTop': { min: 0, step: 1 },
 					'sliceBottom': { min: 0, step: 1 },
 					'sliceRight': { min: 0, step: 1 },
+					'width': { min: 0, max: Infinity, step: 1 },
+					'height': { min: 0, max: Infinity, step: 1 },
 				};
-				props.groups = [ { name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]} ];
+				props.groups = [
+					{ name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]},
+					{ name: "Size", properties: [ 'width', 'height' ]}
+				];
 				sprite.update = null;
 				sprite.angle = 0;
 

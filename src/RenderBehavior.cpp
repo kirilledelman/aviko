@@ -79,15 +79,6 @@ void RenderBehavior::InitClass() {
 	script.SetProperty( "Refract", ArgValue( RenderBehavior::BlendMode::Refract ), constants );
 	script.SetProperty( "Cut", ArgValue( RenderBehavior::BlendMode::Cut ), constants );
 	script.FreezeObject( constants );
-
-	constants = script.NewObject();
-	script.AddGlobalNamedObject( "Effect", constants );
-	script.SetProperty( "None", ArgValue( RenderBehavior::FX::None ), constants );
-	script.SetProperty( "Outline", ArgValue( RenderBehavior::FX::Outline ), constants );
-	script.SetProperty( "Outer", ArgValue( RenderBehavior::FX::Outer ), constants );
-	script.SetProperty( "Inner", ArgValue( RenderBehavior::FX::Inner ), constants );
-	script.SetProperty( "Blur", ArgValue( RenderBehavior::FX::Blur ), constants );
-	script.FreezeObject( constants );
 	
 	// properties
 	script.AddProperty<RenderBehavior>
@@ -156,13 +147,7 @@ void RenderBehavior::InitClass() {
 
 
 void RenderBehavior::UpdateTexturePad() {
-	if ( this->effect == FX::Blur ) {
-		texturePad = effectRadius * 1.5;
-	} else if ( this->effect == FX::Outline ){
-		texturePad = 1 + effectRadius * 1.5;
-	} else if ( this->effect == FX::Outer ){
-		texturePad = effectRadius * 1.5 + fmax( effectOffsetX, effectOffsetY );
-	} else texturePad = 0; // inner or none
+	texturePad = outlineColor->rgba.a ? 2 * ( fabs( outlineRadius ) + fmax( fabs( outlineOffsetX ), fabs( outlineOffsetY ) ) ) : 0;
 }
 
 
@@ -227,10 +212,7 @@ size_t RenderBehavior::SelectTexturedShader(
 		shaderIndex |= SHADER_BLEND;
 		this->_UpdateBlendTarget( targ, blendTarg );
 	}
-	if ( this->effect != FX::None ) {
-		shaderIndex |= SHADER_FX;
-	}
-	if ( image ) GPU_SetImageFilter( image, this->effect != FX::None ? GPU_FILTER_LINEAR : GPU_FILTER_NEAREST );
+	if ( this->outlineRadius != 0 ) shaderIndex |= SHADER_OUTLINE;
 	
 	ShaderVariant &variant = shaders[ shaderIndex ];
 	if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );
@@ -320,31 +302,21 @@ size_t RenderBehavior::SelectTexturedShader(
 		GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
 	}
 	
-	// fx
-	if ( variant.fxUniform >= 0 ) {
-		GPU_SetUniformi( variant.fxUniform, this->effect );
+	// outline color
+	if ( variant.outlineColorUniform >= 0 ) {
+		params[ 0 ] = this->outlineColor->r;
+		params[ 1 ] = this->outlineColor->g;
+		params[ 2 ] = this->outlineColor->b;
+		params[ 3 ] = this->outlineColor->a;
+		GPU_SetUniformfv( variant.outlineColorUniform, 4, 1, params );
 	}
 	
-	// fx color
-	if ( variant.fxColorUniform >= 0 ) {
-		params[ 0 ] = this->effectColor->r;
-		params[ 1 ] = this->effectColor->g;
-		params[ 2 ] = this->effectColor->b;
-		params[ 3 ] = this->effectColor->a;
-		GPU_SetUniformfv( variant.fxColorUniform, 4, 1, params );
-	}
-	
-	// fx params
-	if ( variant.fxOffsetUniform >= 0 ) {
-		params[ 0 ] = this->effectOffsetX;
-		params[ 1 ] = this->effectOffsetY;
-		params[ 2 ] = this->effectOffsetZ;
-		GPU_SetUniformfv( variant.fxOffsetUniform, 3, 1, params );
-	}
-	if ( variant.fxRadiusFalloffUniform >= 0 ) {
-		params[ 0 ] = this->effectRadius;
-		params[ 1 ] = this->effectFalloff;
-		GPU_SetUniformfv( variant.fxRadiusFalloffUniform, 2, 1, params );
+	// outline params
+	if ( variant.outlineOffsetRadiusUniform >= 0 ) {
+		params[ 0 ] = this->outlineOffsetX;
+		params[ 1 ] = this->outlineOffsetY;
+		params[ 2 ] = this->outlineRadius;
+		GPU_SetUniformfv( variant.outlineOffsetRadiusUniform, 3, 1, params );
 	}
 	
 	return shaderIndex;
@@ -412,38 +384,15 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 	GPU_Renderer* renderer = GPU_GetCurrentRenderer();
 	bool glsles = ( renderer->shader_language == GPU_LANGUAGE_GLSLES );
 	
-	// vertex shader
-	char vertShader[ 4096 ];
-	sprintf ( vertShader,
-	"#version %d\n\
-	%s\n\
-	void main(void){\n\
-		color = gpu_Color;\n\
-        texCoord = vec2( gpu_TexCoord.x, gpu_TexCoord.y );\n\
-		gl_Position = gpu_ModelViewProjectionMatrix * vec4(gpu_Vertex, 0.0, 1.0);\n\
-	}",
-	renderer->min_shader_version,
-    glsles ?
-	"precision mediump int;\nprecision mediump float;\n\
-	attribute vec2 gpu_Vertex;\n\
-	attribute vec2 gpu_TexCoord;\n\
-	attribute mediump vec4 gpu_Color;\n\
-	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
-	varying mediump vec4 color;\n\
-	varying vec2 texCoord;\n"
-	 :
-	"in vec2 gpu_Vertex;\n\
-	in vec2 gpu_TexCoord;\n\
-	in vec4 gpu_Color;\n\
-	uniform mat4 gpu_ModelViewProjectionMatrix;\n\
-	out vec4 color;\n\
-	out vec2 texCoord;\n");
-	
 	// assemble fragment shader source
 	char fragShader[ 32768 ];
+	char vertShader[ 8192 ];
+	
 	string params;
 	string features;
 	string funcs;
+	string vertParams;
+	string vertFeatures;
 	
 	// has texture
 	if ( featuresMask & SHADER_TEXTURE ) {
@@ -600,109 +549,43 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		else if (index == 13) limit = 5000;\n\
 		else if (index == 14) limit = 8750;\n\
 		else if (index >= 15) limit = 3750;\n\
-		if ( stippleValue < limit ) discard;";
+		if ( stippleValue < limit ) discard;\n";
 	}
 	
 	// effects
-	if ( featuresMask & ( SHADER_FX | SHADER_TEXTURE ) ) {
+	if ( featuresMask & SHADER_OUTLINE ) {
 		params +=
-		"uniform int fx;\n\
-		uniform vec4 fxColor;\n\
-		uniform vec3 fxOffset;\n\
-		uniform vec2 fxRadiusFalloff;";
+		"uniform vec4 outlineColor;\n\
+		uniform vec3 outlineOffsetRadius;\n";
 		
 		funcs +=
-		"float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\
-		float noise(vec2 p) { \n\
-			vec2 ip = floor(p); \n\
-			vec2 u = fract(p); \n\
-			u = u*u*(3.0-2.0*u); \n\
-			float res = mix(mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x), mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y); \n\
-			return res*res - 0.5; \n\
-		} \n\
-		vec2 randVecOffset( float nx, float ny, float dist ) { \n\
-			return vec2( nx + dist * noise( gl_FragCoord.xy + vec2( nx, ny ) ), ny + dist * noise( texCoord * texSize + vec2( ny, nx ) ) );\n\
-		}\n\
-		vec4 areaSample( vec2 coord ){\n\
+		"vec4 outlineSample( vec2 coord ){\n\
 			vec4 result = readPixel( coord ); \n\
-			float numRings = floor( min( fxRadiusFalloff.x * 0.25, 4.0 ) ); // num of rings to sample up to 4 \n\
-			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-			float c1 = 0, c2 = 0, c3 = 0, c4 = 0; \n\
-			float ringStep = fxRadiusFalloff.x / numRings; \n\
-			float ringRadius; \n\
-			if ( numRings >= 4.0 ) { \n\
-				ringRadius = ringStep * 4.0; \n\
-				c4 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
-				r4 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( 0.3 * ringStep, -ringStep, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( ringStep, 0.3 * ringStep, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 3.0 ) { \n\
-				ringRadius = ringStep * 3.0; \n\
-				c3 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
-				r3 = readPixel( coord + randVecOffset( 0.0, -ringRadius, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( ringRadius, 0.0, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( 0.0, ringRadius, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( -ringRadius, 0.0, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( -ringRadius, -ringRadius, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 2.0 ) { \n\
-				ringRadius = ringStep * 2.0; \n\
-				c2 = ( 1.0 - fxRadiusFalloff.y / ringRadius ); \n\
-				r2 = readPixel( coord + randVecOffset( -ringRadius, -ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + randVecOffset( ringRadius, ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 1.0 ) { \n\
-				c1 = ( 1.0 - fxRadiusFalloff.y / ringStep ); \n\
-				r1 = readPixel( coord + randVecOffset( 0.0, -ringStep, ringStep ) );\n\
-				r1 += readPixel( coord + randVecOffset( ringStep, 0.0, ringStep ) );\n\
-				r1 += readPixel( coord + randVecOffset( 0.0, ringStep, ringStep ) );\n\
-				r1 += readPixel( coord + randVecOffset( -ringStep, 0.0, ringStep ) );\n\
-			}\n\
-			return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 4.0 * ( c1 + c2 ) + 6.0 * ( c3 + c4 ) );\n\
-		}\n\
-		vec4 outlineSample( vec2 coord ){\n\
-			vec4 result = readPixel( coord ); \n\
-			float numRings = fxRadiusFalloff.x >= 2.0 ? 2.0 : 1.0;\n\
+			float radius = abs( outlineOffsetRadius.z );\n\
+			float numRings = radius >= 1.0 ? 2.0 : 1.0;\n\
 			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
 				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-			float c1 = 0, c2 = 0; \n\
-			float ringStep = fxRadiusFalloff.x / numRings; \n\
-			float ringRadius; \n\
-			if ( numRings >= 2.0 ) { \n\
-				ringRadius = fxRadiusFalloff.x * 0.7; \n\
-				c2 = 1.0;\n\
-				r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
-			}\n\
+			float ringStep = radius / numRings; \n\
 			if ( numRings >= 1.0 ) { \n\
-				c1 = 1.0; \n\
-				r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
-				r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
-				r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
-				r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
+				result = max( result, readPixel( coord + vec2( 0.0, -ringStep ) ) );\n\
+				result = max( result, readPixel( coord + vec2( ringStep, 0.0 ) ) );\n\
+				result = max( result, readPixel( coord + vec2( 0.0, ringStep ) ) );\n\
+				result = max( result, readPixel( coord + vec2( -ringStep, 0.0 ) ) );\n\
 			}\n\
-			return (result + r1 * c1 + r2 * c2 ) / ( 1.0 + 4.0 * ( c1 + c2 ) );\n\
+			if ( numRings >= 2.0 ) { \n\
+				float ringRadius = radius * 0.35; \n\
+				result = max( result, readPixel( coord + vec2( -ringRadius, -ringRadius ) ) );\n\
+				result = max( result, readPixel( coord + vec2( ringRadius, ringRadius ) ) );\n\
+				result = max( result, readPixel( coord + vec2( -ringRadius, ringRadius ) ) );\n\
+				result = max( result, readPixel( coord + vec2( ringRadius, -ringRadius ) ) );\n\
+			}\n\
+			return result;\n\
 		}";
 		features +=
-		"if ( fx == 4 ) { // blur \n\
-			src = areaSample( coord * texSize );\n\
-		} else if ( fx == 1 && fxRadiusFalloff.x > 0.0 ) { //outline \n\
-			vec4 smp = outlineSample( coord * texSize );\n\
-			src.rgb = mix( fxColor.rgb, src.rgb, src.a );\n\
-			src.a = color.a * step( 0.0001, max( smp.a, src.a ) );\n\
-		}";
+		"vec4 smp = outlineSample( coord * texSize - outlineOffsetRadius.xy );\n\
+		src.rgb = mix( outlineColor.rgb, src.rgb, src.a );\n\
+		if ( outlineOffsetRadius.z > 0 ) src.a = color.a * max( smp.a * outlineColor.a, src.a );\n\
+		else src.a = color.a * max( smp.a * outlineColor.a, src.a ) * ( 1.0 - src.a );";
 	}
 	
 	// add discarding when alpha = 0
@@ -711,8 +594,27 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		"if ( src.a == 0.0 ) discard; // for z-fighting sprites \n";
 	}
 	
+	// vertex shader
+	
 	// put it together
 	if ( glsles ) {
+		sprintf ( vertShader,
+		"#version %d\n\
+		precision mediump int;\nprecision mediump float;\n\
+		attribute vec2 gpu_Vertex;\n\
+		attribute vec2 gpu_TexCoord;\n\
+		attribute mediump vec4 gpu_Color;\n\
+		uniform mat4 gpu_ModelViewProjectionMatrix;\n\
+		varying mediump vec4 color;\n\
+		varying vec2 texCoord;\n\
+		%s \n\
+		void main(void){\n\
+			color = gpu_Color;\n\
+			texCoord = vec2( gpu_TexCoord.x, gpu_TexCoord.y );\n\
+			gl_Position = gpu_ModelViewProjectionMatrix * vec4(gpu_Vertex, 0.0, 1.0);\n\
+			%s \n\
+		}", renderer->min_shader_version, vertParams.c_str(), vertFeatures.c_str() );
+
 		sprintf( fragShader,
 		"#version %d\n\
 		precision mediump int;\nprecision mediump float;\n\
@@ -728,6 +630,23 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 			gl_FragColor = src;\n\
 		}", renderer->min_shader_version, params.c_str(), funcs.c_str(), features.c_str() );
 	} else {
+		sprintf ( vertShader,
+		"#version %d\n\
+		precision mediump int;\nprecision mediump float;\n\
+		in vec2 gpu_Vertex;\n\
+		in vec2 gpu_TexCoord;\n\
+		in vec4 gpu_Color;\n\
+		uniform mat4 gpu_ModelViewProjectionMatrix;\n\
+		out vec4 color;\n\
+		out vec2 texCoord;\n\
+		%s \n\
+		void main(void){\n\
+			color = gpu_Color;\n\
+			texCoord = vec2( gpu_TexCoord.x, gpu_TexCoord.y );\n\
+			gl_Position = gpu_ModelViewProjectionMatrix * vec4(gpu_Vertex, 0.0, 1.0);\n\
+			%s \n\
+		}", renderer->min_shader_version, vertParams.c_str(), vertFeatures.c_str() );
+		
 		sprintf( fragShader,
 		"#version %d\n\
 		in vec4 color;\n\
@@ -761,10 +680,8 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		variant.backgroundUniform = GPU_GetUniformLocation( variant.shader, "background" );
 		variant.backgroundSizeUniform = GPU_GetUniformLocation( variant.shader, "backgroundSize" );
 		variant.blendUniform = GPU_GetUniformLocation( variant.shader, "blendMode" );
-		variant.fxUniform = GPU_GetUniformLocation( variant.shader, "fx" );
-		variant.fxColorUniform = GPU_GetUniformLocation( variant.shader, "fxColor" );
-		variant.fxOffsetUniform = GPU_GetUniformLocation( variant.shader, "fxOffset" );
-		variant.fxRadiusFalloffUniform = GPU_GetUniformLocation( variant.shader, "fxRadiusFalloff" );
+		variant.outlineColorUniform = GPU_GetUniformLocation( variant.shader, "outlineColor" );
+		variant.outlineOffsetRadiusUniform = GPU_GetUniformLocation( variant.shader, "outlineOffsetRadius" );
 	} else {
 		printf ( "Shader error: %s\nin shaders[%zu]:\n%s\n%s\n", GPU_GetShaderMessage(), featuresMask, fragShader, vertShader );
 		exit(1);
@@ -775,59 +692,79 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 }
 
 /*
- funcs +=
- "vec4 areaSample( vec2 coord ){\n\
- vec4 result = readPixel( coord ); \n\
- vec4 accum; \n\
- float numRings = ceil( min( fxRadiusFalloff.x, 4.0 ) ); // num of rings to sample up to 4 \n\
- vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
- r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
- r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
- r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
- float c1 = 0, c2 = 0, c3 = 0, c4 = 0; \n\
- float ringStep = fxRadiusFalloff.x / numRings; \n\
- float ringRadius; \n\
- if ( numRings >= 4.0 ) { \n\
- ringRadius = ringStep * 4.0; \n\
- c4 = ( 1.0 - fxRadiusFalloff.y * 0.8 ); \n\
- r4 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
- r4 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
- r4 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
- r4 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
- r4 += readPixel( coord + vec2( 0.0, -ringStep ) );\n\
- r4 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
- r4 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
- r4 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
- }\n\
- if ( numRings >= 3.0 ) { \n\
- ringRadius = ringStep * 3.0; \n\
- c3 = ( 1.0 - fxRadiusFalloff.y * 0.6 ); \n\
- r3 = readPixel( coord + vec2( 0.0, -ringRadius ) );\n\
- r3 += readPixel( coord + vec2( ringRadius, 0.0 ) );\n\
- r3 += readPixel( coord + vec2( 0.0, ringRadius ) );\n\
- r3 += readPixel( coord + vec2( -ringRadius, 0.0 ) );\n\
- r3 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
- r3 += readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
- }\n\
- if ( numRings >= 2.0 ) { \n\
- ringRadius = ringStep * 2.0; \n\
- c2 = ( 1.0 - fxRadiusFalloff.y * 0.4 ); \n\
- r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
- r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
- r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
- r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
- r2 += readPixel( coord + vec2( 0.0, ringRadius ) );\n\
- r2 += readPixel( coord + vec2( ringRadius, 0.0 ) );\n\
- }\n\
- if ( numRings >= 1.0 ) { \n\
- c1 = ( 1.0 - fxRadiusFalloff.y * 0.2 ); \n\
- r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
- r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
- r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
- r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
- }\n\
- return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 4.0 * c1 + 6.0 * c2 + 6.0 * c3 + 8.0 * c4 );\n\
- }";
+		float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\
+		float noise(vec2 p) { \n\
+			vec2 ip = floor(p); \n\
+			vec2 u = fract(p); \n\
+			u = u*u*(3.0-2.0*u); \n\
+			float res = mix(mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x), mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y); \n\
+			return res*res; \n\
+		} \n\
+		vec2 randVecOffset( float nx, float ny, float dist ) { \n\
+			float n = 6.283 * rand( vec2( nx, ny ) + gl_FragCoord.xy );\n\
+			return dist * vec2( cos( n ), sin( n ) );\n\
+		}\n\
+		vec4 areaSample( vec2 coord ){\n\
+			float numRings = 1.0 + ceil( min( fxRadiusFalloff.x / 2.0, 4.0 ) ); // num of rings to sample up to 4 \n\
+			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			float c1 = 0.0, c2 = 0.0, c3 = 0.0, c4 = 0.0; \n\
+			float ringStep = fxRadiusFalloff.x / numRings; \n\
+			float ringRadius; \n\
+			vec4 result = readPixel( coord + randVecOffset( gl_FragCoord.x, -gl_FragCoord.y, ringStep * 0.5 ) ); \n\
+			if ( numRings >= 2.0 ) { \n\
+				ringRadius = ringStep; \n\
+				c1 = ringRadius / fxRadiusFalloff.x; \n\
+				r1 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r1 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 3.0 ) { \n\
+				ringRadius = ringStep * 2.0; \n\
+				c2 = ringRadius / fxRadiusFalloff.x; \n\
+				r2 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 4.0 ) { \n\
+				ringRadius = ringStep * 3.0; \n\
+				c3 = ringRadius / fxRadiusFalloff.x; \n\
+				r3 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r3 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 5.0 ) { \n\
+				ringRadius = ringStep * 4.0; \n\
+				c4 = ringRadius / fxRadiusFalloff.x; \n\
+				r4 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
+				r4 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
+			}\n\
+			return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 2.0 * ( c1 + c2 + c3 + c4 ) );\n\
+		}\n\
+		vec4 outlineSample( vec2 coord ){\n\
+			vec4 result = readPixel( coord ); \n\
+			float numRings = fxRadiusFalloff.x >= 2.0 ? 2.0 : 1.0;\n\
+			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
+				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
+			float c1 = 0, c2 = 0; \n\
+			float ringStep = fxRadiusFalloff.x / numRings; \n\
+			float ringRadius; \n\
+			if ( numRings >= 2.0 ) { \n\
+				ringRadius = fxRadiusFalloff.x * 0.7; \n\
+				c2 = 1.0;\n\
+				r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
+				r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
+			}\n\
+			if ( numRings >= 1.0 ) { \n\
+				c1 = 1.0; \n\
+				r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
+				r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
+				r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
+				r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
+			}\n\
+			return (result + r1 * c1 + r2 * c2 ) / ( 1.0 + 4.0 * ( c1 + c2 ) );\n\
+		}";
 */
 
 
@@ -857,3 +794,5 @@ bool RenderBehavior::CompileShader( Uint32& outShader, GPU_ShaderBlock& outShade
 	outShaderBlock = GPU_LoadShaderBlock( outShader, "gpu_Vertex", "gpu_TexCoord", "gpu_Color", "gpu_ModelViewProjectionMatrix" );
 	return true;
 }
+
+//float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\
