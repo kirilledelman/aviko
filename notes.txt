@@ -1,11 +1,16 @@
+Propertylist
+null field - show as dropdown, add config option: "null", "new Type1", "new Type2" etc with callbacks
+.showFunctions - bool ? show functions in a separate group in the end ?
+
+
 
 
 ScriptableObject
 	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
-
+	change serializeMask to TypedArray<string>
 
 GameObject
-	GameObject.getChildrenInside( x,y,w,h ) - will be used to pick objects in editor
+	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash
 	updating z, or inserting/removing children should set _zOrderDirty on parent
 	_zSortedChildren array holds children
 	Render method should keep _zSortedChildren updated, draw in order
@@ -14,9 +19,6 @@ GameObject
 Make sure all focusable components listen for Tab and Shift+Tab
 
 
-Propertylist
-	.showFunctions - bool
-	show functions in a separate group in the end
 
 Scrollbar
 	.minusButton, .plusButton - add disabling, and paging handler funcs
@@ -33,7 +35,6 @@ Top level / Application
 	Normalize error messages, add verbosity
 	Remove unnecessary printfs
 	'quit' event - dispatched right before exiting.
-	'log' - if event is stopped, don't printf, otherwise do.
 
 
 

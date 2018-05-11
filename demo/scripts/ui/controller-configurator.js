@@ -70,7 +70,7 @@
 			// called after controller has been configured
 			// or was configured previously
 			// can use this callback to add new player into game
-			// or ensure controller is available and ready
+			// or confirm that controller is available and ready
 		}
 
 	Methods:

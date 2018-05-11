@@ -21,6 +21,7 @@ new (function (){
 		align: TextAlign.Center,
 		marginBottom: 20,
 		text: "Aviko Demo",
+		bold: true,
 		name: "Title",
 	} );
 
@@ -35,9 +36,6 @@ new (function (){
 		"shows some of Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks.",
 		name: "Intro",
 	} );
-
-	// scene.addChild( 'ui/checkbox', { text: 'False' });
-
 
 	// buttons container
 	var buttons = scene.addChild( 'ui/panel', {
@@ -116,7 +114,6 @@ new (function (){
 
 	scene.addChild( 'ui/button', {
 		text: "Exit",
-		icon: "/scripts/ui/textures/ui:icon-cancel",
 		click: function () {
 			quit();
 		}

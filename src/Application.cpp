@@ -69,6 +69,10 @@ Application::Application() {
 	// register classes
 	this->InitClass();
 	
+	// overlay
+	this->overlay = new GameObject( NULL );
+	this->overlay->orphan = false;
+	
 	// begin terminal capture
 	struct termios newt;
 	tcgetattr(STDIN_FILENO, &_savedTerminal);
@@ -290,6 +294,10 @@ void Application::InitClass() {
 		return val;
 	 })
     );
+	
+	script.AddProperty<Application>
+	("overlay",
+	 static_cast<ScriptObjectCallback>([](void* self, void* val ){ return app.overlay->scriptObject; }) );
 	
 	script.AddProperty<Application>
 	("time", static_cast<ScriptFloatCallback>([](void* self, float v ) { return app.time; }) );
@@ -879,7 +887,7 @@ void Application::GarbageCollect() {
 	soundManager.UnloadUnusedResources();
 	
 	// done
-	printf( "GC performed\n" );
+	// printf( "GC performed\n" );
 }
 
 void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -887,6 +895,9 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	for ( size_t i = 0, ns = this->sceneStack.size(); i < ns; i++ ){
 		protectedObjects.push_back( &sceneStack[ i ]->scriptObject );
 	}
+	
+	// protect overlay
+	protectedObjects.push_back( &overlay->scriptObject );
 	
 	// add debouncers and asyncs
 	AsyncMap::iterator it = scheduledAsyncs->begin();

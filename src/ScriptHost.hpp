@@ -739,7 +739,7 @@ public:
 	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
+		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
 		GetterSetter gs( TypeFloat, flags ); gs.Init( &getter );

@@ -50,6 +50,8 @@ public:
 	
 // ui
 	
+	void GetLocalBounds( float& x, float& y, float& w, float& h );
+	
 	GPU_Rect GetBounds();
 	
 	/// UIs without layout handler will call this on gameObject's render component

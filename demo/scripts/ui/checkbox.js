@@ -27,7 +27,7 @@ include( './ui' );
 	var checkbox;
 	var label;
 	var disabled = false;
-	var checked = false;
+	var checked = undefined;
 	var cancelToBlur = false;
 	var group = null;
 	var constructing = true;
@@ -38,19 +38,20 @@ include( './ui' );
 
 		// (Boolean) space between icon and label
 		[ 'checked', function (){ return checked; }, function ( v ){
-			if ( group ) {
-				if ( v ) {
-					// uncheck other
-					for ( var i = 0; i < group.length; i++ ) {
-						if ( group[ i ] == go ) continue;
-						group[ i ].checked = false;
+			if ( checked != v ) {
+				if ( group ) {
+					if ( v ) {
+						// uncheck other
+						for ( var i = 0; i < group.length; i++ ) {
+							if ( group[ i ] == go ) continue;
+							group[ i ].checked = false;
+						}
 					}
 				}
+				checked = v;
+				if ( !constructing ) go.fire( 'change', checked );
+				if ( checkbox.image ) checkbox.image.opacity = checked ? 1 : 0;
 			}
-			checked = v;
-			if ( !constructing ) go.fire( 'change', checked );
-			if ( checkbox.image ) checkbox.image.opacity = checked ? 1 : 0;
-
 		} ],
 
 		// (String) text on button

@@ -49,6 +49,7 @@ include( './ui' );
 	var maxValue = Infinity;
 	var step = 1.0;
 	var constructing = true;
+	var canScrollUnfocused = false;
 	var allowed = null, pattern = null;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
@@ -106,6 +107,12 @@ include( './ui' );
 		// (Boolean) clicking outside control will blur the control
 		[ 'blurOnClickOutside',  function (){ return blurOnClickOutside; }, function ( cb ){ blurOnClickOutside = cb; } ],
 
+		// (Boolean) allows mousewheel to scroll field without being focused in it
+		[ 'canScrollUnfocused',  function (){ return canScrollUnfocused; }, function ( u ){ canScrollUnfocused = u; } ],
+
+		// (Number) current position of caret ( from 0 to text.positionLength() )
+		[ 'caretPosition',  function (){ return rt.caretPosition; }, function ( p ){ rt.caretPosition = p; go.scrollCaretToView(); } ],
+
 		// (Boolean) turns display of caret and selection on and off (used by focus system)
 		[ 'editing',  function (){ return editing; }, function ( e ){
 			if ( e != editing ) {
@@ -118,7 +125,6 @@ include( './ui' );
 						touched = true;
 					}
 					rt.showCaret = true;
-				    rt.showSelection = selectable;
 				    rt.formatting = false;
 					resetText = rt.text;
 					if ( selectAllOnFocus && selectable ) {
@@ -126,7 +132,7 @@ include( './ui' );
 				    }
 					go.fire( 'editStart' );
 				} else {
-					rt.showCaret = rt.showSelection = ui.dragSelect = false;
+					rt.showCaret = ui.dragSelect = false;
 				    rt.formatting = formatting;
 				    rt.scrollLeft = 0;
 					if ( numeric ) go.value = go.value;
@@ -260,6 +266,21 @@ include( './ui' );
 			go.scrollCaretToView();
 		}, true ],
 
+		// (Number) scrollable height
+		[ 'scrollHeight',  function (){ return rt.scrollHeight; } ],
+
+		// (Number) scrollable width
+		[ 'scrollWidth',  function (){ return rt.scrollHeight; } ],
+
+		// (Number) vertical scroll offset
+		[ 'scrollTop',  function (){ return rt.scrollTop; }, function ( v ){ rt.scrollTop = v; }, true ],
+
+		// (Number) horizontal scroll offset
+		[ 'scrollLeft',  function (){ return rt.scrollLeft; }, function ( v ){ rt.scrollLeft = v; }, true ],
+
+		// (Number) scrollable width
+		[ 'scrollWidth',  function (){ return rt.scrollHeight; } ],
+
 		// (Boolean) auto grow / shrink vertically multiline field
 		[ 'autoGrow',  function (){ return autoGrow; }, function ( v ){
 			rt.multiLine = rt.multiLine || v;
@@ -359,6 +380,8 @@ include( './ui' );
 	// remove input focus from control
 	go[ 'blur' ] = function () { ui.blur(); }
 
+	go[ 'scrollToBottom' ] = function () { rt.scrollLeft = 0; rt.scrollTop = (rt.scrollHeight > rt.height ? (rt.scrollHeight - rt.height) : 0); }
+
 	// create components
 
 	// set name
@@ -375,6 +398,7 @@ include( './ui' );
 	tc = new GameObject();
 	rt = new RenderText();
 	rt.autoResize = false;
+	rt.showSelection = true;
 	tc.render = rt;
 	tc.serialized = false;
 
@@ -508,7 +532,7 @@ include( './ui' );
 		var canScroll = (rt.scrollHeight > rt.height || rt.scrollWidth > rt.width);
 
 		// ignore if not focused
-		if ( !canScroll || !ui.focused ) return;
+		if ( !canScroll || ( !canScrollUnfocused && !ui.focused ) ) return;
 
 		var st = rt.scrollTop, sl = rt.scrollLeft;
 
@@ -548,12 +572,7 @@ include( './ui' );
 	// mouse down
 	ui.mouseDown = function ( btn, x, y ) {
 
-		// ignore if disabled
-		if ( disabled ) {
-			// focus & return
-		    ui.focus();
-			return;
-		}
+		if ( btn != 1 ) return;
 
 		// offset by padding
 		x -= ui.padLeft; y -= ui.padTop;
@@ -569,7 +588,7 @@ include( './ui' );
 
 		// mouse always starts editing
 		go.focus();
-		go.editing = true;
+		if ( !disabled ) go.editing = true;
 
 		// double clicked word
 		var newMouseDownTime = new Date();
@@ -591,12 +610,16 @@ include( './ui' );
 			ui.dragSelect = true;
 			Input.on( 'mouseMove', ui.mouseMoveGlobal );
 		}
+
+		stopAllEvents();
 	}
 
 	// mouse release
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y ) {
+		if ( btn != 1 ) return;
 		ui.dragSelect = null;
 		Input.off( 'mouseMove', ui.mouseMoveGlobal );
+		//stopEvent();
 	};
 
 	// mouse move while holding down
@@ -709,7 +732,7 @@ include( './ui' );
 	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
 
 		// if not editing, ignore all except Tab, Enter, and Escape
-		if ( !editing && code != Key.Tab && code != Key.Enter && code != Key.Escape ) code = 0;
+		// if ( !editing && code != Key.Tab && code != Key.Enter && code != Key.Escape ) code = 0;
 
 		// ready
 		ui.dragSelect = false;
@@ -739,13 +762,12 @@ include( './ui' );
 
 	        case Key.Return:
 		        if ( editing ) {
-			        if ( rt.multiLine ) {
+			        if ( rt.multiLine && ( ( autoGrow && ( shift || alt ) ) || ( !autoGrow && ( ctrl || meta ) ) ) ) {
 				        ui.keyPress( "\n" ); // newline in multiline box
 			        } else {
 				        // text changed?
 				        if ( txt != resetText ) go.fire( 'change', go.value );
 				        go.editing = false;
-				        stopEvent();
 			        }
 		        } else {
 			        ui.navigation( 'accept' );
@@ -764,11 +786,11 @@ include( './ui' );
 	            break;
 
 	        case Key.Backspace:
-	            ui.keyPress( -1, -1 );
+	            if ( editing ) ui.keyPress( -1, -1 );
 	            break;
 
 	        case Key.Delete:
-	            ui.keyPress( -1, 1 );
+	            if ( editing ) ui.keyPress( -1, 1 );
 	            break;
 
 	        case Key.Left:
@@ -789,7 +811,7 @@ include( './ui' );
 						rt.selectionEnd = ( rt.caretPosition += increment );
 					}
 				// move caret
-				} else {
+				} else if ( editing ) {
 					if ( !haveSelection ) rt.caretPosition += increment;
 					rt.selectionStart = rt.selectionEnd;
 				}
@@ -808,7 +830,7 @@ include( './ui' );
 						rt.selectionEnd = rt.caretPositionAt ( 9999, rt.caretY );
 					}
 				// move caret
-				} else {
+				} else if ( editing ) {
 					if ( !haveSelection ) rt.caretPosition = rt.caretPositionAt ( ( code == Key.Home ? -9999 : 9999 ), rt.caretY );
 					rt.selectionStart = rt.selectionEnd;
 				}
@@ -817,6 +839,8 @@ include( './ui' );
 
 			case Key.Up:
 			case Key.Down:
+				if ( !editing ) break;
+
 				// numeric
 				if ( numeric ) {
 					go.value += ( code == Key.Up ? step : -step ) * ( shift ? 10 : 1 );
@@ -869,10 +893,9 @@ include( './ui' );
                 break;
 
 		    case Key.V:
-			    if ( typeof( UI.clipboard ) == 'string' ){
+			    if ( typeof( UI.clipboard ) === 'string' ){
 					ui.keyPress( UI.clipboard );
 				    go.fire( 'paste', UI.clipboard );
-
 			    }
 			    break;
 	    }

@@ -176,13 +176,13 @@ new (function (){
 					{ name: "Flip", properties: [ 'flipX', 'flipY' ] },
 					{ name: "Tile texture", properties: [ 'tileX', 'tileY' ] }
 				];
-
 				break;
 			case 2:
 				description.text = "Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.";
 				props.properties = {
-					'color': true,
+					'color': { inline: true },
 					'addColor': {
+						inline: true,
 						properties: {
 							'r': { min: 0, max: 1, step: 0.1 },
 							'g': { min: 0, max: 1, step: 0.1 },
@@ -209,7 +209,7 @@ new (function (){
 						{ text: "Refract", value: BlendMode.Refract },
 						{ text: "Cut", value: BlendMode.Cut },
 					] },
-					'outlineColor': { hidden: function( t ){ return (t.outlineRadius === 0); } },
+					'outlineColor': { inline: true, hidden: function( t ){ return (t.outlineRadius === 0); } },
 					'outlineOffsetX': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
 					'outlineOffsetY': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
 					'outlineRadius': { min: -16, max: 16, step: 1 },
@@ -235,9 +235,6 @@ new (function (){
 					{ name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ]},
 					{ name: "Size", properties: [ 'width', 'height' ]}
 				];
-				sprite.update = null;
-				sprite.angle = 0;
-
 				break;
 
 		}

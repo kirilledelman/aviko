@@ -272,7 +272,7 @@
 		71E793911FC47DAD0026ABCB /* Image.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Image.hpp; path = src/Image.hpp; sourceTree = "<group>"; };
 		71EB81A61F803BDF0087F25B /* makefile-opi */ = {isa = PBXFileReference; lastKnownFileType = text; path = "makefile-opi"; sourceTree = "<group>"; };
 		71EB81A71F803BDF0087F25B /* makefile-rpi */ = {isa = PBXFileReference; lastKnownFileType = text; path = "makefile-rpi"; sourceTree = "<group>"; };
-		71F343331F950B5D00A850A4 /* documentation.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = documentation.txt; sourceTree = "<group>"; };
+		71F343331F950B5D00A850A4 /* debugger.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = debugger.txt; sourceTree = "<group>"; };
 		71F4846D1F814B9300AF17EA /* Box2D.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Box2D.h; sourceTree = "<group>"; };
 		71F484701F814B9300AF17EA /* b2BroadPhase.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = b2BroadPhase.cpp; sourceTree = "<group>"; };
 		71F484711F814B9300AF17EA /* b2BroadPhase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = b2BroadPhase.h; sourceTree = "<group>"; };
@@ -464,7 +464,7 @@
 			isa = PBXGroup;
 			children = (
 				7194130D1F48887B0066EF3D /* notes.txt */,
-				71F343331F950B5D00A850A4 /* documentation.txt */,
+				71F343331F950B5D00A850A4 /* debugger.txt */,
 				71EB81A61F803BDF0087F25B /* makefile-opi */,
 				71EB81A71F803BDF0087F25B /* makefile-rpi */,
 				71BD96471FFBF44400F3919E /* demo */,

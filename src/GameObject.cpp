@@ -14,6 +14,11 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 	// add scriptObject
 	script.NewScriptObject<GameObject>( this );
 	
+	// event mask
+	this->eventMask = new TypedVector( NULL );
+	ArgValue dv( "String" );
+	this->eventMask->InitWithType( dv );
+	
 	// string argument - script name, obj argument - init object
 	if ( args && args->args.size() >= 1) {
 		// string - script name
@@ -181,6 +186,15 @@ void GameObject::InitClass() {
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((GameObject*) b)->renderAfterChildren; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((GameObject*) b)->renderAfterChildren = val ); }) );
 	
+	script.AddProperty<GameObject>
+	( "eventMask",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((GameObject*) b)->eventMask->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		GameObject* rb = (GameObject*) b;
+		rb->eventMask->Set( val );
+		return ArgValue( rb->eventMask->scriptObject );
+	}),
+	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE );
 	
 	script.AddProperty<GameObject>
 	( "x",
@@ -960,8 +974,20 @@ void GameObject::InitClass() {
 /// calls event handlers on each behavior, then script event listeners on gameObject. Recurses to active children.
 void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallback *forEachGameObject ) {
 	
+	// event mask
+	if ( this->eventMask ) {
+		vector<string>* emask = this->eventMask->ToStringVector();
+		size_t numEventMask = emask->size();
+		if ( numEventMask > 0 ) {
+			for ( size_t i = 0; i < numEventMask; i++ ) {
+				// masked, ignore
+				if ( (*emask)[ i ].compare( event.name ) == 0 ) return;
+			}
+		}
+	}
+	
 	// if a lambda callback is provided, call it
-	if ( forEachGameObject != NULL ) (*forEachGameObject)( this );
+	if ( forEachGameObject != NULL ) if ( !(*forEachGameObject)( this ) ) return;
 	
 	// call on self first
 	if ( !event.bubbles && callOnSelf ) {
@@ -1004,7 +1030,7 @@ void GameObject::CallEvent( Event &event ) {
 	}
 	
 	// dispatches script events on this object
-	if ( !event.stopped ) ScriptableClass::CallEvent( event );
+	if ( !event.stopped && !event.behaviorsOnly ) ScriptableClass::CallEvent( event );
 }
 
 /// returns ArgValueVector with each behavior's scriptObject
@@ -1031,6 +1057,24 @@ ArgValueVector* GameObject::SetBehaviorsVector( ArgValueVector* in ) {
 	return in;
 }
 
+///
+bool GameObject::Traverse( GameObjectCallback *forEachGameObject ) {
+	
+	// if a lambda callback is provided, call it
+	if ( forEachGameObject != NULL ) if ( !(*forEachGameObject)( this ) ) return false;
+	
+	// for each child
+	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
+		GameObject* obj = (GameObject*) this->children[ i ];
+		if ( obj->active() ) {
+			if ( !obj->Traverse( forEachGameObject ) ) return false;
+		}
+	}
+	
+	return true;
+}
+
+
 
 /* MARK:	-				Garbage collection
  -------------------------------------------------------------------- */
@@ -1048,6 +1092,8 @@ void GameObject::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 	}
 	// parent
 	if ( this->parent ) protectedObjects.push_back( &parent->scriptObject );
+	// event mask
+	protectedObjects.push_back( &this->eventMask->scriptObject );
 	
 	// call super
 	ScriptableClass::TraceProtectedObjects( protectedObjects );
@@ -1099,7 +1145,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 		this->parent = newParent;
 		
 		// callback for orphaning
-		GameObjectCallback makeOrphan = [](GameObject *obj) { obj->orphan = true; };
+		GameObjectCallback makeOrphan = [](GameObject *obj) { obj->orphan = true; return true; };
 		
 		// add to new parent
 		if ( newParent ) {
@@ -1141,7 +1187,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 				} else {
 					
 					// means this object has been added to scene, dispatch event and set orphan values on descendents
-					GameObjectCallback moveToScene = [](GameObject *obj) { obj->orphan = false; };
+					GameObjectCallback moveToScene = [](GameObject *obj) { obj->orphan = false; return true; };
 					event.name = EVENT_ADDED_TO_SCENE;
 					this->DispatchEvent( event, true, &moveToScene );
 					
@@ -1171,6 +1217,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 
 /// finds scene this object is attached to
 Scene* GameObject::GetScene() {
+	if ( this == app.overlay && app.sceneStack.size() ) return app.sceneStack.back();
 	if ( this->orphan || !this->parent ) return NULL;
 	return this->parent->GetScene();
 }
@@ -1915,6 +1962,12 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 	outY = isnan(res[ 13 ]) ? 0 : res[ 13 ];
 }
 
+GPU_Rect GameObject::GetBounds(){
+	if ( this->ui ) return { 0, 0, this->ui->layoutWidth, this->ui->layoutHeight };
+	if ( this->render ) return this->render->GetBounds(); // TODO - shape bounds arent implemented
+	GPU_Rect r = { 0, 0, 0, 0 };
+	return r;
+}
 
 // force recalculate matrices on this object + all descendents
 void GameObject::DirtyTransform() {

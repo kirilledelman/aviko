@@ -339,6 +339,38 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
+	// window - ui/window.js
+	window: {
+
+		background: 0xA0A0A0,
+		cornerRadius: 4,
+		pad: [ 30, 6, 6, 6 ],
+
+		// ui/panel.js instance
+		header: {
+			pad: 2,
+			background: 0x004b7a,
+			marginBottom: 4,
+			cornerRadius: 4,
+			minHeight: 30,
+		},
+
+		// ui/text.js instance
+		titleText: {
+			color: 0xFFFFFF,
+			size: 12,
+			pad: 4,
+			bold: true,
+		},
+
+		// ui/button.js
+		closeButton: {
+			pad: [ 0, 4, 0, 4 ],
+			size: 12,
+			text: "X",
+		}
+	},
+
 	// property list for editors (ui/property-list.js)
 	propertyList: {
 
@@ -565,6 +597,9 @@ UI.base = UI.base ? UI.base : {
 			// (Boolean) if true, parent will ignore this element while performing layout
 			[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
 
+			// (Boolean) reverse child layout order
+			[ 'reversed',  function (){ return ui.reversed; }, function ( v ){ ui.reversed = v; } ],
+
 			// (Number) minimum width allowed by layout
 			[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
 
@@ -744,7 +779,7 @@ UI.base = UI.base ? UI.base : {
 
 		// focus rectangle focus change callback
 		function _focusChangedRect( nf ) {
-			if ( this.focusRect.active = (nf == this) ){
+			if ( this.focusRect && (this.focusRect.active = (nf == this)) ){
 				this.focusRect.dispatch( 'layout' );
 			}
 		};

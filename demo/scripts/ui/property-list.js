@@ -46,7 +46,7 @@ include( './ui' );
 	var topPropertyList = go;
 	var groups = [];
 	var allFields = [];
-	var updateInterval = 0;
+	// var updateInterval = 0;
 	var constructing = true;
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
@@ -111,14 +111,14 @@ include( './ui' );
 		}],
 
 		// (Number) automatically refresh displayed properties every updateInterval seconds
-		[ 'updateInterval',  function (){ return updateInterval; }, function ( v ) {
+		/* [ 'updateInterval',  function (){ return updateInterval; }, function ( v ) {
 			updateInterval = v;
 			if ( updateInterval > 0 ) {
 				go.debounce( 'reload', go.reload, updateInterval );
 			} else {
 				go.clearDebouncer( 'reload' );
 			}
-		}],
+		}],*/
 
 		// (Boolean) disable all fields
 		[ 'disabled',  function (){ return disabled; }, function ( v ) {
@@ -204,6 +204,7 @@ include( './ui' );
 
 	// recreates controls
 	go.refresh = function () {
+		log( "refresh" );
 		// set up container
 		var cont = go;
 		if ( shouldScroll ) {
@@ -236,6 +237,10 @@ include( './ui' );
 		// remove previous elements
 		cont.removeAllChildren();
 		cont.ui.height = cont.ui.minHeight = 0;
+		for ( var i in allFields ) {
+			var trg = allFields[ i ].target;
+			if ( trg ) trg.unwatch( allFields[ i ].name );
+		}
 		allFields.length = 0;
 
 		// configure / merge properties with config in
@@ -376,6 +381,7 @@ include( './ui' );
 				if ( i == 0 ) groupTitle.marginTop = 0;
 			}
 			// for each property
+			var propertyInfo;
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
 				var pdef = _properties[ pname ] || {};
@@ -399,6 +405,9 @@ include( './ui' );
 
 				// check for enumeration
 				if ( pdef.enum !== undefined ) fieldType = 'enum';
+
+				// get property info
+				propertyInfo = Object.getOwnPropertyDescriptor( curTarget, pname );
 
 				// create appropriate control
 				switch ( fieldType ) {
@@ -473,39 +482,53 @@ include( './ui' );
 							this.toggleState = this.propList.active = !this.propList.active;
 							this.image.imageObject.angle = (this.propList.active ? 0 : -90);
 						}
+						function pushToTarget() {
+							// TODO - push pop
+							go.target = this.fieldValue;
+						}
+						var inline = ( pdef && pdef.inline );
 						button = cont.addChild( './button', {
-							text: String( fieldValue.constructor ? fieldValue.constructor.name : fieldValue ) + '...',
 							fieldValue: fieldValue,
+							name: pname,
 							wrapEnabled: false,
 							minWidth: valueWidth,
 							disabled: (disabled || ( pdef && pdef.disabled )),
-							click: togglePropList,
 							target: curTarget,
 							style: go.baseStyle.values.any,
 							toggleState: !!pdef.expanded
 						} );
 						button.style = go.baseStyle.values.object;
-
-						// embedded inspector
-						field = cont.addChild( './property-list', {
-							flex: 1,
-							scrollable: false,
-							forceWrap: true,
-							active: !!pdef.expanded,
-							style: go.baseStyle.values.any,
-							fieldButton: button,
-						} );
-						field.style = go.baseStyle.values.inline;
-						field.valueWidth = valueWidth - field.marginLeft; // indent
-						if ( pdef.showAll !== undefined ) field.showAll = pdef.showAll;
-						if ( pdef.properties !== undefined ) field.properties = pdef.properties;
-						if ( pdef.groups !== undefined ) field.groups = pdef.groups;
-						field.target = fieldValue;
-						button.image.imageObject.angle = (field.active ? 0 : -90);
+						if ( inline ) {
+							button.click = togglePropList;
+							button.text = String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ) + '...',
+							// embedded inspector
+							field = cont.addChild( './property-list', {
+								name: pname,
+								flex: 1,
+								scrollable: false,
+								forceWrap: true,
+								active: !!pdef.expanded,
+								style: go.baseStyle.values.any,
+								fieldButton: button,
+							} );
+							field.style = go.baseStyle.values.inline;
+							field.valueWidth = valueWidth - field.marginLeft; // indent
+							if ( pdef.showAll !== undefined ) field.showAll = pdef.showAll;
+							if ( pdef.properties !== undefined ) field.properties = pdef.properties;
+							if ( pdef.groups !== undefined ) field.groups = pdef.groups;
+							field.target = fieldValue;
+							button.image.imageObject.angle = (field.active ? 0 : -90);
+							button.propList = field;
+						} else {
+							button.text = String( fieldValue );
+							button.click = pushToTarget;
+							button.image.imageObject.angle = -90;
+							button.label.flex = 1;
+							button.reversed = true;
+							field = button;
+						}
 
 						// button
-						button.propList = field;
-						button.image.flipY = field.active;
 
 						break;
 					default:
@@ -523,9 +546,10 @@ include( './ui' );
 				}
 				// common properties
 				if ( field ) {
+					field.type = typeof( fieldValue );
 					field.pdef = pdef;
 					field.fieldLabel = label;
-					if ( disabled || ( pdef && pdef.disabled ) ) field.disabled = true;
+					if ( disabled || ( pdef && pdef.disabled ) || ( propertyInfo && !propertyInfo.writable ) ) field.disabled = true;
 					if ( typeof( pdef.style ) === 'object' ) {
 						UI.base.applyProperties( field, pdef.style );
 					}
@@ -540,6 +564,7 @@ include( './ui' );
 						}
 					}
 					allFields.push( field );
+					curTarget.watch( field.name, debounceReload );
 				}
 
 				numRows++;
@@ -566,10 +591,24 @@ include( './ui' );
 
 	}
 
+	function debounceReload( p, ov, v ) {
+		go.debounce( 'reload', go.reload, 0.5 );
+		return v;
+	}
+
 	go.fieldChanged = function ( val ) {
 
+		log( "field changed", this.name, val );
+
+		// type changed
+		if ( this.type != typeof( val ) ) {
+			log( "field changed, type changed: ", this.type, typeof( val ) );
+			go.async( go.refresh );
+			return;
+		}
+
 		// update label
-		if ( typeof ( this.target[ this.name ] ) == 'boolean' ) {
+		if ( typeof ( this.target[ this.name ] ) === 'boolean' ) {
 			this.text = ( val ? "True" : "False" );
 		}
 
@@ -579,19 +618,27 @@ include( './ui' );
 
 		// fire changed
 		go.fire( 'change', this.target, this.name, val, oldVal );
-		go.debounce( 'reload', go.reload );
+		// go.debounce( 'reload', go.reload );
 
 	}
 
 	// refreshes properties values in rows from target
 	go.reload = function () {
 
-		if ( !target || !go.scene ) return;
+		if ( !target ) return;
 
 		// update fields
 		for ( var i in allFields ) {
 			var field = allFields[ i ];
 			var pdef = field.pdef;
+			var val = field.target ? field.target[ field.name ] : null;
+			var tp = typeof( val ) ;
+			// type changed? refresh
+			if ( field.type !== tp ) {
+				log( "reload, type changed: ", field.type, '!=', tp, "/", field.name );
+				go.async( go.refresh );
+				return;
+			}
 			// have def
 			if ( pdef !== undefined ) {
 				// have conditional hiding - apply
@@ -606,8 +653,6 @@ include( './ui' );
 			}
 			// skip focused and hidden fields
 			if ( field.focused || !field.active ) continue;
-			var val = field.target[ field.name ];
-			var tp = typeof( val ) ;
 			if ( tp == 'object' && field.reload ) {
 				field.reload();
 			} else if ( tp == 'boolean' ) {
@@ -619,7 +664,7 @@ include( './ui' );
 		}
 
 		// schedule update
-		if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
+		// if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
 
 	}
 
@@ -634,7 +679,7 @@ include( './ui' );
 	// restart auto refresh on adding to scene
 	go.on( 'addedToScene', function() {
 		// schedule update
-		if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
+		// if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
 	} );
 
 	// apply defaults

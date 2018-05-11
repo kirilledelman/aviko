@@ -378,6 +378,9 @@ bool Image::FromDataURL( string &s ) {
 		GPU_FreeImage( this->image );
 	}
 	this->image = img;
+	GPU_UnsetImageVirtualResolution( img );
+	GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
+	GPU_SetSnapMode( img, GPU_SNAP_NONE );
 	this->width = this->image->base_w;
 	this->height = this->image->base_h;
 	return true;

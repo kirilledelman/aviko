@@ -39,6 +39,7 @@ public:
 	void SetInt( int clr, bool withAlpha );
 	
 	static void FromInt( int clr, float &r, float &g, float &b );
+	static void FromHex( string& clr, float &r, float &g, float &b, float &a );
 	
 	/// returns hexadecimal RRGGBBAA integer value as string
 	string GetHex();

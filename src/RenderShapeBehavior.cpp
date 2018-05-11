@@ -452,6 +452,13 @@ bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, flo
 	
 }
 
+// returns sprite bounding box
+GPU_Rect RenderShapeBehavior::GetBounds() {
+	GPU_Rect rect = { 0, 0, 0, 0 };
+	// TODO
+	return rect;
+}
+
 void RenderShapeBehavior::Resize( float w, float h ) {
 	
 	// TODO - better resize for shapes

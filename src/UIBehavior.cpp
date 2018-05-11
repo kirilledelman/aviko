@@ -479,6 +479,18 @@ void UIBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<UIBehavior>
+	( "reversed",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->layoutReversed; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
+		UIBehavior* ui = (UIBehavior*) b;
+		if ( ui->layoutReversed != val ) {
+			ui->layoutReversed = val;
+			ui->RequestLayout( ArgValue( "reversed" ) );
+		}
+		return ui->layoutReversed;
+	}));
+	
+	script.AddProperty<UIBehavior>
 	( "wrapEnabled",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->wrapEnabled; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
@@ -851,7 +863,7 @@ void UIBehavior::InitClass() {
 bool UIBehavior::Focus() {
 	
 	// if can't be focused, return
-	if ( !this->focusable || !this->scene || !this->gameObject || this->gameObject->orphan ) return false;
+	if ( !this->focusable || !this->gameObject || ( this->gameObject != app.overlay && !this->scene ) || this->gameObject->orphan ) return false;
 	
 	// get current focus
 	UIBehavior* current = this->scene->focusedUI;
@@ -1081,11 +1093,19 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	
 	// collect children with active UI component
 	vector<UIBehavior*> childUIs;
-	for ( size_t i = 0, nc = behavior->gameObject->children.size(); i < nc; i++ ){
-		UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
-		if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() && !ui->fixedPosition ) childUIs.push_back( ui );
+	size_t numChildrenUIs = behavior->gameObject->children.size();
+	childUIs.reserve( numChildrenUIs );
+	if ( behavior->layoutReversed ) {
+		for ( int i = (int) numChildrenUIs - 1; i >= 0; i-- ){
+			UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
+			if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() && !ui->fixedPosition ) childUIs.push_back( ui );
+		}
+	} else {
+		for ( size_t i = 0; i < numChildrenUIs; i++ ){
+			UIBehavior* ui = behavior->gameObject->children[ i ]->ui;
+			if ( ui != NULL && ui->Behavior::active() && ui->gameObject->active() && !ui->fixedPosition ) childUIs.push_back( ui );
+		}
 	}
-	
 	// call appropriate layout function
 	switch ( behavior->layoutType ) {
 		case LayoutType::None:

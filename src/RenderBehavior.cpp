@@ -502,7 +502,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb; // burn \n\
 		else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb); // dodge\n\
 		else if ( blendMode == 7 ) { // invert \n\
-			src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb ) * (vec3(1.0,1.0,1.0) - src.rgb);\n\
+			src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb );\n\
 		} else if ( blendMode == 8 ) { // colorize \n\
 			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
 			vec3 srcHSV = rgb2hsv( src.rgb ); \n\

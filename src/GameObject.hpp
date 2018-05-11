@@ -7,6 +7,7 @@
 #include "RenderBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "RigidBodyBehavior.hpp"
+#include "TypedVector.hpp"
 
 typedef vector<GameObject*> GameObjectVector;
 typedef vector<GameObject*>::iterator GameObjectIterator;
@@ -154,6 +155,9 @@ public:
 	// convert local to global and back
 	void ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal, bool screenSpace=true );
 
+	/// returns local bounding box
+	GPU_Rect GetBounds();
+	
 	/// returns updated local transformation matrix
 	float* Transform();
 	
@@ -261,11 +265,17 @@ public:
 	
 // events
 	
-	typedef function<void (GameObject*)> GameObjectCallback;
+	/// events ignored by this object and descendents
+	TypedVector* eventMask = NULL;
+	
+	typedef function<bool (GameObject*)> GameObjectCallback;
 	
 	/// calls event handlers on each behavior, then script event listeners on gameObject. Recurses to active children.
-	void DispatchEvent( Event& event, bool callOnSelf=false, GameObjectCallback *forEachGameObject=NULL);
+	virtual void DispatchEvent( Event& event, bool callOnSelf=false, GameObjectCallback *forEachGameObject=NULL);
 	
+	/// calls callback on each game object
+	bool Traverse( GameObjectCallback *forEachGameObject );
+
 	/// calls handler for event on each behavior, then dispatches script event listeners on this GameObject
 	void CallEvent( Event& event );
 	

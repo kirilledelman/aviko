@@ -95,6 +95,9 @@ public:
 	float layoutOffsetX = 0;
 	float layoutOffsetY = 0;
 	
+	// reverse children order
+	bool layoutReversed = false;
+	
 	// stretch this element to fill empty space in vertical and horizontal layouts, where fitChildren = false
 	float flex = 0;
 	

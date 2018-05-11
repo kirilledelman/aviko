@@ -108,6 +108,8 @@ public:
 	
 	/// overridden from RenderBehavior
 	bool IsScreenPointInside( float screenX, float screenY, float* outLocalX, float* outLocalY );
+
+	GPU_Rect GetBounds();
 	
 	/// UIs without layout handler will call this on gameObject's render component
 	void Resize( float w, float h );

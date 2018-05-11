@@ -41,6 +41,9 @@ public:
 	/// current scene
 	vector<Scene*> sceneStack;
 	
+	/// overlay
+	GameObject* overlay = NULL;
+	
 // rendering
 	
 	/// display width

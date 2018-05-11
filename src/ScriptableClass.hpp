@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ScriptHost.hpp"
 
+
 /* MARK:	-				Scriptable class
  
  
@@ -20,6 +21,9 @@ struct Event {
 	
 	/// if true, it's dispatched in children first, then parent (GameObject uses this)
 	bool bubbles = false;
+	
+	/// only dispatched on behaviors
+	bool behaviorsOnly = false;
 	
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
@@ -75,7 +79,7 @@ public:
 	
 	/// if true, also calls eventName() by name as function
 	bool dispatchEventsToPropertyFunctions = true;
-
+	
 	/// calls script event listeners on this ScriptableObject
 	virtual void CallEvent( Event& event ) {
 		
@@ -272,7 +276,7 @@ public:
 			}
 			while ( dbit != debouncers.end() ) {
 				ScheduledCall& sched = dbit->second;
-				//				printf( "Debouncer %s time %d\n", dbit->first.c_str(), sched.timeLeft );
+				// printf( "Debouncer %s\n", dbit->first.c_str()  );
 				if ( sched.TimePassed( dt ) ) {
 					dbit = debouncers.erase( dbit );
 				} else {
@@ -297,7 +301,7 @@ public:
 // init
 	
 	// constructor
-	ScriptableClass(){}
+	ScriptableClass(){ }
 	
 	// abstract
 	ScriptableClass( ScriptArguments* ) { script.ReportError( "ScriptableObject can't be created using 'new'" ); }	

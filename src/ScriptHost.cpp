@@ -645,6 +645,7 @@ bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
 		Event e ( EVENT_LOG );
 		e.scriptParams.AddStringArgument( combinedString.c_str() );
 		app.CallEvent( e );
+		if ( !e.stopped ) printf( "%s\n", combinedString.c_str() );
 	} else {
 		// otherwise print to console
 		printf( "%s\n", combinedString.c_str() );
@@ -656,16 +657,28 @@ bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
 /* MARK:	-				Error reporting
  -------------------------------------------------------------------- */
 
+
 /// callback for Javascript errors
 void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport *report ){
 	// scope
 	JSAutoRequest req( cx );
-	
+		
 	// this error is handled
 	JS_ClearPendingException( cx );
 	
 	// if already quitting, ignore
 	if ( !app.run ) return;
+	
+	// error preview
+	string preview;
+	ScriptResource* sr = NULL;
+	if ( report->linebuf ) {
+		preview = report->linebuf;
+	} else if ( (sr = app.scriptManager.FindByPath( report->filename ) ) != NULL ){
+		istringstream iss( sr->source );
+		int i = 0;
+		while ( i++ <= report->lineno ) getline( iss, preview );
+	}
 	
 	// determine if there's error handler registered
 	ScriptableClass::EventListenersMap::iterator hit = app.eventListeners.find( string( EVENT_ERROR ) );
@@ -673,17 +686,7 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 	if ( !hasHandler ) {
 		ArgValue hval = script.GetProperty( EVENT_ERROR, app.scriptObject );
 		if ( hval.type == TypeUndefined ) {
-			// error preview
-			string preview;
-			ScriptResource* sr = NULL;
-			if ( report->linebuf ) {
-				preview = report->linebuf;
-			} else if ( (sr = app.scriptManager.FindByPath( report->filename ) ) != NULL ){
-				istringstream iss( sr->source );
-				int i = 0;
-				while ( i++ <= report->lineno ) getline( iss, preview );
-				preview.append( "\n" );
-			}
+			preview.append( "\n" );
 			if ( preview.length() ) {
 				// add ~~~~^ for error column
 				for ( size_t i = 0; i < report->column; i++ ){
@@ -709,7 +712,7 @@ void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport
 	e.scriptParams.AddStringArgument( report->filename ? report->filename : "" );
 	e.scriptParams.AddIntArgument( report->lineno );
 	e.scriptParams.AddIntArgument( report->column );
-	e.scriptParams.AddStringArgument( report->linebuf );
+	e.scriptParams.AddStringArgument( preview.c_str() );
 	e.scriptParams.AddIntArgument( report->flags );
 	app.CallEvent( e );
 	

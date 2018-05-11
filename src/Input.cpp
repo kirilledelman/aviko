@@ -599,6 +599,8 @@ void Input::HandleEvent( SDL_Event& e ) {
 void Input::UIEvent( Event &event ) {
 	if ( !app.sceneStack.size() || event.stopped ) return;
 	Scene* scene = app.sceneStack.back();
+	event.bubbles = true;
+	event.behaviorsOnly = true;
 	event.behaviorParam = &event;
 	scene->DispatchEvent( event );
 }

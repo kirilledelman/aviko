@@ -54,6 +54,9 @@ include( 'ui/controller-configurator', {
 	}
 } );
 
+// inspector - hold right mouse button down to activate
+var inspector = include( 'ui/inspector' );
+
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
 Input.on( 'mouseMove', function() { Input.showCursor = true; }, true );
@@ -65,23 +68,6 @@ Color.Text = 0x333333;
 
 // show main menu
 App.scene = include( 'main-menu' );
-
-
-/*var s = new GameObject( {
-	render: new RenderSprite( {
-		texture: 'test:test',
-		//texture: 'smiley',
-	} ),
-	x: 100, y: 100,
-	parent: App.scene,
-} );
-log ( s.render.texture );
-Input.mouseWheel = function( wy, wx ) {
-	if ( wy ) s.render.sliceLeft += ( wy > 0 ? 1 : -1 );
-	if ( wx ) s.render.sliceRight += ( wx > 0 ? 1 : -1 );
-
-	//log ( s.render.tileX, s.render.tileY );
-}*/
 
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
 function transitionScene( newScene, oldScene, dir ) {

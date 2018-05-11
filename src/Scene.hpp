@@ -78,11 +78,17 @@ public:
 	// RaycastCallback
 	float32 ReportFixture( b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction );
 	
-	/// raycasts from x, y in dx, dy direction, returns up to maxResults Objects with info
+	/// raycasts from x, y in dx, dy direction, returns up to maxResults Objects with bodies with info
 	ArgValueVector* RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody );
 	
-	/// returns bodies in volume, similar to rayCast 
+	/// raycasts from x, y in dx, dy direction, returns up to maxResults GameObjects with info
+	ArgValueVector* RayCastAll( float x, float y, float dx, float dy, int maxResults );
+
+	/// returns bodies in area, similar to rayCast
 	ArgValueVector* Query( float x, float y, float w, float h, int maxResults, void* ignoreBody );
+	
+	/// returns all gameobjects in area
+	ArgValueVector* QueryAll( float x, float y, float w, float h, int maxResults );
 	
 	// holds results of raycast throughout query
 	struct _RayCastResult {
@@ -144,6 +150,11 @@ public:
 	
 	/// called to render all objects
 	void Render( Event& event );
+
+// events
+	
+	/// overridden from GameObject to affect overlay
+	void DispatchEvent( Event& event, bool callOnSelf=false, GameObjectCallback *forEachGameObject=NULL);
 	
 // hierarchy
 	

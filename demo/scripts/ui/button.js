@@ -213,7 +213,7 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || btn != 1 ) return;
 		stopAllEvents();
 		ui.focus();
 		go.fire( 'click', btn, x, y, wx, wy );
@@ -221,7 +221,7 @@ include( './ui' );
 
 	// mouse down/up state
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || btn != 1 ) return;
 		stopAllEvents();
 		go.state = 'down';
 		// forward to gameObject
@@ -230,8 +230,8 @@ include( './ui' );
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
-		stopAllEvents();
+		if ( disabled || btn != 1 ) return;
+		stopEvent();
 		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
