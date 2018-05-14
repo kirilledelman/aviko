@@ -133,6 +133,7 @@ new (function (){
 		flex: 1,
 		valueWidth: 130,
 		showAll: false,
+		showHeader: false,
 		target: sprite.render
 	} );
 

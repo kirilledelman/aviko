@@ -195,7 +195,7 @@ include( './ui' );
 		if ( dropdown ) {
 			dropdown.parent = null;
 			dropdown = null;
-			Input.off( 'mouseDown', go.mouseDownOutside );
+			Input.mouseDown = null;
 		}
 		// show
 		if ( show ) {
@@ -252,7 +252,7 @@ include( './ui' );
 					selectedItem.scrollIntoView();
 				}
 			}, 0.15 );
-			Input.on( 'mouseDown', go.mouseDownOutside );
+			Input.mouseDown = go.mouseDownOutside;
 		}
 	}
 

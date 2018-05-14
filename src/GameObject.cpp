@@ -343,7 +343,7 @@ void GameObject::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *go, ArgValue ) {
 		GameObject* self = ((GameObject*) go);
 		if ( self->scriptResource ) return ArgValue( self->scriptResource->key.c_str() );
-		return ArgValue();
+		return ArgValue( "" );
 	 }),
 	 static_cast<ScriptValueCallback>([](void *go, ArgValue in ){
 		GameObject* self = ((GameObject*) go);
@@ -1092,6 +1092,7 @@ void GameObject::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 	}
 	// parent
 	if ( this->parent ) protectedObjects.push_back( &parent->scriptObject );
+	
 	// event mask
 	protectedObjects.push_back( &this->eventMask->scriptObject );
 	

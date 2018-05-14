@@ -27,14 +27,6 @@ new (function( params ){
 				target = t;
 				// target
 				if ( target && typeof( target ) === 'object' ) {
-					if ( target.render ) {
-						var c1 = target.render.color.hex;
-						var c2 = target.render.addColor.hex;
-						target.render.color = 'FF0000FF';
-						target.render.addColor = 'FFFF0000';
-						target.render.color.hexTo( c1 );
-						target.render.addColor.hexTo( c2 );
-					}
 					log( "^I$0 =", t );
 					propertyList.target = t;
 				}
@@ -47,14 +39,6 @@ new (function( params ){
 				target2 = t;
 				// target
 				if ( target2 && typeof( target2 ) === 'object' ) {
-					if ( target2.render ) {
-						var c1 = target2.render.color.hex;
-						var c2 = target2.render.addColor.hex;
-						target2.render.color = '00FF00FF';
-						target2.render.addColor = '00FFFF00';
-						target2.render.color.hexTo( c1 );
-						target2.render.addColor.hexTo( c2 );
-					}
 					log( "^I$1 =", t );
 				}
 			}
@@ -74,6 +58,7 @@ new (function( params ){
 		layoutType: Layout.Horizontal,
 		layoutAlignX: LayoutAlign.Start,
 		layoutAlignY: LayoutAlign.Stretch,
+		spacingX: 4,
 		fixedPosition: true,
 		ignoreCamera: true,
 	} );
@@ -98,6 +83,7 @@ new (function( params ){
 		size: 12,
 		formatting: true,
 		marginBottom: 4,
+		alwaysShowSelection: true,
 		focusGroup: 'inspectorConsole',
 		states: {
 			off: { background: 0xFFFFFF },
@@ -117,14 +103,14 @@ new (function( params ){
 		size: 12,
 		focusGroup: 'inspectorInput'
 	} );
-	input.ui.on( 'keyDown', function ( code, shift, ctrl, alt, meta ) {
+	input.on( 'keyDown', function ( code, shift, ctrl, alt, meta ) {
 		// history
 		if ( ( ctrl || meta ) && history.length ) {
 			if ( code == Key.Up ) {
 				historyPos = ( historyPos == history.length ? ( history.length - 1 ) : ( ( historyPos > 0 ? historyPos : history.length ) - 1 ) );
 			} else if ( code == Key.Down ) {
 				historyPos = ( historyPos + 1 ) % history.length;
-			}
+			} else return;
 			input.text = history[ historyPos ];
 			input.caretPosition = input.text.positionLength();
 		// context menu
@@ -142,10 +128,12 @@ new (function( params ){
 		}
 	});
 
-	// resizer
 
+	//
 	this.propertyList = propertyList = window.addChild( './property-list', {
-		minWidth: 280,
+		minWidth: 300,
+		focusGroup: 'inspector',
+		render: new RenderShape( Shape.Rectangle, { color: 0xFFFFFF } ),
 	} );
 
 	// events and callbacks
@@ -172,9 +160,12 @@ new (function( params ){
 		if ( btn != 3 ) return;
 		// show
 		debounce( 'showInspector', function () {
-			// set target to top object
-			var context = App.scene.query( x, y, 1, 1, 0, true );
-			//if ( context.length ) $0 = context[ context.length - 1 ];
+			// if shift isn't pressed
+			if ( !Input.get( Key.LeftShift ) ) {
+				// set target to object under cursor
+				var context = App.scene.query( x, y, 1, 1, 0, true );
+				if ( context.length ) $0 = context[ context.length - 1 ];
+			}
 			// show window
 			App.overlay.addChild( window );
 			window.active = true;

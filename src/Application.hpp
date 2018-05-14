@@ -55,7 +55,7 @@ public:
 	/// upscaling
 	float windowScalingFactor = 2;
 	
-	bool windowResizable = false;
+	bool windowResizable = true;
 	
 	/// computed in UpdateBackscreen
 	float backscreenScale = 0.5;

@@ -295,6 +295,9 @@ void Scene::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 /// overridden to also dispatch to overlay
 void Scene::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallback *forEachGameObject) {
 	
+	// set self
+	event.scene = this;
+	
 	// let overlay at event first
 	app.overlay->DispatchEvent( event, callOnSelf, forEachGameObject );
 	

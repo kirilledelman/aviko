@@ -403,6 +403,46 @@ UI.style = UI.style ? UI.style : {
 			color: 0x0,
 		},
 
+		// container for buttons on top of prop list
+		header: {
+			pad: 2,
+			spacing: 2,
+		},
+
+		backButton: {
+			label: {
+				size: 12,
+				bold: true,
+				flex: 1,
+				wrap: true,
+				align: TextAlign.Left,
+			},
+			background: false,
+			pad: [ 2, 4, 2, 4 ],
+			states: {
+				off: { background: 0xF0F0F0, label: { color: 0x0 } },
+				focus: { background: 0xF0F0F0, label: { color: 0x0 } },
+				disabled: { background: false, label: { color: 0x0, opacity: 1 } },
+				over: { background: 0x006eb2, label: { color: 0xFFFFFF } },
+				down: { background: 0x004b7a, label: { color: 0xFFFFFF } },
+			}
+		},
+
+		moreButton: {
+			label: {
+				size: 12,
+				bold: false,
+			},
+			pad: [ 2, 4, 2, 4 ],
+			states: {
+				off: { background: 0xF0F0F0, label: { color: 0x0 } },
+				focus: { background: 0xF0F0F0, label: { color: 0x0 } },
+				disabled: { background: false, label: { color: 0x0, opacity: 1 } },
+				over: { background: 0x006eb2, label: { color: 0xFFFFFF } },
+				down: { background: 0x004b7a, label: { color: 0xFFFFFF } },
+			}
+		},
+
 		// applied to field values based on type
 		values: {
 			// all types
@@ -705,7 +745,6 @@ UI.base = UI.base ? UI.base : {
 
 		];
 		// map them to gameObject
-		go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		this.addMappedProperties( go, mappedProps );
 
 		// Shared API functions
@@ -809,10 +848,11 @@ UI.base = UI.base ? UI.base : {
 	addMappedProperties: function ( go, mappedProps ) {
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		for ( var i = 0; i < mappedProps.length; i++ ) {
+			var hidden = ( mappedProps[ i ].length >= 4 && mappedProps[ i ][ 3 ] );
 			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: (mappedProps[ i ][ 2 ] != undefined), configurable: true
+				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: !hidden, configurable: true,
 			} );
-			if ( mappedProps[ i ].length >= 4 ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = mappedProps[ i ][ 3 ]; }
+			if ( hidden ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
 		}
 	}
 

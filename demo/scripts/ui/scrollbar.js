@@ -209,6 +209,8 @@ include( './ui' );
 		    go.state = 'focus';
 	    } else {
 		    go.state = 'auto';
+			Input.off( 'mouseMove', handle.ui.mouseMoveGlobal );
+			Input.off( 'mouseUp', handle.ui.mouseUpGlobal );
 	    }
 		go.fire( 'focusChanged', newFocus );
 	}
@@ -267,11 +269,11 @@ include( './ui' );
 			newPos = go.position;
 			if ( prevPos != newPos ) go.fire( 'scroll', newPos );
 		}
+		stopAllEvents();
 	}
 
 	// mouse down on handle
 	handle.ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		stopEvent();
 		if ( disabled ) return;
 
 		ui.focus();
@@ -281,17 +283,16 @@ include( './ui' );
 
 		// start drag
 		go.state = 'dragging';
-		Input.on( 'mouseMove', handle.ui.mouseMoveGlobal );
-		Input.on( 'mouseUp', handle.ui.mouseUpGlobal );
+		Input.mouseMove = handle.ui.mouseMoveGlobal;
+		Input.mouseUp = handle.ui.mouseUpGlobal;
 	}
 
 	// mouse up
 	handle.ui.mouseUpGlobal = function ( btn, x, y ) {
-		if ( go.state == 'dragging' ) {
-			go.state = 'auto';
-			Input.off( 'mouseMove', handle.ui.mouseMoveGlobal );
-			Input.off( 'mouseUp', handle.ui.mouseUpGlobal );
-		}
+		go.state = 'auto';
+		Input.mouseMove = null;
+		Input.mouseUp = null;
+		stopAllEvents();
 	}
 
 	// wheel - dispatch 'scroll' on gameObject
@@ -315,7 +316,6 @@ include( './ui' );
 	// down on scroll pane
 	ui.mouseDown = function( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
-		if ( disabled || go.state == 'dragging' ) return;
 		ui.focus();
 		go.state = 'down';
 
@@ -336,7 +336,7 @@ include( './ui' );
 
 	// rollover / rollout
 	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
-		go.state = 'auto';
+		if ( go.state != 'dragging' ) go.state = 'auto';
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 

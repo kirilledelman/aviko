@@ -562,7 +562,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		"vec4 outlineSample( vec2 coord ){\n\
 			vec4 result = readPixel( coord ); \n\
 			float radius = abs( outlineOffsetRadius.z );\n\
-			float numRings = radius >= 1.0 ? 2.0 : 1.0;\n\
+			float numRings = radius > 1.0 ? 2.0 : 1.0;\n\
 			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
 				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
 			float ringStep = radius / numRings; \n\
@@ -584,7 +584,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		features +=
 		"vec4 smp = outlineSample( coord * texSize - outlineOffsetRadius.xy );\n\
 		src.rgb = mix( outlineColor.rgb, src.rgb, src.a );\n\
-		if ( outlineOffsetRadius.z > 0 ) src.a = color.a * max( smp.a * outlineColor.a, src.a );\n\
+		if ( outlineOffsetRadius.z > 0.0 ) src.a = color.a * max( smp.a * outlineColor.a, src.a );\n\
 		else src.a = color.a * max( smp.a * outlineColor.a, src.a ) * ( 1.0 - src.a );";
 	}
 	
@@ -691,83 +691,6 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 	
 }
 
-/*
-		float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\
-		float noise(vec2 p) { \n\
-			vec2 ip = floor(p); \n\
-			vec2 u = fract(p); \n\
-			u = u*u*(3.0-2.0*u); \n\
-			float res = mix(mix(rand(ip),rand(ip+vec2(1.0,0.0)),u.x), mix(rand(ip+vec2(0.0,1.0)),rand(ip+vec2(1.0,1.0)),u.x),u.y); \n\
-			return res*res; \n\
-		} \n\
-		vec2 randVecOffset( float nx, float ny, float dist ) { \n\
-			float n = 6.283 * rand( vec2( nx, ny ) + gl_FragCoord.xy );\n\
-			return dist * vec2( cos( n ), sin( n ) );\n\
-		}\n\
-		vec4 areaSample( vec2 coord ){\n\
-			float numRings = 1.0 + ceil( min( fxRadiusFalloff.x / 2.0, 4.0 ) ); // num of rings to sample up to 4 \n\
-			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r3 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r4 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-			float c1 = 0.0, c2 = 0.0, c3 = 0.0, c4 = 0.0; \n\
-			float ringStep = fxRadiusFalloff.x / numRings; \n\
-			float ringRadius; \n\
-			vec4 result = readPixel( coord + randVecOffset( gl_FragCoord.x, -gl_FragCoord.y, ringStep * 0.5 ) ); \n\
-			if ( numRings >= 2.0 ) { \n\
-				ringRadius = ringStep; \n\
-				c1 = ringRadius / fxRadiusFalloff.x; \n\
-				r1 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r1 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 3.0 ) { \n\
-				ringRadius = ringStep * 2.0; \n\
-				c2 = ringRadius / fxRadiusFalloff.x; \n\
-				r2 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 4.0 ) { \n\
-				ringRadius = ringStep * 3.0; \n\
-				c3 = ringRadius / fxRadiusFalloff.x; \n\
-				r3 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r3 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 5.0 ) { \n\
-				ringRadius = ringStep * 4.0; \n\
-				c4 = ringRadius / fxRadiusFalloff.x; \n\
-				r4 = readPixel( coord + randVecOffset( ringRadius, -ringRadius, ringRadius ) );\n\
-				r4 += readPixel( coord + randVecOffset( -ringRadius, ringRadius, ringRadius ) );\n\
-			}\n\
-			return (result + r1 * c1 + r2 * c2 + r3 * c3 + r4 * c4 ) / ( 1.0 + 2.0 * ( c1 + c2 + c3 + c4 ) );\n\
-		}\n\
-		vec4 outlineSample( vec2 coord ){\n\
-			vec4 result = readPixel( coord ); \n\
-			float numRings = fxRadiusFalloff.x >= 2.0 ? 2.0 : 1.0;\n\
-			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
-				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
-			float c1 = 0, c2 = 0; \n\
-			float ringStep = fxRadiusFalloff.x / numRings; \n\
-			float ringRadius; \n\
-			if ( numRings >= 2.0 ) { \n\
-				ringRadius = fxRadiusFalloff.x * 0.7; \n\
-				c2 = 1.0;\n\
-				r2 = readPixel( coord + vec2( -ringRadius, -ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( -ringRadius, ringRadius ) );\n\
-				r2 += readPixel( coord + vec2( ringRadius, -ringRadius ) );\n\
-			}\n\
-			if ( numRings >= 1.0 ) { \n\
-				c1 = 1.0; \n\
-				r1 = readPixel( coord + vec2( 0.0, -ringStep ) );\n\
-				r1 += readPixel( coord + vec2( ringStep, 0.0 ) );\n\
-				r1 += readPixel( coord + vec2( 0.0, ringStep ) );\n\
-				r1 += readPixel( coord + vec2( -ringStep, 0.0 ) );\n\
-			}\n\
-			return (result + r1 * c1 + r2 * c2 ) / ( 1.0 + 4.0 * ( c1 + c2 ) );\n\
-		}";
-*/
-
-
 /// helper method
 bool RenderBehavior::CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader ){
 	
@@ -795,4 +718,3 @@ bool RenderBehavior::CompileShader( Uint32& outShader, GPU_ShaderBlock& outShade
 	return true;
 }
 
-//float rand(vec2 n) { return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453); }\n\

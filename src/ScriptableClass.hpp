@@ -28,7 +28,7 @@ struct Event {
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
 	
-	// used during render event
+	// used during render and UI events
 	Scene* scene = NULL;
 	
 	// true to stop processing
@@ -276,7 +276,7 @@ public:
 			}
 			while ( dbit != debouncers.end() ) {
 				ScheduledCall& sched = dbit->second;
-				// printf( "Debouncer %s\n", dbit->first.c_str()  );
+				//printf( "Debouncer %s\n", dbit->first.c_str()  );
 				if ( sched.TimePassed( dt ) ) {
 					dbit = debouncers.erase( dbit );
 				} else {

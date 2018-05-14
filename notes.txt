@@ -1,13 +1,16 @@
 Propertylist
+type icons
 null field - show as dropdown, add config option: "null", "new Type1", "new Type2" etc with callbacks
-.showFunctions - bool ? show functions in a separate group in the end ?
+.showFunctions - bool ? show functions
 
+Move render code for sprite to separate static method
+Add App.cursor = texture or empty for default
 
 
 
 ScriptableObject
 	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
-	change serializeMask to TypedArray<string>
+	change serializeMask to TypedArray<string>?
 
 GameObject
 	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash

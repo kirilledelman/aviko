@@ -1,6 +1,7 @@
 #include "ScriptArguments.hpp"
 #include "ScriptHost.hpp"
 
+size_t ScriptFunctionObject::_index = 0;
 
 /* MARK:	-				ScriptFunction
  -------------------------------------------------------------------- */

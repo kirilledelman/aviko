@@ -118,16 +118,17 @@ void ScriptableClass::InitClass() {
 	( "on",
 		static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: on( String eventName | Array eventNames, [ Function handler [, Boolean once ] ] )";
+		const char* error = "usage: on( String eventName | Array eventNames, [ Function handler [, Boolean once [, Integer priority ] ] ] )";
 		void* handler = NULL;
 		bool once = false;
+		int priority = 0;
 		string propName;
 		ArgValueVector props;
 		
 		// validate
 		ScriptableClass* self = (ScriptableClass*) go;
-		if ( !sa.ReadArguments( 1, TypeString, &propName, TypeFunction, &handler, TypeBool, &once ) ) {
-			if ( !sa.ReadArguments( 1, TypeArray, &props, TypeFunction, &handler, TypeBool, &once ) ){
+		if ( !sa.ReadArguments( 1, TypeString, &propName, TypeFunction, &handler, TypeBool, &once, TypeInt, &priority ) ) {
+			if ( !sa.ReadArguments( 1, TypeArray, &props, TypeFunction, &handler, TypeBool, &once, TypeInt, &priority ) ){
 				script.ReportError( error );
 				return false;
 			}
@@ -153,8 +154,19 @@ void ScriptableClass::InitClass() {
 			
 			// function specified
 			if ( handler ) {
+				// insert at priority
+				EventListeners::iterator it = list.begin(), end = list.end();
+				bool inserted = false;
+				while ( it != end ) {
+					if ( it->priority > priority ) {
+						list.emplace( it, handler, once );
+						inserted = true;
+						break;
+					}
+					it++;
+				}
 				// append to event listeners
-				list.emplace_back( handler, once );
+				if ( !inserted ) list.emplace_back( handler, once );
 			// no function specified
 			} else {
 				// make array of currently attached listeners

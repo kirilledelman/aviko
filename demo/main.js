@@ -16,7 +16,7 @@
 
 
 // set screen size and pixel doubling
-App.setWindowSize( 640, 480, 1 ); // 720p @ 2x
+App.setWindowSize( 640, 480, 1 );
 
 // auto-configure controller
 include( 'ui/controller-configurator', {
@@ -67,7 +67,59 @@ Color.Title = 0x106633;
 Color.Text = 0x333333;
 
 // show main menu
-App.scene = include( 'main-menu' );
+App.scene = include( 'main-menu' ); // */
+
+
+/* App.debugUI = true;
+
+var a = App.scene.addChild( {
+	x: 100, y: 100,
+	name: "A",
+	render: new RenderShape( Shape.Rectangle, 40, 40 ),
+	ui: new UI( {
+		minHeight: 40,
+		minWidth: 40,
+		pad: 4,
+		wrapEnabled: true,
+		layoutType: Layout.Horizontal,
+		fitChildren: true,
+
+	} )
+} );
+
+
+var b = new GameObject( {
+	render: new RenderShape( { shape: Shape.Rectangle, color: 0xFF0000, centered: false } ),
+	name: "B",
+	ui: new UI( {
+		pad: 4,
+		flex: 1,
+		minHeight: 40,
+		minWidth: 20,
+	} ),
+	parent: a,
+} );
+
+b = new GameObject( {
+	render: new RenderShape( { shape: Shape.Rectangle, color: 0xFFFF00, centered: false } ),
+	name: "C",
+	ui: new UI( {
+		pad: 4,
+		minHeight: 40,
+		minWidth: 20,
+	} ),
+	parent: a,
+} );
+
+
+
+Input.mouseMove = function ( x, y ){
+
+	if ( Input.get( Key.MouseButton ) ) {
+		a.ui.width = x - a.x;
+		a.ui.height = y - a.y;
+	}
+}; // */
 
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
 function transitionScene( newScene, oldScene, dir ) {

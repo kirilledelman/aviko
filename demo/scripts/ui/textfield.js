@@ -24,7 +24,7 @@
 */
 
 include( './ui' );
-(function(go) {
+(function( go ) {
 
 	// inner props
 	var ui = new UI(), tc, rt, bg, shp;
@@ -50,6 +50,7 @@ include( './ui' );
 	var step = 1.0;
 	var constructing = true;
 	var canScrollUnfocused = false;
+	var alwaysShowSelection = false;
 	var allowed = null, pattern = null;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
@@ -107,6 +108,9 @@ include( './ui' );
 		// (Boolean) clicking outside control will blur the control
 		[ 'blurOnClickOutside',  function (){ return blurOnClickOutside; }, function ( cb ){ blurOnClickOutside = cb; } ],
 
+		// (Boolean) show selection even when not editing
+		[ 'alwaysShowSelection',  function (){ return alwaysShowSelection; }, function ( s ){ alwaysShowSelection = s; } ],
+
 		// (Boolean) allows mousewheel to scroll field without being focused in it
 		[ 'canScrollUnfocused',  function (){ return canScrollUnfocused; }, function ( u ){ canScrollUnfocused = u; } ],
 
@@ -124,7 +128,7 @@ include( './ui' );
 						rt.caretPosition = rt.text.positionLength();
 						touched = true;
 					}
-					rt.showCaret = true;
+					rt.showCaret = rt.showSelection = true;
 				    rt.formatting = false;
 					resetText = rt.text;
 					if ( selectAllOnFocus && selectable ) {
@@ -137,7 +141,8 @@ include( './ui' );
 				    rt.scrollLeft = 0;
 					if ( numeric ) go.value = go.value;
 					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
-					go.fire( 'editEnd' );
+					go.fire( 'editEnd', go.value );
+					if ( !alwaysShowSelection ) rt.showSelection = false;
 				}
 			}
 		} ],
@@ -731,10 +736,7 @@ include( './ui' );
 	// key down
 	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
 
-		// if not editing, ignore all except Tab, Enter, and Escape
-		// if ( !editing && code != Key.Tab && code != Key.Enter && code != Key.Escape ) code = 0;
-
-		// ready
+	    // ready
 		ui.dragSelect = false;
 		var txt = rt.text;
 		var caretPosition = rt.caretPosition;
@@ -750,13 +752,13 @@ include( './ui' );
 		if ( autoGrow ) go.debounce( 'autoGrow', go.checkAutoGrow );
 
 		// key
+		var dontStopEvent = false;
 	    switch ( code ) {
 		    case Key.Tab:
 			    if ( tabEnabled ) {
 			        ui.keyPress( "\t" );
 	            } else {
 			        ui.moveFocus( shift ? -1 : 1 );
-				    stopEvent();
 			    }
 				break;
 
@@ -772,6 +774,7 @@ include( './ui' );
 		        } else {
 			        ui.navigation( 'accept' );
 		        }
+		        stopEvent();
 	            break;
 
 		    case Key.Escape:
@@ -906,6 +909,9 @@ include( './ui' );
 			selEnd = txt.positionToIndex( rt.selectionEnd );
 			go.fire( 'selectionChanged', txt.substr( selStart, selEnd - selStart ) );
 		}
+
+		// redispatch keydown on object
+		go.fire( 'keyDown', code, shift, ctrl, alt, meta );
 	}
 
 	// checks if clicked outside
@@ -969,7 +975,6 @@ include( './ui' );
 	constructing = false;
 
 })(this);
-
 
 
 

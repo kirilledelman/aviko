@@ -185,12 +185,13 @@ include( './ui' );
 			this.width = Math.max( this.minWidth, x - go.x );
 			this.height = Math.max( this.minHeight, y - go.y );
 		}
+		stopAllEvents();
 	}.bind( ui );
 
 	var mouseUpCallback = function ( btn, x, y ) {
 		if ( dragging ) {
-			Input.off( 'mouseMove', dragCallback );
-			Input.off( 'mouseUp', dragCallback );
+			Input.mouseMove = null;
+			Input.mouseUp = null;
 			go.eventMask.length = 0;
 			go.opacity = 1;
 			dragging = false;
@@ -215,8 +216,8 @@ include( './ui' );
 			if ( !dragging ) return;
 		}
 		go.eventMask = [ 'mouseUp', 'mouseMove' ];
-		Input.on( 'mouseMove', dragCallback );
-		Input.on( 'mouseUp', mouseUpCallback );
+		Input.mouseMove = dragCallback;
+		Input.mouseUp = mouseUpCallback;
 		go.opacity = 0.7;
 	}
 

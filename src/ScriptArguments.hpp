@@ -177,7 +177,7 @@ public:
 	
 };
 
-/// stores a reference to script function, protecting it from GC, used by event system
+/// stores a reference to script function, used by event system
 class ScriptFunctionObject {
 public:
 	
@@ -187,8 +187,13 @@ public:
 	/// used by event dispatcher to remove this function from its list after a single call
 	bool callOnce = false;
 	
-	/// set to true while dispatching
+	/// is set to true while dispatching
 	bool executing = false;
+	
+	/// used when sorting by priority
+	static size_t _index;
+	size_t indexAdded = 0;
+	int priority = 0;
 	
 	/// invoke this function with arguments
 	ArgValue Invoke( ScriptArguments& args );
@@ -197,7 +202,7 @@ public:
 	bool operator==( void* jsfunc ) { return funcObject == jsfunc; };
 	
 	// create / destroy
-	ScriptFunctionObject(){};
+	ScriptFunctionObject(){ indexAdded = _index++; };
 	ScriptFunctionObject( void* scriptFunc, bool once=false );
 	~ScriptFunctionObject();
 	

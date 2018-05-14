@@ -336,7 +336,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 		} else {
 			
 			// check end condition
-			if ( !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
+			if ( !iterator || !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
 			
 			// convert property to string
 			if ( !JS_IdToValue( this->js, propId, &propVal ) ) continue;
@@ -459,7 +459,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 		if ( it->index >= 0 ) {
 			JS_SetElement( this->js, (JSObject*) obj, it->index, &it->value );
 		// normal prop
-		} else {
+		} else if ( it->propName.length() ){
 			JS_SetProperty( this->js, (JSObject*)obj, it->propName.c_str(), &it->value );
 		}
 		it++;

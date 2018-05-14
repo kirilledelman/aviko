@@ -38,7 +38,9 @@ include( './ui' );
 	// internal props
 	var ui = new UI();
 	var scrollable, shouldScroll = true;
+	var header, backButton, moreButton;
 	var target = null;
+	var targetStack = [];
 	var showAll = undefined;
 	var properties = {};
 	var valueWidth = 130;
@@ -101,6 +103,7 @@ include( './ui' );
 		// (Object) target object whose properties are displayed in this property list
 		[ 'target',  function (){ return target; }, function ( v ){
 			target = v;
+			targetStack.length = 0;
 			go.debounce( 'refresh', go.refresh );
 		}],
 
@@ -127,9 +130,16 @@ include( './ui' );
 		}],
 
 		// (Boolean) show add and remove property (and array items) buttons
-		[ 'addRemoveProperties',  function (){ return 'TODO'; }, function ( v ){
-			//TODO
-		}],
+		[ 'showHeader',  function (){ return header.active; }, function ( v ){ header.active = v; }],
+
+		// (ui/panel) reference to header (where object / navigation / extras are displayed)
+		[ 'header',  function (){ return header; } ],
+
+		// (ui/button) reference to back button
+		[ 'backButton',  function (){ return backButton; } ],
+
+		// (ui/button) reference to more button
+		[ 'moreButton',  function (){ return moreButton; } ],
 
 		// (Boolean) should this property list be scrollable
 		[ 'scrollable',  function (){ return shouldScroll; }, function ( v ){
@@ -180,6 +190,37 @@ include( './ui' );
 	ui.focusable = false;
 	go.ui = ui;
 
+	// header
+	header = new GameObject( './panel', {
+		layoutType: Layout.Horizontal,
+		layoutAlignY: LayoutAlign.End,
+		layoutAlignX: LayoutAlign.Start,
+		fitChildren: true,
+	} );
+
+	// back
+	backButton = header.addChild( './button', {
+		text: "Nothing selected",
+		flex: 1,
+		click: function () {
+			// pop to previously selected object
+			if ( targetStack.length ) {
+				target = targetStack[ targetStack.length - 1 ].target;
+				targetStack.pop();
+				go.refresh();
+				if ( targetStack.length == 0 ) backButton.blur();
+			}
+		}
+	} );
+	backButton.style = UI.style.propertyList.backButton;
+
+	// more
+	moreButton = header.addChild( './button', {
+		text: "...",
+	} );
+	moreButton.style = UI.style.propertyList.moreButton;
+
+	// auto fit scrollbar
 	ui.layout = function ( w, h ) {
 		if ( scrollable ) {
 			// make scrollable and its scrollbar fit in width
@@ -193,6 +234,7 @@ include( './ui' );
 			scrollable.spacingY = spacingY;
 			scrollable.pad = pad;
 			ui.pad = 0;
+			header.maxWidth = scrollable.width + scrollable.marginRight;
 		} else {
 			ui.spacingX = spacingX;
 			ui.spacingY = spacingY;
@@ -204,7 +246,6 @@ include( './ui' );
 
 	// recreates controls
 	go.refresh = function () {
-		log( "refresh" );
 		// set up container
 		var cont = go;
 		if ( shouldScroll ) {
@@ -218,10 +259,14 @@ include( './ui' );
 					wrapAfter: 2,
 					acceptToCycle: true,
 					fitChildren: true,
+					flex: 1
 				} );
 			}
 			cont = scrollable;
-			ui.layoutType = Layout.Anchors;
+			ui.layoutType = Layout.Vertical;
+			ui.layoutAlignX = LayoutAlign.Stretch;
+			ui.layoutAlignY = LayoutAlign.Stretch;
+			ui.fitChildren = false;
 			scrollable.scrollbars = false;
 
 		} else {
@@ -242,6 +287,9 @@ include( './ui' );
 			if ( trg ) trg.unwatch( allFields[ i ].name );
 		}
 		allFields.length = 0;
+
+		// add header as first child
+		go.addChild( header, 0 );
 
 		// configure / merge properties with config in
 		// target.constructor.__propertyListConfig and target.__propertyListConfig
@@ -305,14 +353,21 @@ include( './ui' );
 
 		// displaying standard inspector
 
+		// set header button name
+		var bn = [];
+		for ( var i = 0; i < targetStack.length; i++ ) {
+			bn.push( targetStack[ i ].name );
+		}
+		bn.push( target ? target.constructor.name : "(null)" );
+		backButton.text = bn.join( '/' );
+		backButton.disabled = ( targetStack.length == 0 );
+
 		// empty target
 		if ( !target ) {
-			cont.addChild( './text', {
-				selfAlign: LayoutAlign.Stretch,
-				text: "(null)",
-				style: go.baseStyle.empty,
-			} );
+			moreButton.active = false;
 			return;
+		} else {
+			moreButton.active = true;
 		}
 
 		// sort properties into groups
@@ -381,7 +436,6 @@ include( './ui' );
 				if ( i == 0 ) groupTitle.marginTop = 0;
 			}
 			// for each property
-			var propertyInfo;
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
 				var pdef = _properties[ pname ] || {};
@@ -405,9 +459,6 @@ include( './ui' );
 
 				// check for enumeration
 				if ( pdef.enum !== undefined ) fieldType = 'enum';
-
-				// get property info
-				propertyInfo = Object.getOwnPropertyDescriptor( curTarget, pname );
 
 				// create appropriate control
 				switch ( fieldType ) {
@@ -435,7 +486,7 @@ include( './ui' );
 						field = cont.addChild( './textfield', {
 							name: pname,
 							target: curTarget,
-							change: go.fieldChanged,
+							editEnd: go.fieldChanged,
 							minWidth: valueWidth,
 							value: fieldValue,
 							style: go.baseStyle.values.any
@@ -479,68 +530,82 @@ include( './ui' );
 
 						// button to show inspector
 						function togglePropList() {
+							// embedded inspector created on demand
+							if ( !this.propList ) {
+								var myPos = this.parent.children.indexOf( this );
+								this.propList = new GameObject( './property-list', {
+									name: pname,
+									flex: 1,
+									scrollable: false,
+									forceWrap: true,
+									active: !!pdef.expanded,
+									style: go.baseStyle.values.any,
+									fieldButton: button,
+									showHeader: false,
+									type: 'object',
+								} );
+								this.parent.addChild( this.propList, myPos + 1 );
+								this.propList.style = go.baseStyle.values.inline;
+								this.propList.valueWidth = valueWidth - this.propList.marginLeft; // indent
+								if ( this.pdef.showAll !== undefined ) this.propList.showAll = this.pdef.showAll;
+								if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
+								if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
+								this.propList.target = this.fieldValue;
+							}
+							// toggle display
 							this.toggleState = this.propList.active = !this.propList.active;
 							this.image.imageObject.angle = (this.propList.active ? 0 : -90);
 						}
+
+						// button to go into an object
 						function pushToTarget() {
-							// TODO - push pop
-							go.target = this.fieldValue;
+							targetStack.push( {
+								target: target,
+								name: (target.constructor ? target.constructor.name : String( target ) ) + "." + this.name
+							} );
+							target = this.fieldValue;
+							go.refresh();
 						}
+
+						// inline option
 						var inline = ( pdef && pdef.inline );
-						button = cont.addChild( './button', {
-							fieldValue: fieldValue,
+
+						// create field button
+						field = cont.addChild( './button', {
+							target: curTarget,
 							name: pname,
+							fieldValue: fieldValue,
+							text: String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ),
 							wrapEnabled: false,
 							minWidth: valueWidth,
 							disabled: (disabled || ( pdef && pdef.disabled )),
-							target: curTarget,
 							style: go.baseStyle.values.any,
 							toggleState: !!pdef.expanded
 						} );
-						button.style = go.baseStyle.values.object;
+						field.style = go.baseStyle.values.object;
 						if ( inline ) {
-							button.click = togglePropList;
-							button.text = String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ) + '...',
-							// embedded inspector
-							field = cont.addChild( './property-list', {
-								name: pname,
-								flex: 1,
-								scrollable: false,
-								forceWrap: true,
-								active: !!pdef.expanded,
-								style: go.baseStyle.values.any,
-								fieldButton: button,
-							} );
-							field.style = go.baseStyle.values.inline;
-							field.valueWidth = valueWidth - field.marginLeft; // indent
-							if ( pdef.showAll !== undefined ) field.showAll = pdef.showAll;
-							if ( pdef.properties !== undefined ) field.properties = pdef.properties;
-							if ( pdef.groups !== undefined ) field.groups = pdef.groups;
-							field.target = fieldValue;
-							button.image.imageObject.angle = (field.active ? 0 : -90);
-							button.propList = field;
+							field.click = togglePropList;
+							field.image.imageObject.angle = (field.toggleState ? 0 : -90);
 						} else {
-							button.text = String( fieldValue );
-							button.click = pushToTarget;
-							button.image.imageObject.angle = -90;
-							button.label.flex = 1;
-							button.reversed = true;
-							field = button;
+							field.click = pushToTarget;
+							field.image.imageObject.angle = -90;
+							field.label.flex = 1;
+							field.reversed = true;
 						}
 
-						// button
 
 						break;
+
 					default:
-						field = cont.addChild( './text', {
+						field = cont.addChild( './textfield', {
 							name: pname,
-							target: curTarget,
-							change: go.fieldChanged,
+							// target: curTarget,
 							minWidth: valueWidth,
-							wrap: true,
-							text: fieldValue ? fieldValue.toString() : '',
-							style: go.baseStyle.values.any
+							value: String(fieldValue),
+							style: go.baseStyle.values.any,
+							disabled: true,
 						} );
+						field.style = go.baseStyle.values.string;
 						break;
 
 				}
@@ -548,23 +613,24 @@ include( './ui' );
 				if ( field ) {
 					field.type = typeof( fieldValue );
 					field.pdef = pdef;
+					field.focusGroup = ui.focusGroup;
 					field.fieldLabel = label;
-					if ( disabled || ( pdef && pdef.disabled ) || ( propertyInfo && !propertyInfo.writable ) ) field.disabled = true;
+					if ( disabled || pdef.disabled ) field.disabled = true;
 					if ( typeof( pdef.style ) === 'object' ) {
 						UI.base.applyProperties( field, pdef.style );
 					}
 					if ( typeof( pdef.hidden ) === 'function' ) {
 						var shown = !pdef.hidden( curTarget );
 						field.fieldLabel.active = shown;
-						if ( field.fieldButton ) {
-							field.fieldButton.active = shown;
-							field.active = (shown && field.fieldButton.toggleState );
+						if ( field.propList ) {
+							field.propList.active = shown;
+							field.active = (shown && field.toggleState );
 						} else {
 							field.active = shown;
 						}
 					}
 					allFields.push( field );
-					curTarget.watch( field.name, debounceReload );
+					curTarget.watch( field.name, go.watchCallback );
 				}
 
 				numRows++;
@@ -591,24 +657,17 @@ include( './ui' );
 
 	}
 
-	function debounceReload( p, ov, v ) {
-		go.debounce( 'reload', go.reload, 0.5 );
+	// single field changed, update field
+	go.watchCallback = function ( p, ov, v ) {
+		go.async( function() { go.reload( p, v ); } );
 		return v;
 	}
 
 	go.fieldChanged = function ( val ) {
 
-		log( "field changed", this.name, val );
-
-		// type changed
-		if ( this.type != typeof( val ) ) {
-			log( "field changed, type changed: ", this.type, typeof( val ) );
-			go.async( go.refresh );
-			return;
-		}
-
-		// update label
-		if ( typeof ( this.target[ this.name ] ) === 'boolean' ) {
+		// if field is boolean
+		if ( this.type === 'boolean' ) {
+			// update label
 			this.text = ( val ? "True" : "False" );
 		}
 
@@ -618,62 +677,72 @@ include( './ui' );
 
 		// fire changed
 		go.fire( 'change', this.target, this.name, val, oldVal );
-		// go.debounce( 'reload', go.reload );
 
 	}
 
 	// refreshes properties values in rows from target
-	go.reload = function () {
+	go.reload = function ( propName, valOverride ) {
 
 		if ( !target ) return;
 
 		// update fields
+		var field, val, tp;
 		for ( var i in allFields ) {
-			var field = allFields[ i ];
-			var pdef = field.pdef;
-			var val = field.target ? field.target[ field.name ] : null;
-			var tp = typeof( val ) ;
-			// type changed? refresh
+			field = allFields[ i ];
+			pdef = field.pdef;
+	        val = field.target ? field.target[ field.name ] : undefined;
+			// if reload is called with field name
+			if ( typeof( propName ) !== 'undefined' ) {
+				// skip all others
+				if ( field.name !== propName ) continue;
+				// override value, if given
+				if ( arguments.length == 2 ) val = valOverride;
+			}
+			tp = typeof( val );
+
+			// if field type has changed
 			if ( field.type !== tp ) {
-				log( "reload, type changed: ", field.type, '!=', tp, "/", field.name );
-				go.async( go.refresh );
+				log( "reload type changed for \"" + field.name + "\" field.type:", field.type, ', current value:', val, ' of type: ', tp );
+				// re-create just this field
+
+				// go.async( go.refresh );
 				return;
 			}
-			// have def
-			if ( pdef !== undefined ) {
-				// have conditional hiding - apply
-				if ( typeof( pdef.hidden ) === 'function' ) {
-					if ( typeof( field.fieldButton ) !== 'undefined' ){
-						field.fieldLabel.active = field.fieldButton.active = !pdef.hidden( field.fieldButton.target );
-						field.active = (field.fieldButton.active && field.fieldButton.toggleState );
-					} else {
-						field.fieldLabel.active = field.active = !pdef.hidden( field.target );
-					}
+
+			// have conditional hiding - apply
+			if ( typeof( pdef.hidden ) === 'function' ) {
+				if ( typeof( field.fieldButton ) !== 'undefined' ){
+					field.fieldLabel.active = field.fieldButton.active = !pdef.hidden( field.fieldButton.target );
+					field.active = (field.fieldButton.active && field.fieldButton.toggleState );
+				} else {
+					field.fieldLabel.active = field.active = !pdef.hidden( field.target );
 				}
 			}
+
 			// skip focused and hidden fields
 			if ( field.focused || !field.active ) continue;
-			if ( tp == 'object' && field.reload ) {
-				field.reload();
+
+			// field is object with inline property list
+			if ( tp == 'object' && field.propList ) {
+				field.propList.reload();
+
+			// field is boolean
 			} else if ( tp == 'boolean' ) {
 				field.checked = val;
 				field.text = ( val ? "True" : "False" );
+
+			// other
 			} else {
 				field.value = val;
 			}
+
+			// if reload is called with field name, exit after updating
+			if ( typeof( propName ) !== 'undefined' && field.name === propName ) break;
 		}
 
 		// schedule update
 		// if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
 
-	}
-
-	go.push = function ( newTarget ) {
-		/// TODO
-	}
-
-	go.pop = function () {
-		/// TODO
 	}
 
 	// restart auto refresh on adding to scene

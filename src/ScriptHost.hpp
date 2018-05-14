@@ -528,15 +528,15 @@ public:
 	ScriptHost() {
 		
 		// init JS context
-		this->jsr = JS_NewRuntime(8L * 1024 * 1024, JS_USE_HELPER_THREADS);
-		this->js = this->jsr ? JS_NewContext( this->jsr, 8192 ) : NULL;
+		this->jsr = JS_NewRuntime(32L * 1024 * 1024, JS_USE_HELPER_THREADS );
+		this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
 		if ( !this->js || !this->jsr ) {
 			printf( "Can't initialize Javascript runtime or context.\n" );
 			exit( 1 );
 		}
 		
 		// set context option
-		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX );
+		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX | JSOPTION_ASMJS );
 		
 		// set error handler
 		JS_SetErrorReporter( this->js, this->ErrorReport );

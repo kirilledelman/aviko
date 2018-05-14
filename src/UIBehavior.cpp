@@ -1091,6 +1091,14 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	oldWidth = behavior->layoutWidth,
 	oldHeight = behavior->layoutHeight;
 	
+	// check if gameObject is current scene
+	if ( behavior->gameObject == event->scene ) {
+		// apply anchor layout using screen size
+		float x, y;
+		behavior->GetAnchoredPosition( NULL, x, y, behavior->layoutWidth, behavior->layoutHeight );
+		behavior->gameObject->SetPosition( x, y );
+	}
+	
 	// collect children with active UI component
 	vector<UIBehavior*> childUIs;
 	size_t numChildrenUIs = behavior->gameObject->children.size();
@@ -1258,8 +1266,9 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	int numSpacers = (int) rows.size() - 1;
 	totalMinSize += currentRow->minSize + numSpacers * spacingY;
 	
-	// if fit children is set or size is 0
+	// if fit children is set
 	if ( this->fitChildren ) {
+		// ensure starting inner size at least fits all children at their smallest
 		innerHeight = fmin( ( maxHeight > 0 ? maxHeight : 9999999 ) - ( this->padTop + this->padBottom ), fmax( totalMinSize, innerHeight ) );
 		innerWidth = fmin( ( maxWidth > 0 ? maxWidth : 9999999 ) - ( this->padLeft + this->padRight ), fmax( minSpaceUsed, innerWidth ) );
 	}
@@ -1276,7 +1285,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// prepare
-	float maxX = 0, maxY = 0, spacing = 0, startOffset = 0;
+	float maxX = this->padLeft, maxY = this->padTop, spacing = 0, startOffset = 0;
 	curY = this->padTop;
 	
 	// process each row
@@ -1287,9 +1296,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 			float extraSpace = innerWidth - currentRow->spaceUsed;
 			float spaceLeft = extraSpace, spaceShare = 0;
 			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
-				if ( spaceLeft <= 0 ) break;
 				UIBehavior* f = currentRow->flexed[ i ];
-				spaceShare = fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) );
+				spaceShare = fmax( 0, fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) ) );
 				if ( f->maxWidth > 0 ) spaceShare = fmin( spaceShare, f->maxWidth - ( f->marginLeft + f->marginRight ) );
 				f->layoutWidth = f->minWidth + spaceShare;
 				spaceLeft -= spaceShare;
@@ -1378,7 +1386,7 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 		if ( wrapEnabled ) {
 			this->minWidth = minChildSize + this->padLeft + this->padRight;
 		} else if ( this->axisAlignX != LayoutAlign::Stretch ){
-			this->minWidth = maxX + this->padRight;
+			this->minWidth = this->padLeft + minSpaceUsed + this->padRight;
 		}
 		if ( this->axisAlignY == LayoutAlign::Stretch ) {
 			this->minHeight = this->padTop + totalMinSize + this->padBottom;
@@ -1479,7 +1487,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// prepare
-	float maxX = 0, maxY = 0, spacing = 0, startOffset = 0;
+	float maxX = this->padLeft, maxY = this->padTop, spacing = 0, startOffset = 0;
 	curX = this->padLeft;
 	
 	// process each row
@@ -1490,7 +1498,6 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 			float extraSpace = innerHeight - currentRow->spaceUsed;
 			float spaceLeft = extraSpace, spaceShare = 0;
 			for ( size_t i = 0, nf = currentRow->flexed.size(); i < nf; i++ ) {
-				if ( spaceLeft <= 0 ) break;
 				UIBehavior* f = currentRow->flexed[ i ];
 				spaceShare = fmin( spaceLeft, extraSpace * ( f->flex / currentRow->totalFlex ) );
 				if ( f->maxHeight > 0 ) spaceShare = fmin( spaceShare, f->maxHeight - ( f->marginTop + f->marginBottom ) );
@@ -1581,7 +1588,7 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 		if ( wrapEnabled ) {
 			this->minHeight = minChildSize + this->padTop + this->padBottom;
 		} else if ( this->axisAlignY != LayoutAlign::Stretch ){
-			 this->minHeight = maxY + this->padBottom;
+			 this->minHeight = this->padTop + minSpaceUsed + this->padBottom;
 		}
 		if ( this->axisAlignX == LayoutAlign::Stretch ) {
 			this->minWidth = this->padLeft + totalMinSize + this->padRight;
@@ -1621,98 +1628,99 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 	y = gameObject->GetY();
 	w = fmin( ( maxWidth > 0 ? maxWidth : 9999999 ), fmax( layoutWidth, minWidth ) );
 	h = fmin( ( maxHeight > 0 ? maxHeight : 9999999 ), fmax( layoutHeight, minHeight ) );
+	float parentWidth = app.windowWidth, parentHeight = app.windowHeight;
 	
 	if ( parentUI ) {
-	
-		float parentWidth = parentUI->layoutWidth - ( parentUI->padLeft + parentUI->padRight );
-		float parentHeight = parentUI->layoutHeight - ( parentUI->padTop + parentUI->padBottom );
-		
-		// anchors
-		
-		float thisSide = 0;
-		float otherSide = 0;
-		
-		// left is measured from start edge
-		if ( anchorLeft == 0 ) {
-			thisSide = left;
-		// left is measured from opposite edge
-		} else if ( anchorLeft == 1 ) {
-			thisSide = parentWidth - left;
-		// left is measured from middle
-		} else if ( anchorLeft > 0 ){
-			thisSide = parentWidth * anchorLeft + left;
-		}
-		// right is measured from start edge
-		if ( anchorRight == 0 ) {
-			otherSide = parentWidth - right;
-		// right is measured from opposite edge
-		} else if ( anchorRight == 1 ) {
-			otherSide = right;
-		// right is measured from middle
-		} else if ( anchorRight > 0 ){
-			otherSide = parentWidth * ( 1 - anchorRight ) + right;
-		}
-		
-		// apply
-		if ( anchorLeft >= 0 || anchorRight >= 0 ) {
-			// start anchor is disabled
-			if ( anchorLeft < 0 ) {
-				x = otherSide - w;
-			// end anchor is disabled
-			} else if ( anchorRight < 0 ) {
-				x = thisSide;
-			} else {
-				x = thisSide;
-				w = otherSide - thisSide;
-			}
-		}
-		
-		// top is measured from start edge
-		if ( anchorTop == 0 ) {
-			thisSide = top;
-		// top is measured from opposite edge
-		} else if ( anchorTop == 1 ) {
-			thisSide = parentHeight - top;
-		// top is measured from middle
-		} else if ( anchorTop > 0 ){
-			thisSide = parentHeight * anchorTop + top;
-		}
-		// bottom is measured from start edge
-		if ( anchorBottom == 0 ) {
-			otherSide = parentHeight - bottom;
-		// right is measured from opposite edge
-		} else if ( anchorBottom == 1 ) {
-			otherSide = bottom;
-			// right is measured from middle
-		} else if ( anchorBottom > 0 ){
-			otherSide = parentHeight * ( 1 - anchorBottom ) + bottom;
-		}
-		
-		if ( anchorTop >= 0 || anchorBottom >= 0 ) {
-			// start anchor is disabled
-			if ( anchorTop < 0 ) {
-				y = otherSide - h;
-			// end anchor is disabled
-			} else if ( anchorBottom < 0 ) {
-				y = thisSide;
-			} else {
-				y = thisSide;
-				h = otherSide - thisSide;
-			}
-		}
-		
-		// add parents' padding
-		x += parentUI->padLeft;
-		y += parentUI->padTop;
-		
-		// add margins
-		x += this->marginLeft;
-		w -= this->marginLeft + this->marginRight;
-		y += this->marginTop;
-		h -= this->marginTop + this->marginBottom;
-		
+		parentWidth = parentUI->layoutWidth - ( parentUI->padLeft + parentUI->padRight );
+		parentHeight = parentUI->layoutHeight - ( parentUI->padTop + parentUI->padBottom );
 	}
 	
+	// anchors
+	float thisSide = 0;
+	float otherSide = 0;
+	
+	// left is measured from start edge
+	if ( anchorLeft == 0 ) {
+		thisSide = left;
+	// left is measured from opposite edge
+	} else if ( anchorLeft == 1 ) {
+		thisSide = parentWidth - left;
+	// left is measured from middle
+	} else if ( anchorLeft > 0 ){
+		thisSide = parentWidth * anchorLeft + left;
+	}
+	// right is measured from start edge
+	if ( anchorRight == 0 ) {
+		otherSide = parentWidth - right;
+	// right is measured from opposite edge
+	} else if ( anchorRight == 1 ) {
+		otherSide = right;
+	// right is measured from middle
+	} else if ( anchorRight > 0 ){
+		otherSide = parentWidth * ( 1 - anchorRight ) + right;
+	}
+	
+	// apply
+	if ( anchorLeft >= 0 || anchorRight >= 0 ) {
+		// start anchor is disabled
+		if ( anchorLeft < 0 ) {
+			x = otherSide - w;
+		// end anchor is disabled
+		} else if ( anchorRight < 0 ) {
+			x = thisSide;
+		} else {
+			x = thisSide;
+			w = otherSide - thisSide;
+		}
+	}
+	
+	// top is measured from start edge
+	if ( anchorTop == 0 ) {
+		thisSide = top;
+	// top is measured from opposite edge
+	} else if ( anchorTop == 1 ) {
+		thisSide = parentHeight - top;
+	// top is measured from middle
+	} else if ( anchorTop > 0 ){
+		thisSide = parentHeight * anchorTop + top;
+	}
+	// bottom is measured from start edge
+	if ( anchorBottom == 0 ) {
+		otherSide = parentHeight - bottom;
+	// right is measured from opposite edge
+	} else if ( anchorBottom == 1 ) {
+		otherSide = bottom;
+		// right is measured from middle
+	} else if ( anchorBottom > 0 ){
+		otherSide = parentHeight * ( 1 - anchorBottom ) + bottom;
+	}
+	
+	if ( anchorTop >= 0 || anchorBottom >= 0 ) {
+		// start anchor is disabled
+		if ( anchorTop < 0 ) {
+			y = otherSide - h;
+		// end anchor is disabled
+		} else if ( anchorBottom < 0 ) {
+			y = thisSide;
+		} else {
+			y = thisSide;
+			h = otherSide - thisSide;
+		}
+	}
+		
+	// add parents' padding
+	if ( parentUI ) {
+		x += parentUI->padLeft;
+		y += parentUI->padTop;
+	}
+	
+	// add margins
+	x += this->marginLeft;
+	w -= this->marginLeft + this->marginRight;
+	y += this->marginTop;
+	h -= this->marginTop + this->marginBottom;
+	
+	// clip
 	w = fmin( ( maxWidth > 0 ? maxWidth : 9999999 ), fmax( w, minWidth ) );
 	h = fmin( ( maxHeight > 0 ? maxHeight : 9999999 ), fmax( h, minHeight ) );
 	

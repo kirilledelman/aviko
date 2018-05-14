@@ -153,18 +153,24 @@ void Application::InitRender() {
 
 void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 	if ( ( newWidth && newHeight ) && ( newWidth != this->windowWidth || newHeight != this->windowHeight ) ) {
+		
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
 		GPU_SetWindowResolution( newWidth, newHeight );
+		this->windowWidth = this->screen->base_w;
+		this->windowHeight = this->screen->base_h;
+		GPU_UnsetVirtualResolution( this->screen );
+#else
 		this->windowWidth = newWidth;
 		this->windowHeight = newHeight;
-		GPU_UnsetVirtualResolution( this->screen );
+#endif
 		UpdateBackscreen();
 		
 		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
 		
 		// send event
 		Event event( EVENT_RESIZED );
-		event.scriptParams.AddIntArgument( newWidth / app.windowScalingFactor );
-		event.scriptParams.AddIntArgument( newHeight / app.windowScalingFactor );
+		event.scriptParams.AddIntArgument( (float) this->windowWidth / app.windowScalingFactor );
+		event.scriptParams.AddIntArgument( (float) this->windowHeight / app.windowScalingFactor );
 		this->CallEvent( event );
 		
 		// and send layout event to scene
@@ -172,7 +178,7 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 			event.name = EVENT_LAYOUT;
 			event.stopped = false;
 			event.scriptParams.ResizeArguments( 0 );
-			sceneStack.back()->DispatchEvent( event );
+			sceneStack.back()->DispatchEvent( event, true );
 		}
 
 	}

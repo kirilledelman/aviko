@@ -193,7 +193,7 @@ include( './ui' );
 		if ( name == 'accept' ) {
 
 			// simulated click
-			ui.fire( 'click', 0, 0, 0, go.x, go.y );
+			ui.fire( 'click', 1, 0, 0, go.x, go.y );
 
 			// animate down / up
 			go.state = 'down';
