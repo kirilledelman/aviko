@@ -6,7 +6,7 @@ null field - show as dropdown, add config option: "null", "new Type1", "new Type
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default
 
-
+Negative outline with .color .a < 1 doesn't work
 
 ScriptableObject
 	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed

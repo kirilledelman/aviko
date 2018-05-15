@@ -214,6 +214,7 @@ include( './ui' );
 				// position to the right
 				vsb = new GameObject( './scrollbar' );
 				vsb.orientation = 'vertical';
+				vsb.focusGroup = container.ui.focusGroup;
 				vsb.parent = go;
 				vsb.anchorTop = vsb.anchorBottom = vsb.anchorRight = 0;
 				vsb.anchorLeft = -1;
@@ -226,6 +227,7 @@ include( './ui' );
 				// position to the right
 				hsb = new GameObject( './scrollbar' );
 				hsb.orientation = 'horizontal';
+				hsb.focusGroup = container.ui.focusGroup;
 				hsb.parent = go;
 				hsb.anchorLeft = hsb.anchorBottom = hsb.anchorRight = 0;
 				hsb.anchorTop = -1;

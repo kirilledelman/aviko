@@ -42,7 +42,7 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
-	// printf( "~GameObject %p\n", this );
+	// printf( "~GameObject %p (%s)\n", this, this->name.c_str() );
 	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
@@ -516,7 +516,7 @@ void GameObject::InitClass() {
 	("addChild", // ( GameObject child [, int position ] ) -> GameObject child
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		// validate params
-		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Int desiredPosition | Object initProperties ] ] )";
+		const char* error = "usage: addChild( [ GameObject obj | String scriptPath [,Integer desiredPosition | (Object initProperties, Integer desiredPosition) ] ] )";
 		void* obj = NULL;
 		void *initObj = NULL;
 		string scriptName;
@@ -548,7 +548,7 @@ void GameObject::InitClass() {
 		}
 		
 		// either position or initObj
-		int pos = -1; //(int) other->children.size();
+		int pos = -1;
 		if ( !sa.ReadArgumentsFrom( (initObj ? 0 : 1), 1, TypeObject, &initObj, TypeInt, &pos ) ){
 			sa.ReadArgumentsFrom( (initObj ? 0 : 1), 1, TypeInt, &pos );
 		}

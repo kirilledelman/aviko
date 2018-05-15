@@ -981,6 +981,7 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 	// for each UI in scene
 	vector<UIBehavior*> uiElements;
 	this->scene->GetBehaviors( true, uiElements );
+	app.overlay->GetBehaviors( true, uiElements );
 	if ( !uiElements.size() || ( uiElements.size() == 1 && uiElements[ 0 ] == this ) ) return NULL;
 	
 	// try until find a candidate or margin of search is too big

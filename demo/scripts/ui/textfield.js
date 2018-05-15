@@ -755,8 +755,14 @@ include( './ui' );
 		var dontStopEvent = false;
 	    switch ( code ) {
 		    case Key.Tab:
-			    if ( tabEnabled ) {
+			    // complete word
+			    if ( selectable && rt.selectionStart == rt.caretPosition && rt.selectionStart < rt.selectionEnd ) {
+				    rt.caretPosition = rt.selectionEnd;
+				    rt.selectionStart = rt.selectionEnd = 0;
+			    // tab character
+	            } else if ( tabEnabled ) {
 			        ui.keyPress( "\t" );
+			    // move focus
 	            } else {
 			        ui.moveFocus( shift ? -1 : 1 );
 			    }

@@ -69,7 +69,7 @@ include( './ui' );
 				go.updateSelectedItem();
 			} ],
 
-		// (*) 'value' property of selected item
+		// (Number) 0 based index of item selected in menu
 		[ 'selectedIndex',  function (){ return selectedIndex; },
 			function ( v ){
 				if ( isNaN( v ) ) return;
@@ -208,6 +208,7 @@ include( './ui' );
 				layoutAlignX: LayoutAlign.Stretch,
 				layoutAlignY: LayoutAlign.Start,
 				wrapEnabled: false,
+				focusGroup: 'dropdown',
 				height: button.height,
 				minWidth: button.width,
 				update: go.updateDropdownPosition,
@@ -244,7 +245,7 @@ include( './ui' );
 			dropdown.getChild( 0 ).focusUp = item;
 			item.focusDown = dropdown.getChild( 0 );
 			// add to scene, positioning will occur on update
-			go.scene.addChild( dropdown );
+			App.overlay.addChild( dropdown );
 			dropdown.fadeTo( 1, 0.15 );
 			dropdown.async( function() {
 				if ( dropdown ) {

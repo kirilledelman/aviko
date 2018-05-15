@@ -52,7 +52,7 @@ UI.style = UI.style ? UI.style : {
 		selectionTextColor: 0xFFFFFF,
 		outlineColor: 0x0066a5,
 		pad: 4,
-		cornerRadius: 2,
+		cornerRadius: 0,
 		acceptToEdit: true,
 		focusRect: true,
 		states:{
@@ -339,6 +339,66 @@ UI.style = UI.style ? UI.style : {
 
 	},
 
+	// select-style dropdown menu - ui/select.js
+	popupMenu: {
+
+		maxVisibleItems: 8,
+		pad: 0,
+
+		// scrollable container with items (ui/scrollable.js)
+		container: {
+			spacingY: 0,
+			minWidth: 20,
+			minHeight: 20,
+			pad: 0,
+			render: {
+				outlineColor: '00000033',
+				outlineOffsetY: 1,
+				outlineRadius: 2
+			}
+		},
+
+		// items in the popup menu (ui/button.js)
+		item: {
+			label: {
+				size: 14,
+				flex: 1
+			},
+			layoutAlignX: LayoutAlign.Start,
+			focusRect: false,
+			cornerRadius: 0,
+			pad: [ 4, 8, 4, 8 ],
+			states:{
+				off: {
+					background: 0xFFFFFF,
+					label: { color: 0x0 }
+				},
+				over: {
+					background: 0x006eb2,
+					label: { color: 0xFFFFFF }
+				},
+				focus: {
+					background: 0x0066a5,
+					label: { color: 0xFFFFFF }
+				},
+				down: {
+					background: 0x004b7a,
+					label: { color: 0xFFFFFF }
+				},
+				disabled: {
+					background: 0xf6f6f6,
+					label: { color: 0x333333 }
+				},
+			}
+		},
+
+		// separator (GameObject) with RenderShape
+		separator: {
+			render: { color: 0x660000 }
+		}
+
+	},
+
 	// window - ui/window.js
 	window: {
 
@@ -393,6 +453,9 @@ UI.style = UI.style ? UI.style : {
 			color: 0x666666,
 			align: TextAlign.Center,
 			marginTop: 4,
+			flex: 1,
+			wrap: true,
+			forceWrap: true
 		},
 
 		// applied to each field label
@@ -412,13 +475,15 @@ UI.style = UI.style ? UI.style : {
 		backButton: {
 			label: {
 				size: 12,
-				bold: true,
+				bold: false,
 				flex: 1,
 				wrap: true,
 				align: TextAlign.Left,
 			},
 			background: false,
 			pad: [ 2, 4, 2, 4 ],
+			spacingX: 4,
+			image: { imageObject: { angle: 90 } }, // down arrow rotated back <
 			states: {
 				off: { background: 0xF0F0F0, label: { color: 0x0 } },
 				focus: { background: 0xF0F0F0, label: { color: 0x0 } },

@@ -14,7 +14,7 @@ new (function( params ){
 
 	var logBuffer = "";
 	var window, console, output, input, propertyList;
-	var target, target2;
+	var target2;
 	var history = [];
 	var historyPos = 0;
 
@@ -22,13 +22,12 @@ new (function( params ){
 	var mappedProps = [
 
 		// (Object) currently inspected target
-		[ '$0', function (){ return target; }, function ( t ) {
-			if ( t != target ) {
-				target = t;
+		[ '$0', function (){ return propertyList.target; }, function ( t ) {
+			if ( t != propertyList.target ) {
+				propertyList.target = t;
 				// target
-				if ( target && typeof( target ) === 'object' ) {
+				if ( t && typeof( t ) === 'object' ) {
 					log( "^I$0 =", t );
-					propertyList.target = t;
 				}
 			}
 		}, true ],
@@ -36,11 +35,11 @@ new (function( params ){
 		// (Object) secondary target
 		[ '$1', function (){ return target2; }, function ( t ) {
 			if ( t != target2 ) {
-				target2 = t;
 				// target
 				if ( target2 && typeof( target2 ) === 'object' ) {
 					log( "^I$1 =", t );
 				}
+				target2 = t;
 			}
 		}, true ],
 
@@ -54,7 +53,6 @@ new (function( params ){
 		resizable: true,
 		x: 0, y: App.windowHeight * 0.5,
 		width: App.windowWidth, height: App.windowHeight * 0.5,
-		z: 1000,
 		layoutType: Layout.Horizontal,
 		layoutAlignX: LayoutAlign.Start,
 		layoutAlignY: LayoutAlign.Stretch,
@@ -84,7 +82,7 @@ new (function( params ){
 		formatting: true,
 		marginBottom: 4,
 		alwaysShowSelection: true,
-		focusGroup: 'inspectorConsole',
+		focusGroup: 'inspector',
 		states: {
 			off: { background: 0xFFFFFF },
 			disabled: { background: 0xFFFFFF },
@@ -101,7 +99,7 @@ new (function( params ){
 		tabEnabled: true,
 		lineSpacing: -2,
 		size: 12,
-		focusGroup: 'inspectorInput'
+		focusGroup: 'inspector'
 	} );
 	input.on( 'keyDown', function ( code, shift, ctrl, alt, meta ) {
 		// history

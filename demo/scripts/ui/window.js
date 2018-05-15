@@ -204,9 +204,9 @@ include( './ui' );
 		if ( dragging ) return;
 		dragOffsetX = x; dragOffsetY = y;
 		stopAllEvents();
-		if ( y < header.height ) {
+		if ( draggable && y < header.height ) {
 			dragging = 'window';
-		} else {
+		} else if ( resizable ) {
 			if ( x >= this.width - this.padRight ) {
 				dragging = 'width';
 			}
@@ -214,7 +214,7 @@ include( './ui' );
 				dragging = ( dragging ? dragging : '' ) + 'height';
 			}
 			if ( !dragging ) return;
-		}
+		} else return;
 		go.eventMask = [ 'mouseUp', 'mouseMove' ];
 		Input.mouseMove = dragCallback;
 		Input.mouseUp = mouseUpCallback;

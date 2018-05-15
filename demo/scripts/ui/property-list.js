@@ -48,7 +48,6 @@ include( './ui' );
 	var topPropertyList = go;
 	var groups = [];
 	var allFields = [];
-	// var updateInterval = 0;
 	var constructing = true;
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
@@ -113,16 +112,6 @@ include( './ui' );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
-		// (Number) automatically refresh displayed properties every updateInterval seconds
-		/* [ 'updateInterval',  function (){ return updateInterval; }, function ( v ) {
-			updateInterval = v;
-			if ( updateInterval > 0 ) {
-				go.debounce( 'reload', go.reload, updateInterval );
-			} else {
-				go.clearDebouncer( 'reload' );
-			}
-		}],*/
-
 		// (Boolean) disable all fields
 		[ 'disabled',  function (){ return disabled; }, function ( v ) {
 			ui.disabled = disabled = v;
@@ -177,6 +166,14 @@ include( './ui' );
 		// (Number) spacing between rows
 		[ 'spacingY',  function (){ return spacingY; }, function ( v ){ spacingY = v; ui.requestLayout( 'spacingY' ); } ],
 
+		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
+		[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){
+			backButton.focusGroup = moreButton.focusGroup = ui.focusGroup = f;
+			for ( var i in allFields ) {
+				allFields[ i ].focusGroup = f;
+			}
+		} ],
+
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );
@@ -201,6 +198,7 @@ include( './ui' );
 	// back
 	backButton = header.addChild( './button', {
 		text: "Nothing selected",
+		focusGroup: ui.focusGroup,
 		flex: 1,
 		click: function () {
 			// pop to previously selected object
@@ -214,9 +212,23 @@ include( './ui' );
 	} );
 	backButton.style = UI.style.propertyList.backButton;
 
-	// more
+	// editing options
 	moreButton = header.addChild( './button', {
 		text: "...",
+		focusGroup: ui.focusGroup,
+		click: function (){
+			var items = [
+				{ text: "Reload object", action: function ( obj ){ go.refresh(); } },
+				{ text: "Add property", action: function ( obj ){ log("^4TODO"); } },
+				{ text: "Remove property", action: function ( obj ){ log("^4TODO"); } },
+			];
+			var popup = new GameObject( './popup-menu', {
+				target: this,
+				items: items,
+				selectedIndex: 0,
+				selected: function ( s ) { s.action( target ); }
+			} );
+		}
 	} );
 	moreButton.style = UI.style.propertyList.moreButton;
 
@@ -244,6 +256,207 @@ include( './ui' );
 		go.fire( 'layout' );
 	}
 
+	// creates or replaces a field for property
+	go.makeField = function ( curTarget, pname, pdef, label, cont ) {
+
+		var fieldValue, fieldType, replaceField = null, replaceIndex = -1, insertChildIndex = -1;
+
+		// replace field mode?
+		if ( arguments.length == 2 ) {
+			replaceIndex = arguments[ 1 ];
+			replaceField = arguments[ 0 ];
+			curTarget = replaceField.target;
+			pdef = replaceField.pdef;
+			pname = replaceField.name;
+			label = replaceField.fieldLabel;
+			cont = replaceField.parent;
+		}
+
+		// common
+		fieldValue = curTarget[ pname ];
+		fieldType = typeof( fieldValue );
+		if ( pdef.enum !== undefined ) fieldType = 'enum';
+
+		// create appropriate control
+		switch ( fieldType ) {
+
+			// input fields:
+
+			case 'number':
+				field = cont.addChild( './textfield', {
+					name: pname,
+					target: curTarget,
+					change: go.fieldChanged,
+					numeric: true,
+					minWidth: valueWidth,
+					integer: ( pdef && pdef.integer !== undefined ) ? pdef.integer : false,
+					min: ( pdef && pdef.min !== undefined ) ? pdef.min : -Infinity,
+					max: ( pdef && pdef.max !== undefined ) ? pdef.max : Infinity,
+					step: ( pdef && pdef.step !== undefined ) ? pdef.step : 1,
+					value: fieldValue,
+					style: go.baseStyle.values.any
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.number;
+				break;
+
+			case 'string':
+				field = cont.addChild( './textfield', {
+					name: pname,
+					target: curTarget,
+					editEnd: go.fieldChanged,
+					minWidth: valueWidth,
+					value: fieldValue,
+					style: go.baseStyle.values.any
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.string;
+				break;
+
+			// dropdown:
+
+			case 'enum':
+				field = cont.addChild( './select', {
+					name: pname,
+					target: curTarget,
+					change: go.fieldChanged,
+					minWidth: valueWidth,
+					value: fieldValue,
+					items: pdef.enum,
+					style: go.baseStyle.values.any
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.enum;
+				break;
+
+			// check box:
+
+			case 'boolean':
+				field = cont.addChild( './checkbox', {
+					name: pname,
+					target: curTarget,
+					change: go.fieldChanged,
+					checked: fieldValue,
+					text: fieldValue ? "True" : "False",
+					minWidth: valueWidth,
+					style: go.baseStyle.values.any
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.boolean;
+				break;
+
+			// inspector:
+
+			case 'object':
+
+				// button to show inspector
+				function togglePropList() {
+					// embedded inspector created on demand
+					if ( !this.propList ) {
+						var myPos = this.parent.children.indexOf( this );
+						this.propList = new GameObject( './property-list', {
+							name: pname,
+							flex: 1,
+							scrollable: false,
+							forceWrap: true,
+							active: !!pdef.expanded,
+							style: go.baseStyle.values.any,
+							fieldButton: this,
+							showHeader: false,
+							type: 'object',
+						} );
+						this.parent.addChild( this.propList, myPos + 1 );
+						this.propList.style = go.baseStyle.values.inline;
+						this.propList.valueWidth = valueWidth - this.propList.marginLeft; // indent
+						if ( this.pdef.showAll !== undefined ) this.propList.showAll = this.pdef.showAll;
+						if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
+						if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
+						this.propList.target = this.fieldValue;
+					}
+					// toggle display
+					this.toggleState = this.propList.active = !this.propList.active;
+					this.image.imageObject.angle = (this.propList.active ? 0 : -90);
+				}
+
+				// button to go into an object
+				function pushToTarget() {
+					targetStack.push( {
+						target: target,
+						name: (target.constructor ? target.constructor.name : String( target ) ) + "." + this.name
+					} );
+					target = this.fieldValue;
+					go.refresh();
+				}
+
+				// inline option
+				var inline = ( pdef && pdef.inline );
+
+				// create field button
+				field = cont.addChild( './button', {
+					target: curTarget,
+					name: pname,
+					fieldValue: fieldValue,
+					text: String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ),
+					wrapEnabled: false,
+					minWidth: valueWidth,
+					disabled: (disabled || ( pdef && pdef.disabled )),
+					style: go.baseStyle.values.any,
+					toggleState: !!pdef.expanded
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.object;
+				if ( inline ) {
+					field.click = togglePropList;
+					field.image.imageObject.angle = (field.toggleState ? 0 : -90);
+				} else {
+					field.click = pushToTarget;
+					field.image.imageObject.angle = -90;
+					field.label.flex = 1;
+					field.reversed = true;
+				}
+
+				break;
+
+			default:
+				field = cont.addChild( './textfield', {
+					name: pname,
+					minWidth: valueWidth,
+					value: String(fieldValue),
+					style: go.baseStyle.values.any,
+					disabled: true,
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.string;
+				break;
+
+		}
+
+		// common properties
+		if ( field ) {
+			field.type = typeof( fieldValue );
+			field.pdef = pdef;
+			field.focusGroup = ui.focusGroup;
+			field.fieldLabel = label;
+			if ( disabled || pdef.disabled ) field.disabled = true;
+			if ( typeof( pdef.style ) === 'object' ) {
+				UI.base.applyProperties( field, pdef.style );
+			}
+			if ( typeof( pdef.hidden ) === 'function' ) {
+				var shown = !pdef.hidden( curTarget );
+				field.fieldLabel.active = shown;
+				if ( field.propList ) {
+					field.propList.active = shown;
+					field.active = (shown && field.toggleState );
+				} else {
+					field.active = shown;
+				}
+			}
+			if ( replaceField ) {
+				allFields.splice( replaceIndex, 1, field );
+				replaceField.parent = null;
+			} else {
+				allFields.push( field );
+				curTarget.watch( field.name, go.watchCallback );
+			}
+		}
+
+		return field;
+	}
+
 	// recreates controls
 	go.refresh = function () {
 		// set up container
@@ -255,10 +468,12 @@ include( './ui' );
 					layoutAlignX: LayoutAlign.Start,
 					layoutAlignY: LayoutAlign.Start,
 					marginRight: 0,
+					focusGroup: ui.focusGroup,
 					wrapEnabled: true,
 					wrapAfter: 2,
 					acceptToCycle: true,
 					fitChildren: true,
+					scrollbars: false,
 					flex: 1
 				} );
 			}
@@ -343,6 +558,28 @@ include( './ui' );
 			if ( !Object.keys( _properties ).length && _showAll === undefined ) _showAll = true;
 		}
 
+		// set header button name
+		var bn = [];
+		for ( var i = 0; i < targetStack.length; i++ ) {
+			bn.push( targetStack[ i ].name );
+		}
+		bn.push( ( target && target.constructor ) ? target.constructor.name : "(null)" );
+		backButton.text = bn.join( ' ^B->^n ' );
+		backButton.disabled = ( targetStack.length == 0 );
+		if ( targetStack.length ) {
+			backButton.icon = UI.style.propertyList.values.object.icon;
+		} else {
+			backButton.icon = "";
+		}
+
+		// empty target
+		if ( !target ) {
+			moreButton.disabled = true;
+			return;
+		} else {
+			moreButton.disabled = false;
+		}
+
 		// if displaying a custom inspector
 		if ( _customInspector ) {
 			// initialize it
@@ -352,23 +589,6 @@ include( './ui' );
 		}
 
 		// displaying standard inspector
-
-		// set header button name
-		var bn = [];
-		for ( var i = 0; i < targetStack.length; i++ ) {
-			bn.push( targetStack[ i ].name );
-		}
-		bn.push( target ? target.constructor.name : "(null)" );
-		backButton.text = bn.join( '/' );
-		backButton.disabled = ( targetStack.length == 0 );
-
-		// empty target
-		if ( !target ) {
-			moreButton.active = false;
-			return;
-		} else {
-			moreButton.active = true;
-		}
 
 		// sort properties into groups
 		var regroup = { ' ': [] }; // default (unsorted) group
@@ -418,7 +638,6 @@ include( './ui' );
 		}
 
 		// for each group
-		var field = null;
 		var numRows = 0, numGroups = 0;
 		for ( var i = 0, ng = _gs.length; i <= ng; i++ ) {
 			var props = i < ng ? regroup[ _gs[ i ].name ] : regroup[ ' ' ];
@@ -441,198 +660,17 @@ include( './ui' );
 				var pdef = _properties[ pname ] || {};
 
 				// add label
-				var labelText = pname;
 				if ( typeof( pdef.label ) === 'function' ) labelText = pdef.label( pname );
 				else if ( typeof ( pdef.label ) === 'string' ) labelText = pdef.label;
 				var label = cont.addChild( './text', {
-					text: labelText,
+					text: pname,
 					flex: 1,
 					wrap: true,
 					style: go.baseStyle.label
 				} );
 
-				// value/type
-				var curTarget = ( pdef.target || target );
-				var fieldValue = curTarget[ pname ];
-				var fieldType = typeof( fieldValue );
-				var button = null;
-
-				// check for enumeration
-				if ( pdef.enum !== undefined ) fieldType = 'enum';
-
-				// create appropriate control
-				switch ( fieldType ) {
-
-					// input fields:
-
-					case 'number':
-						field = cont.addChild( './textfield', {
-							name: pname,
-							target: curTarget,
-							change: go.fieldChanged,
-							numeric: true,
-							minWidth: valueWidth,
-							integer: ( pdef && pdef.integer !== undefined ) ? pdef.integer : false,
-							min: ( pdef && pdef.min !== undefined ) ? pdef.min : -Infinity,
-							max: ( pdef && pdef.max !== undefined ) ? pdef.max : Infinity,
-							step: ( pdef && pdef.step !== undefined ) ? pdef.step : 1,
-							value: fieldValue,
-							style: go.baseStyle.values.any
-						} );
-						field.style = go.baseStyle.values.number;
-						break;
-
-					case 'string':
-						field = cont.addChild( './textfield', {
-							name: pname,
-							target: curTarget,
-							editEnd: go.fieldChanged,
-							minWidth: valueWidth,
-							value: fieldValue,
-							style: go.baseStyle.values.any
-						} );
-						field.style = go.baseStyle.values.string;
-						break;
-
-					// dropdown:
-
-					case 'enum':
-						field = cont.addChild( './select', {
-							name: pname,
-							target: curTarget,
-							change: go.fieldChanged,
-							minWidth: valueWidth,
-							value: fieldValue,
-							items: pdef.enum,
-							style: go.baseStyle.values.any
-						} );
-						field.style = go.baseStyle.values.enum;
-						break;
-
-					// check box:
-
-					case 'boolean':
-						field = cont.addChild( './checkbox', {
-							name: pname,
-							target: curTarget,
-							change: go.fieldChanged,
-							checked: fieldValue,
-							text: fieldValue ? "True" : "False",
-							minWidth: valueWidth,
-							style: go.baseStyle.values.any
-						} );
-						field.style = go.baseStyle.values.boolean;
-						break;
-
-					// inspector:
-
-					case 'object':
-
-						// button to show inspector
-						function togglePropList() {
-							// embedded inspector created on demand
-							if ( !this.propList ) {
-								var myPos = this.parent.children.indexOf( this );
-								this.propList = new GameObject( './property-list', {
-									name: pname,
-									flex: 1,
-									scrollable: false,
-									forceWrap: true,
-									active: !!pdef.expanded,
-									style: go.baseStyle.values.any,
-									fieldButton: button,
-									showHeader: false,
-									type: 'object',
-								} );
-								this.parent.addChild( this.propList, myPos + 1 );
-								this.propList.style = go.baseStyle.values.inline;
-								this.propList.valueWidth = valueWidth - this.propList.marginLeft; // indent
-								if ( this.pdef.showAll !== undefined ) this.propList.showAll = this.pdef.showAll;
-								if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
-								if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
-								this.propList.target = this.fieldValue;
-							}
-							// toggle display
-							this.toggleState = this.propList.active = !this.propList.active;
-							this.image.imageObject.angle = (this.propList.active ? 0 : -90);
-						}
-
-						// button to go into an object
-						function pushToTarget() {
-							targetStack.push( {
-								target: target,
-								name: (target.constructor ? target.constructor.name : String( target ) ) + "." + this.name
-							} );
-							target = this.fieldValue;
-							go.refresh();
-						}
-
-						// inline option
-						var inline = ( pdef && pdef.inline );
-
-						// create field button
-						field = cont.addChild( './button', {
-							target: curTarget,
-							name: pname,
-							fieldValue: fieldValue,
-							text: String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ),
-							wrapEnabled: false,
-							minWidth: valueWidth,
-							disabled: (disabled || ( pdef && pdef.disabled )),
-							style: go.baseStyle.values.any,
-							toggleState: !!pdef.expanded
-						} );
-						field.style = go.baseStyle.values.object;
-						if ( inline ) {
-							field.click = togglePropList;
-							field.image.imageObject.angle = (field.toggleState ? 0 : -90);
-						} else {
-							field.click = pushToTarget;
-							field.image.imageObject.angle = -90;
-							field.label.flex = 1;
-							field.reversed = true;
-						}
-
-
-						break;
-
-					default:
-						field = cont.addChild( './textfield', {
-							name: pname,
-							// target: curTarget,
-							minWidth: valueWidth,
-							value: String(fieldValue),
-							style: go.baseStyle.values.any,
-							disabled: true,
-						} );
-						field.style = go.baseStyle.values.string;
-						break;
-
-				}
-				// common properties
-				if ( field ) {
-					field.type = typeof( fieldValue );
-					field.pdef = pdef;
-					field.focusGroup = ui.focusGroup;
-					field.fieldLabel = label;
-					if ( disabled || pdef.disabled ) field.disabled = true;
-					if ( typeof( pdef.style ) === 'object' ) {
-						UI.base.applyProperties( field, pdef.style );
-					}
-					if ( typeof( pdef.hidden ) === 'function' ) {
-						var shown = !pdef.hidden( curTarget );
-						field.fieldLabel.active = shown;
-						if ( field.propList ) {
-							field.propList.active = shown;
-							field.active = (shown && field.toggleState );
-						} else {
-							field.active = shown;
-						}
-					}
-					allFields.push( field );
-					curTarget.watch( field.name, go.watchCallback );
-				}
-
+				// add field
+				go.makeField( ( pdef.target || target ) , pname, pdef, label, cont );
 				numRows++;
 
 			}
@@ -641,9 +679,10 @@ include( './ui' );
 
 		// placeholder
 		if ( numRows == 0 ) {
+			var sv = String( target );
 			cont.addChild( './text', {
 				selfAlign: LayoutAlign.Stretch,
-				text: "no editable properties",
+				text: ( sv.length ? ("^B(" + sv + ")^b: ") : "" ) + "no editable properties",
 				style: go.baseStyle.empty,
 			} );
 		}
@@ -654,6 +693,9 @@ include( './ui' );
 			function _showScrollbars() { this.scrollbars = 'auto'; }
 			scrollable.debounce( 'showScrollbars', _showScrollbars, 0.1 );
 		}
+
+		// clean up
+		gc();
 
 	}
 
@@ -678,6 +720,12 @@ include( './ui' );
 		// fire changed
 		go.fire( 'change', this.target, this.name, val, oldVal );
 
+		// callback
+		if ( this.pdef.change ) this.pdef.change( this.target, this.name, val, oldVal );
+
+		// full reload option
+		if ( this.pdef.reloadOnChange ) go.reload();
+
 	}
 
 	// refreshes properties values in rows from target
@@ -701,12 +749,10 @@ include( './ui' );
 			tp = typeof( val );
 
 			// if field type has changed
-			if ( field.type !== tp ) {
+			if ( field.type !== tp && field.type !== 'enum' ) {
 				log( "reload type changed for \"" + field.name + "\" field.type:", field.type, ', current value:', val, ' of type: ', tp );
 				// re-create just this field
-
-				// go.async( go.refresh );
-				return;
+				field = go.makeField( field, i );
 			}
 
 			// have conditional hiding - apply
@@ -740,16 +786,7 @@ include( './ui' );
 			if ( typeof( propName ) !== 'undefined' && field.name === propName ) break;
 		}
 
-		// schedule update
-		// if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
-
 	}
-
-	// restart auto refresh on adding to scene
-	go.on( 'addedToScene', function() {
-		// schedule update
-		// if ( updateInterval > 0 ) go.debounce( 'reload', go.reload, updateInterval );
-	} );
 
 	// apply defaults
 	go.baseStyle = Object.create( UI.style.propertyList );
@@ -769,11 +806,11 @@ Default inspector parameters for property list
 Color.__propertyListConfig = Color.__propertyListConfig ? Color.__propertyListConfig : {
 	showAll: false,
 	properties: {
-		'r': { min: 0, max: 1, step: 0.1 },
-		'g': { min: 0, max: 1, step: 0.1 },
-		'b': { min: 0, max: 1, step: 0.1 },
-		'a': { min: 0, max: 1, step: 0.1 },
-		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i } },
+		'r': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
+		'g': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
+		'b': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
+		'a': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
+		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i }, reloadOnChange: true },
 	},
 	groups: [ { properties: [ 'r', 'g', 'b', 'a', 'hex' ] } ]
 }

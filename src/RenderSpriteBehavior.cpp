@@ -93,7 +93,7 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
 		ImageResource* img = NULL;
-		if ( val.type == TypeString ) {
+		if ( val.type == TypeString && val.value.stringValue->length()	) {
 			// "texture" - make sure it exists
 			img = app.textureManager.Get( val.value.stringValue->c_str() );
 			if ( img->error == ERROR_NONE ) {

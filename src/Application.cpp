@@ -71,6 +71,7 @@ Application::Application() {
 	
 	// overlay
 	this->overlay = new GameObject( NULL );
+	this->overlay->SetZ( 1000 );
 	this->overlay->orphan = false;
 	
 	// begin terminal capture
@@ -737,14 +738,16 @@ void Application::InitClass() {
 	( "clone",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
-		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: clone( Object object )" );
+		void* overrides = NULL;
+		if ( !sa.ReadArguments( 1, TypeObject, &initObj, TypeObject, &overrides ) ){
+			script.ReportError( "usage: clone( Object object,[ Object initObject ] )" );
 			return false;
 		}
 		ArgValue ret( initObj );
 		ret = script.MakeInitObject( ret );
 		void *def = ret.value.objectValue;
 		ret.value.objectValue = script.InitObject( def );
+		if ( overrides ) script.CopyProperties( overrides, ret.value.objectValue );
 		sa.ReturnValue( ret );
 		return true;
 	}) );
