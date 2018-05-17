@@ -455,7 +455,71 @@ bool RenderShapeBehavior::IsScreenPointInside( float screenX, float screenY, flo
 // returns sprite bounding box
 GPU_Rect RenderShapeBehavior::GetBounds() {
 	GPU_Rect rect = { 0, 0, 0, 0 };
-	// TODO
+	// check if point is inside
+	if( shapeType == ShapeType::Line ){
+		
+		if ( x < 0 ) { rect.x = x; rect.w = -x; }
+		else { rect.x = 0; rect.w = x; }
+		if ( y < 0 ) { rect.y = y; rect.h = -y; }
+		else { rect.y = 0; rect.h = y; }
+		
+	} else if( shapeType == ShapeType::Arc ){
+		
+		rect = { x - radius, y - radius, radius * 2, radius * 2 };
+		
+	} else if ( shapeType == ShapeType::Circle ) {
+		
+		if ( centered ) {
+			rect = { -radius, -radius, radius * 2, radius * 2 };
+		} else {
+			rect = { 0, 0, radius * 2, radius * 2 };
+		}
+		
+	} else if ( shapeType == ShapeType::Ellipse ) {
+		
+		if ( centered ) {
+			rect = { -x, -y, x * 2, y * 2 };
+		} else {
+			rect = { 0, 0, x * 2, y * 2 };
+		}
+		
+	} else if ( shapeType == ShapeType::Sector ) {
+		
+		rect = { x - radius, y - radius, radius * 2, radius * 2 };
+		
+	} else if ( shapeType == ShapeType::Triangle ) {
+		
+		float minX = x, minY = y, maxX = x, maxY = y;
+		minX = fmin( minX, x1 ); minY = fmin( minY, y1 );
+		maxX = fmax( maxX, x1 ); maxY = fmax( maxY, y1 );
+		minX = fmin( minX, x2 ); minY = fmin( minY, y2 );
+		maxX = fmax( maxX, x2 ); maxY = fmax( maxY, y2 );
+		rect.x = minX; rect.y = minY;
+		rect.w = maxX - minX; rect.h = maxY - minY;
+		
+	} else if ( shapeType == ShapeType::Rectangle || shapeType == ShapeType::RoundedRectangle ) {
+		if ( centered ) {
+			rect = { -x * 0.5f, -y * 0.5f, x, y };
+		} else {
+			rect = { 0, 0, x, y };
+		}
+	} else if ( shapeType == ShapeType::Polygon ) {
+		
+		vector<float>* dv = polyPoints->ToFloatVector();
+		if ( dv->size() >= 2 ) {
+			float minX = (*dv)[ 0 ], minY = (*dv)[ 1 ];
+			float maxX = minX, maxY = minY;
+			for ( size_t i = 2, np = dv->size(); i < np; i+=2 ){
+				float xx = (*dv)[ i ], yy = (*dv)[ i + 1 ];
+				minX = fmin( minX, xx ); minY = fmin( minY, yy );
+				maxX = fmax( maxX, xx ); maxY = fmax( maxY, yy );
+			}
+			rect.x = minX; rect.y = minY;
+			rect.w = maxX - minX; rect.h = maxY - minY;
+		}
+		
+	}
+	
 	return rect;
 }
 

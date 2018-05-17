@@ -8,6 +8,9 @@ Add App.cursor = texture or empty for default
 
 Negative outline with .color .a < 1 doesn't work
 
+Textfield
+	copying formatted text includes first formatting char
+
 ScriptableObject
 	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
 	change serializeMask to TypedArray<string>?

@@ -968,7 +968,7 @@ include( './ui' );
 	go[ 'scrollIntoView' ] = function() {
 		if ( editing ) {
 			// scroll to caret, if editing
-			go._scrollIntoView( rt.caretX, rt.caretY, 1 + ui.padLeft + ui.padRight, rt.lineHeight + ui.padTop + ui.padBottom );
+			go._scrollIntoView( rt.caretX, rt.caretY ); // ,1 + ui.padLeft + ui.padRight, rt.lineHeight + ui.padTop + ui.padBottom );
 		} else {
 			go._scrollIntoView();
 		}

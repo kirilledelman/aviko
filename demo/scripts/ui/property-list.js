@@ -39,15 +39,18 @@ include( './ui' );
 	var ui = new UI();
 	var scrollable, shouldScroll = true;
 	var header, backButton, moreButton;
-	var target = null;
+	var target = undefined;
 	var targetStack = [];
 	var showAll = undefined;
 	var properties = {};
 	var valueWidth = 130;
 	var disabled = false;
+	var readOnly = false;
+	var rightClickMenu = true;
 	var topPropertyList = go;
 	var groups = [];
 	var allFields = [];
+	var actions = [];
 	var constructing = true;
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
@@ -80,6 +83,7 @@ include( './ui' );
 		//          label: (String) "text displayed for property instead of property name", or (Function) to transform propname to text
 		//          style: (Object) - apply properties in this object to resulting input field
 		//          hidden: (Function) - return true to conditionally hide this field. Function's only param is target
+		//          deletable: (Boolean) - show "Delete property" option in right-click menu
 		//
 		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
 		//          properties: (Object) - apply properties to sub-property-list
@@ -99,6 +103,13 @@ include( './ui' );
 			go.debounce( 'refresh', go.refresh );
 		}],
 
+		// (Array) in form of [ { text: "Action name", action: function(){} } ... ]
+		//      These will be added as additional actions
+		//      To override alphabetical order of default group, supply group without name: param
+		[ 'actions',  function (){ return actions; }, function ( v ){
+			actions = (v && typeof( v ) == 'object' && v.constructor == Array) ? v : [];
+		}],
+
 		// (Object) target object whose properties are displayed in this property list
 		[ 'target',  function (){ return target; }, function ( v ){
 			target = v;
@@ -114,12 +125,25 @@ include( './ui' );
 
 		// (Boolean) disable all fields
 		[ 'disabled',  function (){ return disabled; }, function ( v ) {
-			ui.disabled = disabled = v;
-			go.debounce( 'refresh', go.refresh );
+			if ( disabled != v ) {
+				disabled = v;
+				go.debounce( 'refresh', go.refresh );
+			}
+		}],
+
+		// (Boolean) disable all fields except objects - can follow deeper into objects
+		[ 'readOnly',  function (){ return readOnly; }, function ( v ) {
+			if ( readOnly != v ) {
+				readOnly = v;
+				go.debounce( 'refresh', go.refresh );
+			}
 		}],
 
 		// (Boolean) show add and remove property (and array items) buttons
 		[ 'showHeader',  function (){ return header.active; }, function ( v ){ header.active = v; }],
+
+		// (Boolean) show context right click menu on fields
+		[ 'rightClickMenu',  function (){ return rightClickMenu; }, function ( v ){ rightClickMenu = v; }],
 
 		// (ui/panel) reference to header (where object / navigation / extras are displayed)
 		[ 'header',  function (){ return header; } ],
@@ -132,8 +156,10 @@ include( './ui' );
 
 		// (Boolean) should this property list be scrollable
 		[ 'scrollable',  function (){ return shouldScroll; }, function ( v ){
-			shouldScroll = v;
-			go.debounce( 'refresh', go.refresh );
+			if ( shouldScroll != v ) {
+				shouldScroll = v;
+				go.debounce( 'refresh', go.refresh );
+			}
 		} ],
 
 		// (GameObject) container to which all fields are added
@@ -203,9 +229,10 @@ include( './ui' );
 		click: function () {
 			// pop to previously selected object
 			if ( targetStack.length ) {
-				target = targetStack[ targetStack.length - 1 ].target;
+				var pop = targetStack[ targetStack.length - 1 ];
+				target = pop.target;
 				targetStack.pop();
-				go.refresh();
+				go.refresh( pop.scrollTop );
 				if ( targetStack.length == 0 ) backButton.blur();
 			}
 		}
@@ -216,21 +243,29 @@ include( './ui' );
 	moreButton = header.addChild( './button', {
 		text: "...",
 		focusGroup: ui.focusGroup,
-		click: function (){
-			var items = [
-				{ text: "Reload object", action: function ( obj ){ go.refresh(); } },
-				{ text: "Add property", action: function ( obj ){ log("^4TODO"); } },
-				{ text: "Remove property", action: function ( obj ){ log("^4TODO"); } },
-			];
-			var popup = new GameObject( './popup-menu', {
-				target: this,
-				items: items,
-				selectedIndex: 0,
-				selected: function ( s ) { s.action( target ); }
-			} );
-		}
+		actions: []
 	} );
 	moreButton.style = UI.style.propertyList.moreButton;
+
+	//
+	function nameObject( obj ) {
+		if ( obj === null ) return '(null)';
+		if ( obj === undefined ) return '(undefined)';
+		if ( typeof( obj ) === 'object' ) {
+			if ( obj.constructor === Array ) return 'Array[' + obj.length +']';
+			if ( obj.constructor === Vector ) return 'Vector[' + obj.length +']';
+			if ( obj.constructor === Color ) return '#' + obj.hex;
+			if ( obj.constructor === Image ) return 'Image(' + obj.width + 'x' + obj.height + ')';
+			if ( obj.constructor === GameObject || obj.constructor === Scene  ) {
+				return ( obj.active ? '' : '^9' ) + ( obj.name.length > 0 ? ( '<' + obj.name + '>' ) : obj.constructor.name );
+			}
+			if ( obj.constructor === Body || obj.constructor === UI || obj.constructor === RenderText || obj.constructor === RenderSprite || obj.constructor === RenderShape ) {
+				return ( obj.active ? '' : '^9' ) + obj.constructor.name;
+			}
+			return obj.constructor.name;
+		}
+		return String( obj );
+	}
 
 	// auto fit scrollbar
 	ui.layout = function ( w, h ) {
@@ -259,22 +294,24 @@ include( './ui' );
 	// creates or replaces a field for property
 	go.makeField = function ( curTarget, pname, pdef, label, cont ) {
 
-		var fieldValue, fieldType, replaceField = null, replaceIndex = -1, insertChildIndex = -1;
+		var fieldValue, fieldType, replaceField = null, replaceAllFieldsIndex = -1, insertChildIndex = -1;
 
 		// replace field mode?
-		if ( arguments.length == 2 ) {
-			replaceIndex = arguments[ 1 ];
+		if ( arguments.length == 1 ) {
 			replaceField = arguments[ 0 ];
+			cont = replaceField.parent;
+			replaceAllFieldsIndex = allFields.indexOf( replaceField );
+			insertChildIndex = cont.children.indexOf( replaceField );
 			curTarget = replaceField.target;
 			pdef = replaceField.pdef;
 			pname = replaceField.name;
 			label = replaceField.fieldLabel;
-			cont = replaceField.parent;
 		}
 
 		// common
 		fieldValue = curTarget[ pname ];
 		fieldType = typeof( fieldValue );
+		if ( fieldValue === null ) fieldType = 'null';
 		if ( pdef.enum !== undefined ) fieldType = 'enum';
 
 		// create appropriate control
@@ -344,6 +381,7 @@ include( './ui' );
 			// inspector:
 
 			case 'object':
+			case 'null':
 
 				// button to show inspector
 				function togglePropList() {
@@ -353,13 +391,16 @@ include( './ui' );
 						this.propList = new GameObject( './property-list', {
 							name: pname,
 							flex: 1,
+							readOnly: !!this.pdef.readOnly,
 							scrollable: false,
 							forceWrap: true,
 							active: !!pdef.expanded,
 							style: go.baseStyle.values.any,
 							fieldButton: this,
 							showHeader: false,
+							topPropertyList: topPropertyList ? topPropertyList : go,
 							type: 'object',
+							change: function () { this.fieldButton.text = nameObject( this.target ); }
 						} );
 						this.parent.addChild( this.propList, myPos + 1 );
 						this.propList.style = go.baseStyle.values.inline;
@@ -376,38 +417,62 @@ include( './ui' );
 
 				// button to go into an object
 				function pushToTarget() {
-					targetStack.push( {
-						target: target,
-						name: (target.constructor ? target.constructor.name : String( target ) ) + "." + this.name
-					} );
-					target = this.fieldValue;
-					go.refresh();
+					if ( topPropertyList ) {
+						topPropertyList.pushToTarget( this.fieldValue, this.name );
+					} else {
+						go.pushToTarget( this.fieldValue, this.name );
+					}
 				}
 
-				// inline option
-				var inline = ( pdef && pdef.inline );
+				// if object is null
+				if ( fieldValue === null && !readOnly ) {
+					var dropdownItems = [
+						{ text: "(null)", value: null },
+					];
+					// actions to change value from null
+					if ( pdef.actions ) {
+						dropdownItems = dropdownItems.concat( pdef.actions );
+					}
+					// show dropdown
+					field = cont.addChild( './select', {
+						name: pname,
+						target: curTarget,
+						change: function ( v, sel ) { if ( sel.action ) sel.action.call( go ); },
+						minWidth: valueWidth,
+						value: fieldValue,
+						items: dropdownItems,
+						style: go.baseStyle.values.any
+					}, insertChildIndex );
+					field.style = go.baseStyle.values.enum;
 
-				// create field button
-				field = cont.addChild( './button', {
-					target: curTarget,
-					name: pname,
-					fieldValue: fieldValue,
-					text: String( (fieldValue && fieldValue.constructor) ? fieldValue.constructor.name : String(fieldValue) ),
-					wrapEnabled: false,
-					minWidth: valueWidth,
-					disabled: (disabled || ( pdef && pdef.disabled )),
-					style: go.baseStyle.values.any,
-					toggleState: !!pdef.expanded
-				}, insertChildIndex );
-				field.style = go.baseStyle.values.object;
-				if ( inline ) {
-					field.click = togglePropList;
-					field.image.imageObject.angle = (field.toggleState ? 0 : -90);
 				} else {
-					field.click = pushToTarget;
-					field.image.imageObject.angle = -90;
-					field.label.flex = 1;
-					field.reversed = true;
+
+					// inline option
+					var inline = ( pdef && pdef.inline );
+
+					// create field button
+					field = cont.addChild( './button', {
+						target: curTarget,
+						name: pname,
+						fieldValue: fieldValue,
+						text: nameObject( fieldValue ),
+						wrapEnabled: false,
+						minWidth: valueWidth,
+						disabled: (disabled || ( pdef && pdef.disabled )),
+						style: go.baseStyle.values.any,
+						toggleState: !!pdef.expanded
+					}, insertChildIndex );
+					field.style = go.baseStyle.values.object;
+					if ( inline ) {
+						field.click = togglePropList;
+						field.image.imageObject.angle = (field.toggleState ? 0 : -90);
+					} else {
+						field.click = pushToTarget;
+						field.image.imageObject.angle = -90;
+						field.label.flex = 1;
+						field.reversed = true;
+					}
+
 				}
 
 				break;
@@ -427,10 +492,11 @@ include( './ui' );
 
 		// common properties
 		if ( field ) {
-			field.type = typeof( fieldValue );
+			field.type = fieldType;
 			field.pdef = pdef;
 			field.focusGroup = ui.focusGroup;
 			field.fieldLabel = label;
+			if ( fieldType != 'object' && readOnly ) field.disabled = true;
 			if ( disabled || pdef.disabled ) field.disabled = true;
 			if ( typeof( pdef.style ) === 'object' ) {
 				UI.base.applyProperties( field, pdef.style );
@@ -438,27 +504,30 @@ include( './ui' );
 			if ( typeof( pdef.hidden ) === 'function' ) {
 				var shown = !pdef.hidden( curTarget );
 				field.fieldLabel.active = shown;
+				field.active = shown;
 				if ( field.propList ) {
-					field.propList.active = shown;
-					field.active = (shown && field.toggleState );
-				} else {
-					field.active = shown;
+					field.propList.active = (shown && field.toggleState );
 				}
 			}
 			if ( replaceField ) {
-				allFields.splice( replaceIndex, 1, field );
+				// log( "replacing ", replaceField, " with new field", field, "at ", replaceAllFieldsIndex, "child index:", insertChildIndex,"field.parent = ", field.parent );
+				if ( replaceField.propList ) {
+					replaceField.propList.parent = null;
+				}
+				allFields.splice( replaceAllFieldsIndex, 1, field );
 				replaceField.parent = null;
 			} else {
 				allFields.push( field );
 				curTarget.watch( field.name, go.watchCallback );
 			}
+			label.field = field;
 		}
 
 		return field;
 	}
 
 	// recreates controls
-	go.refresh = function () {
+	go.refresh = function ( restoreScrollPos ) {
 		// set up container
 		var cont = go;
 		if ( shouldScroll ) {
@@ -512,6 +581,7 @@ include( './ui' );
 		var _showAll = undefined;
 		var _groups = [];
 		var _customInspector = null;
+		var _actions = [];
 		function mergeConfig( other ) {
 			// merge properties
 			if ( typeof( other.properties ) === 'object' ) {
@@ -533,11 +603,15 @@ include( './ui' );
 							break;
 						}
 					}
-					if ( !found ) _groups.push( g );
+					if ( !found ) {
+						_groups.push( g );
+					}
 				}
 			}
 			// showAll
 			if ( typeof ( other.showAll ) === 'boolean' ) _showAll = other.showAll;
+			// merge actions
+			if ( typeof ( other.actions ) === 'object' && other.actions.length ) _actions = _actions.concat( other.actions );
 			// custom inspector
 			if ( typeof ( other.inspector ) === 'function' ) _customInspector = other.inspector;
 		}
@@ -549,10 +623,10 @@ include( './ui' );
 			}
 			// merge object's __propertyListConfig
 			if ( target.__propertyListConfig ) {
-				mergeConfig( target.constructor.__propertyListConfig );
+				mergeConfig( target.__propertyListConfig );
 			}
 			// merge current properties etc
-			mergeConfig( { properties: properties, groups: groups, showAll: showAll, inspector: customInspector } );
+			mergeConfig( { properties: properties, groups: groups, showAll: showAll, inspector: customInspector, actions: actions } );
 
 			// if properties are empty, set showall to true
 			if ( !Object.keys( _properties ).length && _showAll === undefined ) _showAll = true;
@@ -563,7 +637,7 @@ include( './ui' );
 		for ( var i = 0; i < targetStack.length; i++ ) {
 			bn.push( targetStack[ i ].name );
 		}
-		bn.push( ( target && target.constructor ) ? target.constructor.name : "(null)" );
+		bn.push( ( target && target.constructor ) ? target.constructor.name : ( target === undefined ? "Nothing selected" : "(null)" ) );
 		backButton.text = bn.join( ' ^B->^n ' );
 		backButton.disabled = ( targetStack.length == 0 );
 		if ( targetStack.length ) {
@@ -579,6 +653,24 @@ include( './ui' );
 		} else {
 			moreButton.disabled = false;
 		}
+
+		// set more button options
+		moreButton.actions = _actions;
+		moreButton.click = function () {
+			var items = [
+				{ text: "Reload object", action: function (){ this.refresh(); } },
+			];
+			if ( this.actions.length ) {
+				items.push( null );
+				items = items.concat( this.actions );
+			}
+			var popup = new GameObject( './popup-menu', {
+				target: this,
+				items: items,
+				selectedIndex: 0,
+				selected: function ( s ) { s.action.call( this ); }.bind( go )
+			} );
+		};
 
 		// if displaying a custom inspector
 		if ( _customInspector ) {
@@ -609,7 +701,7 @@ include( './ui' );
 			// copy properties that exist in target and match showing criteria
 			for( var i in g.properties ) {
 				var pname = g.properties[ i ];
-				var pdef = properties[ pname ];
+				var pdef = _properties[ pname ];
 				if ( ( target[ pname ] !== undefined && // target has property
 					( ( _showAll === true && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
 					( _showAll !== true && pdef !== undefined && pdef !== false ) ) ) || // showing select properties, and prop is included
@@ -648,7 +740,7 @@ include( './ui' );
 				var groupTitle = cont.addChild( './text', {
 					forceWrap: true,
 					flex: 1,
-					text: (i < ng ? _gs[ i ].name : ''),
+					text: (i < ng ? _gs[ i ].name : 'Miscellaneous'),
 					style: go.baseStyle.group,
 				} );
 				// clear top margin if first
@@ -657,7 +749,7 @@ include( './ui' );
 			// for each property
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
-				var pdef = _properties[ pname ] || {};
+				var pdef = _properties[ pname ] || { deletable: true };
 
 				// add label
 				if ( typeof( pdef.label ) === 'function' ) labelText = pdef.label( pname );
@@ -670,7 +762,7 @@ include( './ui' );
 				} );
 
 				// add field
-				go.makeField( ( pdef.target || target ) , pname, pdef, label, cont );
+				go.makeField( ( pdef.target || target ), pname, pdef, label, cont );
 				numRows++;
 
 			}
@@ -690,9 +782,17 @@ include( './ui' );
 		// scroll to top, enable scrollbars
 		if ( scrollable ) {
 			scrollable.scrollLeft = scrollable.scrollTop = 0;
-			function _showScrollbars() { this.scrollbars = 'auto'; }
+			function _showScrollbars() {
+				this.scrollbars = 'auto';
+				this.async( function() {
+					scrollable.scrollTop = (restoreScrollPos != undefined ? restoreScrollPos : 0);
+				}, 0.5 );
+			}
 			scrollable.debounce( 'showScrollbars', _showScrollbars, 0.1 );
 		}
+
+		// if this is an inline propList, update our button
+		if ( go.fieldButton ) go.fieldButton.text = nameObject( target );
 
 		// clean up
 		gc();
@@ -701,7 +801,8 @@ include( './ui' );
 
 	// single field changed, update field
 	go.watchCallback = function ( p, ov, v ) {
-		go.async( function() { go.reload( p, v ); } );
+		go.async( function() { go.reload( p ); } );
+		//go.reload( p, v );
 		return v;
 	}
 
@@ -723,14 +824,24 @@ include( './ui' );
 		// callback
 		if ( this.pdef.change ) this.pdef.change( this.target, this.name, val, oldVal );
 
-		// full reload option
-		if ( this.pdef.reloadOnChange ) go.reload();
+		// reload other fields option
+		var reloads = this.pdef.reloadOnChange;
+
+		// true = reload all
+		if ( reloads === true ) {
+			go.reload();
+		// single other field
+		} else if ( typeof( reloads ) === 'string' ) {
+			go.reload( reloads );
+		// array
+		} else if ( reloads && typeof( reloads ) === 'object' && reloads.length ) {
+			for ( var i in reloads ) go.reload( reloads[ i ] );
+		}
 
 	}
 
 	// refreshes properties values in rows from target
 	go.reload = function ( propName, valOverride ) {
-
 		if ( !target ) return;
 
 		// update fields
@@ -747,33 +858,37 @@ include( './ui' );
 				if ( arguments.length == 2 ) val = valOverride;
 			}
 			tp = typeof( val );
+			if ( val === null ) tp = 'null';
 
 			// if field type has changed
-			if ( field.type !== tp && field.type !== 'enum' ) {
-				log( "reload type changed for \"" + field.name + "\" field.type:", field.type, ', current value:', val, ' of type: ', tp );
+			if ( ( field.type !== tp ) && field.type !== 'enum' ) {
 				// re-create just this field
-				field = go.makeField( field, i );
+				field = go.makeField( field );
 			}
 
 			// have conditional hiding - apply
 			if ( typeof( pdef.hidden ) === 'function' ) {
-				if ( typeof( field.fieldButton ) !== 'undefined' ){
-					field.fieldLabel.active = field.fieldButton.active = !pdef.hidden( field.fieldButton.target );
-					field.active = (field.fieldButton.active && field.fieldButton.toggleState );
-				} else {
-					field.fieldLabel.active = field.active = !pdef.hidden( field.target );
+				var shown = !pdef.hidden( field.target );
+				field.fieldLabel.active = shown;
+				field.active = shown;
+				if ( field.propList ) {
+					field.propList.active = (shown && field.toggleState );
 				}
 			}
 
 			// skip focused and hidden fields
 			if ( field.focused || !field.active ) continue;
 
-			// field is object with inline property list
-			if ( tp == 'object' && field.propList ) {
-				field.propList.reload();
-
+			// field is object
+			if ( tp === 'object' ) {
+				field.text = nameObject( val );
+				if ( field.propList ) {
+					if ( field.propList.target == val ) field.propList.reload();
+					else field.propList.target = val;
+				}
+				field.fieldValue = val;
 			// field is boolean
-			} else if ( tp == 'boolean' ) {
+			} else if ( tp === 'boolean' ) {
 				field.checked = val;
 				field.text = ( val ? "True" : "False" );
 
@@ -786,6 +901,105 @@ include( './ui' );
 			if ( typeof( propName ) !== 'undefined' && field.name === propName ) break;
 		}
 
+		// if this is an inline propList, update our button
+		if ( go.fieldButton ) go.fieldButton.text = nameObject( target );
+
+	}
+
+	go.pushToTarget = function( newTarget, propName ) {
+		targetStack.push( {
+			target: target,
+			name: ((target && target.constructor) ? ( target.constructor.name + "." ) : '' ) + propName,
+			scrollTop: go.container.scrollTop
+		} );
+		target = newTarget;
+		go.refresh();
+	}
+
+	// right click menu
+	ui.click = function ( btn, x, y, wx, wy ) {
+		if ( btn == 3 && !disabled && rightClickMenu ) {
+
+			stopAllEvents();
+
+			// find field right-clicked on
+			var objs = go.container.query( wx, wy, 1, 1, true );
+			var field = null;
+			for ( var i in objs ) {
+				var obj = objs[ i ];
+				field = obj.field || ( obj.pdef ? obj : null );
+				if ( field ) break;
+			}
+			// construct a menu
+			var items = [];
+			if ( field ) {
+				// reload property
+				items.push( { text: "Re-load ^B" + field.name + "^b property", action: function () {
+					this.reload( field.name );
+				} } );
+				// if not readonly mode
+				if ( !readOnly ) {
+					// field can be deleted
+					if ( field.pdef.deletable === true ) {
+						items.push( {
+							text: "Delete ^B" + field.name + "^b property", action: function () {
+								delete this.target[ field.name ];
+								if ( typeof( this.target[ field.name ] ) === 'undefined' ) {
+									log( "Deleted ^B" + field.name + "^b successfully." );
+									this.refresh( this.container.scrollTop );
+								} else {
+									log( "Unable to delete ^B" + field.name + "^b property." );
+								}
+							}
+						} );
+					}
+					// field is nullable
+					if ( field.type === 'object' && field.fieldValue && field.pdef.nullable ) {
+						items.push( {
+							text: "Set ^B" + field.name + "^b = ^Inull", action: function () {
+								this.target[ field.name ] = null;
+							}
+						} );
+					}
+					// can add properties
+					if ( showAll !== false ) {
+						items.push( {
+							text: "Add property", action: function () {
+								this.addProperty();
+							}
+						} );
+					}
+				}
+			}
+			// common actions
+			items = items.concat( moreButton.actions );
+
+			// show popup menu at cursor
+			if ( !items.length ) return;
+			var popup = new GameObject( './popup-menu', {
+				x: wx, y: wy,
+				items: items,
+				selectedIndex: 0,
+				selected: function ( s ) { s.action.call( go ); }
+			} );
+
+		}
+	}
+
+	go.addProperty = function () {
+		// TODO - prompt for prop name and value( as eval ), then reload, find new prop, scrollIntoView
+		var win = App.overlay.addChild( './window', {
+			modal: true,
+			minWidth: 200,
+			minHeight: 200,
+			title: "Add Property",
+		} );
+		win.setTransform( App.windowWidth / 2 - win.width, App.windowHeight / 2 - win.height );
+	}
+
+	// automatically clear target when removing from scene
+	go.removed = function () {
+		go.target = null;
 	}
 
 	// apply defaults
@@ -799,11 +1013,23 @@ include( './ui' );
 
 /*
 
-Default inspector parameters for property list
+Default inspector parameters for various built in classes in property list component
 
 */
 
-Color.__propertyListConfig = Color.__propertyListConfig ? Color.__propertyListConfig : {
+App.__propertyListConfig = App.__propertyListConfig ||
+{
+	showAll: false,
+	properties: {
+		'scene': { nullable: true, actions: [ { text:"new Scene", action: function() { this.pushToTarget( this.target.scene = new Scene(), 'scene' ); } } ]},
+	},
+	groups: [
+		{ name: "Scene", properties: [ 'scene' ] }
+	],
+}
+
+Color.__propertyListConfig = Color.__propertyListConfig ||
+{
 	showAll: false,
 	properties: {
 		'r': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
@@ -813,4 +1039,44 @@ Color.__propertyListConfig = Color.__propertyListConfig ? Color.__propertyListCo
 		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i }, reloadOnChange: true },
 	},
 	groups: [ { properties: [ 'r', 'g', 'b', 'a', 'hex' ] } ]
+}
+
+GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
+{
+	showAll: true,
+	actions: [
+		{ text: "Add child", action: function() { this.pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } }
+	],
+	properties: {
+		'name': true,
+		'script': { reloadOnChange: true },
+		'x': { step: 1 },
+		'y': { step: 1 },
+		'z': { step: 1 },
+		'angle': { min: -360, max: 360, step: 1 },
+		'scaleX': { step: 0.1 },
+		'scaleY': { step: 0.1 },
+		'skewX': { min: -90, max: 90, step: 1 },
+		'skewY': { min: -90, max: 90, step: 1 },
+		'scene': true,
+		'parent': { nullable: true, },
+		'children': { inline: true, readOnly: true },
+		'active': true,
+		'ignoreCamera': true,
+		'renderAfterChildren': true,
+		'render': { nullable: true, },
+		'opacity': { min: 0, max: 1, step: 0.1 },
+		'body': { nullable: true, actions: [ { text:"new Body", action: function() { this.pushToTarget( this.target.body = new Body(), 'body' ); } } ]},
+		'ui': { nullable: true, actions: [ { text:"new UI", action: function() { this.pushToTarget( this.target.ui = new UI(), 'ui' ); } } ] },
+		'scale': { reloadOnChange: [ 'scaleY', 'scaleX' ] },
+		'__propertyListConfig': false
+	},
+	groups: [
+		{ name: "GameObject", properties: [ 'active', 'name', 'script' ] },
+		{ name: "Transform", properties: [ 'x', 'y', 'z', 'angle', 'scaleX', 'scaleY', 'skewX', 'skewY' ] },
+		{ name: "Hierarchy", properties: [ 'scene', 'parent', 'children' ] },
+		{ name: "Display", properties: [ 'render', 'opacity', 'ignoreCamera', 'renderAfterChildren', ] },
+		{ name: "Physics", properties: [ 'body' ] },
+		{ name: "UI", properties: [ 'ui' ] },
+	]
 }

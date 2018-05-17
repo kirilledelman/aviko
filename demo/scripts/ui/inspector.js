@@ -127,16 +127,18 @@ new (function( params ){
 	});
 
 
-	//
+
 	this.propertyList = propertyList = window.addChild( './property-list', {
 		minWidth: 300,
 		focusGroup: 'inspector',
 		render: new RenderShape( Shape.Rectangle, { color: 0xFFFFFF } ),
 	} );
 
+
 	// events and callbacks
 
 	function onLog( s ) {
+		if ( !window.active ) return;
 		logBuffer += (logBuffer.length ? "\n^n^c" : "") + s;
 		output.text = logBuffer;
 		output.async( output.scrollToBottom, 0.1 );
@@ -161,7 +163,7 @@ new (function( params ){
 			// if shift isn't pressed
 			if ( !Input.get( Key.LeftShift ) ) {
 				// set target to object under cursor
-				var context = App.scene.query( x, y, 1, 1, 0, true );
+				var context = App.scene.query( x, y, 1, 1, true );
 				if ( context.length ) $0 = context[ context.length - 1 ];
 			}
 			// show window

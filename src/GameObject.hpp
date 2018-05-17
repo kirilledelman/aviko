@@ -196,6 +196,8 @@ public:
 	/// used for serialization
 	ArgValueVector* SetChildrenVector( ArgValueVector* in );
 	
+	bool IsDescendentOf( GameObject* grandDaddy );
+	
 	/// garbage collection callback
 	void TraceProtectedObjects( vector<void **> &protectedObjects );
 	
@@ -212,7 +214,15 @@ public:
 
 	/// set to true to draw last
 	bool renderAfterChildren = false;
-		
+	
+// non-physics query
+	
+	/// raycasts from x, y in dx, dy direction, returns up to maxResults GameObjects with info
+	ArgValueVector* RayCastAll( float x, float y, float dx, float dy, int maxResults );
+	
+	/// returns all gameobjects in area
+	ArgValueVector* QueryAll( float x, float y, float w, float h, int maxResults );
+	
 // behavior
 	
 	// can access private fields

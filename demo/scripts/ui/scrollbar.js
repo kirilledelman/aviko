@@ -285,6 +285,7 @@ include( './ui' );
 		go.state = 'dragging';
 		Input.mouseMove = handle.ui.mouseMoveGlobal;
 		Input.mouseUp = handle.ui.mouseUpGlobal;
+		stopAllEvents();
 	}
 
 	// mouse up

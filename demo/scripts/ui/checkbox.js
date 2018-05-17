@@ -175,7 +175,7 @@ include( './ui' );
 
 	// click - dispatch on gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || btn != 1 ) return;
 		if ( group && checked ) return; // can't uncheck in a group
 		ui.focus();
 		go.fire( 'click', btn, x, y, wx, wy );
@@ -184,7 +184,7 @@ include( './ui' );
 
 	// mouse down/up state
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || btn != 1 ) return;
 		go.state = 'down';
 		// redispatch on gameObject
 		go.fire( 'mouseDown', btn, x, y, wx, wy );
@@ -192,7 +192,7 @@ include( './ui' );
 
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
+		if ( disabled || btn != 1 ) return;
 		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}

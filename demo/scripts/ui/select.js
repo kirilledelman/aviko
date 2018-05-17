@@ -226,6 +226,7 @@ include( './ui' );
 					icon: items[ i ].icon,
 					text: items[ i ].text,
 					name: items[ i ].text,
+					item: items[ i ],
 					minWidth: button.width,
 					disabled: !!items[ i ].disabled,
 					focusGroup: 'dropdown',
@@ -291,9 +292,9 @@ include( './ui' );
 	go.itemSelected = function () {
 		stopAllEvents();
 		go.showDropdown( false );
-		if ( go.value != this.value ) {
+		if ( go.value !== this.value ) {
 			go.value = this.value;
-			go.fire( 'change', go.value );
+			go.fire( 'change', go.value, this.item );
 		}
 		button.focus();
 	}

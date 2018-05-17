@@ -181,7 +181,7 @@ include( './ui' );
 	// positions menu next to target
 	go.update = function () {
 		// place next to target
-		var x = 0, y = 0;
+		var x = go.x, y = go.y;
 		if ( target ) {
 			var tw = 0;
 			if ( target.ui ) {
@@ -217,6 +217,7 @@ include( './ui' );
 			y < go.y || y > go.y + container.height ) {
 			go.parent = null;
 			stopAllEvents();
+			//Input.on( 'mouseUp', function() { stopAllEvents(); }, true ); // ignore next mouseup
 		}
 	}
 

@@ -84,7 +84,7 @@ public:
 	virtual void CallEvent( Event& event ) {
 		
 		// ignore if finalizing
-		if ( script.IsAboutToBeFinalized( &this->scriptObject ) ) return;
+		if ( script.IsAboutToBeFinalized( &this->scriptObject ) || event.stopped ) return;
 		
 		// event listeners array
 		EventListeners* list = &this->eventListeners[ event.name ];
@@ -176,8 +176,8 @@ public:
 	/// adds scheduled async
 	static int AddAsync( void* obj, void* func, float delay ) {
 		list<ScheduledCall>& asyncs = (*scheduledAsyncs)[ obj ];
-		asyncs.emplace_back( obj, func, delay );
-		return asyncs.back().index;
+		asyncs.emplace_front( obj, func, delay );
+		return asyncs.front().index;
 	}
 	
 	/// removes async by index

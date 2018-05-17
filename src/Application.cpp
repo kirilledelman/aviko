@@ -1087,6 +1087,10 @@ void Application::GameLoop() {
 			event.behaviorParam = NULL;
 			event.skipObject = NULL;
 			event.stopped = false; // reused
+
+			// clear with scene's bg color
+			GPU_ClearColor( this->screen, scene->backgroundColor->rgba );
+		
 		}
 		
 		// copy to main screen and flip

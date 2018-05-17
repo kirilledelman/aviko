@@ -88,7 +88,7 @@ void RenderSpriteBehavior::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
 		if ( rs->imageResource ) return ArgValue( rs->imageResource->key.c_str() );
-		return ArgValue( (void*) NULL );
+		return ArgValue( "" );
 	 } ),
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;

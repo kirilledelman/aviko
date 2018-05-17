@@ -362,7 +362,8 @@ UI.style = UI.style ? UI.style : {
 		item: {
 			label: {
 				size: 14,
-				flex: 1
+				flex: 1,
+				bold: false,
 			},
 			layoutAlignX: LayoutAlign.Start,
 			focusRect: false,
@@ -442,9 +443,10 @@ UI.style = UI.style ? UI.style : {
 		// applied to group label - note that first group's marginTop will be forced to 0
 		group: {
 			bold: true,
-			color: 0x333333,
+			color: 0x666666,
 			align: TextAlign.Center,
-			marginTop: 4,
+			marginTop: 16,
+			marginBottom: 8,
 		},
 
 		// applied to "no editable properties" and "(null)" text
@@ -486,7 +488,7 @@ UI.style = UI.style ? UI.style : {
 			image: { imageObject: { angle: 90 } }, // down arrow rotated back <
 			states: {
 				off: { background: 0xF0F0F0, label: { color: 0x0 } },
-				focus: { background: 0xF0F0F0, label: { color: 0x0 } },
+				focus: { background: 0x006eb2, label: { color: 0xFFFFFF } },
 				disabled: { background: false, label: { color: 0x0, opacity: 1 } },
 				over: { background: 0x006eb2, label: { color: 0xFFFFFF } },
 				down: { background: 0x004b7a, label: { color: 0xFFFFFF } },
@@ -501,7 +503,7 @@ UI.style = UI.style ? UI.style : {
 			pad: [ 2, 4, 2, 4 ],
 			states: {
 				off: { background: 0xF0F0F0, label: { color: 0x0 } },
-				focus: { background: 0xF0F0F0, label: { color: 0x0 } },
+				focus: { background: 0x006eb2, label: { color: 0xFFFFFF } },
 				disabled: { background: false, label: { color: 0x0, opacity: 1 } },
 				over: { background: 0x006eb2, label: { color: 0xFFFFFF } },
 				down: { background: 0x004b7a, label: { color: 0xFFFFFF } },
@@ -663,6 +665,7 @@ UI.base = UI.base ? UI.base : {
 				} else if ( !ui.focusRect ) {
 					ui.focusRect = new GameObject( './panel', {
 						active: false,
+						name: "FocusRect",
 						fixedPosition: true,
 						style: UI.style.focusRect,
 					} );
@@ -787,7 +790,7 @@ UI.base = UI.base ? UI.base : {
 			[ 'offsetY',  function (){ return ui.offsetY; }, function ( v ){ ui.offsetY = v; } ],
 
 			// (Object) used to override style (collection of properties) other than default after creating / during init
-			[ 'style',  function (){ return null; }, function ( v ){
+			[ 'style',  function (){ return go.baseStyle; }, function ( v ){
 				// merge into current baseStyle
 				for ( var p in v ) go.baseStyle[ p ] = v[ p ];
 				UI.base.applyProperties( go, v );
@@ -890,6 +893,15 @@ UI.base = UI.base ? UI.base : {
 
 	},
 
+	// adds group with properties to __propertyListConfig
+	addInspectables: function ( go, groupName, props, propsExtended ) {
+		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
+		go.__propertyListConfig.groups.push( { name: groupName, properties: props } );
+		for ( var p in props ) {
+			go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
+		}
+	},
+
 	// sets properties on an object
 	applyProperties: function ( go, props ) {
 		if ( !props || !go ) return;
@@ -912,11 +924,13 @@ UI.base = UI.base ? UI.base : {
 	// creates properties with getter/setters
 	addMappedProperties: function ( go, mappedProps ) {
 		go.serializeMask = go.serializeMask ? go.serializeMask : {};
+		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
 		for ( var i = 0; i < mappedProps.length; i++ ) {
 			var hidden = ( mappedProps[ i ].length >= 4 && mappedProps[ i ][ 3 ] );
 			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
 				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: !hidden, configurable: true,
 			} );
+			go.__propertyListConfig.properties[ mappedProps[ i ][ 0 ] ] = false; // hide from inspector
 			if ( hidden ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
 		}
 	}

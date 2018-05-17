@@ -134,6 +134,7 @@ new (function (){
 		valueWidth: 130,
 		showAll: false,
 		showHeader: false,
+		rightClickMenu: false,
 		target: sprite.render
 	} );
 
@@ -185,11 +186,11 @@ new (function (){
 					'addColor': {
 						inline: true,
 						properties: {
-							'r': { min: 0, max: 1, step: 0.1 },
-							'g': { min: 0, max: 1, step: 0.1 },
-							'b': { min: 0, max: 1, step: 0.1 },
-							'a': { min: 0, max: 1, step: 0.1 },
-							'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i } },
+							'r': { min: -1, max: 1, step: 0.1 },
+							'g': { min: -1, max: 1, step: 0.1 },
+							'b': { min: -1, max: 1, step: 0.1 },
+							'a': { min: -1, max: 1, step: 0.1 },
+							'hex': false,
 						}
 					},
 					'opacity': { min: 0, max: 1, step: 0.1, target: sprite },
@@ -213,7 +214,7 @@ new (function (){
 					'outlineColor': { inline: true, hidden: function( t ){ return (t.outlineRadius === 0); } },
 					'outlineOffsetX': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
 					'outlineOffsetY': { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); } },
-					'outlineRadius': { min: -16, max: 16, step: 1 },
+					'outlineRadius': { min: -16, max: 16, step: 1, reloadOnChange: [ 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ] },
 				};
 				props.groups = [
 					{ name: "Blending", properties: [ 'blendMode', 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ] },

@@ -1081,7 +1081,7 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 
 void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	
-	if ( !behavior->gameObject ) return;
+	if ( !behavior->gameObject || !behavior->gameObject->active() ) return;
 	
 	// constrain size
 	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
@@ -1750,6 +1750,7 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 		top = ( this->gameObject ? this->gameObject->GetScene() : NULL );
 		
 	}
+	// printf( "Request layout! %s\n", trigger.toString().c_str() );
 	if ( top ) {
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false );
 		if ( trigger.type != TypeUndefined ) {

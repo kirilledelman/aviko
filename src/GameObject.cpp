@@ -963,6 +963,88 @@ void GameObject::InitClass() {
 		sa.ReturnString( buf );
 		return true;
 	}));
+	
+	script.DefineFunction<GameObject>
+	("rayCast",
+	 static_cast<ScriptFunctionCallback>([]( void* p, ScriptArguments& sa ){
+		GameObject* g = (GameObject*) p;
+		// arguments
+		float x = 0, y = 0, dx = 0, dy = 0;
+		void* ignoreBody = NULL;
+		bool allObjects = false;
+		int maxResults = 0;
+		const char *error = "usage: rayCast( Number worldX, Number worldY, Number directionX, Number directionY, [ Body ignoreBody | Boolean allObjects, [ Int maxResults ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// ignoreBody / allObjects
+		if ( sa.args.size() >= 4 ) {
+			if ( !sa.ReadArgumentsFrom( 4, 1, TypeObject, &ignoreBody, TypeInt, &maxResults ) ) {
+				if ( !sa.ReadArgumentsFrom( 4, 1, TypeBool, &allObjects, TypeInt, &maxResults ) ) {
+					script.ReportError( error );
+					return false;
+				}
+			}
+		}
+		
+		// call
+		ArgValueVector* res = NULL;
+		Scene* scene = g->GetScene();
+		if ( allObjects ) {
+			res = g->RayCastAll( x, y, dx, dy, maxResults );
+		} else if ( scene ) {
+			res = scene->RayCast( x * WORLD_TO_BOX2D_SCALE, y * WORLD_TO_BOX2D_SCALE, dx * WORLD_TO_BOX2D_SCALE, dy * WORLD_TO_BOX2D_SCALE, maxResults, ignoreBody, g );
+		} else {
+			sa.ReturnNull();
+			return true;
+		}
+		sa.ReturnArray( *res );
+		delete res;
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
+	("query",
+	 static_cast<ScriptFunctionCallback>([]( void* p, ScriptArguments& sa ){
+		GameObject* g = (GameObject*) p;
+		// arguments
+		float x = 0, y = 0, dx = 0, dy = 0;
+		void* ignoreBody = NULL;
+		bool allObjects = false;
+		int maxResults = 0;
+		const char *error = "usage: query( Number worldX, Number worldY, Number width, Number height, [ Body ignoreBody | Boolean allObjects, [ Int maxResults ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		
+		// ignoreBody / allObjects
+		if ( sa.args.size() >= 4 ) {
+			if ( !sa.ReadArgumentsFrom( 4, 1, TypeObject, &ignoreBody, TypeInt, &maxResults ) ) {
+				if ( !sa.ReadArgumentsFrom( 4, 1, TypeBool, &allObjects, TypeInt, &maxResults ) ) {
+					script.ReportError( error );
+					return false;
+				}
+			}
+		}
+		
+		// call
+		ArgValueVector* res = NULL;
+		Scene* scene = g->GetScene();
+		if ( allObjects ) {
+			res = g->QueryAll( x, y, dx, dy, maxResults );
+		} else if ( scene ) {
+			res = scene->Query( x * WORLD_TO_BOX2D_SCALE, y * WORLD_TO_BOX2D_SCALE, dx * WORLD_TO_BOX2D_SCALE, dy * WORLD_TO_BOX2D_SCALE, maxResults, ignoreBody, g );
+		} else {
+			sa.ReturnNull();
+			return true;
+		}
+		sa.ReturnArray( *res );
+		delete res;
+		return true;
+	}));
 
 }
 
@@ -1216,6 +1298,13 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 	}
 }
 
+// 
+bool GameObject::IsDescendentOf( GameObject* grandDaddy ) {
+	if ( this->parent == grandDaddy ) return true;
+	else if ( this->parent ) return this->parent->IsDescendentOf( grandDaddy );
+	return false;
+}
+
 /// finds scene this object is attached to
 Scene* GameObject::GetScene() {
 	if ( this == app.overlay && app.sceneStack.size() ) return app.sceneStack.back();
@@ -1253,8 +1342,73 @@ ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 }
 
 
+/* MARK:	-				Non-Physics query
+ -------------------------------------------------------------------- */
+
+
+ArgValueVector* GameObject::QueryAll( float x, float y, float w, float h, int maxResults ) {
+	// populate and return results
+	ArgValueVector* ret = new ArgValueVector();
+	float ox = x + w, oy = y + h;
+	GameObjectCallback callback = static_cast<GameObjectCallback>([x,y,ox,oy,maxResults,ret]( GameObject* go ){
+		// check if any of the corners of go are inside rectangle xywh first
+		GPU_Rect bounds = go->GetBounds();
+		float gx, gy;
+		bool inside = false;
+		go->ConvertPoint( bounds.x, bounds.y, gx, gy, true );
+		inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
+		if ( !inside ) {
+			go->ConvertPoint( bounds.x + bounds.w, bounds.y, gx, gy, true );
+			inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
+			if ( !inside ) {
+				go->ConvertPoint( bounds.x + bounds.w, bounds.y + bounds.h, gx, gy, true );
+				inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
+				if ( !inside ) {
+					go->ConvertPoint( bounds.x, bounds.y, gx, gy, true );
+					inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
+				}
+			}
+		}
+		// check the opposite - if any of the corners of outer rect are inside go
+		if ( !inside ) {
+			float bx = bounds.x + bounds.w, by = bounds.y + bounds.h;
+			go->ConvertPoint( x, y, gx, gy, false );
+			inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
+			if ( !inside ) {
+				go->ConvertPoint( ox, y, gx, gy, false );
+				inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
+				if ( !inside ) {
+					go->ConvertPoint( ox, oy, gx, gy, false );
+					inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
+					if ( !inside ) {
+						go->ConvertPoint( x, oy, gx, gy, false );
+						inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
+					}
+				}
+			}
+		}
+		
+		// add
+		if ( inside ) {
+			ret->push_back( ArgValue( go->scriptObject ) );
+		}
+		return ( !maxResults || ret->size() < maxResults );
+	});
+	this->Traverse( &callback );
+	return ret;
+}
+
+ArgValueVector* GameObject::RayCastAll( float x, float y, float dx, float dy, int maxResults ) {
+	// populate and return results
+	//https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
+	ArgValueVector* ret = new ArgValueVector();
+	return ret;
+}
+
+
 /* MARK:	-				Transform
  -------------------------------------------------------------------- */
+
 
 bool GameObject::HasBody(){ return ( this->body && this->body->live ); }
 

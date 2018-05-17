@@ -206,19 +206,19 @@ void Scene::InitClass() {
 		void* ignoreBody = NULL;
 		bool allObjects = false;
 		int maxResults = 0;
-		const char *error = "usage: rayCast( Number startX, Number startY, Number directionX, Number directionY, [ Int maxResults, [ Body ignoreBody | Boolean allObjects ] ] )";
-		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy, TypeInt, &maxResults ) ) {
+		const char *error = "usage: rayCast( Number worldX, Number worldY, Number directionX, Number directionY, [ Body ignoreBody | Boolean allObjects, [ Int maxResults ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		
 		// ignoreBody / allObjects
-		if ( sa.args.size() >= 6 ) {
-			if ( sa.args[ 5 ].type == TypeBool ) {
-				allObjects = sa.args[ 5 ].value.boolValue;
-			} else if ( !sa.ReadArgumentsFrom( 5, 1, TypeObject, &ignoreBody ) ) {
-				script.ReportError( error );
-				return false;
+		if ( sa.args.size() >= 4 ) {
+			if ( !sa.ReadArgumentsFrom( 4, 1, TypeObject, &ignoreBody, TypeInt, &maxResults ) ) {
+				if ( !sa.ReadArgumentsFrom( 4, 1, TypeBool, &allObjects, TypeInt, &maxResults ) ) {
+					script.ReportError( error );
+					return false;
+				}
 			}
 		}
 		
@@ -243,19 +243,19 @@ void Scene::InitClass() {
 		void* ignoreBody = NULL;
 		bool allObjects = false;
 		int maxResults = 0;
-		const char *error = "usage: query( Number x, Number y, Number width, Number height, [ Int maxResults, [ Body ignoreBody | Boolean allObjects ] ] )";
-		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy, TypeInt, &maxResults ) ) {
+		const char *error = "usage: query( Number worldX, Number worldY, Number width, Number height, [ Body ignoreBody | Boolean allObjects, [ Int maxResults ] ] )";
+		if ( !sa.ReadArguments( 4, TypeFloat, &x, TypeFloat, &y, TypeFloat, &dx, TypeFloat, &dy ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		
 		// ignoreBody / allObjects
-		if ( sa.args.size() >= 6 ) {
-			if ( sa.args[ 5 ].type == TypeBool ) {
-				allObjects = sa.args[ 5 ].value.boolValue;
-			} else if ( !sa.ReadArgumentsFrom( 5, 1, TypeObject, &ignoreBody ) ) {
-				script.ReportError( error );
-				return false;
+		if ( sa.args.size() >= 4 ) {
+			if ( !sa.ReadArgumentsFrom( 4, 1, TypeObject, &ignoreBody, TypeInt, &maxResults ) ) {
+				if ( !sa.ReadArgumentsFrom( 4, 1, TypeBool, &allObjects, TypeInt, &maxResults ) ) {
+					script.ReportError( error );
+					return false;
+				}
 			}
 		}
 		
@@ -372,71 +372,6 @@ void Scene::Render( Event& event ) {
 }
 
 
-
-/* MARK:	-				Non-Physics query
- -------------------------------------------------------------------- */
-
-
-ArgValueVector* Scene::QueryAll( float x, float y, float w, float h, int maxResults ) {
-	// populate and return results
-	ArgValueVector* ret = new ArgValueVector();
-	float ox = x + w, oy = y + h;
-	GameObjectCallback callback = static_cast<GameObjectCallback>([x,y,ox,oy,maxResults,ret]( GameObject* go ){
-		// check if any of the corners of go are inside rectangle xywh first
-		GPU_Rect bounds = go->GetBounds();
-		float gx, gy;
-		bool inside = false;
-		go->ConvertPoint( bounds.x, bounds.y, gx, gy, true );
-		inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
-		if ( !inside ) {
-			go->ConvertPoint( bounds.x + bounds.w, bounds.y, gx, gy, true );
-			inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
-			if ( !inside ) {
-				go->ConvertPoint( bounds.x + bounds.w, bounds.y + bounds.h, gx, gy, true );
-				inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
-				if ( !inside ) {
-					go->ConvertPoint( bounds.x, bounds.y, gx, gy, true );
-					inside = ( gx >= x && gx < ox && gy >= y && gy < oy );
-				}
-			}
-		}
-		// check the opposite - if any of the corners of outer rect are inside go
-		if ( !inside ) {
-			float bx = bounds.x + bounds.w, by = bounds.y + bounds.h;
-			go->ConvertPoint( x, y, gx, gy, false );
-			inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
-			if ( !inside ) {
-				go->ConvertPoint( ox, y, gx, gy, false );
-				inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
-				if ( !inside ) {
-					go->ConvertPoint( ox, oy, gx, gy, false );
-					inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
-					if ( !inside ) {
-						go->ConvertPoint( x, oy, gx, gy, false );
-						inside = ( gx >= bounds.x && gx < bx && gy >= bounds.y && gy < by );
-					}
-				}
-			}
-		}
-		
-		// add
-		if ( inside ) {
-			ret->push_back( ArgValue( go->scriptObject ) );
-		}
-		return ( !maxResults || ret->size() < maxResults );
-	});
-	this->Traverse( &callback );
-	return ret;
-}
-
-ArgValueVector* Scene::RayCastAll( float x, float y, float dx, float dy, int maxResults ) {
-	// populate and return results
-	//https://en.wikipedia.org/wiki/Cohen%E2%80%93Sutherland_algorithm
-	ArgValueVector* ret = new ArgValueVector();
-	return ret;
-}
-
-
 /* MARK:	-				Physics
  -------------------------------------------------------------------- */
 
@@ -462,7 +397,7 @@ float32 Scene::ReportFixture( b2Fixture* fixture, const b2Vec2& point, const b2V
 }
 
 // returns new vector (delete after use)
-ArgValueVector* Scene::RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody ) {
+ArgValueVector* Scene::RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody, GameObject* descendentsOf ) {
 	_raycastIgnore = ignoreBody;
 	_maxRaycastResults = maxResults;
 	_raycastResult.clear();
@@ -477,16 +412,18 @@ ArgValueVector* Scene::RayCast( float x, float y, float dx, float dy, int maxRes
 	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
 	while( it != end ) {
 		_RayCastResult& r = it->second;
-		ArgValue& val = *vi;
-		val.type = TypeObject;
-		void* obj = val.value.objectValue = script.NewObject();
-		script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
-		script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
-		script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
-		script.SetProperty( "x", ArgValue( r.point.x ), obj );
-		script.SetProperty( "y", ArgValue( r.point.y ), obj );
-		script.SetProperty( "normalX", ArgValue( r.normal.x ), obj );
-		script.SetProperty( "normalY", ArgValue( r.normal.y ), obj );
+		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendentOf( descendentsOf ) ) ) {
+			ArgValue& val = *vi;
+			val.type = TypeObject;
+			void* obj = val.value.objectValue = script.NewObject();
+			script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
+			script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
+			script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
+			script.SetProperty( "x", ArgValue( r.point.x ), obj );
+			script.SetProperty( "y", ArgValue( r.point.y ), obj );
+			script.SetProperty( "normalX", ArgValue( r.normal.x ), obj );
+			script.SetProperty( "normalY", ArgValue( r.normal.y ), obj );
+		}
 		it++; vi++;
 	}
 	return ret;
@@ -509,7 +446,7 @@ bool Scene::ReportFixture( b2Fixture* fixture ) {
 	return true; // keep going
 }
 
-ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults, void *ignoreBody ) {
+ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults, void *ignoreBody, GameObject* descendentsOf ) {
 	_raycastIgnore = ignoreBody;
 	_maxRaycastResults = maxResults;
 	_raycastResult.clear();
@@ -525,12 +462,14 @@ ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults
 	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
 	while( it != end ) {
 		_RayCastResult& r = it->second;
-		ArgValue& val = *vi;
-		val.type = TypeObject;
-		void* obj = val.value.objectValue = script.NewObject();
-		script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
-		script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
-		script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
+		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendentOf( descendentsOf ) ) ) {
+			ArgValue& val = *vi;
+			val.type = TypeObject;
+			void* obj = val.value.objectValue = script.NewObject();
+			script.SetProperty( "shape", ArgValue( r.shape->scriptObject ), obj );
+			script.SetProperty( "body", ArgValue( r.shape->body->scriptObject ), obj );
+			script.SetProperty( "gameObject", ArgValue( r.shape->body->gameObject->scriptObject ), obj );
+		}
 		it++; vi++;
 	}
 	return ret;

@@ -30,6 +30,7 @@ include( './ui' );
 	var draggable = true, resizable = true;
 	var dragOffsetX, dragOffsetY, dragging = false;
 	var constructing = true;
+	var modalBackground;
 	go.serializeMask = { 'ui':1, 'render':1 };
 
 	// API properties
@@ -52,6 +53,30 @@ include( './ui' );
 
 		// (Boolean) window can be resized
 		[ 'resizable',  function (){ return resizable; }, function ( r ){ resizable = r; } ],
+
+		// (Boolean) window blocks UI events outside its bounds
+		[ 'modal',  function (){ return !!modalBackground; }, function ( m ){
+			if ( m && !modalBackground ) {
+				modalBackground = new GameObject( './panel', {
+					mouseMove: stopAllEvents,
+					mouseOver: stopAllEvents,
+					mouseOut: stopAllEvents,
+					mouseDown: stopAllEvents,
+					mouseUp: stopAllEvents,
+					click: stopAllEvents,
+					width: App.windowWidth,
+					height: App.windowHeight,
+					background: 0xFF0000FF,
+				} );
+				if ( go.parent ) {
+					go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
+					log( "Added background!");
+				}
+			} else if ( modalBackground && !m ) {
+				modalBackground.parent = null;
+				modalBackground = null;
+			}
+		} ],
 
 		// (String) or (Color) or (Number) or (Image) or (null|false) - set background to sprite, or solid color, or nothing
 		[ 'background',  function (){ return background; }, function ( v ){
@@ -172,7 +197,6 @@ include( './ui' );
 		ui.padTop = header.height + header.marginBottom;
 	}
 
-
 	// dragging window
 	var dragCallback = function ( x, y ) {
 		if ( dragging == 'window' ) {
@@ -219,6 +243,18 @@ include( './ui' );
 		Input.mouseMove = dragCallback;
 		Input.mouseUp = mouseUpCallback;
 		go.opacity = 0.7;
+	}
+
+	// add modal background under window if present
+	go.added = function () {
+		if ( modalBackground ) {
+			go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
+		}
+	}
+
+	// remove modal background if present
+	go.removed = function () {
+		if ( modalBackground ) modalBackground.parent = null;
 	}
 
 	// apply defaults

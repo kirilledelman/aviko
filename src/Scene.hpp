@@ -79,17 +79,11 @@ public:
 	float32 ReportFixture( b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float32 fraction );
 	
 	/// raycasts from x, y in dx, dy direction, returns up to maxResults Objects with bodies with info
-	ArgValueVector* RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody );
+	ArgValueVector* RayCast( float x, float y, float dx, float dy, int maxResults, void* ignoreBody, GameObject* descendentsOf=NULL );
 	
-	/// raycasts from x, y in dx, dy direction, returns up to maxResults GameObjects with info
-	ArgValueVector* RayCastAll( float x, float y, float dx, float dy, int maxResults );
-
 	/// returns bodies in area, similar to rayCast
-	ArgValueVector* Query( float x, float y, float w, float h, int maxResults, void* ignoreBody );
-	
-	/// returns all gameobjects in area
-	ArgValueVector* QueryAll( float x, float y, float w, float h, int maxResults );
-	
+	ArgValueVector* Query( float x, float y, float w, float h, int maxResults, void* ignoreBody, GameObject* descendentsOf=NULL );
+		
 	// holds results of raycast throughout query
 	struct _RayCastResult {
 		b2Vec2 point = { 0, 0 };

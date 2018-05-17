@@ -43,6 +43,7 @@ include( './ui' );
 		[ 'text',  function (){ return label.text; }, function ( v ){
 			label.text = v;
 			label.active = !!v;
+			ui.requestLayout( 'text' );
 		} ],
 
 		// (String) or null - texture on icon
@@ -66,9 +67,8 @@ include( './ui' );
 			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
-			 go.state = 'disabled';
-			 label.opacity = v ? 0.6 : 1;
-			 go.dispatch( 'layout' );
+			 go.state = 'auto';
+			 // label.opacity = v ? 0.6 : 1;
 		 } ],
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
@@ -126,7 +126,7 @@ include( './ui' );
 	];
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );
-
+	UI.base.addInspectables( go, 'UI', [ 'text', 'icon', 'disabled', 'cancelToBlur', 'style' ] );
 	// create components
 
 	// set name
@@ -229,9 +229,8 @@ include( './ui' );
 	}
 
 	// up
-	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
+	ui.mouseUp = /* ui.mouseUpOutside = */ function ( btn, x, y, wx, wy ) {
 		if ( disabled || btn != 1 ) return;
-		stopEvent();
 		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
@@ -249,6 +248,7 @@ include( './ui' );
 
 	// rollover / rollout
 	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
+		stopAllEvents();
 		go.state = 'auto';
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
