@@ -660,9 +660,14 @@ include( './ui' );
 			var items = [
 				{ text: "Reload object", action: function (){ this.refresh(); } },
 			];
-			if ( this.actions.length ) {
+			if ( !readOnly && showAll !== false ) {
+				items.push( {
+					text: "Add property", action: function () { this.addProperty(); }
+				} );
+			}
+			if ( _actions.length ) {
 				items.push( null );
-				items = items.concat( this.actions );
+				items = items.concat( _actions );
 			}
 			var popup = new GameObject( './popup-menu', {
 				target: this,
@@ -729,6 +734,9 @@ include( './ui' );
 			regroup[ ' ' ].sort();
 		}
 
+		// if restoreScrollPos is string, we'll be looking for this field to scroll into view
+		var scrollToField = null;
+
 		// for each group
 		var numRows = 0, numGroups = 0;
 		for ( var i = 0, ng = _gs.length; i <= ng; i++ ) {
@@ -762,7 +770,14 @@ include( './ui' );
 				} );
 
 				// add field
-				go.makeField( ( pdef.target || target ), pname, pdef, label, cont );
+				var field = go.makeField( ( pdef.target || target ), pname, pdef, label, cont );
+
+				// if looking to scroll to a field
+				if ( restoreScrollPos === pname ) {
+					// we found it
+					scrollToField = field;
+				}
+
 				numRows++;
 
 			}
@@ -785,7 +800,9 @@ include( './ui' );
 			function _showScrollbars() {
 				this.scrollbars = 'auto';
 				this.async( function() {
-					scrollable.scrollTop = (restoreScrollPos != undefined ? restoreScrollPos : 0);
+					if ( scrollToField ) {
+						scrollToField.scrollIntoView();
+					} else scrollable.scrollTop = (typeof( restoreScrollPos ) === 'number' ? restoreScrollPos : 0);
 				}, 0.5 );
 			}
 			scrollable.debounce( 'showScrollbars', _showScrollbars, 0.1 );
@@ -961,17 +978,21 @@ include( './ui' );
 							}
 						} );
 					}
-					// can add properties
-					if ( showAll !== false ) {
-						items.push( {
-							text: "Add property", action: function () {
-								this.addProperty();
-							}
-						} );
-					}
+				}
+			}
+			// field or no field
+			if ( !readOnly ) {
+				// can add properties
+				if ( showAll !== false ) {
+					items.push( {
+						text: "Add property", action: function () {
+							this.addProperty();
+						}
+					} );
 				}
 			}
 			// common actions
+			items.push( null );
 			items = items.concat( moreButton.actions );
 
 			// show popup menu at cursor
@@ -986,15 +1007,196 @@ include( './ui' );
 		}
 	}
 
+	// shows dialog that lets create a new property
 	go.addProperty = function () {
-		// TODO - prompt for prop name and value( as eval ), then reload, find new prop, scrollIntoView
+		// Add property window
 		var win = App.overlay.addChild( './window', {
 			modal: true,
-			minWidth: 200,
-			minHeight: 200,
+			minWidth: 300,
+			pad: 8,
 			title: "Add Property",
+			layoutType: Layout.Vertical,
+			layoutAlignX: LayoutAlign.Stretch,
+			layoutAlignY: LayoutAlign.Start,
+			fitChildren: true,
 		} );
-		win.setTransform( App.windowWidth / 2 - win.width, App.windowHeight / 2 - win.height );
+		// instructions
+		win.addChild( './text', {
+			pad: 8,
+			text: "Enter new property name, type and value.",
+			color: 0x0,
+			wrap: true,
+			bold: false,
+		} );
+		// name
+		var nameLabel = win.addChild( './text', {
+			pad: 8,
+			text: "Name:",
+			color: 0x0,
+			bold: true,
+		} );
+		var propName = win.addChild( './textfield', {
+			focusGroup: 'addProperty',
+			editEnd: validate
+		} );
+		// type
+		win.addChild( './text', {
+			pad: 8,
+			text: "Type",
+			color: 0x0,
+			bold: true,
+		} );
+		var propType = win.addChild( './select', {
+			value: 'number',
+			focusGroup: 'addProperty',
+			items: [
+				{ text: "Null", value: "null" },
+				{ text: "Boolean", value: "boolean" },
+				{ text: "Number", value: "number" },
+				{ text: "String", value: "string" },
+				{ text: "Array", value: "array" },
+				{ text: "Function", value: "function" },
+				{ text: "new Object", value: "Object" },
+				{ text: "new GameObject", value: "GameObject" },
+				{ text: "new Color", value: "Color" },
+				{ text: "new Sound", value: "Sound" },
+				{ text: "new Image", value: "Image" },
+				{ text: "new Vector", value: "Vector" },
+			],
+			change: function ( v ) {
+
+				var lbl = "Value:";
+				var showDropdown = false;
+				var valueDisabled = false;
+				var autoGrow = false;
+				var val = '';
+				var numeric = false;
+				var isCode = false;
+				switch( v ) {
+					case 'null':
+						valueDisabled = true;
+						val = 'null';
+						break;
+					case 'boolean':
+						showDropdown = true;
+						propValueDropdown.items = [
+							{ text: "true", value: true },
+							{ text: "false", value: false },
+						];
+						propValueDropdown.value = true;
+						break;
+					case 'number':
+						numeric = true;
+						val = '0';
+						break;
+					case 'string':
+						autoGrow = true;
+						break;
+					case 'array':
+						lbl = "Value: ^b(e.g.[1, 2, 3])";
+						val = "[ ]";
+						break;
+					case 'Vector':
+						lbl = "Value: ^b(e.g.[1, 2, 3])";
+						val = "[ ]";
+						break;
+					case 'function':
+						lbl = "Function: ^b(eval called)";
+						val = "function () {\n\t\n}";
+						autoGrow = true;
+						isCode = false; // TODO
+						break;
+					default:
+						val = 'new ' + v + '()';
+						break;
+				}
+				valLabel.text = lbl;
+				propValueDropdown.active = showDropdown;
+				propValue.active = !showDropdown;
+				propValue.disabled = valueDisabled;
+				propValue.numeric = numeric;
+				propValue.multiLine = !autoGrow;
+				propValue.autoGrow = autoGrow;
+				propValue.text = val;
+				validate();
+			}
+		} );
+		// value
+		var valLabel = win.addChild( './text', {
+			pad: 8,
+			text: "Value:",
+			color: 0x0,
+			bold: true,
+		} );
+		var propValue = win.addChild( './textfield', {
+			focusGroup: 'addProperty',
+			editEnd: validate,
+			autoGrow: true,
+		} );
+		var propValueDropdown = win.addChild( './select', {
+			focusGroup: 'addProperty',
+			change: validate,
+			active: false,
+		} );
+
+		// Cancel, OK
+		var btns = win.addChild( './panel', {
+			layoutType: Layout.Horizontal,
+			layoutAlignX: LayoutAlign.Stretch,
+			spacing: 4,
+			marginTop: 16,
+		} );
+		btns.addChild( './button', {
+			text: "Cancel",
+			focusGroup: 'addProperty',
+			flex: 2,
+			click: win.close
+		} );
+		var btnOk = btns.addChild( './button', {
+			text: "Accept",
+			focusGroup: 'addProperty',
+			disabled: true,
+			flex:3,
+			click: function() {
+				// get value
+				var pendingValue = validate( "final" );
+				if ( pendingValue === undefined ) return;
+				win.close();
+				// create property
+				target[ propName.text ] = pendingValue;
+				if ( target[ propName.text ] === pendingValue ) {
+					log( "Added property ^B" + propName.text + "^b successfully" );
+				} else {
+					log( "Failed to add property ^B" + propName.text + "^b." );
+				}
+				go.refresh( propName.text ); // scroll to prop name
+			}
+		} );
+		// returns value
+		function validate( final ){
+			btnOk.disabled = true;
+
+			// prop name
+			var pname = propName.text;
+			nameLabel.text = "Name:";
+			if ( pname.length ) {
+				if ( typeof( target[ pname ] ) !== 'undefined' ) {
+					nameLabel.text = "^2Property already exists";
+					return;
+				}
+			} else return;
+
+			// prop val
+
+
+			// pass
+			btnOk.disabled = false;
+
+			// TODO - if final == 'final' return actual value - ie new Object etc.
+		}
+		// focus on name
+		propName.focus();
+		propType.change( propType.value );
 	}
 
 	// automatically clear target when removing from scene

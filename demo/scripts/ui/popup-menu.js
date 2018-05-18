@@ -91,7 +91,6 @@ include( './ui' );
 		ignoreCamera: true,
 		fixedPosition: true,
 	} );
-
 	go.updateItems = function () {
 
 		// clean up
@@ -106,15 +105,9 @@ include( './ui' );
 			var disabled = false;
 			if ( item === null ) {
 				if ( i == items.length - 1 || i == 0 ) continue;
-				container.addChild( {
-					ui: new UI(),
-					render: new RenderShape( {
-                        shape: Shape.Rectangle,
-						width: 20, height: 2,
-						color: 0x333333
-					} ),
-					style: go.baseStyle.separator,
-				} )
+				container.addChild( './panel', {
+					style: go.baseStyle.separator
+				});
 				continue;
 			}
 			if ( typeof ( item ) === 'string' ) {
@@ -168,12 +161,10 @@ include( './ui' );
 	go.updateSize = function () {
 		container.width = container.scrollWidth;
 		var totalHeight = 0, numItems = 0;
-		for ( var i = 0; i < items.length && numItems < maxVisibleItems; i++ ) {
-			if ( items[ i ] != null ) {
-				numItems++;
-				var btn = container.getChild( i );
-				totalHeight += btn.height + container.spacingY + btn.marginTop + btn.marginBottom;
-			}
+		for ( var i = 0; i < container.container.numChildren && numItems < maxVisibleItems; i++ ) {
+			var btn = container.getChild( i );
+			totalHeight += btn.height + container.spacingY + btn.marginTop + btn.marginBottom;
+			if ( items[ i ] !== null ) numItems++;
 		}
 		container.minHeight = totalHeight;
 	}

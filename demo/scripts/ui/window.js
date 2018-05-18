@@ -58,20 +58,20 @@ include( './ui' );
 		[ 'modal',  function (){ return !!modalBackground; }, function ( m ){
 			if ( m && !modalBackground ) {
 				modalBackground = new GameObject( './panel', {
-					mouseMove: stopAllEvents,
-					mouseOver: stopAllEvents,
-					mouseOut: stopAllEvents,
-					mouseDown: stopAllEvents,
-					mouseUp: stopAllEvents,
-					click: stopAllEvents,
 					width: App.windowWidth,
 					height: App.windowHeight,
-					background: 0xFF0000FF,
+					style: go.baseStyle.modalBackground
 				} );
+				modalBackground.ui.mouseMove = modalBackgroundCallback;
+				modalBackground.ui.mouseOver = modalBackgroundCallback;
+				modalBackground.ui.mouseOut = modalBackgroundCallback;
+				modalBackground.ui.mouseDown = modalBackgroundCallback;
+				modalBackground.ui.mouseUp = modalBackgroundCallback;
+				modalBackground.ui.click = modalBackgroundCallback;
 				if ( go.parent ) {
 					go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
-					log( "Added background!");
 				}
+				draggable = resizable = false;
 			} else if ( modalBackground && !m ) {
 				modalBackground.parent = null;
 				modalBackground = null;
@@ -138,7 +138,11 @@ include( './ui' );
 	// api
 
 	go[ 'close' ] = function () {
-		go.active = false;
+		if ( modalBackground ) {
+			go.parent = null;
+		} else {
+			go.active = false;
+		}
 		go.fire( 'closed' );
 	}
 
@@ -195,6 +199,16 @@ include( './ui' );
 		// resize title
 		header.width = w ;
 		ui.padTop = header.height + header.marginBottom;
+		// modal is centered
+		if ( modalBackground ) {
+			modalBackground.resize( App.windowWidth, App.windowHeight );
+			go.setTransform( ( App.windowWidth - w ) * 0.5, ( App.windowHeight - h ) * 0.5 );
+		}
+	}
+
+	function modalBackgroundCallback() {
+		// log( "modalBackgroundCallback", currentEventName() );
+		stopAllEvents();
 	}
 
 	// dragging window

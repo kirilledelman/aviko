@@ -13,11 +13,17 @@ TypedVector::TypedVector( ScriptArguments* args ) {
 	// if args passed
 	size_t numArgs = 0;
 	if ( args && (numArgs = args->args.size()) > 0 ) {
-		// first argument is type,
-		script.SetProperty( "type", args->args[ 0 ], this->scriptObject );
-		// second arg is init array
-		if ( numArgs >= 2 && args->args[ 1 ].type == TypeArray ) {
-			script.SetProperty( "array", args->args[ 1 ], this->scriptObject );
+		
+		// if first argument is array
+		if ( args->args[ 0 ].type == TypeArray ) {
+			script.SetProperty( "array", args->args[ 0 ], this->scriptObject );
+		} else {
+			// first is type
+			script.SetProperty( "type", args->args[ 0 ], this->scriptObject );
+			// second arg is used to init
+			if ( numArgs >= 2 && args->args[ 1 ].type == TypeArray ) {
+				script.SetProperty( "array", args->args[ 1 ], this->scriptObject );
+			}
 		}
 	}
 	
@@ -241,18 +247,12 @@ void TypedVector::Notify() {
 
 ArgValue TypedVector::InitWithType( ArgValue& typeVal ) {
 
-	// already initialized - fail
-	if ( container != NULL ) {
-		script.ReportError( "Vector already initialized" );
-		return ArgValue( false );
-	}
-	
 	// type from param
 	TypedVector* copyFrom = NULL;
 	// string
 	if ( typeVal.type == TypeString ) {
 		// just copy type to objectTypeName
-		typeName = *typeVal.value.stringValue;;
+		typeName = *typeVal.value.stringValue;
 	// another typed vector
 	} else if ( typeVal.type == TypeObject && !typeVal.isNull() &&
 			   ( copyFrom = script.GetInstance<TypedVector>( typeVal.value.objectValue ) ) != NULL ) {
@@ -265,9 +265,31 @@ ArgValue TypedVector::InitWithType( ArgValue& typeVal ) {
 	} else if ( typeVal.type == TypeFunction ) {
 		// get class name
 		typeName = script.GetClassNameByConstructor( typeVal.value.objectValue );
+	} else if ( typeVal.type == TypeInt ) {
+		typeName = "Integer";
+	} else if ( typeVal.type == TypeBool ) {
+		typeName = "Boolean";
 	} else {
-		script.ReportError( "Invalid Vector type specified: expecting object constructor, String, or another Vector." );
-		return ArgValue( false );
+		typeName = "Number";
+	}
+	
+	// free container
+	if ( container != NULL ) {
+		if ( type == TypeInt ){
+			delete (vector<int>*) container;
+		} else if ( type == TypeChar ){
+			delete (vector<Uint8>*) container;
+		} else if ( type == TypeFloat ){
+			delete (vector<float>*) container;
+		} else if ( type == TypeDouble ){
+			delete (vector<double>*) container;
+		} else if ( type == TypeBool ){
+			delete (vector<bool>*) container;
+		} else if ( type == TypeString ){
+			delete (vector<string>*) container;
+		} else if ( type == TypeObject || type == TypeArray ){
+			delete (vector<void*>*) container;
+		}
 	}
 	
 	// create container based on type
@@ -394,7 +416,13 @@ bool TypedVector::Set( ArgValue& in ) {
 	TypedVector* other = NULL;
 	if ( in.type == TypeArray ){
 		int np = (int) in.value.arrayValue->size();
-		if ( !container ) this->InitWithType( in.value.arrayValue->at( 0 ) );
+		if ( !container ) {
+			ArgValue dummy( "Number" );
+			if ( !np ) this->InitWithType( dummy );
+			else if ( this->InitWithType( in.value.arrayValue->at( 0 ) ).isFalse() ){
+				return false;
+			}
+		}
 		if ( !lockedSize ) this->SetLength( np );
 		for ( int i = 0; i < np; i++ ){
 			this->SetElement( in.value.arrayValue->at( i ), i );

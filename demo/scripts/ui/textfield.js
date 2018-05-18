@@ -322,9 +322,10 @@ include( './ui' );
 		// (Boolean) input disabled
 		[ 'disabled',  function (){ return disabled; },
 		 function ( v ){
-			 ui.disabled = !(disabled = v) || acceptToEdit;
+			 disabled = v;
+			 // ui.disabled = v || acceptToEdit; //?
 			 if ( v && editing ) go.editing = false;
-			 go.state = 'disabled';
+			 go.state = 'auto';
 			 go.dispatch( 'layout' );
 		 } ],
 

@@ -393,9 +393,10 @@ UI.style = UI.style ? UI.style : {
 			}
 		},
 
-		// separator (GameObject) with RenderShape
+		// separator (ui/panel)
 		separator: {
-			render: { color: 0x660000 }
+			background: 0xD0D0D0,
+			minHeight: 1,
 		}
 
 	},
@@ -403,7 +404,7 @@ UI.style = UI.style ? UI.style : {
 	// window - ui/window.js
 	window: {
 
-		background: 0xA0A0A0,
+		background: 0xE0E0E0,
 		cornerRadius: 4,
 		pad: [ 30, 6, 6, 6 ],
 
@@ -429,6 +430,12 @@ UI.style = UI.style ? UI.style : {
 			pad: [ 0, 4, 0, 4 ],
 			size: 12,
 			text: "X",
+		},
+
+		// ui/panel.js
+		modalBackground: {
+			background: 0xFFFFFF,
+			opacity: 0.9,
 		}
 	},
 

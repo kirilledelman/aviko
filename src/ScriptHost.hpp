@@ -1277,9 +1277,16 @@ public:
 		JSAutoRequest req( this->js );
 		RootedValue rval( this->js );
 		int lineno = 1;
-		// printf("> %s\n", code );
+		// execute
 		if ( !JS_EvaluateScript( this->js, thisObj ? ((JSObject*) thisObj ) : this->global_object, code, (int) strlen(code), filename ? filename : "", lineno, rval.address() )) {
-			if ( JS_IsExceptionPending( this->js ) ) JS_ReportPendingException( this->js );
+			// resulted in error?
+			if ( JS_IsExceptionPending( this->js ) ) {
+				// return error object
+				RootedValue err( this->js );
+				JS_GetPendingException( this->js, err.address() );
+				JS_ClearPendingException( this->js );
+				return ArgValue( err.get() );
+			}
 		}
 		return ArgValue( rval.get() );
 	}

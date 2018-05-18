@@ -162,7 +162,7 @@ include( './ui' );
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Vertical;
 	ui.layoutAlignX = LayoutAlign.Stretch;
-	ui.layoutAlignY = LayoutAlign.Stretch;
+	//ui.layoutAlignY = LayoutAlign.Stretch;
 	ui.focusable = false;
 	go.ui = ui;
 
