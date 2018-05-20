@@ -28,7 +28,7 @@
 
 */
 
-include( './ui' );
+if ( !UI.style) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -101,6 +101,9 @@ include( './ui' );
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		[ 'cancelToBlur',  function (){ return button.cancelToBlur; }, function ( cb ){ button.cancelToBlur = cb; } ],
+
+		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
+		[ 'focusGroup',  function (){ return button.ui.focusGroup; }, function ( f ){ button.ui.focusGroup = f; } ],
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
 		[ 'pad',  function (){ return button.ui.pad; }, function ( v ){ button.ui.pad = v; } ],
@@ -214,6 +217,7 @@ include( './ui' );
 				update: go.updateDropdownPosition,
 				x: gp.x, y: gp.y + button.height,
 				opacity: 0,
+				scrollbars: false,
 				style: go.baseStyle.menu,
 				ignoreCamera: true,
 				fixedPosition: true,
@@ -252,6 +256,7 @@ include( './ui' );
 				if ( dropdown ) {
 					selectedItem.focus();
 					selectedItem.scrollIntoView();
+					dropdown.scrollbars = 'auto';
 				}
 			}, 0.15 );
 			Input.mouseDown = go.mouseDownOutside;

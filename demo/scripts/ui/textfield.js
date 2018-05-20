@@ -23,7 +23,7 @@
  
 */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function( go ) {
 
 	// inner props
@@ -45,6 +45,8 @@ include( './ui' );
 	var autoGrow = false;
 	var numeric = false;
 	var integer = false;
+	var code = false;
+	var newLinesRequireShift = true;
 	var minValue = -Infinity;
 	var maxValue = Infinity;
 	var step = 1.0;
@@ -114,6 +116,9 @@ include( './ui' );
 		// (Boolean) allows mousewheel to scroll field without being focused in it
 		[ 'canScrollUnfocused',  function (){ return canScrollUnfocused; }, function ( u ){ canScrollUnfocused = u; } ],
 
+		// (Boolean) in multiline input require shift|alt|ctrl|meta to make new lines with Enter key
+		[ 'newLinesRequireShift',  function (){ return newLinesRequireShift; }, function ( u ){ newLinesRequireShift = u; } ],
+
 		// (Number) current position of caret ( from 0 to text.positionLength() )
 		[ 'caretPosition',  function (){ return rt.caretPosition; }, function ( p ){ rt.caretPosition = p; go.scrollCaretToView(); } ],
 
@@ -139,6 +144,7 @@ include( './ui' );
 					rt.showCaret = ui.dragSelect = false;
 				    rt.formatting = formatting;
 				    rt.scrollLeft = 0;
+					if ( code ) go.async( go.cancelAutocomplete, 0.5 );
 					if ( numeric ) go.value = go.value;
 					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
 					go.fire( 'editEnd', go.value );
@@ -169,7 +175,6 @@ include( './ui' );
 			} else {
 				ui.height = ui.minHeight;
 			}
-			go.dispatch( 'layout' );
 		} ],
 
 		// (Boolean) only accepts numbers
@@ -192,6 +197,13 @@ include( './ui' );
 
 		// (Boolean) maximum value for numeric input
 		[ 'integer',  function (){ return integer; }, function ( v ){ integer = v; } ],
+
+		// (Object) | (Boolean) set to an Object to enable code editor mode
+		// object will be used to resolve "this", when typing "this."
+		// set to false to disable
+		[ 'code',  function (){ return code; }, function ( v ){
+			code = v;
+		} ],
 
 		// (RegExp) allow typing only these characters. Regular expression against which to compare incoming character, e.g. /[0-9a-z]/i
 		[ 'allowed',  function (){ return allowed; }, function ( a ){ allowed = a; } ],
@@ -423,11 +435,10 @@ include( './ui' );
 
 	// layout components
 	ui.layout = function ( w, h ) {
-		ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
-		if ( rt.multiLine ) {
-			if ( autoGrow ) ui.minHeight = ui.height = h = rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom;
+		if ( autoGrow ) {
+			ui.minHeight = Math.min( ui.maxHeight ? ui.maxHeight : 999999, rt.lineHeight * rt.numLines + ui.padTop + ui.padBottom );
 		} else {
-			h = ui.minHeight;
+			ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
 		}
 		bg.resize( w, h );
 		shp.resize( w, h );
@@ -575,6 +586,124 @@ include( './ui' );
 		return i;
 	}
 
+	// helper for code - searches backwards to beginning of expression that can be evaluated for
+	// autocomplete
+	function findExpression( startIndex ) {
+		// word boundary
+		var i = startIndex;
+		var rx = /[^a-z0-9_$.]/i; // characters that can be part of lookupable expression
+		var txt = rt.text;
+		while( i >= 0 ) {
+			if ( txt.substr( i, 1 ).match( rx ) ) break;
+			i--;
+		}
+		i++;
+		var expr = txt.substr( i, startIndex - i + 1 );
+		if ( expr.match( /^[.0-9]/ ) || expr.length < 2 ) return ''; // ignore invalid
+		return expr;
+	}
+
+	//
+	function autocomplete( accept ) {
+
+		var expr = findExpression( rt.caretPosition );
+		var exprLen = expr.length;
+		var lastPeriod = -1;
+		var suggestions = [];
+		if ( accept ) {
+
+			// accept selected item in popup
+			lastPeriod = expr.lastIndexOf( '.' );
+			if ( go.popup && go.popup.selectedIndex >= 0 )
+			suggestions = [ go.popup.items[ go.popup.selectedIndex ] ];
+
+		} else {
+
+			// ends with . - show all available properties
+			if ( expr.substr( -1 ) == '.' ) {
+				lastPeriod = expr.length - 1;
+				var obj = eval( expr.substr( 0, exprLen - 1 ) );
+				if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
+					// add all properties
+					for ( var p in obj ) suggestions.push( p );
+				}
+				// object, ends with partially completed property name - suggest matches
+			} else if ( ( lastPeriod = expr.lastIndexOf( '.' ) ) > 0 ) {
+				var obj = eval( expr.substr( 0, lastPeriod ) );
+				if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
+					// all matching beginning of property name
+					var prop = expr.substr( lastPeriod + 1 );
+					var propLen = prop.length;
+					for ( var p in obj ) {
+						if ( p.substr( 0, propLen ) === prop ) suggestions.push( p );
+					}
+				}
+				// doesn't have . in it yet - predict object from global
+			} else if ( exprLen ) {
+				// all matching beginning of line
+				for ( var p in global ) {
+					if ( p.substr( 0, exprLen ) === expr ) suggestions.push( p );
+				}
+			}
+		}
+
+		// multiple - show popup
+		if ( suggestions.length > 1 ) {
+			// new one
+			if ( !go.popup ) {
+				go.popup = new GameObject( './popup-menu', {
+					preferredDirection: 'up',
+					noFocus: true,
+					selected: function( item ) {
+						autocomplete( true );
+					}
+				} );
+			}
+			// update
+			var items = suggestions;
+			// only update if items changed
+			var ni = go.popup.items.length;
+			if ( ni != items.length ) {
+				go.popup.items = items;
+			} else {
+				for ( var i = 0; i < ni; i++ ) {
+					if ( go.popup.items[ i ] != items[ i ] ) {
+						go.popup.items = items;
+						break;
+					}
+				}
+			}
+			// update position
+			var gp = go.localToGlobal( rt.caretX, rt.caretY );
+			go.popup.setTransform( gp.x, gp.y );
+
+		// single suggestion - append selected text
+		} else if ( suggestions.length == 1 ) {
+			var sugg = suggestions[ 0 ];
+			if ( lastPeriod > 0 ) {
+				sugg = sugg.substr( exprLen - lastPeriod - 1 );
+			} else {
+				sugg = sugg.substr( exprLen );
+			}
+			rt.text = rt.text.substr( 0, rt.caretPosition ) + sugg + rt.text.substr( rt.caretPosition );
+			if ( go.popup ) { go.popup.parent = null; go.popup = null; }
+			if ( accept ) {
+				rt.selectionStart = rt.selectionEnd = rt.caretPosition = rt.caretPosition + sugg.length;
+				go.focus(); go.editing = true; // keep editing
+			} else {
+				rt.selectionEnd = ( rt.selectionStart = rt.caretPosition ) + sugg.length;
+			}
+		// no matches, remove popup
+		} else {
+			if ( go.popup ) { go.popup.parent = null; go.popup = null; }
+		}
+	}
+
+	go.cancelAutocomplete = function() {
+		go.cancelDebouncer( 'autocomplete' );
+		if ( go.popup ) { go.popup.parent = null; go.popup = null; }
+	}
+
 	// mouse down
 	ui.mouseDown = function ( btn, x, y ) {
 
@@ -718,13 +847,17 @@ include( './ui' );
 			if ( pattern && !txt.match( pattern ) ) return;
 			rt.text = txt;
 	    }
+
 		// update caret position
 	    rt.caretPosition = caretPosition;
 		rt.selectionEnd = rt.selectionStart;
 
 		// autogrow
-		if ( autoGrow ) {
-			go.debounce( 'autoGrow', go.checkAutoGrow );
+		if ( autoGrow ) go.debounce( 'autoGrow', go.checkAutoGrow );
+
+		// autocomplete
+		if ( code && typeof( key ) === 'string' ) {
+			go.debounce( 'autocomplete', autocomplete, 1 );
 		}
 
 		// make sure caret is in view
@@ -732,10 +865,11 @@ include( './ui' );
 
 		// change
 		go.fire( 'change', go.value );
+
 	}
 
 	// key down
-	ui.keyDown = function ( code, shift, ctrl, alt, meta ) {
+	ui.keyDown = function ( key, shift, ctrl, alt, meta ) {
 
 	    // ready
 		ui.dragSelect = false;
@@ -753,13 +887,15 @@ include( './ui' );
 		if ( autoGrow ) go.debounce( 'autoGrow', go.checkAutoGrow );
 
 		// key
-		var dontStopEvent = false;
-	    switch ( code ) {
+	    switch ( key ) {
 		    case Key.Tab:
 			    // complete word
-			    if ( selectable && rt.selectionStart == rt.caretPosition && rt.selectionStart < rt.selectionEnd ) {
+			    if ( go.popup ) {
+			        autocomplete( true );
+			    } else if ( selectable && rt.selectionStart == rt.caretPosition && rt.selectionStart < rt.selectionEnd ) {
 				    rt.caretPosition = rt.selectionEnd;
 				    rt.selectionStart = rt.selectionEnd = 0;
+				    go.cancelAutocomplete();
 			    // tab character
 	            } else if ( tabEnabled ) {
 			        ui.keyPress( "\t" );
@@ -771,8 +907,15 @@ include( './ui' );
 
 	        case Key.Return:
 		        if ( editing ) {
-			        if ( rt.multiLine && ( ( autoGrow && ( shift || alt ) ) || ( !autoGrow && ( ctrl || meta ) ) ) ) {
+			        if ( go.popup ) {
+				        autocomplete( true );
+				        return;
+			        } else if ( rt.multiLine && ( !newLinesRequireShift || ( shift || alt || ctrl || meta ) ) ) {
+				        // TODO - if code, count tabs at beginning of this line and add them to here
+				        // TODO - maybe add .lineAtCaret property to RenderText?
+
 				        ui.keyPress( "\n" ); // newline in multiline box
+				        return;
 			        } else {
 				        // text changed?
 				        if ( txt != resetText ) go.fire( 'change', go.value );
@@ -786,6 +929,16 @@ include( './ui' );
 
 		    case Key.Escape:
 			    if ( editing ) {
+				    if ( code ) {
+					    if ( go.popup ) {
+						    go.cancelAutocomplete();
+						    stopAllEvents();
+						    go.editing = true;
+						    return;
+					    } else {
+						    go.cancelDebouncer( 'autocomplete' );
+					    }
+				    }
 				    // if single line text field, reset text
 				    if ( !rt.multiLine ) {
 					    rt.text = resetText;
@@ -797,15 +950,17 @@ include( './ui' );
 
 	        case Key.Backspace:
 	            if ( editing ) ui.keyPress( -1, -1 );
+			    if ( code ) go.cancelAutocomplete();
 	            break;
 
 	        case Key.Delete:
 	            if ( editing ) ui.keyPress( -1, 1 );
+			    if ( code ) go.cancelAutocomplete();
 	            break;
 
 	        case Key.Left:
 			case Key.Right:
-				var increment = ( code == Key.Left ? -1 : 1 );
+				var increment = ( key == Key.Left ? -1 : 1 );
 				// skip word?
 				if ( ctrl || alt || meta ) {
 					// find either next, or previous word
@@ -813,47 +968,64 @@ include( './ui' );
 				}
 				// expand selection
 				if ( shift && selectable ) {
-					if ( code == Key.Left && caretPosition > 0 ) {
+					if ( key == Key.Left && caretPosition > 0 ) {
 						if ( !haveSelection ) rt.selectionEnd = caretPosition;
 						rt.caretPosition = rt.selectionStart = caretPosition + increment;
-					} else if ( code == Key.Right && caretPosition < txt.positionLength() ){
+					} else if ( key == Key.Right && caretPosition < txt.positionLength() ){
 						if ( !haveSelection ) rt.selectionStart = caretPosition;
 						rt.selectionEnd = ( rt.caretPosition += increment );
 					}
 				// move caret
 				} else if ( editing ) {
-					if ( !haveSelection ) rt.caretPosition += increment;
+					if ( haveSelection ) {
+						rt.caretPosition = ( key == Key.Left ? rt.selectionStart : rt.selectionEnd );
+					} else rt.caretPosition += increment;
 					rt.selectionStart = rt.selectionEnd;
 				}
 				go.scrollCaretToView();
+			    if ( code ) go.cancelAutocomplete();
 	            break;
 
 			case Key.Home:
 			case Key.End:
 				// expand selection
 				if ( shift && selectable ) {
-					if ( code == Key.Home && caretPosition > 0 ) {
+					if ( key == Key.Home && caretPosition > 0 ) {
 						if ( !haveSelection ) rt.selectionEnd = caretPosition;
 						rt.caretPosition = rt.selectionStart = rt.caretPositionAt ( -9999, rt.caretY );
-					} else if ( code == Key.End && caretPosition < txt.positionLength() ){
+					} else if ( key == Key.End && caretPosition < txt.positionLength() ){
 						if ( !haveSelection ) rt.selectionStart = caretPosition;
 						rt.selectionEnd = rt.caretPositionAt ( 9999, rt.caretY );
 					}
 				// move caret
 				} else if ( editing ) {
-					if ( !haveSelection ) rt.caretPosition = rt.caretPositionAt ( ( code == Key.Home ? -9999 : 9999 ), rt.caretY );
+					if ( !haveSelection ) rt.caretPosition = rt.caretPositionAt ( ( key == Key.Home ? -9999 : 9999 ), rt.caretY );
 					rt.selectionStart = rt.selectionEnd;
 				}
 				go.scrollCaretToView();
+			    if ( code ) go.cancelAutocomplete();
 	            break;
 
 			case Key.Up:
 			case Key.Down:
 				if ( !editing ) break;
 
+				// navigate autocomplete popup
+				if ( code && go.popup ) {
+					if ( key == Key.Up ) {
+						if ( go.popup.selectedIndex <= 0 ) go.popup.selectedIndex = go.popup.items.length - 1;
+						else go.popup.selectedIndex--;
+					} else {
+						if ( go.popup.selectedIndex == -1 || go.popup.selectedIndex == go.popup.items.length - 1 ) go.popup.selectedIndex = 0;
+						else go.popup.selectedIndex++;
+					}
+					stopEvent();
+					break;
+				}
+
 				// numeric
 				if ( numeric ) {
-					go.value += ( code == Key.Up ? step : -step ) * ( shift ? 10 : 1 );
+					go.value += ( key == Key.Up ? step : -step ) * ( shift ? 10 : 1 );
 					rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 					go.fire( 'change', go.value );
 					return;
@@ -867,19 +1039,20 @@ include( './ui' );
 					rt.selectionStart = rt.selectionEnd;
 				}
 				// common
-				if ( rt.caretLine == 0 && code == Key.Up ) {
+				if ( rt.caretLine == 0 && key == Key.Up ) {
 					rt.caretPosition = 0;
-				} else if ( rt.caretLine >= rt.numLines - 1 && code == Key.Down ) {
+				} else if ( rt.caretLine >= rt.numLines - 1 && key == Key.Down ) {
 					rt.caretPosition = txt.positionLength();
 				} else {
-					rt.caretPosition = rt.caretPositionAt ( rt.caretX, rt.caretY + ( code == Key.Up ? -1 : 1 ) * rt.lineHeight );
+					rt.caretPosition = rt.caretPositionAt ( rt.caretX, rt.caretY + ( key == Key.Up ? -1 : 1 ) * rt.lineHeight );
 				}
 				// selecting
 				if ( shift && selectable ) {
-					if ( code == Key.Up ) rt.selectionStart = rt.caretPosition;
+					if ( key == Key.Up ) rt.selectionStart = rt.caretPosition;
 					else rt.selectionEnd = rt.caretPosition;
 				}
 				go.scrollCaretToView();
+			    if ( code ) go.cancelAutocomplete();
 				break;
 
 			case Key.A:
@@ -887,6 +1060,7 @@ include( './ui' );
 				if ( selectable && ( meta || ctrl ) ) {
 					rt.selectionStart = 0;
 					rt.caretPosition = rt.selectionEnd = rt.text.positionLength();
+				    if ( code ) go.cancelAutocomplete();
 				}
                 break;
 
@@ -897,13 +1071,15 @@ include( './ui' );
 					var ss = txt.positionToIndex( rt.selectionStart );
 					var se = txt.positionToIndex( rt.selectionEnd );
 					UI.clipboard = txt.substr( ss, se - ss );
-					if ( code == Key.X ) ui.keyPress( -1, 1 );
+					if ( key == Key.X ) ui.keyPress( -1, 1 );
 					go.fire( 'copy', UI.clipboard );
+				    if ( code ) go.cancelAutocomplete();
 				}
                 break;
 
 		    case Key.V:
 			    if ( typeof( UI.clipboard ) === 'string' ){
+				    if ( code ) go.cancelAutocomplete();
 					ui.keyPress( UI.clipboard );
 				    go.fire( 'paste', UI.clipboard );
 			    }
@@ -918,13 +1094,19 @@ include( './ui' );
 		}
 
 		// redispatch keydown on object
-		go.fire( 'keyDown', code, shift, ctrl, alt, meta );
+		go.fire( 'keyDown', key, shift, ctrl, alt, meta );
+
+		// update position
+		if ( go.popup ) {
+			var gp = go.localToGlobal( rt.caretX, rt.caretY );
+			go.popup.setTransform( gp.x, gp.y );
+		}
 	}
 
 	// checks if clicked outside
 	go.checkClickOutside = function ( btn, x, y ) {
-		if ( blurOnClickOutside && ui.focused ) {
-			lp = go.globalToLocal( x, y );
+		if ( blurOnClickOutside && ui.focused && !go.popup ) {
+			var lp = go.globalToLocal( x, y );
 			if ( lp.x < 0 || lp.x > go.width || lp.y < 0 || lp.y > go.height ) {
 				go.blur();
 			}

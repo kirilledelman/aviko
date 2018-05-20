@@ -143,5 +143,4 @@ include( './ui' );
 	UI.base.applyProperties( go, go.baseStyle );
 	constructing = false;
 
-
 })(this);

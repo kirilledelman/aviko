@@ -3,7 +3,8 @@ new (function (){
 	// create scene
 	var scene = new Scene( {
 		name: "Sprites",
-		backgroundColor: Color.Background
+		backgroundColor: Color.Background,
+		opacity: 0,
 	} );
 
 	scene.ui = new UI( {
@@ -246,5 +247,6 @@ new (function (){
 	// show first page
 	changePage( 0 );
 	scrollbar.focus();
+	scene.fadeTo( 1, 2 );
 	return scene;
 })();

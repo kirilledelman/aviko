@@ -2,7 +2,7 @@ new (function (){
 
 	var scene = new Scene( {
 		name: "Main Menu",
-		backgroundColor: Color.Background
+		backgroundColor: Color.Background,
 	} );
 
 	scene.ui = new UI( {

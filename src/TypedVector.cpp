@@ -248,7 +248,7 @@ void TypedVector::Notify() {
 ArgValue TypedVector::InitWithType( ArgValue& typeVal ) {
 
 	// type from param
-	TypedVector* copyFrom = NULL;
+	TypedVector* copyFrom = NULL;	
 	// string
 	if ( typeVal.type == TypeString ) {
 		// just copy type to objectTypeName

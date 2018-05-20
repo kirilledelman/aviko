@@ -381,8 +381,11 @@ void GameObject::InitClass() {
 				}
 			}
 		} else if ( s->error == ERROR_NOT_FOUND ) {
-			printf( ".script path \"%s\" was not found.\n", key );
-		
+			JSScript* scr = NULL;
+			unsigned int line;
+			JS_DescribeScriptedCaller( script.js, &scr, &line );
+			printf( ".script path \"%s\" for [GameObject (%s)%p] was not found at %s:%d.\n", key, self->name.c_str(), self, JS_GetScriptFilename( script.js, scr ), line );
+			//script.ReportError( ".script path \"%s\" was not found.\n", key );
 		}
 		return ArgValue();
 		

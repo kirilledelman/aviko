@@ -537,6 +537,8 @@ public:
 		
 		// set context option
 		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX | JSOPTION_ASMJS );
+		JS_SetParallelCompilationEnabled( this->js, true );
+		JS_SetGlobalCompilerOption( this->js, JSCOMPILER_PJS_ENABLE, 1);
 		
 		// set error handler
 		JS_SetErrorReporter( this->js, this->ErrorReport );
@@ -555,7 +557,7 @@ public:
 		JS_InitStandardClasses( this->js, this->global_object );
 		
 		// add global functions
-		JS_DefineFunction( this->js, this->global_object, "log", (JSNative) this->Log, 0, JSPROP_READONLY );
+		JS_DefineFunction( this->js, this->global_object, "log", (JSNative) this->Log, 0, JSPROP_READONLY | JSPROP_ENUMERATE );
 		
 		// add global object as root for GC
 		JS_AddObjectRoot( this->js, &this->global_object );
@@ -643,7 +645,9 @@ public:
 								 ( def->parent ? def->parent->proto : NULL ),
 								 &def->jsc, (JSNative) &ScriptHost::Construct<CLASS>,
 								 0, NULL, NULL, NULL, NULL );
-		
+		// make constructor func enumerable in global object
+		JSBool found;
+		JS_SetPropertyAttributes( this->js, this->global_object, def->className.c_str(), JSPROP_PERMANENT | JSPROP_ENUMERATE, &found );
 	}
 
 	
@@ -655,7 +659,7 @@ public:
 	void DefineFunction( const char *funcName, ScriptFunctionCallback callback ){
 		JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
-		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, 0 );//JSPROP_PERMANENT
+		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT );//JSPROP_PERMANENT
 		classDef->funcs[ string(funcName) ] = callback;
 	}
 	
@@ -1043,14 +1047,14 @@ public:
 		key.append( "." ); key.append( funcName );
 		
 		// add function
-		JS_DefineFunction( this->js, isStatic ? class_constructor : class_prototype, funcName, (JSNative) ClassFuncCallback, 0, JSPROP_PERMANENT );
+		JS_DefineFunction( this->js, isStatic ? class_constructor : class_prototype, funcName, (JSNative) ClassFuncCallback, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT );
 		this->classFuncCallbacks[ key ] = callback;
 		return true;
 	}
 
 	/// adds a globally visible function
 	void DefineGlobalFunction( const char *funcName, ScriptFunctionCallback callback ){
-		JS_DefineFunction( this->js, this->global_object, funcName, (JSNative) GlobalFuncCallback, 0, JSPROP_PERMANENT );
+		JS_DefineFunction( this->js, this->global_object, funcName, (JSNative) GlobalFuncCallback, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT );
 		this->classFuncCallbacks[ string( funcName ) ] = callback;
 	}
 	
@@ -1311,11 +1315,13 @@ public:
 		RootedValue rval( this->js );
 		RootedObject robj( this->js, obj );
 		JSAutoCompartment( this->js, this->global_object );
-
+		
+		Uint32 t = SDL_GetTicks();
 		// execute
 		JSBool success = JS_ExecuteScript( this->js, robj, scriptResource->compiledScript, rval.address() );
 		if ( success && out ) *out = ArgValue( *rval.address() );
-		JS_MaybeGC( this->js );
+		
+		printf( "%s took %d ms\n", scriptResource->key.c_str(), SDL_GetTicks() - t );
 		
 		return success;
 	}

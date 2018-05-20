@@ -1,7 +1,7 @@
+Test if executing scripts as opposed to funcs is introducing the delay in populating objects
+
 Propertylist
-type icons
-null field - show as dropdown, add config option: "null", "new Type1", "new Type2" etc with callbacks
-.showFunctions - bool ? show functions
+	edit functions, or show as readonly
 
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default

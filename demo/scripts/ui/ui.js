@@ -22,7 +22,7 @@
  
 */
 
-UI.style = UI.style ? UI.style : {
+UI.style = UI.style || {
 
 	// basic container panel - ui/panel.js
 	panel: { },
@@ -623,7 +623,7 @@ Shared functionality between Aviko ui components
 
 */
 
-UI.base = UI.base ? UI.base : {
+UI.base = UI.base || {
 
 	// layout-specific properties shared between UI components
 	addSharedProperties: function( go, ui ) {
@@ -825,7 +825,7 @@ UI.base = UI.base ? UI.base : {
 		// Shared API functions
 
 		// set focus to the control (if it accepts focus)
-		go[ 'focus' ] = function () { ui.focus(); }
+		go[ 'focus' ] = function () { if ( ui.focusable ) ui.focus(); }
 
 		// remove focus from control
 		go[ 'blur' ] = function () { ui.blur(); }
@@ -886,15 +886,18 @@ UI.base = UI.base ? UI.base : {
 		// focus rectangle layout callback
 		function _layoutFocusRect ( w, h ) {
 			var fr = this.focusRect;
-			if ( !fr ) return;
+			if ( !fr || !fr.resize ) return;
 			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
 			fr.setTransform( -fr.offset, -fr.offset );
 		};
 
 		// focus rectangle focus change callback
 		function _focusChangedRect( nf ) {
-			if ( this.focusRect && (this.focusRect.active = (nf == this)) ){
-				this.focusRect.dispatch( 'layout' );
+			var fr = this.focusRect;
+			if ( !fr || !fr.resize ) return;
+			fr.active = ( this == nf );
+			if ( fr.active ){
+				fr.dispatch( 'layout' );
 			}
 		};
 
@@ -930,7 +933,7 @@ UI.base = UI.base ? UI.base : {
 
 	// creates properties with getter/setters
 	addMappedProperties: function ( go, mappedProps ) {
-		go.serializeMask = go.serializeMask ? go.serializeMask : {};
+		if ( go != global ) go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
 		for ( var i = 0; i < mappedProps.length; i++ ) {
 			var hidden = ( mappedProps[ i ].length >= 4 && mappedProps[ i ][ 3 ] );
@@ -938,7 +941,7 @@ UI.base = UI.base ? UI.base : {
 				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: !hidden, configurable: true,
 			} );
 			go.__propertyListConfig.properties[ mappedProps[ i ][ 0 ] ] = false; // hide from inspector
-			if ( hidden ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
+			if ( hidden && go != global ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
 		}
 	}
 

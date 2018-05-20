@@ -9,7 +9,7 @@
 
  */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 new (function( params ){
 
 	var logBuffer = "";
@@ -96,8 +96,10 @@ new (function( params ){
 	input = console.addChild( './textfield', {
 		name: "ConsoleInput",
 		autoGrow: true,
+		newLinesRequireShift: true,
 		tabEnabled: true,
 		lineSpacing: -2,
+		code: global,
 		size: 12,
 		focusGroup: 'inspector'
 	} );
@@ -111,9 +113,6 @@ new (function( params ){
 			} else return;
 			input.text = history[ historyPos ];
 			input.caretPosition = input.text.positionLength();
-		// context menu
-		} else if ( code == Key.Period ) {
-
 		// accept
 		} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
 			log ( "^B> " + input.text );
@@ -124,16 +123,14 @@ new (function( params ){
 			input.editing = true;
 			historyPos = history.length;
 		}
-	});
+	} );
 
-
-
+	// property editor
 	this.propertyList = propertyList = window.addChild( './property-list', {
 		minWidth: 300,
 		focusGroup: 'inspector',
 		render: new RenderShape( Shape.Rectangle, { color: 0xFFFFFF } ),
 	} );
-
 
 	// events and callbacks
 

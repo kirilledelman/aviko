@@ -32,7 +32,7 @@
 
 */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -343,6 +343,8 @@ include( './ui' );
 					editEnd: go.fieldChanged,
 					minWidth: valueWidth,
 					value: fieldValue,
+					autoGrow: true,
+					newLinesRequireShift: true,
 					style: go.baseStyle.values.any
 				}, insertChildIndex );
 				field.style = go.baseStyle.values.string;
@@ -1037,7 +1039,8 @@ include( './ui' );
 		} );
 		var propName = win.addChild( './textfield', {
 			focusGroup: 'addProperty',
-			editEnd: validate
+			editEnd: validate,
+			change: function() { this.debounce( 'validate', validate, 1 ); }
 		} );
 		// type
 		win.addChild( './text', {
@@ -1056,12 +1059,12 @@ include( './ui' );
 				{ text: "String", value: "string" },
 				{ text: "Array", value: "array" },
 				{ text: "Function", value: "function" },
-				{ text: "new Object", value: "Object" },
-				{ text: "new GameObject", value: "GameObject" },
-				{ text: "new Color", value: "Color" },
-				{ text: "new Sound", value: "Sound" },
-				{ text: "new Image", value: "Image" },
-				{ text: "new Vector", value: "Vector" },
+				{ text: "Object", value: "Object" },
+				{ text: "GameObject", value: "GameObject" },
+				{ text: "Color", value: "Color" },
+				{ text: "Sound", value: "Sound" },
+				{ text: "Image", value: "Image" },
+				{ text: "Vector", value: "Vector" },
 			],
 			change: function ( v ) {
 
@@ -1069,6 +1072,7 @@ include( './ui' );
 				var showDropdown = false;
 				var valueDisabled = false;
 				var autoGrow = false;
+				var tabs = false;
 				var val = '';
 				var numeric = false;
 				var isCode = false;
@@ -1098,22 +1102,24 @@ include( './ui' );
 						break;
 					case 'Vector':
 						lbl = "Value: ^b(e.g.[1, 2, 3])";
-						val = "[ ]";
+						val = "new Vector([ ])";
 						break;
 					case 'function':
-						lbl = "Function: ^b(eval called)";
+						lbl = "Function:";
 						val = "function () {\n\t\n}";
 						autoGrow = true;
-						isCode = false; // TODO
+						isCode = target;
 						break;
 					default:
 						val = 'new ' + v + '()';
 						break;
 				}
-				valLabel.text = lbl;
+				valLabel.text = valLabel.defaultText = lbl;
 				propValueDropdown.active = showDropdown;
 				propValue.active = !showDropdown;
 				propValue.disabled = valueDisabled;
+				propValue.tabEnabled = tabs;
+				propValue.code = isCode;
 				propValue.numeric = numeric;
 				propValue.multiLine = !autoGrow;
 				propValue.autoGrow = autoGrow;
@@ -1131,6 +1137,7 @@ include( './ui' );
 		var propValue = win.addChild( './textfield', {
 			focusGroup: 'addProperty',
 			editEnd: validate,
+			newLinesRequireShift: false,
 			autoGrow: true,
 		} );
 		var propValueDropdown = win.addChild( './select', {
@@ -1175,7 +1182,6 @@ include( './ui' );
 		// returns value
 		function validate( final ){
 			btnOk.disabled = true;
-
 			// prop name
 			var pname = propName.text;
 			nameLabel.text = "Name:";
@@ -1187,12 +1193,53 @@ include( './ui' );
 			} else return;
 
 			// prop val
-
-
+			var ptype = propType.value;
+			var pval = propValue.text;
+			var err = null;
+			var value = undefined;
+			valLabel.text = valLabel.defaultText;
+			switch( ptype ) {
+				case 'array':
+					if ( !pval.match( /^\[[^]*\]$/ ) ) err = "Bad array syntax";
+					else value = eval( pval );
+					break;
+				case 'Vector':
+					if ( !pval.match( /^new Vector\((.+,)?\s*\[[^]*\]\s*\)$/ ) ) err = "Bad vector constructor syntax";
+					else if ( final === 'final' ) value = eval( pval );
+					break;
+				case 'function':
+					if ( !pval.match( /^function(\s+[a-zA-Z0-9_$]+)?\s*\([a-zA-Z0-9_$,\s]*\)\s*\{([^]*)\}$/ ) ) err = "Bad function syntax";
+					else if ( final === 'final' ) {
+						value = eval( "var _temp_=" + pval + ";_temp_;" ); // to allow nameless functions
+					}
+					break;
+				case 'number':
+					if ( final === 'final' ) value = parseFloat( pval );
+					break;
+				case 'boolean':
+					if ( final === 'final' ) value = propValueDropdown.value;
+					break;
+				case 'string':
+					if ( final === 'final' ) value = pval;
+					break;
+				case 'null':
+					if ( final === 'final' ) value = null;
+					break;
+				default:
+					if ( !pval.match( new RegExp( '^new '+ptype+'\\([^]*\\)$' ) ) ) err = "Bad constructor syntax";
+					else if ( final === 'final' ) value = eval( pval );
+					break;
+			}
+			if ( err ) {
+				valLabel.text = "^2" + err;
+				return;
+			} else if ( final === 'final' && ( typeof( value ) === 'object' && value !== null && value.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
+				valLabel.text = "^2" + value.constructor.name + ": " + value.toString();
+				return;
+			}
 			// pass
 			btnOk.disabled = false;
-
-			// TODO - if final == 'final' return actual value - ie new Object etc.
+			return value;
 		}
 		// focus on name
 		propName.focus();

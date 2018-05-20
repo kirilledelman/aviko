@@ -20,7 +20,7 @@
 
 */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -276,7 +276,7 @@ include( './ui' );
 	handle.ui.mouseDown = function ( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
 
-		ui.focus();
+		if ( ui.focusable ) ui.focus();
 
 		// position of mouse on handle
 		grabX = x; grabY = y;
@@ -317,7 +317,8 @@ include( './ui' );
 	// down on scroll pane
 	ui.mouseDown = function( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
-		ui.focus();
+
+		if ( ui.focusable ) ui.focus();
 		go.state = 'down';
 
 		// try to center handle on point

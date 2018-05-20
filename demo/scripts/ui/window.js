@@ -21,7 +21,7 @@
 
 */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -67,6 +67,7 @@ include( './ui' );
 				modalBackground.ui.mouseOut = modalBackgroundCallback;
 				modalBackground.ui.mouseDown = modalBackgroundCallback;
 				modalBackground.ui.mouseUp = modalBackgroundCallback;
+				modalBackground.ui.mouseWheel = modalBackgroundCallback;
 				modalBackground.ui.click = modalBackgroundCallback;
 				if ( go.parent ) {
 					go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );

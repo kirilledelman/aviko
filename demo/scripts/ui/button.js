@@ -25,7 +25,7 @@
 
  */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -215,7 +215,7 @@ include( './ui' );
 	ui.click = function ( btn, x, y, wx, wy ) {
 		if ( disabled || btn != 1 ) return;
 		stopAllEvents();
-		ui.focus();
+		if ( ui.focusable ) ui.focus();
 		go.fire( 'click', btn, x, y, wx, wy );
 	}
 
@@ -258,5 +258,4 @@ include( './ui' );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;
-
 })(this);

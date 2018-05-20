@@ -19,7 +19,7 @@
 
  */
 
-include( './ui' );
+if ( !UI.style ) include( './ui' );
 (function(go) {
 
 	// internal props
@@ -214,12 +214,12 @@ include( './ui' );
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
-	go.awake = function() {
+	//go.awake = function() {
 		// apply defaults
 		go.baseStyle = Object.create( UI.style.checkbox );
 		UI.base.applyProperties( go, go.baseStyle );
 		go.state = 'auto';
 		constructing = false;
-	}
+	// }
 
 })(this);

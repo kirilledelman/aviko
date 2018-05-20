@@ -30,6 +30,7 @@ include( './ui' );
 	container.ui = new UI();
 	go.serializeMask = { 'ui':1, 'render':1 };
 	var scrollbars = false;
+	var scrollbarsFocusable = true;
 	var constructing = true;
 	var vsb = null, hsb = null;
 
@@ -48,6 +49,14 @@ include( './ui' );
 				go.fireLate( 'updateScrollbars' );
 			}
 		} ],
+
+		// (Boolean) whether scrollbars can receive focus
+		[ 'scrollbarsFocusable',  function (){ return scrollbarsFocusable; }, function ( v ){
+			scrollbarsFocusable = v;
+			if ( vsb ) vsb.focusable = scrollbarsFocusable;
+			if ( hsb ) hsb.focusable = scrollbarsFocusable;
+		} ],
+
 
 		// (Number) current width of the control
 		[ 'width',  function (){ return ui.width; }, function ( w ){
@@ -221,7 +230,8 @@ include( './ui' );
 				vsb.right = -vsb.width;
 				vsb.scroll = function ( ny ) { go.scrollTop = ny; }
 				vsb.focusUp = vsb.focusDown = vsb;
-		}
+				vsb.focusable = scrollbarsFocusable;
+			}
 			// horizontal
 			if ( !hsb ) {
 				// position to the right
@@ -234,6 +244,7 @@ include( './ui' );
 				hsb.bottom = -hsb.height;
 				hsb.scroll = function ( nx ) { go.scrollLeft = nx; }
 				hsb.focusLeft = hsb.focusRight = hsb;
+				hsb.focusable = scrollbarsFocusable;
 			}
 		}
 
