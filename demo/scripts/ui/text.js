@@ -15,7 +15,7 @@
 
  */
 
-if ( !UI.style ) include( './ui' );
+include( './ui' );
 (function(go) {
 
 	// inner props

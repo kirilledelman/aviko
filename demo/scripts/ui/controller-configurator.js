@@ -82,7 +82,7 @@
 
  */
 
-if ( !UI.style ) include( './ui' );
+include( './ui' );
 new (function( params ){
 
 	var axis = [];

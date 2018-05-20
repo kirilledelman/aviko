@@ -25,7 +25,7 @@
 
  */
 
-if ( !UI.style ) include( './ui' );
+include( './ui' );
 (function(go) {
 
 	// internal props
@@ -144,7 +144,7 @@ if ( !UI.style ) include( './ui' );
 	});
 
 	// label
-	label = go.addChild( './text', {
+	label = go.addChild( 'ui/text', {
 		name: "Label",
 		wrap: false,
 		active: false

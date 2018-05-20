@@ -32,7 +32,7 @@
 
 */
 
-if ( !UI.style ) include( './ui' );
+include( './ui' );
 (function(go) {
 
 	// internal props
