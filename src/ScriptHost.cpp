@@ -127,10 +127,10 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 	JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) obj );
 	jsval propVal;
 	jsid propId;
+	ArgValue serializeMaskVal;
 	// first, see if there's serializeMask prop
-	JSObject* serializeMask = NULL;
 	if ( JS_GetProperty( this->js, (JSObject*) obj, "serializeMask", &propVal ) ) {
-		JS_ValueToObject( this->js, propVal, &serializeMask );
+		serializeMaskVal = propVal;
 	}
 	while( JS_NextProperty( this->js, iterator, &propId ) && propId != JSID_VOID ) {
 		// convert each property to string
@@ -140,9 +140,22 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 			unsigned attrs = 0;
 			JSBool found = false;
 			// check if it's in serializeMask
-			if ( serializeMask ) {
-				ArgValue check = this->GetProperty( buf, serializeMask );
-				if ( check.toBool() ) {
+			if ( serializeMaskVal.type != TypeUndefined ) {
+				bool masked = false;
+				if ( serializeMaskVal.type == TypeArray ) {
+					for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
+						ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
+						if ( check.type == TypeString && check.value.stringValue->compare( buf ) == 0 ) {
+							masked = true;
+							break;
+						}
+					}
+				} else if ( serializeMaskVal.type == TypeObject ) {
+					ArgValue check = this->GetProperty( buf, serializeMaskVal.value.objectValue );
+					masked = check.toBool();
+				}
+				// found prop in serializeMask
+				if ( masked ) {
 					// skip
 					JS_free( this->js, buf );
 					continue;
@@ -173,9 +186,22 @@ ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<st
 			// if property is serialized
 			if ( gs.flags & PROP_SERIALIZED & ~PROP_READONLY) {
 				// check if it's in serializeMask
-				if ( serializeMask ) {
-					ArgValue check = this->GetProperty( iter->first.c_str(), serializeMask );
-					if ( check.toBool() ) {
+				if ( serializeMaskVal.type != TypeUndefined ) {
+					bool masked = false;
+					if ( serializeMaskVal.type == TypeArray ) {
+						for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
+							ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
+							if ( check.type == TypeString && check.value.stringValue->compare( iter->first ) == 0 ) {
+								masked = true;
+								break;
+							}
+						}
+					} else if ( serializeMaskVal.type == TypeObject ) {
+						ArgValue check = this->GetProperty( iter->first.c_str(), serializeMaskVal.value.objectValue );
+						masked = check.toBool();
+					}
+					// found prop in serializeMask
+					if ( masked ) {
 						// skip
 						iter++;
 						continue;

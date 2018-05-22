@@ -160,13 +160,6 @@ UI.style = UI.style || {
 			bold: true,
 		},
 
-		// apply to icon image (ui/image.js)
-		image: {
-			width: 20,
-			height: 20,
-			mode: 'icon'
-		},
-
 		states:{
 			off: {
 				background: 0x0066a5,
@@ -659,27 +652,18 @@ UI.base = UI.base || {
 			[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){ ui.focusGroup = f; } ],
 
 			// (Boolean) - enables/disables focus rectangle (getter returns Render component)
-			[ 'focusRect',  function (){ return ui.focusRect ? ui.focusRect.render : null; }, function ( fr ){
-				if ( fr === null || fr === false ) {
-					// remove
-					if ( ui.focusRect ) {
-						ui.focusRect.parent = null;
-						ui.focusRect = null;
-						ui.off( 'layout', _layoutFocusRect );
-						ui.off( 'focusChanged', _focusChangedRect );
-					}
-				// add
-				} else if ( !ui.focusRect ) {
-					ui.focusRect = new GameObject( './panel', {
-						active: false,
-						name: "FocusRect",
-						fixedPosition: true,
-						style: UI.style.focusRect,
-					} );
+			[ 'focusRect',  function (){ return ui.focusRect; }, function ( fr ){
+				if ( fr ) {
 					ui.on( 'layout', _layoutFocusRect );
 					ui.on( 'focusChanged', _focusChangedRect );
-					go.addChild( ui.focusRect, 0 );
+				} else {
+					ui.off( 'layout', _layoutFocusRect );
+					ui.off( 'focusChanged', _focusChangedRect );
+					if ( ui.focusRectPanel ) {
+						ui.focusRectPanel = ui.focusRectPanel.parent = null;
+					}
 				}
+				ui.focusRect = fr;
 			} ],
 
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
@@ -885,7 +869,7 @@ UI.base = UI.base || {
 
 		// focus rectangle layout callback
 		function _layoutFocusRect ( w, h ) {
-			var fr = this.focusRect;
+			var fr = this.focusRectObject;
 			if ( !fr || !fr.resize ) return;
 			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
 			fr.setTransform( -fr.offset, -fr.offset );
@@ -893,11 +877,17 @@ UI.base = UI.base || {
 
 		// focus rectangle focus change callback
 		function _focusChangedRect( nf ) {
-			var fr = this.focusRect;
-			if ( !fr || !fr.resize ) return;
-			fr.active = ( this == nf );
-			if ( fr.active ){
-				fr.dispatch( 'layout' );
+			if ( this.focusRect ) {
+				if ( !this.focusRectObject ) {
+					this.focusRectObject = this.gameObject.addChild( 'ui/panel', {
+						active: ( this == nf ),
+						name: "FocusRect",
+						fixedPosition: true,
+						style: UI.style.focusRect,
+					} );
+				} else {
+					this.focusRectObject.active = ( this == nf );
+				}
 			}
 		};
 

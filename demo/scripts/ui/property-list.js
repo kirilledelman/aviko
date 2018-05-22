@@ -414,7 +414,8 @@ include( './ui' );
 					}
 					// toggle display
 					this.toggleState = this.propList.active = !this.propList.active;
-					this.image.imageObject.angle = (this.propList.active ? 0 : -90);
+					this.image.angle = (this.propList.active ? 0 : -90);
+					this.image.ui.offsetY = (this.propList.active ? 0 : 9);
 				}
 
 				// button to go into an object
@@ -467,10 +468,12 @@ include( './ui' );
 					field.style = go.baseStyle.values.object;
 					if ( inline ) {
 						field.click = togglePropList;
-						field.image.imageObject.angle = (field.toggleState ? 0 : -90);
+						field.image.angle = (field.toggleState ? 0 : -90);
+						field.image.ui.offsetY = (field.toggleState ? 0 : 9);
 					} else {
 						field.click = pushToTarget;
-						field.image.imageObject.angle = -90;
+						field.image.angle = -90;
+						field.image.ui.offsetY = 9;
 						field.label.flex = 1;
 						field.reversed = true;
 					}

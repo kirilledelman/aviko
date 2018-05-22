@@ -247,6 +247,6 @@ new (function (){
 	// show first page
 	changePage( 0 );
 	scrollbar.focus();
-	scene.fadeTo( 1, 2 );
+	scene.fadeTo( 1, 0.5 );
 	return scene;
 })();

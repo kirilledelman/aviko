@@ -47,16 +47,22 @@ include( './ui' );
 		} ],
 
 		// (String) or null - texture on icon
-		[ 'icon',  function (){ return image.texture; }, function ( v ){
-			image.texture = v;
-			image.active = !!v;
+		[ 'icon',  function (){ return image? image.texture : ''; }, function ( v ){
+			if ( v ) {
+				if ( !image ) makeImage();
+				image.render.texture = v;
+				image.ui.minWidth = image.render.originalWidth;
+				image.ui.minHeight = image.render.originalHeight;
+			} else if ( image ) {
+				image.active = false;
+			}
 		} ],
 
 		// (GameObject) instance of 'ui/text.js' used as label
 		[ 'label',  function (){ return label; } ],
 
 		// (GameObject) instance of 'ui/image.js' used as icon
-		[ 'image',  function (){ return image; } ],
+		[ 'image',  function (){ return image ? image : makeImage(); } ],
 
 		// (Number) space between icon and label
 		[ 'gap',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
@@ -124,9 +130,12 @@ include( './ui' );
 		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
 
 	];
+	var dt = new Date();
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.addMappedProperties( go, mappedProps );
 	UI.base.addInspectables( go, 'UI', [ 'text', 'icon', 'disabled', 'cancelToBlur', 'style' ] );
+	log( "Button shared props took ", (new Date()).getTime() - dt.getTime() );
+
 	// create components
 
 	// set name
@@ -144,18 +153,13 @@ include( './ui' );
 	});
 
 	// label
+	dt = new Date();
 	label = go.addChild( 'ui/text', {
 		name: "Label",
 		wrap: false,
 		active: false
 	}, 1 );
-
-	// icons
-	image = go.addChild( './image', {
-		name: "Icon",
-		mode: 'icon',
-		active: false
-	}, 0 );
+	log( "Button label took ", (new Date()).getTime() - dt.getTime() );
 
 	// UI
 	ui.autoMoveFocus = true;
@@ -253,9 +257,19 @@ include( './ui' );
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
+	function makeImage(){
+		image = go.addChild( new GameObject({
+			ui: new UI(),
+			render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
+		} ), 0);
+		return image;
+	}
+
 	// apply defaults
+	dt = new Date();
 	go.baseStyle = Object.create( UI.style.button );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;
+	log( "Applying base style took ", (new Date()).getTime() - dt.getTime() );
 })(this);
