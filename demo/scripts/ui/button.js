@@ -31,110 +31,126 @@ include( './ui' );
 	// internal props
 	var ui = new UI(), bg, shp, background = false;
 	var label, image;
-	var disabled = false;
+	var disabled = false, disabledCanFocus = true;
 	var cancelToBlur = false;
 	var constructing = true;
-	go.serializeMask = { 'ui':1, 'render':1 };
+	go.serializeMask = [ 'ui', 'render' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (String) text on button
-		[ 'text',  function (){ return label.text; }, function ( v ){
-			label.text = v;
-			label.active = !!v;
-			ui.requestLayout( 'text' );
-		} ],
+		'text': {
+			get: function (){ return label.text; },
+			set: function( v ){
+				label.text = v;
+				label.active = !!v;
+				ui.requestLayout( 'text' );
+			} 
+		},
 
 		// (String) or null - texture on icon
-		[ 'icon',  function (){ return image? image.texture : ''; }, function ( v ){
-			if ( v ) {
-				if ( !image ) makeImage();
-				image.render.texture = v;
-				image.ui.minWidth = image.render.originalWidth;
-				image.ui.minHeight = image.render.originalHeight;
-			} else if ( image ) {
-				image.active = false;
+		'icon': {
+			get: function (){ return image ? image.texture : ''; },
+			set: function( v ){
+				if ( v ) {
+					if ( !image ) makeImage();
+					image.render.texture = v;
+					image.ui.minWidth = image.render.originalWidth;
+					image.ui.minHeight = image.render.originalHeight;
+					image.active = true;
+				} else if ( image ) {
+					image.active = false;
+				}
 			}
-		} ],
+		},
 
 		// (GameObject) instance of 'ui/text.js' used as label
-		[ 'label',  function (){ return label; } ],
+		'label': { get: function (){ return label; } },
 
 		// (GameObject) instance of 'ui/image.js' used as icon
-		[ 'image',  function (){ return image ? image : makeImage(); } ],
+		'image': { get: function (){ return image ? image : makeImage(); } },
 
 		// (Number) space between icon and label
-		[ 'gap',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
+		'gap': { get: function (){ return ui.spacingX; }, set: function ( v ){ ui.spacingX = v; } },
 
 		// (Boolean) input disabled
-		[ 'disabled',  function (){ return disabled; },
-		 function ( v ){
-			 ui.disabled = disabled = v;
-			 ui.focusable = !v;
-			 if ( v && ui.focused ) ui.blur();
-			 go.state = 'auto';
-			 // label.opacity = v ? 0.6 : 1;
-		 } ],
+		'disabled': {
+			get: function (){ return disabled; },
+		    set: function ( v ){
+				 ui.disabled = disabled = v;
+				 ui.focusable = !v || disabledCanFocus;
+				 if ( v && ui.focused ) ui.blur();
+				 go.state = 'auto';
+		    }
+		},
+
+		// (Boolean) whether control is focusable when it's disabled
+		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){ disabledCanFocus = f; } },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function ( cb ){ cancelToBlur = cb; } },
 
 		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'background',  function (){ return background; }, function ( b ){
-			background = b;
-			if ( b === null || b === false ) {
-				go.render = null;
-			} else if ( typeof( b ) == 'string' ) {
-				bg.texture = b;
-				bg.resize( ui.width, ui.height );
-				go.render = bg;
-			} else {
-				shp.color = b;
-				go.render = shp;
+		'background': {
+			get: function (){ return background; },
+			set: function( b ){
+				background = b;
+				if ( b === null || b === false ) {
+					go.render = null;
+				} else if ( typeof( b ) == 'string' ) {
+					bg.texture = b;
+					bg.resize( ui.width, ui.height );
+					go.render = bg;
+				} else {
+					shp.color = b;
+					go.render = shp;
+				}
 			}
-		} ],
+		},
 
 		// (Number) corner roundness when background is solid color
-		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
-			shp.radius = b;
-			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-		} ],
+		'cornerRadius': {
+			get: function (){ return shp.radius; },
+			set: function( b ){
+				shp.radius = b;
+				shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
+			} 
+		},
 
 		// (Number) outline thickness when background is solid color
-		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
+		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function( b ){
 			shp.lineThickness = b;
-		} ],
+		} },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
+		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function( c ){
 			shp.outlineColor = (c === false ? '00000000' : c );
-		} ],
+		} },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
+		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; } },
 
 		// (Number) texture slice top
-		[ 'sliceTop',  function (){ return bg.sliceTop; }, function ( v ){ bg.sliceTop = v; }, true ],
+		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false },
 
 		// (Number) texture slice right
-		[ 'sliceRight',  function (){ return bg.sliceRight; }, function ( v ){ bg.sliceRight = v; }, true ],
+		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
 
 		// (Number) texture slice bottom
-		[ 'sliceBottom',  function (){ return bg.sliceBottom; }, function ( v ){ bg.sliceBottom = v; }, true ],
+		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
 
 		// (Number) texture slice left
-		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
+		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
 
-	];
-	var dt = new Date();
+	};
+
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 	UI.base.addInspectables( go, 'UI', [ 'text', 'icon', 'disabled', 'cancelToBlur', 'style' ] );
-	log( "Button shared props took ", (new Date()).getTime() - dt.getTime() );
 
 	// create components
 
@@ -153,13 +169,11 @@ include( './ui' );
 	});
 
 	// label
-	dt = new Date();
 	label = go.addChild( 'ui/text', {
 		name: "Label",
 		wrap: false,
 		active: false
 	}, 1 );
-	log( "Button label took ", (new Date()).getTime() - dt.getTime() );
 
 	// UI
 	ui.autoMoveFocus = true;
@@ -174,17 +188,16 @@ include( './ui' );
 	ui.layout = function( w, h, r ) {
 		shp.resize( w, h );
 		bg.resize( w, h );
+		label.ui.maxWidth = w - ( ui.padLeft + ui.padRight ) - ( image ? ( ui.spacingX + image.ui.width + image.ui.marginLeft + image.ui.marginRight ) : 0 );
 	}
 
 	// focus changed
-	ui.focusChanged = function ( newFocus ) {
+	ui.focusChanged = function ( newFocus, oldFocus ) {
 		// focused
 	    if ( newFocus == ui ) {
 		    go.scrollIntoView();
-		    go.state = 'focus';
-	    } else {
-		    go.state = 'auto';
 	    }
+	    go.state = 'auto';
 		go.fire( 'focusChanged', newFocus );
 	}
 
@@ -194,7 +207,7 @@ include( './ui' );
 		stopAllEvents();
 
 		// enter = click
-		if ( name == 'accept' ) {
+		if ( name == 'accept' && !disabled ) {
 
 			// simulated click
 			ui.fire( 'click', 1, 0, 0, go.x, go.y );
@@ -217,9 +230,9 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
 		stopAllEvents();
 		if ( ui.focusable ) ui.focus();
+		if ( disabled || btn != 1 ) return;
 		go.fire( 'click', btn, x, y, wx, wy );
 	}
 
@@ -233,9 +246,9 @@ include( './ui' );
 	}
 
 	// up
-	ui.mouseUp = /* ui.mouseUpOutside = */ function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
+	ui.mouseUp = function ( btn, x, y, wx, wy ) {
 		go.state = 'auto';
+		if ( disabled || btn != 1 ) return;
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
 
@@ -266,10 +279,8 @@ include( './ui' );
 	}
 
 	// apply defaults
-	dt = new Date();
-	go.baseStyle = Object.create( UI.style.button );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.button );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;
-	log( "Applying base style took ", (new Date()).getTime() - dt.getTime() );
 })(this);

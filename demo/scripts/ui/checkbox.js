@@ -26,67 +26,77 @@ include( './ui' );
 	var ui = new UI();
 	var checkbox;
 	var label;
-	var disabled = false;
+	var disabled = false, disabledCanFocus = true;
 	var checked = undefined;
 	var cancelToBlur = false;
 	var group = null;
 	var constructing = true;
-	go.serializeMask = { 'ui':1, 'render':1, 'children':1 };
+	go.serializeMask = [ 'ui', 'render', 'children' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Boolean) space between icon and label
-		[ 'checked', function (){ return checked; }, function ( v ){
-			if ( checked != v ) {
-				if ( group ) {
-					if ( v ) {
-						// uncheck other
-						for ( var i = 0; i < group.length; i++ ) {
-							if ( group[ i ] == go ) continue;
-							group[ i ].checked = false;
+		'checked': {
+			get: function (){ return checked; },
+			set: function( v ){
+				if ( checked != v ) {
+					if ( group ) {
+						if ( v ) {
+							// uncheck other
+							for ( var i = 0; i < group.length; i++ ) {
+								if ( group[ i ] == go ) continue;
+								group[ i ].checked = false;
+							}
 						}
 					}
+					checked = v;
+					if ( !constructing ) go.fire( 'change', checked );
+					if ( checkbox.image ) checkbox.image.opacity = checked ? 1 : 0;
 				}
-				checked = v;
-				if ( !constructing ) go.fire( 'change', checked );
-				if ( checkbox.image ) checkbox.image.opacity = checked ? 1 : 0;
-			}
-		} ],
+			}, enumerable: true, configurable: true
+		},
 
 		// (String) text on button
-		[ 'text',  function (){ return label.text; }, function ( v ){
-			label.text = v;
-			label.active = !!v;
-		} ],
+		'text': {
+			get: function (){ return label.text; },
+			set: function( v ){
+				label.text = v;
+				label.active = !!v;
+			}, enumerable: true, configurable: true
+		},
 
 		// (GameObject) instance of 'ui/text.js' used as label
-		[ 'label',  function (){ return label; } ],
+		'label': { get: function (){ return label; }, enumerable: true, configurable: true },
 
 		// (GameObject) instance of 'ui/button.js' used as checkbox body
-		[ 'checkbox',  function (){ return checkbox; } ],
+		'checkbox': { get: function (){ return checkbox; }, enumerable: true, configurable: true },
 
 		// (Boolean) input disabled
-		[ 'disabled',  function (){ return disabled; },
-		 function ( v ){
-			 ui.disabled = disabled = v;
-			 ui.focusable = !v;
-			 if ( v && ui.focused ) ui.blur();
-			 go.state = 'disabled';
-			 label.opacity = v ? 0.6 : 1;
-			 go.dispatch( 'layout' );
-		 } ],
+		'disabled': {
+			get: function (){ return disabled; },
+			set: function( v ){
+				ui.disabled = disabled = v;
+				ui.focusable = !v || disabledCanFocus;
+				if ( v && ui.focused ) ui.blur();
+				go.state = 'disabled';
+				label.opacity = v ? 0.6 : 1;
+				go.dispatch( 'layout' );
+			}, enumerable: true, configurable: true
+		},
+
+		// (Boolean) whether control is focusable when it's disabled
+		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){ disabledCanFocus = f; } },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function( cb ){ cancelToBlur = cb; }, enumerable: true, configurable: true },
 
 		// (Array) or null - makes checkbox act as a radio button in a group. Array must be all the checkboxes in a group. One will always be selected
-		[ 'group',  function (){ return group; }, function ( v ){ group = v; } ],
+		'group': { get: function (){ return group; }, set: function( v ){ group = v; }, enumerable: true, configurable: true },
 
-	];
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
-
+	UI.base.mapProperties( go, mappedProps );
 
 	// create components
 
@@ -214,12 +224,10 @@ include( './ui' );
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
-	//go.awake = function() {
-		// apply defaults
-		go.baseStyle = Object.create( UI.style.checkbox );
-		UI.base.applyProperties( go, go.baseStyle );
-		go.state = 'auto';
-		constructing = false;
-	// }
+	// apply defaults
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.checkbox );
+	UI.base.applyProperties( go, go.baseStyle );
+	go.state = 'auto';
+	constructing = false;
 
 })(this);

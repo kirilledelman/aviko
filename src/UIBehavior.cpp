@@ -893,7 +893,6 @@ bool UIBehavior::Focus() {
 	event.scriptParams.AddObjectArgument( this->scriptObject );
 	this->CallEvent( event );
 	if ( current ) current->CallEvent( event );
-
 	
 	return true;
 }
@@ -1084,8 +1083,8 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	if ( !behavior->gameObject || !behavior->gameObject->active() ) return;
 	
 	// constrain size
-	behavior->layoutWidth = fmax( behavior->minWidth, fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), behavior->layoutWidth ) );
-	behavior->layoutHeight = fmax( behavior->minHeight, fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), behavior->layoutHeight ) );
+	behavior->layoutWidth = fmin( ( behavior->maxWidth > 0 ? behavior->maxWidth : 9999999 ), fmax( behavior->minWidth, behavior->layoutWidth ) );
+	behavior->layoutHeight = fmin( ( behavior->maxHeight > 0 ? behavior->maxHeight : 9999999 ), fmax( behavior->minHeight, behavior->layoutHeight ) );
 	
 	// remember current, to retrigger layout later if changed
 	float
@@ -1397,8 +1396,8 @@ void UIBehavior::LayoutHorizontal( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// enforce min/max again
-	this->layoutWidth = ( fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) ) );
-	this->layoutHeight = ( fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) ) );
+	this->layoutWidth = fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), fmax( this->minWidth, this->layoutWidth ) );
+	this->layoutHeight = fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), fmax( this->minHeight, this->layoutHeight ) );
 	
 }
 
@@ -1599,8 +1598,8 @@ void UIBehavior::LayoutVertical( vector<UIBehavior *> &childUIs ) {
 	}
 	
 	// enforce min/max again
-	this->layoutWidth = ( fmax( this->minWidth, fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), this->layoutWidth ) ) );
-	this->layoutHeight = ( fmax( this->minHeight, fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), this->layoutHeight ) ) );
+	this->layoutWidth = fmin( ( this->maxWidth > 0 ? this->maxWidth : 9999999 ), fmax( this->minWidth, this->layoutWidth ) );
+	this->layoutHeight = fmin( ( this->maxHeight > 0 ? this->maxHeight : 9999999 ), fmax( this->minHeight, this->layoutHeight ) );
 
 }
 
@@ -1744,13 +1743,23 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 		
 		top = ( this->gameObject->parent ? this->gameObject->parent : this->gameObject );
 	
-	// top level - scene
+	// topmost positioned parent
 	} else {
 		
-		top = ( this->gameObject ? this->gameObject->GetScene() : NULL );
+		top = this->gameObject;
+		GameObject* p = top;
+		while ( p && p->ui != NULL ) {
+			if ( p->ui->fixedPosition ) {
+				top = p;
+				break;
+			}
+			top = p;
+			p = p->parent;
+		}
+		// top = ( this->gameObject ? this->gameObject->GetScene() : NULL );
 		
 	}
-	// printf( "%s Requested layout! %s\n", gameObject->name.c_str(), trigger.toString().c_str() );
+	// printf( "%s Requested layout! %s, top=%s\n", gameObject->name.c_str(), trigger.toString().c_str(), top ? top->name.c_str() : "null" );
 	if ( top ) {
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false );
 		if ( trigger.type != TypeUndefined ) {

@@ -55,17 +55,17 @@ include( './ui' );
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
 	var customInspector, inspector;
-	go.serializeMask = { 'ui':1, 'target':1, 'children': 1 };
+	go.serializeMask = [ 'ui', 'target', 'children' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Boolean) - if true, all enumerable properties of object will be displayed,
 		// if false, only ones in .properties
-		[ 'showAll',  function (){ return showAll; }, function ( v ){
+		'showAll': { get: function (){ return showAll; }, set: function( v ){
 			showAll = v;
 			go.debounce( 'refresh', go.refresh );
-		}],
+		} },
 
 		// (Object) in form of { 'propertyName': PROPERTY_DEF, 'propertyName2': PROPERTY_DEF ... }
 		//      PROPERTY_DEF is either
@@ -90,119 +90,122 @@ include( './ui' );
 		//          groups: (Object) - apply groups to sub-property-list
 		//          showAll: (Boolean) - apply showAll param to sub-property-list
 		//
-		[ 'properties',  function (){ return properties; }, function ( v ){
+		'properties': { get: function (){ return properties; }, set: function( v ){
 			properties = v;
 			go.debounce( 'refresh', go.refresh );
-		}],
+		} },
 
 		// (Array) in form of [ { name: "Group name", properties: [ 'p1', 'p2', ... ] } ... ] to group and order properties
 		//      Properties not listed in groups will appear in an automatically generated group after listed groups, alphabetically
 		//      To override alphabetical order of default group, supply group without name: param
-		[ 'groups',  function (){ return groups; }, function ( v ){
+		'groups': { get: function (){ return groups; }, set: function( v ){
 			groups = (v && typeof( v ) == 'object' && v.constructor == Array) ? v : [];
 			go.debounce( 'refresh', go.refresh );
-		}],
+		} },
 
 		// (Array) in form of [ { text: "Action name", action: function(){} } ... ]
 		//      These will be added as additional actions
 		//      To override alphabetical order of default group, supply group without name: param
-		[ 'actions',  function (){ return actions; }, function ( v ){
+		'actions': { get: function (){ return actions; }, set: function( v ){
 			actions = (v && typeof( v ) == 'object' && v.constructor == Array) ? v : [];
-		}],
+		} },
 
 		// (Object) target object whose properties are displayed in this property list
-		[ 'target',  function (){ return target; }, function ( v ){
+		'target': { get: function (){ return target; }, set: function( v ){
 			target = v;
 			targetStack.length = 0;
 			go.debounce( 'refresh', go.refresh );
-		}],
+		} },
 
 		// (Number) width of value fields
-		[ 'valueWidth',  function (){ return valueWidth; }, function ( v ) {
+		'valueWidth': { get: function (){ return valueWidth; }, set: function( v ) {
 			valueWidth = Math.max( 45, v );
 			go.debounce( 'refresh', go.refresh );
-		}],
+		} },
 
 		// (Boolean) disable all fields
-		[ 'disabled',  function (){ return disabled; }, function ( v ) {
+		'disabled': { get: function (){ return disabled; }, set: function( v ) {
 			if ( disabled != v ) {
 				disabled = v;
 				go.debounce( 'refresh', go.refresh );
 			}
-		}],
+		} },
 
 		// (Boolean) disable all fields except objects - can follow deeper into objects
-		[ 'readOnly',  function (){ return readOnly; }, function ( v ) {
+		'readOnly': { get: function (){ return readOnly; }, set: function( v ) {
 			if ( readOnly != v ) {
 				readOnly = v;
 				go.debounce( 'refresh', go.refresh );
 			}
-		}],
+		} },
 
 		// (Boolean) show add and remove property (and array items) buttons
-		[ 'showHeader',  function (){ return header.active; }, function ( v ){ header.active = v; }],
+		'showHeader': { get: function (){ return header.active; }, set: function( v ){ header.active = v; } },
 
 		// (Boolean) show context right click menu on fields
-		[ 'rightClickMenu',  function (){ return rightClickMenu; }, function ( v ){ rightClickMenu = v; }],
+		'rightClickMenu': { get: function (){ return rightClickMenu; }, set: function( v ){ rightClickMenu = v; } },
 
 		// (ui/panel) reference to header (where object / navigation / extras are displayed)
-		[ 'header',  function (){ return header; } ],
+		'header': { get: function (){ return header; } },
 
 		// (ui/button) reference to back button
-		[ 'backButton',  function (){ return backButton; } ],
+		'backButton': { get: function (){ return backButton; } },
 
 		// (ui/button) reference to more button
-		[ 'moreButton',  function (){ return moreButton; } ],
+		'moreButton': { get: function (){ return moreButton; } },
 
 		// (Boolean) should this property list be scrollable
-		[ 'scrollable',  function (){ return shouldScroll; }, function ( v ){
-			if ( shouldScroll != v ) {
-				shouldScroll = v;
-				go.debounce( 'refresh', go.refresh );
+		'scrollable': {
+			get: function (){ return shouldScroll; },
+			set: function( v ){
+				if ( shouldScroll != v ) {
+					shouldScroll = v;
+					go.debounce( 'refresh', go.refresh );
+				}
 			}
-		} ],
+		},
 
 		// (GameObject) container to which all fields are added
-		[ 'container',  function (){ return (scrollable || go); } ],
+		'container': { get: function (){ return (scrollable || go); } },
 
 		// (GameObject) when displaying nested property list editors, this holds reference to the topmost one
-		[ 'topPropertyList',  function (){ return topPropertyList; }, function ( v ){ topPropertyList = v; } ],
+		'topPropertyList': { get: function (){ return topPropertyList; }, set: function( v ){ topPropertyList = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-		[ 'pad',  function (){ return pad; }, function ( v ){ pad = v; ui.requestLayout( 'pad' ); } ],
+		'pad': { get: function (){ return pad; }, set: function( v ){ pad = v; ui.requestLayout( 'pad' ); }  },
 
 		// (Number) inner padding top
-		[ 'padTop', function (){ return pad[ 0 ]; }, function ( v ){ pad[ 0 ] = v; ui.requestLayout( 'padTop' ); }, true ],
+		'padTop': { get: function (){ return pad[ 0 ]; }, set: function( v ){ pad[ 0 ] = v; ui.requestLayout( 'padTop' ); }, serialized: false  },
 
 		// (Number) inner padding right
-		[ 'padRight', function (){ return pad[ 1 ]; }, function ( v ){ pad[ 1 ] = v; ui.requestLayout( 'padRight' ); }, true ],
+		'padRight': { get: function (){ return pad[ 1 ]; }, set: function( v ){ pad[ 1 ] = v; ui.requestLayout( 'padRight' ); }, serialized: false },
 
 		// (Number) inner padding bottom
-		[ 'padBottom', function (){ return pad[ 2 ]; }, function ( v ){ pad[ 2 ] = v; ui.requestLayout( 'padBottom' ); }, true ],
+		'padBottom': { get: function (){ return pad[ 2 ]; }, set: function( v ){ pad[ 2 ] = v; ui.requestLayout( 'padBottom' ); }, serialized: false },
 
 		// (Number) inner padding left
-		[ 'padLeft', function (){ return pad[ 3 ]; }, function ( v ){ pad[ 3 ] = v; ui.requestLayout( 'padLeft' ); }, true ],
+		'padLeft': { get: function (){ return pad[ 3 ]; }, set: function( v ){ pad[ 3 ] = v; ui.requestLayout( 'padLeft' ); }, serialized: false },
 
 		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-		[ 'spacing',  function (){ return Math.max( spacingX, spacingY ); }, function ( v ){ spacingX = spacingY = v; ui.requestLayout( 'spacing' ); }, true ],
+		'spacing': { get: function (){ return Math.max( spacingX, spacingY ); }, set: function( v ){ spacingX = spacingY = v; ui.requestLayout( 'spacing' ); }, serialized: false },
 
 		// (Number) spacing between label and value
-		[ 'spacingX',  function (){ return spacingX; }, function ( v ){ spacingX = v; ui.requestLayout( 'spacingX' ); } ],
+		'spacingX': { get: function (){ return spacingX; }, set: function( v ){ spacingX = v; ui.requestLayout( 'spacingX' ); } },
 
 		// (Number) spacing between rows
-		[ 'spacingY',  function (){ return spacingY; }, function ( v ){ spacingY = v; ui.requestLayout( 'spacingY' ); } ],
+		'spacingY': { get: function (){ return spacingY; }, set: function( v ){ spacingY = v; ui.requestLayout( 'spacingY' ); } },
 
 		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
-		[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){
+		'focusGroup': { get: function (){ return ui.focusGroup; }, set: function( f ){
 			backButton.focusGroup = moreButton.focusGroup = ui.focusGroup = f;
 			for ( var i in allFields ) {
 				allFields[ i ].focusGroup = f;
 			}
-		} ],
+		}  },
 
-	];
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// create components
 
@@ -289,6 +292,55 @@ include( './ui' );
 		}
 		if ( go.render ) go.render.resize( w, h );
 		go.fire( 'layout' );
+	}
+
+	// button callback to show inspector
+	function togglePropList() {
+		// embedded inspector created on demand
+		if ( !this.propList ) {
+			var myPos = this.parent.children.indexOf( this );
+			this.propList = new GameObject( './property-list', {
+				name: this.name,
+				flex: 1,
+				readOnly: !!this.pdef.readOnly,
+				scrollable: false,
+				forceWrap: true,
+				active: !!this.pdef.expanded,
+				style: go.baseStyle.values.any,
+				fieldButton: this,
+				showHeader: false,
+				topPropertyList: topPropertyList ? topPropertyList : go,
+				type: 'object',
+				change: function () { this.fieldButton.text = nameObject( this.target ); }
+			} );
+			this.parent.addChild( this.propList, myPos + 1 );
+			this.propList.style = go.baseStyle.values.inline;
+			this.propList.valueWidth = valueWidth - this.propList.marginLeft; // indent
+			if ( this.pdef.showAll !== undefined ) this.propList.showAll = this.pdef.showAll;
+			if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
+			if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
+			this.propList.target = this.fieldValue;
+		}
+		// toggle display
+		this.toggleState = this.propList.active = !this.propList.active;
+		this.image.angle = (this.propList.active ? 0 : -90);
+		this.image.ui.offsetY = (this.propList.active ? 0 : 9);
+	}
+
+	// button callback to push into an object
+	function pushToTarget() {
+		if ( topPropertyList ) {
+			topPropertyList.pushToTarget( this.fieldValue, this.name );
+		} else {
+			go.pushToTarget( this.fieldValue, this.name );
+		}
+	}
+
+	function editFunctionBody() {
+
+		// force "edit value"
+		go.addProperty( this.name, 'function', this.fieldValue );
+
 	}
 
 	// creates or replaces a field for property
@@ -380,52 +432,26 @@ include( './ui' );
 				field.style = go.baseStyle.values.boolean;
 				break;
 
+			case 'function':
+				// if function is native, display as read-only
+				field = cont.addChild( './button', {
+					name: pname,
+					target: curTarget,
+					fieldValue: fieldValue,
+					text: "function " + fieldValue.name + "()",
+					wrapEnabled: false,
+					minWidth: valueWidth,
+					disabled: fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ),
+					style: go.baseStyle.values.any,
+					click: editFunctionBody,
+				}, insertChildIndex );
+				field.style = go.baseStyle.values.func;
+				break;
+
 			// inspector:
 
 			case 'object':
 			case 'null':
-
-				// button to show inspector
-				function togglePropList() {
-					// embedded inspector created on demand
-					if ( !this.propList ) {
-						var myPos = this.parent.children.indexOf( this );
-						this.propList = new GameObject( './property-list', {
-							name: pname,
-							flex: 1,
-							readOnly: !!this.pdef.readOnly,
-							scrollable: false,
-							forceWrap: true,
-							active: !!pdef.expanded,
-							style: go.baseStyle.values.any,
-							fieldButton: this,
-							showHeader: false,
-							topPropertyList: topPropertyList ? topPropertyList : go,
-							type: 'object',
-							change: function () { this.fieldButton.text = nameObject( this.target ); }
-						} );
-						this.parent.addChild( this.propList, myPos + 1 );
-						this.propList.style = go.baseStyle.values.inline;
-						this.propList.valueWidth = valueWidth - this.propList.marginLeft; // indent
-						if ( this.pdef.showAll !== undefined ) this.propList.showAll = this.pdef.showAll;
-						if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
-						if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
-						this.propList.target = this.fieldValue;
-					}
-					// toggle display
-					this.toggleState = this.propList.active = !this.propList.active;
-					this.image.angle = (this.propList.active ? 0 : -90);
-					this.image.ui.offsetY = (this.propList.active ? 0 : 9);
-				}
-
-				// button to go into an object
-				function pushToTarget() {
-					if ( topPropertyList ) {
-						topPropertyList.pushToTarget( this.fieldValue, this.name );
-					} else {
-						go.pushToTarget( this.fieldValue, this.name );
-					}
-				}
 
 				// if object is null
 				if ( fieldValue === null && !readOnly ) {
@@ -477,9 +503,7 @@ include( './ui' );
 						field.label.flex = 1;
 						field.reversed = true;
 					}
-
 				}
-
 				break;
 
 			default:
@@ -492,7 +516,6 @@ include( './ui' );
 				}, insertChildIndex );
 				field.style = go.baseStyle.values.string;
 				break;
-
 		}
 
 		// common properties
@@ -646,7 +669,11 @@ include( './ui' );
 		backButton.text = bn.join( ' ^B->^n ' );
 		backButton.disabled = ( targetStack.length == 0 );
 		if ( targetStack.length ) {
+			// < icon from \/ image
 			backButton.icon = UI.style.propertyList.values.object.icon;
+			backButton.image.angle = 90;
+			backButton.image.ui.offsetY = -2;
+			backButton.image.ui.offsetX = 8;
 		} else {
 			backButton.icon = "";
 		}
@@ -659,21 +686,32 @@ include( './ui' );
 			moreButton.disabled = false;
 		}
 
-		// set more button options
-		moreButton.actions = _actions;
+		// process actions .hidden and .disabled conditionals
+		if ( _actions.length ) {
+			moreButton.actions = [];
+			for ( var i = 0; i < _actions.length; i++ ) {
+				var a = _actions[ i ];
+				if ( typeof( a.hidden ) === 'function' ) {
+					if ( !a.hidden.call( go ) ) moreButton.actions.push( { text: a.text, action: a.action } );
+				} else moreButton.actions.push( a );
+			}
+		}
 		moreButton.click = function () {
-			var items = [
-				{ text: "Reload object", action: function (){ this.refresh(); } },
-			];
-			if ( !readOnly && showAll !== false ) {
+			// popup menu items
+			var items = [ { text: "Reload object", action: function (){ this.refresh(); } }, ];
+			// save only if serializable
+			if ( target.serializeable !== false ) {
 				items.push( {
-					text: "Add property", action: function () { this.addProperty(); }
+					text: "Serialize to JSON",
+					action: function() { log( stringify( this.target ) ); }
 				} );
 			}
-			if ( _actions.length ) {
+			// add object specific actions from .actions section of __propertyListConfig
+			if ( this.actions.length ) {
 				items.push( null );
-				items = items.concat( _actions );
+				items = items.concat( this.actions );
 			}
+			// show popup
 			var popup = new GameObject( './popup-menu', {
 				target: this,
 				items: items,
@@ -763,6 +801,11 @@ include( './ui' );
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
 				var pdef = _properties[ pname ] || { deletable: true };
+
+				// skip native functions
+				if ( typeof ( target[ pname ] ) === 'function' && target[ pname ].toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ) ) {
+					continue;
+				}
 
 				// add label
 				if ( typeof( pdef.label ) === 'function' ) labelText = pdef.label( pname );
@@ -974,9 +1017,16 @@ include( './ui' );
 								}
 							}
 						} );
+						if ( field.type !== 'object' ) {
+							items.push( {
+								text: "Edit ^B" + field.name + "^b", action: function () {
+									addProperty( field.name, field.type, field.target[ field.name ] );
+								}
+							} );
+						}
 					}
 					// field is nullable
-					if ( field.type === 'object' && field.fieldValue && field.pdef.nullable ) {
+					if ( field.type === 'object' && field.fieldValue && field.pdef.nullable && !field.disabled ) {
 						items.push( {
 							text: "Set ^B" + field.name + "^b = ^Inull", action: function () {
 								this.target[ field.name ] = null;
@@ -996,6 +1046,22 @@ include( './ui' );
 					} );
 				}
 			}
+			// copy, paste
+			items.push( null );
+			items.push( {
+				text: "Copy value", action: function () {
+					this.copiedValue = { value: field.value || field.fieldValue, type: field.type };
+				}
+			} );
+			if ( go.copiedValue && go.copiedValue.type == field.type && !readOnly && !field.disabled ) {
+				items.push( {
+					text: "Paste value (" + go.copiedValue.type + ")", action: function () {
+						field.target[ field.name ] = this.copiedValue.value;
+						this.reload( field.name );
+					}
+				} );
+			}
+
 			// common actions
 			items.push( null );
 			items = items.concat( moreButton.actions );
@@ -1013,13 +1079,13 @@ include( './ui' );
 	}
 
 	// shows dialog that lets create a new property
-	go.addProperty = function () {
+	go.addProperty = function ( forceName, forceType, forceValue ) {
 		// Add property window
 		var win = App.overlay.addChild( './window', {
 			modal: true,
 			minWidth: 300,
 			pad: 8,
-			title: "Add Property",
+			title: forceName ? "Edit Property" : "Add Property",
 			layoutType: Layout.Vertical,
 			layoutAlignX: LayoutAlign.Stretch,
 			layoutAlignY: LayoutAlign.Start,
@@ -1028,7 +1094,7 @@ include( './ui' );
 		// instructions
 		win.addChild( './text', {
 			pad: 8,
-			text: "Enter new property name, type and value.",
+			text: forceName ? "Edit existing property value." : "Enter new property name, type and value.",
 			color: 0x0,
 			wrap: true,
 			bold: false,
@@ -1043,6 +1109,8 @@ include( './ui' );
 		var propName = win.addChild( './textfield', {
 			focusGroup: 'addProperty',
 			editEnd: validate,
+			text: forceName || "",
+			disabled: !!forceName,
 			change: function() { this.debounce( 'validate', validate, 1 ); }
 		} );
 		// type
@@ -1069,66 +1137,7 @@ include( './ui' );
 				{ text: "Image", value: "Image" },
 				{ text: "Vector", value: "Vector" },
 			],
-			change: function ( v ) {
-
-				var lbl = "Value:";
-				var showDropdown = false;
-				var valueDisabled = false;
-				var autoGrow = false;
-				var tabs = false;
-				var val = '';
-				var numeric = false;
-				var isCode = false;
-				switch( v ) {
-					case 'null':
-						valueDisabled = true;
-						val = 'null';
-						break;
-					case 'boolean':
-						showDropdown = true;
-						propValueDropdown.items = [
-							{ text: "true", value: true },
-							{ text: "false", value: false },
-						];
-						propValueDropdown.value = true;
-						break;
-					case 'number':
-						numeric = true;
-						val = '0';
-						break;
-					case 'string':
-						autoGrow = true;
-						break;
-					case 'array':
-						lbl = "Value: ^b(e.g.[1, 2, 3])";
-						val = "[ ]";
-						break;
-					case 'Vector':
-						lbl = "Value: ^b(e.g.[1, 2, 3])";
-						val = "new Vector([ ])";
-						break;
-					case 'function':
-						lbl = "Function:";
-						val = "function () {\n\t\n}";
-						autoGrow = true;
-						isCode = target;
-						break;
-					default:
-						val = 'new ' + v + '()';
-						break;
-				}
-				valLabel.text = valLabel.defaultText = lbl;
-				propValueDropdown.active = showDropdown;
-				propValue.active = !showDropdown;
-				propValue.disabled = valueDisabled;
-				propValue.tabEnabled = tabs;
-				propValue.code = isCode;
-				propValue.numeric = numeric;
-				propValue.multiLine = !autoGrow;
-				propValue.autoGrow = autoGrow;
-				propValue.text = val;
-				validate();
-			}
+			change: typeChanged
 		} );
 		// value
 		var valLabel = win.addChild( './text', {
@@ -1142,6 +1151,7 @@ include( './ui' );
 			editEnd: validate,
 			newLinesRequireShift: false,
 			autoGrow: true,
+			maxHeight: 14 * 8,
 		} );
 		var propValueDropdown = win.addChild( './select', {
 			focusGroup: 'addProperty',
@@ -1163,7 +1173,7 @@ include( './ui' );
 			click: win.close
 		} );
 		var btnOk = btns.addChild( './button', {
-			text: "Accept",
+			text: "Add Property",
 			focusGroup: 'addProperty',
 			disabled: true,
 			flex:3,
@@ -1175,25 +1185,97 @@ include( './ui' );
 				// create property
 				target[ propName.text ] = pendingValue;
 				if ( target[ propName.text ] === pendingValue ) {
-					log( "Added property ^B" + propName.text + "^b successfully" );
+					log( "Set property ^B" + propName.text + "^b successfully" );
 				} else {
-					log( "Failed to add property ^B" + propName.text + "^b." );
+					log( "Failed to write property ^B" + propName.text + "^b." );
 				}
 				go.refresh( propName.text ); // scroll to prop name
 			}
 		} );
+		// callback
+		function typeChanged ( v ) {
+
+			var lbl = "Value:";
+			var showDropdown = false;
+			var valueDisabled = false;
+			var autoGrow = false;
+			var tabs = false;
+			var val = '';
+			var numeric = false;
+			var isCode = false;
+			switch ( v ) {
+				case 'null':
+					valueDisabled = true;
+					val = 'null';
+					break;
+				case 'boolean':
+					showDropdown = true;
+					propValueDropdown.items = [
+						{ text: "true", value: true },
+						{ text: "false", value: false },
+					];
+					propValueDropdown.value = true;
+					break;
+				case 'number':
+					numeric = true;
+					val = '0';
+					break;
+				case 'string':
+					autoGrow = true;
+					tabs = true;
+					break;
+				case 'array':
+					lbl = "Value: ^b(e.g.[1, 2, 3])";
+					val = "[ ]";
+					break;
+				case 'Vector':
+					lbl = "Value: ^b(e.g.[1, 2, 3])";
+					val = "new Vector([ ])";
+					break;
+				case 'function':
+					lbl = "Function:";
+					val = "function () {\n\t\n}";
+					autoGrow = true;
+					tabs = true;
+					isCode = true;
+					break;
+				default:
+					val = 'new ' + v + '()';
+					break;
+			}
+			valLabel.text = valLabel.defaultText = lbl;
+			propValueDropdown.active = showDropdown;
+			propValue.active = !showDropdown;
+			propValue.disabled = valueDisabled;
+			propValue.numeric = numeric;
+			propValue.multiLine = !autoGrow;
+			propValue.autoGrow = autoGrow;
+			propValue.text = val;
+			propValue.tabEnabled = tabs;
+			if ( isCode ) {
+				propValue.target = target;
+				propValue.autocomplete = UI.base.autocompleteObjectProperty;
+			} else {
+				propValue.autocomplete = false;
+			}
+			validate();
+		}
+
 		// returns value
 		function validate( final ){
 			btnOk.disabled = true;
 			// prop name
 			var pname = propName.text;
 			nameLabel.text = "Name:";
-			if ( pname.length ) {
+			btnOk.text = win.title;
+			var exists = false;
+			if ( pname.length && !forceName ) {
 				if ( typeof( target[ pname ] ) !== 'undefined' ) {
-					nameLabel.text = "^2Property already exists";
-					return;
+					nameLabel.text = "^3Warning: property already exists";
+					exists = true;
+					btnOk.text = "^3Overwrite Property";
 				}
-			} else return;
+			} else if ( !pname.length ) return;
 
 			// prop val
 			var ptype = propType.value;
@@ -1244,9 +1326,22 @@ include( './ui' );
 			btnOk.disabled = false;
 			return value;
 		}
-		// focus on name
-		propName.focus();
-		propType.change( propType.value );
+		// edit property mode
+		if ( forceValue !== undefined ) {
+			if ( forceType ) propType.value = forceType;
+			propType.change( propType.value );
+			if ( forceType == 'boolean' ) {
+				propValueDropdown.value = forceValue;
+				propValueDropdown.focus();
+			} else {
+				propValue.text = String(forceValue);
+				propValue.focus();
+			}
+		// add prop mode
+		} else {
+			propName.focus();
+			propType.change( propType.value );
+		}
 	}
 
 	// automatically clear target when removing from scene
@@ -1255,7 +1350,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.propertyList );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.propertyList );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.values = go.values || { };
 	go.state = 'auto';
@@ -1297,7 +1392,8 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 {
 	showAll: true,
 	actions: [
-		{ text: "Add child", action: function() { this.pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } }
+		{ text: "New property", action: function () { this.addProperty(); } },
+		{ text: "Add child", action: function() { this.pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } },
 	],
 	properties: {
 		'name': true,
@@ -1321,12 +1417,13 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'body': { nullable: true, actions: [ { text:"new Body", action: function() { this.pushToTarget( this.target.body = new Body(), 'body' ); } } ]},
 		'ui': { nullable: true, actions: [ { text:"new UI", action: function() { this.pushToTarget( this.target.ui = new UI(), 'ui' ); } } ] },
 		'scale': { reloadOnChange: [ 'scaleY', 'scaleX' ] },
-		'__propertyListConfig': false
+		'__propertyListConfig': false,
+		'worldX': false, 'worldY': false, 'worldScaleX': false, 'worldScaleY': false, 'worldX': false,
 	},
 	groups: [
-		{ name: "GameObject", properties: [ 'active', 'name', 'script' ] },
-		{ name: "Transform", properties: [ 'x', 'y', 'z', 'angle', 'scaleX', 'scaleY', 'skewX', 'skewY' ] },
+		{ name: "GameObject", properties: [ 'active', 'name', 'script', 'serializeable' ] },
 		{ name: "Hierarchy", properties: [ 'scene', 'parent', 'children' ] },
+		{ name: "Transform", properties: [ 'x', 'y', 'z', 'angle', 'scaleX', 'scaleY', 'skewX', 'skewY' ] },
 		{ name: "Display", properties: [ 'render', 'opacity', 'ignoreCamera', 'renderAfterChildren', ] },
 		{ name: "Physics", properties: [ 'body' ] },
 		{ name: "UI", properties: [ 'ui' ] },

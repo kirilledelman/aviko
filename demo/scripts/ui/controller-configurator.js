@@ -101,77 +101,77 @@ new (function( params ){
 	var ignoreNextEvent = false;
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Array) of { id, minus, plus, description, descriptionMinus, descriptionPlus }
-		[ 'axis',  function (){ return axis; }, function ( v ){ axis = v; } ],
+		'axis': { get: function (){ return axis; }, set: function( v ){ axis = v; } },
 
 		// (Array) of { id, description }
-		[ 'buttons',  function (){ return buttons; }, function ( v ){ buttons = v; } ],
+		'buttons': { get: function (){ return buttons; }, set: function( v ){ buttons = v; } },
 
 		// (Boolean) buttons before axis
-		[ 'buttonsFirst',  function (){ return buttonsFirst; }, function ( v ){ buttonsFirst = v; } ],
+		'buttonsFirst': { get: function (){ return buttonsFirst; }, set: function( v ){ buttonsFirst = v; } },
 
 		// (GameObject) container when configurator is open
-		[ 'container', function (){ return container; } ],
+		'container': { get: function (){ return container; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'title', function (){ return title; } ],
+		'title': { get: function (){ return title; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'subtitle', function (){ return subtitle; } ],
+		'subtitle': { get: function (){ return subtitle; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'prompt', function (){ return prompt; } ],
+		'prompt': { get: function (){ return prompt; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'action', function (){ return action; } ],
+		'action': { get: function (){ return action; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'error', function (){ return error; } ],
+		'error': { get: function (){ return error; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		[ 'instruction', function (){ return instruction; } ],
+		'instruction': { get: function (){ return instruction; } },
 
 		// (Boolean) true when configurator is open
-		[ 'isOpen', function (){ return !!currentlyConfiguring; } ],
+		'isOpen': { get: function (){ return !!currentlyConfiguring; } },
 
 		// (Function) callback for when controller is connected
-		[ 'controllerAdded',  function (){ return callbacks.controllerAdded; }, function ( v ){ callbacks.controllerAdded = v; }, true ],
+		'controllerAdded': { get: function (){ return callbacks.controllerAdded; }, set: function( v ){ callbacks.controllerAdded = v; }, serialized: false },
 
 		// (Function) callback for when controller is disconnected
-		[ 'controllerRemoved',  function (){ return callbacks.controllerRemoved; }, function ( v ){ callbacks.controllerRemoved = v; }, true ],
+		'controllerRemoved': { get: function (){ return callbacks.controllerRemoved; }, set: function( v ){ callbacks.controllerRemoved = v; }, serialized: false },
 
 		// (Function) callback before configurator is displayed for another controller
-		[ 'willShow',  function (){ return callbacks.willShow; }, function ( v ){ callbacks.willShow = v; }, true ],
+		'willShow': { get: function (){ return callbacks.willShow; }, set: function( v ){ callbacks.willShow = v; }, serialized: false },
 
 		// (Function) callback before configurator is dismissed
-		[ 'willHide',  function (){ return callbacks.willHide; }, function ( v ){ callbacks.willHide = v; }, true ],
+		'willHide': { get: function (){ return callbacks.willHide; }, set: function( v ){ callbacks.willHide = v; }, serialized: false },
 
 		// (Function) callback after controller is deemed ready to use
-		[ 'ready',  function (){ return callbacks.ready; }, function ( v ){ callbacks.ready = v; }, true ],
+		'ready': { get: function (){ return callbacks.ready; }, set: function( v ){ callbacks.ready = v; }, serialized: false },
 
 		// (Number) delay in seconds before configurator is displayed
-		[ 'showDelay',  function (){ return showDelay; }, function ( v ){ showDelay = v; } ],
+		'showDelay': { get: function (){ return showDelay; }, set: function( v ){ showDelay = v; } },
 
 		// (Object) used to apply style (collection of properties) - use to preconfigure look of title, prompt etc.
-		[ 'style',  function (){ return style; }, function ( v ){
-			style = v;
-			if ( container ) UI.base.applyProperties( this, style );
-		} ],
+		'style': {
+			get: function (){ return style; },
+			set: function ( v ){ style = v; if ( container ) UI.base.applyProperties( this, style );
+		} },
 
-	];
-	UI.base.addMappedProperties( this, mappedProps );
+	};
+	UI.base.mapProperties( this, mappedProps );
 
 	// API functions
 
-	this[ 'reset' ] = function ( controller ) {
+	this.reset = function ( controller ) {
 		controller.reset( true );
 		var index = controllersToConfigure.indexOf( controller );
 		if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
 	}
 
-	this[ 'configure' ] = configureController;
+	this.configure = configureController;
 
 	// optional init parameter ( can pass as include( 'ui/controller-configurator', { ... init ... } ) )
 

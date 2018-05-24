@@ -1,12 +1,17 @@
+Checkbox doesnt toggle with enter
 
 Propertylist
-	Showing popup menus and property list fields can be done in "waves" over mult frames to improve responsiveness
-	edit functions, or show as readonly
+	test popup menus with disabled items
+	save as JSON, new Object from JSON
+
 
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default
 
 Negative outline with .color .a < 1 doesn't work
+
+Image
+	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
 
 Textfield
 	copying formatted text includes first formatting char

@@ -28,159 +28,159 @@ include( './ui' );
 	// internal props
 	var ui, spr, img, container = go.addChild();
 	container.ui = new UI();
-	go.serializeMask = { 'ui':1, 'render':1 };
+	go.serializeMask = [ 'ui', 'render' ];
 	var scrollbars = false;
 	var scrollbarsFocusable = true;
 	var constructing = true;
 	var vsb = null, hsb = null;
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Array) - set child objects at once - overrides built-in
-		[ 'children',  function (){ return container.children; }, function ( v ){
+		'children': { get: function (){ return container.children; }, set: function( v ){
 			container.children = v; // overridden
-		}],
+		} },
 
 		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
-		[ 'scrollbars',  function (){ return scrollbars; }, function ( s ){
+		'scrollbars': { get: function (){ return scrollbars; }, set: function( s ){
 			if ( s != scrollbars ) {
 				scrollbars = s;
 				go.fireLate( 'updateScrollbars' );
 			}
-		} ],
+		}  },
 
 		// (Boolean) whether scrollbars can receive focus
-		[ 'scrollbarsFocusable',  function (){ return scrollbarsFocusable; }, function ( v ){
+		'scrollbarsFocusable': { get: function (){ return scrollbarsFocusable; }, set: function( v ){
 			scrollbarsFocusable = v;
 			if ( vsb ) vsb.focusable = scrollbarsFocusable;
 			if ( hsb ) hsb.focusable = scrollbarsFocusable;
-		} ],
+		}  },
 
 
 		// (Number) current width of the control
-		[ 'width',  function (){ return ui.width; }, function ( w ){
+		'width': { get: function (){ return ui.width; }, set: function( w ){
 			ui.width = w;
-		} ],
+		}  },
 
 		// (Number) current height of the control
-		[ 'height',  function (){ return ui.height; }, function ( h ){
+		'height': { get: function (){ return ui.height; }, set: function( h ){
 			ui.height = h;
-		} ],
+		}  },
 
 		// (Number) width of the scrollable container area
-		[ 'scrollWidth',  function (){ return container.ui.width; }, function ( w ){
+		'scrollWidth': { get: function (){ return container.ui.width; }, set: function( w ){
 			if ( container.ui.width != w ) {
 				container.ui.width = w;
 				go.fireLate( 'updateScrollbars' );
 			}
-		} ],
+		}  },
 
 		// (Number) height of the scrollable container area
-		[ 'scrollHeight',  function (){ return container.ui.height; }, function ( h ){
+		'scrollHeight': { get: function (){ return container.ui.height; }, set: function( h ){
 			if ( container.ui.height != h ) {
 				container.ui.height = h;
 				go.fireLate( 'updateScrollbars' );
 			}
-		} ],
+		}  },
 
 		// (Number) current y scroll position
-		[ 'scrollTop',  function (){ return -container.y; }, function ( t ){
+		'scrollTop': { get: function (){ return -container.y; }, set: function( t ){
 			var py = container.y;
 			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), -t ) );
 			if ( py != container.y ) {
 				go.fireLate( 'scroll' );
 				go.fireLate( 'updateScrollbars' );
 			}
-		} ],
+		}  },
 
 		// (Number) current x scroll position
-		[ 'scrollLeft',  function (){ return -container.x; }, function ( l ){
+		'scrollLeft': { get: function (){ return -container.x; }, set: function( l ){
 			var px = container.x;
 			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), -l ) );
 			if ( px != container.x ) {
 				go.fireLate( 'scroll' );
 				go.fireLate( 'updateScrollbars' );
 			}
-		} ],
+		}  },
 
 		// (ui/scrollbar.js) - returns vertical scrollbar instance
-		[ 'verticalScrollbar',  function (){ return vsb; } ],
+		'verticalScrollbar': { get: function (){ return vsb; } },
 
 		// (ui/scrollbar.js) - returns horizontal scrollbar instance
-		[ 'horizontalScrollbar',  function (){ return hsb; } ],
+		'horizontalScrollbar': { get: function(){ return hsb; } },
 
 		// (GameObject) the actual container to which all children are added
-		[ 'container',  function (){ return container; } ],
+		'container': { get: function (){ return container; } },
 
 		// map back to this ui (not container)
 
 		// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
-		[ 'forceWrap',  function (){ return ui.forceWrap; }, function ( v ){ ui.forceWrap = v; } ],
+		'forceWrap': { get: function (){ return ui.forceWrap; }, set: function( v ){ ui.forceWrap = v; }  },
 
 		// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
-		[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
+		'selfAlign': { get: function (){ return ui.selfAlign; }, set: function( v ){ ui.selfAlign = v; }  },
 
 		// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
-		[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
+		'flex': { get: function (){ return ui.flex; }, set: function( v ){ ui.flex = v; }  },
 
 		// (Boolean) if true, parent will ignore this element while performing layout
-		[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
+		'fixedPosition': { get: function (){ return ui.fixedPosition; }, set: function( v ){ ui.fixedPosition = v; }  },
 
 		// (Number) minimum width allowed by layout
-		[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
+		'minWidth': { get: function (){ return ui.minWidth; }, set: function( v ){ ui.minWidth = v; }  },
 
 		// (Number) minimum height allowed by layout
-		[ 'minHeight',  function (){ return ui.minHeight; }, function ( v ){ ui.minHeight = v; } ],
+		'minHeight': { get: function (){ return ui.minHeight; }, set: function( v ){ ui.minHeight = v; }  },
 
 		// (Number) maximum width allowed by layout
-		[ 'maxWidth',  function (){ return ui.maxWidth; }, function ( v ){ ui.maxWidth = v; } ],
+		'maxWidth': { get: function (){ return ui.maxWidth; }, set: function( v ){ ui.maxWidth = v; }  },
 
 		// (Number) maximum height allowed by layout
-		[ 'maxHeight',  function (){ return ui.maxHeight; }, function ( v ){ ui.maxHeight = v; } ],
+		'maxHeight': { get: function (){ return ui.maxHeight; }, set: function( v ){ ui.maxHeight = v; }  },
 
 		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		[ 'anchorLeft',  function (){ return ui.anchorLeft; }, function ( v ){ ui.anchorLeft = v; } ],
+		'anchorLeft': { get: function (){ return ui.anchorLeft; }, set: function( v ){ ui.anchorLeft = v; }  },
 
 		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		[ 'anchorRight',  function (){ return ui.anchorRight; }, function ( v ){ ui.anchorRight = v; } ],
+		'anchorRight': { get: function (){ return ui.anchorRight; }, set: function( v ){ ui.anchorRight = v; }  },
 
 		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		[ 'anchorTop',  function (){ return ui.anchorTop; }, function ( v ){ ui.anchorTop = v; } ],
+		'anchorTop': { get: function (){ return ui.anchorTop; }, set: function( v ){ ui.anchorTop = v; }  },
 
 		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		[ 'anchorBottom',  function (){ return ui.anchorBottom; }, function ( v ){ ui.anchorBottom = v; } ],
+		'anchorBottom': { get: function (){ return ui.anchorBottom; }, set: function( v ){ ui.anchorBottom = v; }  },
 
 		// (Number) offset from anchorLeft
-		[ 'left',  function (){ return ui.left; }, function ( v ){ ui.left = v; } ],
+		'left': { get: function (){ return ui.left; }, set: function( v ){ ui.left = v; }  },
 
 		// (Number) offset from anchorLeft
-		[ 'right',  function (){ return ui.right; }, function ( v ){ ui.right = v; } ],
+		'right': { get: function (){ return ui.right; }, set: function( v ){ ui.right = v; }  },
 
 		// (Number) offset from anchorLeft
-		[ 'top',  function (){ return ui.top; }, function ( v ){ ui.top = v; } ],
+		'top': { get: function (){ return ui.top; }, set: function( v ){ ui.top = v; }  },
 
 		// (Number) offset from anchorLeft
-		[ 'bottom',  function (){ return ui.bottom; }, function ( v ){ ui.bottom = v; } ],
+		'bottom': { get: function (){ return ui.bottom; }, set: function( v ){ ui.bottom = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
-		[ 'margin',  function (){ return ui.margin; }, function ( v ){ ui.margin = v; } ],
+		'margin': { get: function (){ return ui.margin; }, set: function( v ){ ui.margin = v; }  },
 
 		// (Number) outer margin top
-		[ 'marginTop',  function (){ return ui.marginTop; }, function ( v ){ ui.marginTop = v; }, true ],
+		'marginTop': { get: function (){ return ui.marginTop; }, set: function( v ){ ui.marginTop = v; }, serialized: false },
 
 		// (Number) outer margin right
-		[ 'marginRight',  function (){ return ui.marginRight; }, function ( v ){ ui.marginRight = v; }, true ],
+		'marginRight': { get: function (){ return ui.marginRight; }, set: function( v ){ ui.marginRight = v; }, serialized: false },
 
 		// (Number) outer margin bottom
-		[ 'marginBottom',  function (){ return ui.marginBottom; }, function ( v ){ ui.marginBottom = v; }, true ],
+		'marginBottom': { get: function (){ return ui.marginBottom; }, set: function( v ){ ui.marginBottom = v; }, serialized: false },
 
 		// (Number) outer margin left
-		[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
+		'marginLeft': { get: function (){ return ui.marginLeft; }, set: function( v ){ ui.marginLeft = v; }, serialized: false },
 
-	];
+	};
 	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// remapped functions - forward calls to container
 	go.addChild = function() { return container.addChild.apply( container, arguments ); }
@@ -304,7 +304,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.scrollable );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.scrollable );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;

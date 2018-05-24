@@ -89,6 +89,9 @@ public:
 	/// quality
 	bool antialias = true;
 	
+	/// each line auto clears formatting
+	bool newLinesResetFormatting = false;
+	
 	/// current setting
 	bool bold = false;
 	bool italic = false;

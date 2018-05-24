@@ -23,45 +23,51 @@ include( './ui' );
 	var ui = new UI(), sc, rs, ri;
 	var mode = 'icon';
 	var constructing = true;
-	go.serializeMask = { 'ui':1, 'render':1 };
+	go.serializeMask = [ 'ui', 'render' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Color) or (Number) or null - solid background for this control
-		[ 'background', function (){ return go.render ? go.render.color : null; },
-			function ( v ){
+		'background': {
+			get: function (){ return go.render ? go.render.color : null; },
+			set: function ( v ){
 				if ( v === null ) {
 					go.render = null;
 				} else {
 					if ( !go.render ) go.render = new RenderShape( Shape.Rectangle );
 					go.render.color = v;
 				}
-			} ],
+			}
+		},
 
 		// (String) texture path
-		[ 'texture', function (){ return rs.texture; }, function ( v ){ rs.texture = v; go.updateParams(); } ],
+		'texture': { get: function (){ return rs.texture; }, set: function( v ){ rs.texture = v; go.updateParams(); }  },
 
 		// (GameObject) object displaying the image
-		[ 'imageObject',  function (){ return sc; } ],
+		'imageObject': { get: function (){ return sc; } },
 
 		// (Image) instance of Image object (alternative to .texture property)
-		[ 'image',  function (){ return rs.image; }, function ( v ){
-			rs.image = v;
-			go.updateParams();
-		} ],
+		'image': {
+			get: function (){ return rs.image; },
+			set: function ( v ) {
+				rs.image = v;
+				go.updateParams();
+			}
+		},
 
 		// (String) 'icon', 'fit', 'fill', or 'stretch'
-		[ 'mode',  function (){ return mode; }, function ( v ){ mode = v; go.updateParams(); } ],
+		'mode': { get: function (){ return mode; }, set: function( v ){ mode = v; go.updateParams(); }  },
 
 		// (Boolean) image is flipped X
-		[ 'flipX', function (){ return rs.flipX; }, function ( v ){ rs.flipX = v; } ],
+		'flipX': { get: function (){ return rs.flipX; }, set: function( v ){ rs.flipX = v; }  },
 
 		// (Boolean) image is flipped X
-		[ 'flipY', function (){ return rs.flipY; }, function ( v ){ rs.flipY = v; } ],
-	];
+		'flipY': { get: function (){ return rs.flipY; }, set: function( v ){ rs.flipY = v; }  },
+
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// create components
 
@@ -70,7 +76,7 @@ include( './ui' );
 
 	sc = go.addChild();
 	sc.name = "Image.Container";
-	sc.serialized = false;
+	sc.serializeable = false;
 	rs = new RenderSprite();
 	rs.pivotX = rs.pivotY = 0.5;
 	sc.render = rs;
@@ -139,7 +145,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.image );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.image );
 	UI.base.applyProperties( go, go.baseStyle );
 	constructing = false;
 

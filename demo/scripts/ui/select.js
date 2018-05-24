@@ -41,23 +41,21 @@ include( './ui' );
 	var dropdown;
 	var constructing = true;
 	var maxVisibleItems = 10;
-	go.serializeMask = { 'ui':1, 'render':1, 'children':1 };
+	go.serializeMask = [ 'ui', 'render', 'children' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Array) in form of [ { text:"Label text", value:(*), icon:"optional icon", disabled:(Boolean) } ...]
-		[ 'items',  function (){ return items; },
-			function ( v ){
+		'items': { get: function (){ return items; }, set: function( v ){
 				items = v;
 				go.value = value;
 				go.selectedIndex = selectedIndex;
 				go.updateSelectedItem();
-			} ],
+			}  },
 
 		// (*) 'value' property of selected item
-		[ 'value',  function (){ return value; },
-			function ( v ){
+		'value': { get: function (){ return value; }, set: function( v ){
 				value = v;
 				// find matching value in items
 				selectedIndex = -1;
@@ -67,71 +65,76 @@ include( './ui' );
 					}
 				}
 				go.updateSelectedItem();
-			} ],
+			}  },
 
 		// (Number) 0 based index of item selected in menu
-		[ 'selectedIndex',  function (){ return selectedIndex; },
-			function ( v ){
+		'selectedIndex': {
+			get: function (){ return selectedIndex; },
+			set: function( v ){
 				if ( isNaN( v ) ) return;
 				selectedIndex = Math.max( -1, Math.min( Math.floor( v ), items.length ) );
 				value = selectedIndex > 0 ? items[ selectedIndex ] : value;
 				go.updateSelectedItem();
-			} ],
+			}
+		},
 
 		// (*) 'value' property of selected item
-		[ 'maxVisibleItems',  function (){ return maxVisibleItems; }, function ( v ){ maxVisibleItems = v; } ],
+		'maxVisibleItems': { get: function (){ return maxVisibleItems; }, set: function( v ){ maxVisibleItems = v; }  },
 
 		// (GameObject) instance of 'ui/button.js' used as main area
-		[ 'button',  function (){ return button; } ],
+		'button': { get: function (){ return button; } },
 
 		// (GameObject) instance of 'ui/image.js' used for dropdown icon
-		[ 'arrowImage',  function (){ return arrowImage; } ],
+		'arrowImage': { get: function (){ return arrowImage; } },
 
 		// (String) or null - texture on icon
-		[ 'arrowIcon',  function (){ return arrowImage.texture; }, function ( v ){
-			arrowImage.image.texture = v;
-			arrowImage.active = !!v;
-		} ],
+		'arrowIcon': {
+			get: function (){ return arrowImage.texture; },
+			set: function( v ){
+				arrowImage.image.texture = v;
+				arrowImage.active = !!v;
+			}
+		},
 
 		// (Boolean) input disabled
-		[ 'disabled',  function (){ return button.disabled; },
-		 function ( v ){
-			 ui.disabled = button.disabled = v;
-		 } ],
+		'disabled': { get: function (){ return button.disabled; }, set: function( v ){ ui.disabled = button.disabled = v; }  },
+
+		// (Boolean) whether control is focusable when it's disabled
+		'disabledCanFocus': { get: function (){ return button.disabledCanFocus; }, set: function ( f ){ button.disabledCanFocus = f; } },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		[ 'cancelToBlur',  function (){ return button.cancelToBlur; }, function ( cb ){ button.cancelToBlur = cb; } ],
+		'cancelToBlur': { get: function (){ return button.cancelToBlur; }, set: function( cb ){ button.cancelToBlur = cb; }  },
 
 		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
-		[ 'focusGroup',  function (){ return button.ui.focusGroup; }, function ( f ){ button.ui.focusGroup = f; } ],
+		'focusGroup': { get: function (){ return button.ui.focusGroup; }, set: function( f ){ button.ui.focusGroup = f; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-		[ 'pad',  function (){ return button.ui.pad; }, function ( v ){ button.ui.pad = v; } ],
+		'pad': { get: function (){ return button.ui.pad; }, set: function( v ){ button.ui.pad = v; }  },
 
 		// (Number) inner padding top
-		[ 'padTop',  function (){ return button.ui.padTop; }, function ( v ){ button.ui.padTop = v; }, true ],
+		'padTop': { get: function (){ return button.ui.padTop; }, set: function( v ){ button.ui.padTop = v; }, serialized: false  },
 
 		// (Number) inner padding right
-		[ 'padRight',  function (){ return button.ui.padRight; }, function ( v ){ button.ui.padRight = v; }, true ],
+		'padRight': { get: function (){ return button.ui.padRight; }, set: function( v ){ button.ui.padRight = v; }, serialized: false },
 
 		// (Number) inner padding bottom
-		[ 'padBottom',  function (){ return button.ui.padBottom; }, function ( v ){ button.ui.padBottom = v; }, true ],
+		'padBottom': { get: function (){ return button.ui.padBottom; }, set: function( v ){ button.ui.padBottom = v; }, serialized: false },
 
 		// (Number) inner padding left
-		[ 'padLeft',  function (){ return button.ui.padLeft; }, function ( v ){ button.ui.padLeft = v; }, true ],
+		'padLeft': { get: function (){ return button.ui.padLeft; }, set: function( v ){ button.ui.padLeft = v; }, serialized: false },
 
 		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-		[ 'spacing',  function (){ return button.ui.spacing; }, function ( v ){ button.ui.spacing = v; }, true ],
+		'spacing': { get: function (){ return button.ui.spacing; }, set: function( v ){ button.ui.spacing = v; }, serialized: false },
 
 		// (Number) spacing between children when layoutType is Vertical
-		[ 'spacingX',  function (){ return button.ui.spacingX; }, function ( v ){ button.ui.spacingX = v; } ],
+		'spacingX': { get: function (){ return button.ui.spacingX; }, set: function( v ){ button.ui.spacingX = v; } },
 
 		// (Number) spacing between children when layoutType is Horizontal
-		[ 'spacingY',  function (){ return button.ui.spacingY; }, function ( v ){ button.ui.spacingY = v; } ],
+		'spacingY': { get: function (){ return button.ui.spacingY; }, set: function( v ){ button.ui.spacingY = v; } },
 
-	];
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// API functions
 
@@ -324,7 +327,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.select );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.select );
 	UI.base.applyProperties( go, go.baseStyle );
 	button.state = 'auto';
 	constructing = false;

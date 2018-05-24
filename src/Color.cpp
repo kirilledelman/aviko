@@ -431,9 +431,11 @@ void Color::SetInt( int val, bool withAlpha ) {
 }
 
 void Color::FromInt( int val, float &r, float &g, float &b) {
-	b = ( val & 0xFF ) / 255.0f;
-	g = ( ( val >> 8 ) & 0xFF ) / 255.0f;
-	r = ( ( val >> 16 ) & 0xFF ) / 255.0f;
+	float m = 1;
+	if ( val < 0 ) { m = -1; val = -val; }
+	b = m * ( val & 0xFF ) / 255.0f;
+	g = m * ( ( val >> 8 ) & 0xFF ) / 255.0f;
+	r = m * ( ( val >> 16 ) & 0xFF ) / 255.0f;
 }
 
 void Color::FromHex( string& hex, float &r, float &g, float &b, float& a ) {
@@ -545,8 +547,12 @@ void Color::Set( ArgValue &val ) {
 	
 		int v = 0;
 		val.toInt( v );
-		this->SetInt( v, false );
-		
+		if ( v < 0 ) {
+			Color::FromInt( v, this->r, this->g, this->b );
+			this->rgba = { 0, 0, 0, 0 };
+		} else {
+			this->SetInt( v, false );
+		}
 	}
 	
 }

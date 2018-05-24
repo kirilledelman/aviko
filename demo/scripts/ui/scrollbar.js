@@ -39,137 +39,135 @@ include( './ui' );
 	var plusButton = null, minusButton = null;
 	var constructing = true;
 	var grabX = 0, grabY = 0;
-	go.serializeMask = { 'ui':1, 'render':1, 'children': 1 };
+	go.serializeMask = [ 'ui', 'render', 'children' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (String) 'horizontal' or 'vertical' - scrollbar orientation
-		[ 'orientation',  function (){ return orientation; }, function ( o ){
+		'orientation': { get: function (){ return orientation; }, set: function( o ){
 			if ( o != 'vertical' && o != 'horizontal' ) return;
 			orientation = o;
 			// re-apply style
 			UI.base.applyProperties( go, go.baseStyle[ orientation + 'Style' ] );
 			go.dispatchLate( 'layout' );
-		} ],
+		}  },
 
 		// (Number) - position of the handle - 0 to (totalSize - handleSize)
-		[ 'position',
-			function (){
+		'position': { get: function (){
 				if ( discrete ) return Math.round( position / handleSize ) * handleSize;
 				else return position;
-			},
-			function ( p ){
+			}, set: function( p ){
 				if ( p != position ) {
 					position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
 					if ( discrete ) position = Math.round( position / handleSize ) * handleSize;
 					go.dispatchLate( 'layout' );
 				}
 			}
-		],
+		 },
 
 		// (Number) - total size of scrollable content (note that actual size of scrollbar is set with width/height, or anchors)
-		[ 'totalSize',  function (){ return totalSize; }, function ( v ) {
+		'totalSize': { get: function (){ return totalSize; }, set: function( v ) {
 			if ( v != totalSize ) {
 				totalSize = v;
 				handle.active = (v > 0);
 				go.dispatchLate( 'layout' );
 			}
-		}],
+		} },
 
 		// (Number) - the size of visible "window" into content (less than totalSize)
-		[ 'handleSize',  function (){ return handleSize; }, function ( v ){
+		'handleSize': { get: function (){ return handleSize; }, set: function( v ){
 			if ( v != handleSize ) {
 				handleSize = v;
 				go.dispatchLate( 'layout' );
 			}
-		}],
+		} },
 
 		// (Boolean) values can only be changed in increments of handleSize (used for scrollbars used as paginators)
-		[ 'discrete',  function (){ return discrete; }, function ( cb ){ discrete = cb; } ],
+		'discrete': { get: function (){ return discrete; }, set: function( cb ){ discrete = cb; }  },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function( cb ){ cancelToBlur = cb; }  },
 
 		// (Boolean) pressing Enter (or 'accept' controller button) will "pageDown" scrollbar page-by-page.
-		[ 'acceptToCycle',  function (){ return acceptToCycle; }, function ( a ){ acceptToCycle = a; } ],
+		'acceptToCycle': { get: function (){ return acceptToCycle; }, set: function( a ){ acceptToCycle = a; }  },
 
 		// (Boolean) pressing Enter (or 'accept' controller button) enters mode where directional buttons can be used to scroll.
 		// if true, unless in scrolling mode, directional buttons move focus instead.
-		[ 'acceptToScroll',  function (){ return acceptToScroll; }, function ( a ){ acceptToScroll = a; } ],
+		'acceptToScroll': { get: function (){ return acceptToScroll; }, set: function( a ){ acceptToScroll = a; }  },
 
 		// (Boolean) input disabled
-		[ 'disabled',  function (){ return disabled; },
-		 function ( v ){
+		'disabled': { get: function (){ return disabled; }, set: function( v ){
 			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
 			 go.state = 'disabled';
-		 } ],
+		 }  },
 
 		// (ui/button) button serving as >> or 'pageUp' button
-		[ 'plusButton',  function (){ return plusButton; }, function ( b ){ plusButton = b; go.dispatchLate( 'layout' ); } ],
+		'plusButton': { get: function (){ return plusButton; }, set: function( b ){ plusButton = b; go.dispatchLate( 'layout' ); }  },
 
 		// (ui/button) button serving as << or 'pageDown' button
-		[ 'minusButton',  function (){ return minusButton; }, function ( b ){ minusButton = b; go.dispatchLate( 'layout' ); } ],
+		'minusButton': { get: function (){ return minusButton; }, set: function( b ){ minusButton = b; go.dispatchLate( 'layout' ); }  },
 
 		// (GameObject) - reference to scroll handle
-		[ 'handle',  function (){ return handle; } ],
+		'handle': { get: function (){ return handle; } },
 
 		// (String) or (Color) or (Number) or (null|false)- scrollbar background set to sprite, or solid color, or nothing
-		[ 'background',  function (){ return background; }, function ( b ){
-			background = b;
-			if ( background === null || background === false ) {
-				go.render = null;
-			} else if ( typeof( background ) == 'string' ) {
-				bg.texture = background;
-				bg.resize( ui.width, ui.height );
-				go.render = bg;
-			} else {
-				shp.color = background;
-				go.render = shp;
+		'background': {
+			get: function (){ return background; },
+			set: function( b ){
+				background = b;
+				if ( background === null || background === false ) {
+					go.render = null;
+				} else if ( typeof( background ) == 'string' ) {
+					bg.texture = background;
+					bg.resize( ui.width, ui.height );
+					go.render = bg;
+				} else {
+					shp.color = background;
+					go.render = shp;
+				}
 			}
-		}],
+		},
 
 		// (Number) corner roundness when background is solid color
-		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
+		'cornerRadius': { get: function (){ return shp.radius; }, set: function( b ){
 			shp.radius = b;
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-		} ],
+		}  },
 
 		// (Number) outline thickness when background is solid color
-		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
+		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function( b ){
 			shp.lineThickness = b;
-		} ],
+		}  },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
+		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function( c ){
 			shp.outlineColor = (c === false ? '00000000' : c );
-		} ],
+		}  },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
+		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; }  },
 
 		// (Number) texture slice top
-		[ 'sliceTop',  function (){ return bg.sliceTop; }, function ( v ){ bg.sliceTop = v; }, true ],
+		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false  },
 
 		// (Number) texture slice right
-		[ 'sliceRight',  function (){ return bg.sliceRight; }, function ( v ){ bg.sliceRight = v; }, true ],
+		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
 
 		// (Number) texture slice bottom
-		[ 'sliceBottom',  function (){ return bg.sliceBottom; }, function ( v ){ bg.sliceBottom = v; }, true ],
+		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
 
 		// (Number) texture slice left
-		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
+		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
 
-
-
-	];
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// create components
 
@@ -417,7 +415,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.scrollbar );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.scrollbar );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.orientation = orientation;
 	go.state = 'auto';

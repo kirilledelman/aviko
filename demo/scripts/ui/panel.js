@@ -23,67 +23,69 @@ include( './ui' );
 	// internal props
 	var ui = new UI(), bg, shp, background = false;
 	var constructing = true;
-	go.serializeMask = { 'ui':1, 'render':1 };
+	go.serializeMask = [ 'ui', 'render' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (String) or (Color) or (Number) or (Image) or (null|false) - set background to sprite, or solid color, or nothing
-		[ 'background',  function (){ return background; }, function ( v ){
-			background = v;
-			if ( v === false || v === null || v === undefined ){
-				go.render = null;
-			} else if ( typeof( v ) == 'string' ) {
-				bg.image = null;
-				bg.texture = v;
-				go.render = bg;
-			} else if ( typeof( v ) == 'object' && v.constructor == Image ){
-				bg.image = v;
-				bg.texture = null;
-				go.render = bg;
-			} else {
-				shp.color = v;
-				go.render = shp;
+		'background': {
+			get: function (){ return background; },
+			set: function ( v ){
+				background = v;
+				if ( v === false || v === null || v === undefined ){
+					go.render = null;
+				} else if ( typeof( v ) == 'string' ) {
+					bg.image = null;
+					bg.texture = v;
+					go.render = bg;
+				} else if ( typeof( v ) == 'object' && v.constructor == Image ){
+					bg.image = v;
+					bg.texture = null;
+					go.render = bg;
+				} else {
+					shp.color = v;
+					go.render = shp;
+				}
 			}
-		}],
+		},
 
 		// (Number) corner roundness when background is solid color
-		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
-			shp.radius = b;
-			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-		} ],
+		'cornerRadius': {
+			get: function (){ return shp.radius; },
+			set: function ( b ){
+				shp.radius = b;
+				shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
+			}
+		},
 
 		// (Number) outline thickness when background is solid color
-		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
-			shp.lineThickness = b;
-		} ],
+		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function ( b ){ shp.lineThickness = b; } },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
-			shp.outlineColor = (c === false ? '00000000' : c );
-		} ],
+		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function ( c ){ shp.outlineColor = (c === false ? '00000000' : c ); } },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
+		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; }  },
 
 		// (Number) texture slice top
-		[ 'sliceTop',  function (){ return bg.sliceTop; }, function ( v ){ bg.sliceTop = v; }, true ],
+		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false },
 
 		// (Number) texture slice right
-		[ 'sliceRight',  function (){ return bg.sliceRight; }, function ( v ){ bg.sliceRight = v; }, true ],
+		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
 
 		// (Number) texture slice bottom
-		[ 'sliceBottom',  function (){ return bg.sliceBottom; }, function ( v ){ bg.sliceBottom = v; }, true ],
+		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
 
 		// (Number) texture slice left
-		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
+		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
 
-	];
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// create components
 
@@ -116,7 +118,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.panel );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.panel );
 	UI.base.applyProperties( go, go.baseStyle );
 	constructing = false;
 

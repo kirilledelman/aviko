@@ -19,32 +19,38 @@ new (function( params ){
 	var historyPos = 0;
 
 	// properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (Object) currently inspected target
-		[ '$0', function (){ return propertyList.target; }, function ( t ) {
-			if ( t != propertyList.target ) {
-				propertyList.target = t;
-				// target
-				if ( t && typeof( t ) === 'object' ) {
-					log( "^I$0 =", t );
+		'$0': {
+			get: function (){ return propertyList.target; },
+			set: function ( t ) {
+				if ( t != propertyList.target ) {
+					propertyList.target = t;
+					// target
+					if ( t && typeof( t ) === 'object' ) {
+						log( "$0 =", t );
+					}
 				}
-			}
-		}, true ],
+			}, serialized: false
+		},
 
 		// (Object) secondary target
-		[ '$1', function (){ return target2; }, function ( t ) {
-			if ( t != target2 ) {
-				// target
-				if ( target2 && typeof( target2 ) === 'object' ) {
-					log( "^I$1 =", t );
+		'$1': {
+			get: function (){ return target2; },
+			set: function ( t ) {
+				if ( t != target2 ) {
+					// target
+					if ( target2 && typeof( target2 ) === 'object' ) {
+						log( "$1 =", t );
+					}
+					target2 = t;
 				}
-				target2 = t;
-			}
-		}, true ],
+			}, serialized: false
+		},
 
-	];
-	UI.base.addMappedProperties( global, mappedProps );
+	};
+	UI.base.mapProperties( global, mappedProps );
 
 	// construct UI
 	this.window = window = new GameObject( './window', {
@@ -82,6 +88,7 @@ new (function( params ){
 		formatting: true,
 		marginBottom: 4,
 		alwaysShowSelection: true,
+		newLinesResetFormatting: true,
 		focusGroup: 'inspector',
 		states: {
 			off: { background: 0xFFFFFF },
@@ -99,7 +106,7 @@ new (function( params ){
 		newLinesRequireShift: true,
 		tabEnabled: true,
 		lineSpacing: -2,
-		code: global,
+		autocomplete: UI.base.autocompleteObjectProperty,
 		size: 12,
 		focusGroup: 'inspector'
 	} );
@@ -115,13 +122,14 @@ new (function( params ){
 			input.caretPosition = input.text.positionLength();
 		// accept
 		} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
-			log ( "^B> " + input.text );
+			log ( "> " + input.text ); //.replace( /\^/g, '^^' )
 			history.push( input.text );
 			var r = eval( input.text );
-			log( "^9" + r );
 			input.text = "";
 			input.editing = true;
 			historyPos = history.length;
+			if ( r !== null && typeof ( r ) === 'object' && r.constructor.name.indexOf( 'Error' ) > 0 ) throw r;
+			log( r );
 		}
 	} );
 
@@ -135,8 +143,8 @@ new (function( params ){
 	// events and callbacks
 
 	function onLog( s ) {
-		if ( !window.active ) return;
-		logBuffer += (logBuffer.length ? "\n^n^c" : "") + s;
+		// if ( !window.active ) return;
+		logBuffer += (logBuffer.length ? "\n" : "") + s;
 		output.text = logBuffer;
 		output.async( output.scrollToBottom, 0.1 );
 	}

@@ -35,7 +35,7 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 	} else if ( val.type == TypeObject && val.value.objectValue != NULL ) {
 		
 		// check .serialized property, skip if === false
-		ArgValue serialized = GetProperty( "serialized", val.value.objectValue );
+		ArgValue serialized = GetProperty( "serializeable", val.value.objectValue );
 		if ( serialized.type == TypeBool && serialized.value.boolValue == false ) return ArgValue();
 		
 		// object

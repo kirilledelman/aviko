@@ -1,24 +1,27 @@
 /*
 
-	Edit UI.style structure below to change the default appearance of Aviko UI components.
+	Aviko UI components are intended to help rapid development.
 
-	These are just default properties set at creation and can be overridden. See components
-	source files for all available properties. Some shared properties are defined in ui.js
-	in "shared functionality" block (below)
+	To customize default appearance, edit UI.style structure below.
 
-    To further customize / use different "substyles" for differently styled components,
-    provide .style param. E.g:
+	These are just default properties applied at creation and can be overridden.
+	See components' source files for all available properties. Some shared properties are
+	defined in this file in "shared functionality" block (below UI.style structure)
 
-    var bigButtonStyle = { .... style properties to init button with .... };
-    var smallButtonStyle = { .... style properties to init button with .... };
-    container.addChild( 'ui/button', {
-        text: "Big Button",
-        style: bigButtonStyle
-    });
-    container.addChild( 'ui/button', {
-        text: "Small Button",
-        style: smallButtonStyle
-    });
+    To customize individual components, use .style property to override many properties
+    at once. E.g:
+
+	    var bigButtonStyle = { pad: 10, label: { size: 20 } };
+	    var smallButtonStyle = { pad: 4, label: { size: 8 } };
+
+	    container.addChild( 'ui/button', {
+	        text: "Big Button",
+	        style: bigButtonStyle
+	    });
+	    container.addChild( 'ui/button', {
+	        text: "Small Button",
+	        style: smallButtonStyle
+	    });
  
 */
 
@@ -72,7 +75,15 @@ UI.style = UI.style || {
 				background: 0xcccccc,
 				lineThickness: 0,
 			},
-		}
+		},
+		// autocomplete menu (ui/popupMenu.js)
+		popupMenu: {
+			// items in the popup menu (ui/button.js)
+			item: {
+				label: { size: 12, },
+				pad: [ 4, 8, 4, 8 ],
+			},
+		},
 	},
 
 	// scrollable container - ui/scrollable.js
@@ -92,6 +103,7 @@ UI.style = UI.style || {
 		focusRect: true,
 		borderRadius: 2,
 
+		// handle - ui/button.js
 		handle: {
 			pad: 0,
 			borderRadius: 0,
@@ -165,16 +177,16 @@ UI.style = UI.style || {
 				background: 0x0066a5,
 			},
 			over: {
-				background: 0x006eb2,
+				background: 0x1a92dc,
 			},
 			focus: {
-				background: 0x006eb2,
+				background: 0x1a92dc,
 			},
 			down: {
 				background: 0x004b7a,
 			},
 			disabled: {
-				background: 0xe0e0e0,
+				background: 0xc0c0c0,
 			},
 		}
 	},
@@ -249,7 +261,7 @@ UI.style = UI.style || {
 					label: { color: 0x0 }
 				},
 				over: {
-					background: 0xf6f6f6,
+					background: 0xf9f9f9,
 					lineThickness: 0,
 					label: { color: 0x0 }
 				},
@@ -362,7 +374,7 @@ UI.style = UI.style || {
 			focusRect: false,
 			cornerRadius: 0,
 			pad: [ 4, 8, 4, 8 ],
-			states:{
+			states: {
 				off: {
 					background: 0xFFFFFF,
 					label: { color: 0x0 }
@@ -380,8 +392,7 @@ UI.style = UI.style || {
 					label: { color: 0xFFFFFF }
 				},
 				disabled: {
-					background: 0xf6f6f6,
-					label: { color: 0x333333 }
+					label: { color: 0x999999 }
 				},
 			}
 		},
@@ -445,8 +456,8 @@ UI.style = UI.style || {
 			bold: true,
 			color: 0x666666,
 			align: TextAlign.Center,
-			marginTop: 16,
-			marginBottom: 8,
+			marginTop: 12,
+			marginBottom: 4,
 		},
 
 		// applied to "no editable properties" and "(null)" text
@@ -512,6 +523,7 @@ UI.style = UI.style || {
 
 		// applied to field values based on type
 		values: {
+
 			// all types
 			any: {
 				acceptToEdit: true,
@@ -519,21 +531,61 @@ UI.style = UI.style || {
 				blurOnClickOutside: false,
 				fitChildren: false,
 				minHeight: 25,
+				states: { disabled: { label: { color: 0x666666 } }, }
 			},
+
 			// Number - ui/textfield
 			number: {
 				numeric: true,
 				selectAllOnFocus: true,
 			},
+
 			// String - ui/textfield
-			string: {
+			string: { },
+
+			// Function - ui/button
+			func: {
+				layoutAlignX: LayoutAlign.Start,
+				spacing: 4,
+				label: { bold: true, size: 14, color: 0x0 },
+				pad: 4,
+				outlineColor: 0x0066a5,
+				cornerRadius: 2,
+				states: {
+					off: {
+						background: 0xf6f6f6,
+						lineThickness: 0,
+						label: { color: 0x0 }
+					},
+					over: {
+						background: 0xf6f6f6,
+						lineThickness: 0,
+						label: { color: 0x0 }
+					},
+					down: {
+						background: 0x0066a5,
+						lineThickness: 0,
+						label: { color: 0xFFFFFF }
+					},
+					focus: {
+						background: 0xd9e2e7,
+						lineThickness: 2,
+						label: { color: 0x0 }
+					},
+					disabled: {
+						background: 0xcccccc,
+						lineThickness: 0,
+						label: { color: 0x666666 }
+					},
+				}
 			},
+
 			// Boolean - ui/checkbox
-			boolean: {
-			},
+			boolean: { },
+
 			// Enum - ui/dropdown
-			enum: {
-			},
+			enum: { },
+
 			// Object - ui/button
 			object: {
 				icon: '#iVBORw0KGgoAAAANSUhEUgAAAAwAAAAHCAYAAAA8sqwkAAAANElEQVR4XmMgF7gANf4ngF1QDBcREQnDpQEqh+kYbJpwKoZpR9ZEUDFMk6ysbCIIM1ADAABNKxlRej1XTAAAAABJRU5ErkJggg==',
@@ -571,14 +623,14 @@ UI.style = UI.style || {
 					disabled: {
 						background: 0xcccccc,
 						lineThickness: 0,
-						label: { color: 0x333333 }
+						label: { color: 0x666666 }
 					},
 				}
 			},
 
 			// inline sub-property list ui/property-list
 			inline: {
-				marginLeft: 10 // indent
+				marginLeft: 16 // indent
 			},
 
 		},
@@ -622,274 +674,228 @@ UI.base = UI.base || {
 	addSharedProperties: function( go, ui ) {
 
 		// create properties on gameObject
-		var mappedProps = [
+		var mappedProps = {
 
 			// (Number) current width of the control
-			[ 'width',  function (){ return ui.width; }, function ( w ){ ui.width = w; } ],
+			'width': { get: function (){ return ui.width; }, set: function( w ){ ui.width = w; } },
 
 			// (Number) current height of the control
-			[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; } ],
+			'height': { get: function (){ return ui.height; }, set: function( h ){ ui.height = h; } },
 
 			// (Boolean) allows keyboard / navigation focus
-			[ 'focusable',  function (){ return ui.focusable; }, function ( v ){ ui.focusable = v; } ],
+			'focusable': { get: function (){ return ui.focusable; }, set: function( v ){ ui.focusable = v; } },
 
 			// (Boolean) is field currently focused
-			[ 'focused',  function (){ return ui.focused; } ],
+			'focused': { get: function (){ return ui.focused; } },
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusLeft',  function (){ return ui.focusLeft; }, function ( f ){ ui.focusLeft = f; } ],
+			'focusLeft': { get: function (){ return ui.focusLeft; }, set: function( f ){ ui.focusLeft = f; } },
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusRight',  function (){ return ui.focusRight; }, function ( f ){ ui.focusRight = f; } ],
+			'focusRight': { get: function (){ return ui.focusRight; }, set: function( f ){ ui.focusRight = f; } },
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusUp',  function (){ return ui.focusUp; }, function ( f ){ ui.focusUp = f; } ],
+			'focusUp': { get: function (){ return ui.focusUp; }, set: function( f ){ ui.focusUp = f; } },
 
 			// (UI) or (GameObject) or null - object to focus to the left of this control
-			[ 'focusDown',  function (){ return ui.focusDown; }, function ( f ){ ui.focusDown = f; } ],
+			'focusDown': { get: function (){ return ui.focusDown; }, set: function( f ){ ui.focusDown = f; } },
 
 			// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
-			[ 'focusGroup',  function (){ return ui.focusGroup; }, function ( f ){ ui.focusGroup = f; } ],
+			'focusGroup': { get: function (){ return ui.focusGroup; }, set: function( f ){ ui.focusGroup = f; } },
 
 			// (Boolean) - enables/disables focus rectangle (getter returns Render component)
-			[ 'focusRect',  function (){ return ui.focusRect; }, function ( fr ){
-				if ( fr ) {
-					ui.on( 'layout', _layoutFocusRect );
-					ui.on( 'focusChanged', _focusChangedRect );
-				} else {
-					ui.off( 'layout', _layoutFocusRect );
-					ui.off( 'focusChanged', _focusChangedRect );
-					if ( ui.focusRectPanel ) {
-						ui.focusRectPanel = ui.focusRectPanel.parent = null;
+			'focusRect': {
+				get: function (){ return ui.focusRect; },
+				set: function ( fr ){
+					if ( fr ) {
+						ui.on( 'layout', UI.base._layoutFocusRect );
+						ui.on( 'focusChanged', UI.base._focusChangedRect );
+					} else {
+						ui.off( 'layout', UI.base._layoutFocusRect );
+						ui.off( 'focusChanged', UI.base._focusChangedRect );
+						if ( ui.focusRectPanel ) {
+							ui.focusRectPanel = ui.focusRectPanel.parent = null;
+						}
 					}
+					ui.focusRect = fr;
 				}
-				ui.focusRect = fr;
-			} ],
+			},
 
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
-			[ 'layoutType',  function (){ return ui.layoutType; }, function ( v ){ ui.layoutType = v; } ],
+			'layoutType': { get: function (){ return ui.layoutType; }, set: function( v ){ ui.layoutType = v; } },
 
 			// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on X axis
-			[ 'layoutAlignX',  function (){ return ui.layoutAlignX; }, function ( v ){ ui.layoutAlignX = v; } ],
+			'layoutAlignX': { get: function (){ return ui.layoutAlignX; }, set: function( v ){ ui.layoutAlignX = v; } },
 
 			// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on Y axis
-			[ 'layoutAlignY',  function (){ return ui.layoutAlignY; }, function ( v ){ ui.layoutAlignY = v; } ],
+			'layoutAlignY': { get: function (){ return ui.layoutAlignY; }, set: function( v ){ ui.layoutAlignY = v; } },
 
 			// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
-			[ 'fitChildren',  function (){ return ui.fitChildren; }, function ( v ){ ui.fitChildren = v; } ],
+			'fitChildren': { get: function (){ return ui.fitChildren; }, set: function( v ){ ui.fitChildren = v; } },
 
 			// (Boolean) for Horizontal and Vertical layouts, allow wrap of children into rows
-			[ 'wrapEnabled',  function (){ return ui.wrapEnabled; }, function ( v ){ ui.wrapEnabled = v; } ],
+			'wrapEnabled': { get: function (){ return ui.wrapEnabled; }, set: function( v ){ ui.wrapEnabled = v; } },
 
 			// (Integer) for Horizontal and Vertical layouts, auto wrap after this many items per row
-			[ 'wrapAfter',  function (){ return ui.wrapAfter; }, function ( v ){ ui.wrapAfter = v; } ],
+			'wrapAfter': { get: function (){ return ui.wrapAfter; }, set: function( v ){ ui.wrapAfter = v; } },
 
 			// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
-			[ 'forceWrap',  function (){ return ui.forceWrap; }, function ( v ){ ui.forceWrap = v; } ],
+			'forceWrap': { get: function (){ return ui.forceWrap; }, set: function( v ){ ui.forceWrap = v; } },
 
 			// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
-			[ 'selfAlign',  function (){ return ui.selfAlign; }, function ( v ){ ui.selfAlign = v; } ],
+			'selfAlign': { get: function (){ return ui.selfAlign; }, set: function( v ){ ui.selfAlign = v; } },
 
 			// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
-			[ 'flex',  function (){ return ui.flex; }, function ( v ){ ui.flex = v; } ],
+			'flex': { get: function (){ return ui.flex; }, set: function( v ){ ui.flex = v; } },
 
 			// (Boolean) if true, parent will ignore this element while performing layout
-			[ 'fixedPosition',  function (){ return ui.fixedPosition; }, function ( v ){ ui.fixedPosition = v; } ],
+			'fixedPosition': { get: function (){ return ui.fixedPosition; }, set: function( v ){ ui.fixedPosition = v; } },
 
 			// (Boolean) reverse child layout order
-			[ 'reversed',  function (){ return ui.reversed; }, function ( v ){ ui.reversed = v; } ],
+			'reversed': { get: function (){ return ui.reversed; }, set: function( v ){ ui.reversed = v; } },
 
 			// (Number) minimum width allowed by layout
-			[ 'minWidth',  function (){ return ui.minWidth; }, function ( v ){ ui.minWidth = v; } ],
+			'minWidth': { get: function (){ return ui.minWidth; }, set: function( v ){ ui.minWidth = v; } },
 
 			// (Number) minimum height allowed by layout
-			[ 'minHeight',  function (){ return ui.minHeight; }, function ( v ){ ui.minHeight = v; } ],
+			'minHeight': { get: function (){ return ui.minHeight; }, set: function( v ){ ui.minHeight = v; } },
 
 			// (Number) maximum width allowed by layout
-			[ 'maxWidth',  function (){ return ui.maxWidth; }, function ( v ){ ui.maxWidth = v; } ],
+			'maxWidth': { get: function (){ return ui.maxWidth; }, set: function( v ){ ui.maxWidth = v; } },
 
 			// (Number) maximum height allowed by layout
-			[ 'maxHeight',  function (){ return ui.maxHeight; }, function ( v ){ ui.maxHeight = v; } ],
+			'maxHeight': { get: function (){ return ui.maxHeight; }, set: function( v ){ ui.maxHeight = v; } },
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorLeft',  function (){ return ui.anchorLeft; }, function ( v ){ ui.anchorLeft = v; } ],
+			'anchorLeft': { get: function (){ return ui.anchorLeft; }, set: function( v ){ ui.anchorLeft = v; } },
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorRight',  function (){ return ui.anchorRight; }, function ( v ){ ui.anchorRight = v; } ],
+			'anchorRight': { get: function (){ return ui.anchorRight; }, set: function( v ){ ui.anchorRight = v; } },
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorTop',  function (){ return ui.anchorTop; }, function ( v ){ ui.anchorTop = v; } ],
+			'anchorTop': { get: function (){ return ui.anchorTop; }, set: function( v ){ ui.anchorTop = v; } },
 
 			// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-			[ 'anchorBottom',  function (){ return ui.anchorBottom; }, function ( v ){ ui.anchorBottom = v; } ],
+			'anchorBottom': { get: function (){ return ui.anchorBottom; }, set: function( v ){ ui.anchorBottom = v; } },
 
 			// (Number) offset from anchorLeft
-			[ 'left',  function (){ return ui.left; }, function ( v ){ ui.left = v; } ],
+			'left': { get: function (){ return ui.left; }, set: function( v ){ ui.left = v; } },
 
 			// (Number) offset from anchorLeft
-			[ 'right',  function (){ return ui.right; }, function ( v ){ ui.right = v; } ],
+			'right': { get: function (){ return ui.right; }, set: function( v ){ ui.right = v; } },
 
 			// (Number) offset from anchorLeft
-			[ 'top',  function (){ return ui.top; }, function ( v ){ ui.top = v; } ],
+			'top': { get: function (){ return ui.top; }, set: function( v ){ ui.top = v; } },
 
 			// (Number) offset from anchorLeft
-			[ 'bottom',  function (){ return ui.bottom; }, function ( v ){ ui.bottom = v; } ],
+			'bottom': { get: function (){ return ui.bottom; }, set: function( v ){ ui.bottom = v; } },
 
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
-			[ 'margin',  function (){ return ui.margin; }, function ( v ){ ui.margin = v; } ],
+			'margin': { get: function (){ return ui.margin; }, set: function( v ){ ui.margin = v; } },
 
 			// (Number) outer margin top
-			[ 'marginTop',  function (){ return ui.marginTop; }, function ( v ){ ui.marginTop = v; }, true ],
+			'marginTop': { get: function (){ return ui.marginTop; }, set: function( v ){ ui.marginTop = v; }, serialized: false, enumerable: false, configurable: true },
 
 			// (Number) outer margin right
-			[ 'marginRight',  function (){ return ui.marginRight; }, function ( v ){ ui.marginRight = v; }, true ],
+			'marginRight': { get: function (){ return ui.marginRight; }, set: function( v ){ ui.marginRight = v; }, serialized: false },
 
 			// (Number) outer margin bottom
-			[ 'marginBottom',  function (){ return ui.marginBottom; }, function ( v ){ ui.marginBottom = v; }, true ],
+			'marginBottom': { get: function (){ return ui.marginBottom; }, set: function( v ){ ui.marginBottom = v; }, serialized: false },
 
 			// (Number) outer margin left
-			[ 'marginLeft',  function (){ return ui.marginLeft; }, function ( v ){ ui.marginLeft = v; }, true ],
+			'marginLeft': { get: function (){ return ui.marginLeft; }, set: function( v ){ ui.marginLeft = v; }, serialized: false },
 
 			// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-			[ 'pad',  function (){ return ui.pad; }, function ( v ){ ui.pad = v;} ],
+			'pad': { get: function (){ return ui.pad; }, set: function( v ){ ui.pad = v;} },
 
 			// (Number) inner padding top
-			[ 'padTop',  function (){ return ui.padTop; }, function ( v ){ ui.padTop = v; }, true ],
+			'padTop': { get: function (){ return ui.padTop; }, set: function( v ){ ui.padTop = v; }, serialized: false },
 
 			// (Number) inner padding right
-			[ 'padRight',  function (){ return ui.padRight; }, function ( v ){ ui.padRight = v; }, true ],
+			'padRight': { get: function (){ return ui.padRight; }, set: function( v ){ ui.padRight = v; }, serialized: false },
 
 			// (Number) inner padding bottom
-			[ 'padBottom',  function (){ return ui.padBottom; }, function ( v ){ ui.padBottom = v; }, true ],
+			'padBottom': { get: function (){ return ui.padBottom; }, set: function( v ){ ui.padBottom = v; }, serialized: false },
 
 			// (Number) inner padding left
-			[ 'padLeft',  function (){ return ui.padLeft; }, function ( v ){ ui.padLeft = v; }, true ],
+			'padLeft': { get: function (){ return ui.padLeft; }, set: function( v ){ ui.padLeft = v; }, serialized: false },
 
 			// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-			[ 'spacing',  function (){ return ui.spacing; }, function ( v ){ ui.spacing = v; }, true ],
+			'spacing': { get: function (){ return ui.spacing; }, set: function( v ){ ui.spacing = v; }, serialized: false },
 
 			// (Number) spacing between children when layoutType is Vertical
-			[ 'spacingX',  function (){ return ui.spacingX; }, function ( v ){ ui.spacingX = v; } ],
+			'spacingX': { get: function (){ return ui.spacingX; }, set: function( v ){ ui.spacingX = v; } },
 
 			// (Number) spacing between children when layoutType is Horizontal
-			[ 'spacingY',  function (){ return ui.spacingY; }, function ( v ){ ui.spacingY = v; } ],
+			'spacingY': { get: function (){ return ui.spacingY; }, set: function( v ){ ui.spacingY = v; } },
 
 			// (Number) relative X offset from object's layout position
-			[ 'offsetX',  function (){ return ui.offsetX; }, function ( v ){ ui.offsetX = v; } ],
+			'offsetX': { get: function (){ return ui.offsetX; }, set: function( v ){ ui.offsetX = v; } },
 
 			// (Number) relative Y offset from object's layout position
-			[ 'offsetY',  function (){ return ui.offsetY; }, function ( v ){ ui.offsetY = v; } ],
+			'offsetY': { get: function (){ return ui.offsetY; }, set: function( v ){ ui.offsetY = v; } },
+
+			// (Color) | (Number) .color property of current render component
+			'color': { get: function (){ return go.render ? go.render.color : null; }, set: function( v ){ if ( go.render ) go.render.color = v; } },
+
+			// (Color) | (Number) .addColor property of current render component
+			'addColor': { get: function (){ return go.render ? go.render.addColor : null; }, set: function( v ){ if ( go.render ) go.render.addColor = v; } },
 
 			// (Object) used to override style (collection of properties) other than default after creating / during init
-			[ 'style',  function (){ return go.baseStyle; }, function ( v ){
-				// merge into current baseStyle
-				for ( var p in v ) go.baseStyle[ p ] = v[ p ];
-				UI.base.applyProperties( go, v );
-				go.state = 'auto'; // reset state
-			}, true ],
+			'style': {
+				get: function (){ return go.baseStyle; },
+				set: function ( v ){
+					// merge into current baseStyle
+					UI.base.mergeStyle( go.baseStyle, v ) ;
+					UI.base.applyProperties( go, v );
+					go.state = 'auto'; // reset state
+				}, // serialized: false
+			},
 
 			// (Object) used to change state of control. Holds definitions from initialization
-			[ 'states',  function (){ return go._states; }, function ( v ){ go._states = clone( v ); }, true ],
+			'states': { get: function (){ return go._states; }, set: function( v ){ go._states = clone( v ); }, serialized: false },
 
 			// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc). Applies properties from object in .states style property
-			[ 'state',  function (){ return go._state ? go._state : 'off'; }, function ( v ){
-				var sv = v;
-				if ( v == 'auto' ) {
-					sv = v = ( ui.disabled ? 'disabled' : ( ui.focused ? 'focus' : ( ui.over ? 'over' : 'off' ) ) );
-					if ( go._states !== undefined && go._states[ v ] == undefined ) sv = 'off'; // if no such state in states set to off
-				}
-				go._state = v;
-				if ( go._states !== undefined && go._states[ sv ] !== undefined ) UI.base.applyProperties( go, go._states[ sv ] );
-			}, true ],
+			'state': {
+				get: function (){ return go._state ? go._state : 'off'; },
+				set: function ( v ){
+					if ( !go._states ) return;
+					if ( v == 'auto' ) {
+						// apply states in order
+						UI.base.applyProperties( go, go._states[ v = 'off' ] );
+						if ( ui.focused && go._states[ 'focus' ] ) { UI.base.applyProperties( go, go._states[ v = 'focus' ] ); }
+						if ( ui.disabled ) {
+							v = 'disabled';
+							if ( go._states[ 'disabled' ] ) { UI.base.applyProperties( go, go._states[ v ] ); }
+						} else {
+							if ( ui.down && go._states[ 'down' ] ) { UI.base.applyProperties( go, go._states[ v = 'down' ] ); }
+							else if ( ui.over && go._states[ 'over' ] ) { UI.base.applyProperties( go, go._states[ v = 'over' ] ); }
+						}
+					} else {
+						UI.base.applyProperties( go, go._states[ v ] );
+					}
+					go._state = v;
+				}, serialized: false
+			},
 
-		];
+		};
+
 		// map them to gameObject
-		this.addMappedProperties( go, mappedProps );
+		this.mapProperties( go, mappedProps );
 
 		// Shared API functions
 
+		// resize control
+		go.resize = function ( w, h ) { ui.resize( w, h ); }
+
 		// set focus to the control (if it accepts focus)
-		go[ 'focus' ] = function () { if ( ui.focusable ) ui.focus(); }
+		go.focus = UI.base._focus; //
 
 		// remove focus from control
-		go[ 'blur' ] = function () { ui.blur(); }
-
-		// resize control
-		go[ 'resize' ] = function ( w, h ) { ui.resize( w, h ); }
+		go.blur = UI.base._blur; //
 
 		// called from "focusChanged" to scroll this component into view
-		go[ 'scrollIntoView' ] = function( expandAmount ) {
-			var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
-			// params are used by input to scroll caret into view
-			if ( arguments.length != 0 ) {
-				lpx = arguments[ 0 ]; lpy = arguments[ 1 ];
-				lw = arguments[ 2 ]; lh = arguments[ 3 ];
-			}
-			// find nearest scrollable
-			var p = this.parent;
-			var c = this;
-			var scrollable = null;
-			while( p ) {
-				if ( p.ui && p.render && p.render && p.render.image && p.render.image.autoDraw == c ){
-					scrollable = p;
-					break;
-				}
-				c = p;
-				p = p.parent;
-			}
-			if ( !scrollable || scrollable[ 'scrollTop' ] === undefined || scrollable[ 'scrollLeft' ] === undefined ) return;
-
-			// convert coordinate to scrollable's system
-			var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
-			var sw = scrollable.width, sh = scrollable.height;
-			var gp = this.localToGlobal( lpx, lpy );
-			var lp = scrollable.globalToLocal( gp.x, gp.y );
-			var t = lp.y + scrollable.scrollTop,
-				b = t + lh;
-			var l = lp.x + scrollable.scrollLeft,
-				r = l + lw;
-
-			// expand b-h and l-r a bit
-			var m = Math.min( lw, lh ) * ( expandAmount ? expandAmount : 0 );
-			if ( lh + m * 2 < sh ) { t -= m; b += m; }
-			if ( lw + m * 2 < sw ) { l -= m; r += m; }
-
-			// make sure it's in view
-			if ( b > sy + sh && b - t < sh ) { // bottom
-				scrollable.scrollTop = b - sh;
-			} else if ( t < sy ) { // top
-				scrollable.scrollTop = t;
-			}
-			if ( r > sx + sw && r - l < sw ) { // right
-				scrollable.scrollLeft = r - sw;
-			} else if ( l < sx ) { // left
-				scrollable.scrollLeft = l;
-			}
-		}
-
-		// focus rectangle layout callback
-		function _layoutFocusRect ( w, h ) {
-			var fr = this.focusRectObject;
-			if ( !fr || !fr.resize ) return;
-			fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
-			fr.setTransform( -fr.offset, -fr.offset );
-		};
-
-		// focus rectangle focus change callback
-		function _focusChangedRect( nf ) {
-			if ( this.focusRect ) {
-				if ( !this.focusRectObject ) {
-					this.focusRectObject = this.gameObject.addChild( 'ui/panel', {
-						active: ( this == nf ),
-						name: "FocusRect",
-						fixedPosition: true,
-						style: UI.style.focusRect,
-					} );
-				} else {
-					this.focusRectObject.active = ( this == nf );
-				}
-			}
-		};
+		go.scrollIntoView = UI.base._scrollIntoView;
 
 	},
 
@@ -904,12 +910,12 @@ UI.base = UI.base || {
 
 	// sets properties on an object
 	applyProperties: function ( go, props ) {
-		if ( !props || !go ) return;
+		if ( !( props && go ) ) return;
 		for ( var p in props ) {
-			if ( p == 'style' ) continue; // last
+			if ( p === 'style' ) continue; // last
 			// object with same name (but not an array)?
-			if ( typeof( props[ p ] ) == 'object' && props[ p ].constructor != Array &&
-				typeof( go[ p ] ) == 'object' && go[ p ] !== null ) {
+			if ( typeof( props[ p ] ) === 'object' && props[ p ].constructor !== Array &&
+				typeof( go[ p ] ) === 'object' && go[ p ] !== null ) {
 				// apply properties to it
 				UI.base.applyProperties( go[ p ], props[ p ] );
 			} else {
@@ -918,7 +924,23 @@ UI.base = UI.base || {
 			}
 		}
 		// style is set last
-		if ( typeof( props[ 'style' ] ) == 'object' ) go.style = props.style;
+		if ( typeof( props[ 'style' ] ) === 'object' ) go.style = props.style;
+	},
+
+	// merges style into base style
+	mergeStyle: function ( baseStyle, overrideStyle ) {
+		if ( !( baseStyle && overrideStyle ) ) return;
+		for ( var p in overrideStyle ) {
+			var ot = typeof( overrideStyle[ p ] );
+			var bt = typeof( baseStyle[ p ] );
+			if ( ot === 'object' && !( overrideStyle[ p ] && overrideStyle[ p ].constructor == Array ) ) {
+				if ( bt === 'undefined' ) baseStyle[ p ] = {};
+				UI.base.mergeStyle( baseStyle[ p ], overrideStyle[ p ] );
+			} else {
+				baseStyle[ p ] = overrideStyle[ p ];
+			}
+		}
+		return baseStyle;
 	},
 
 	// creates properties with getter/setters
@@ -933,7 +955,165 @@ UI.base = UI.base || {
 			go.__propertyListConfig.properties[ mappedProps[ i ][ 0 ] ] = false; // hide from inspector
 			if ( hidden && go != global ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
 		}
-	}
+	},
+
+	// creates properties with getter/setters
+	mapProperties: function( go, mappedProps ) {
+		if ( go !== global ) go.serializeMask = go.serializeMask || [];
+		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
+		for ( var i in mappedProps ) {
+			var prop = mappedProps[ i ];
+			prop.configurable = true;
+			if ( typeof( prop.enumerable ) === 'undefined' ) prop.enumerable = true;
+			go.__propertyListConfig.properties[ i ] = false; // hide from inspector
+			if ( prop.serialized === false && go !== global ) {
+				if ( go.serializeMask.constructor === Array ) go.serializeMask.push( i );
+				else go.serializeMask[ i ] = true;
+			}
+		}
+		Object.defineProperties( go, mappedProps );
+	},
+
+	// textfield callback for autocompleting object properties
+	// returns:
+	// {
+	//      suggestions: Array of suggestions to display in a popup, or null to hide popup, e.g. [ { text: "suggestion 1", value: "replace value" } ... ]
+	//      replaceStart: position in current field text, from which an accepted suggestion will replace text up to current caret
+	// }
+	autocompleteObjectProperty: function ( textfield ) {
+
+		var expr = textfield.findExpression( textfield.caretPosition - 1, /[a-z0-9\.$_]/i, null );
+		var exprLen = expr.length;
+		var lastPeriod = 0;
+		var replaceStart = textfield.caretPosition; // if we support partial / midword matches in the future
+		var suggestions = [];
+		var target = ( textfield.target || global );
+
+		// ends with . - show all available properties
+		if ( expr.substr( -1 ) == '.' ) {
+
+			var obj = eval( expr.substr( 0, exprLen - 1 ), target );
+			if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
+				// add all properties
+				for ( var p in obj ) suggestions.push( { text: p, value: p } );
+			}
+
+		// object, ends with partially completed property name - suggest matches
+		} else if ( ( lastPeriod = expr.lastIndexOf( '.' ) ) > 0 ) {
+
+			var obj = eval( expr.substr( 0, lastPeriod ), target );
+			if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
+
+				// all matching beginning of property name
+				var prop = expr.substr( lastPeriod + 1 );
+				var propLen = prop.length;
+				for ( var p in obj ) {
+					if ( p.substr( 0, propLen ) === prop && p.length !== propLen ) {
+						suggestions.push( {
+							text: "^B" + prop + "^b" + p.substr( propLen ),
+							value: p.substr( -( p.length + ( lastPeriod - exprLen ) ) - 1 ) } );
+					}
+				}
+
+			}
+
+		// doesn't have . in it yet - predict object from global
+		} else if ( exprLen ) {
+
+			// all matching beginning of line
+			for ( var p in global ) {
+				if ( p.substr( 0, exprLen ) === expr && p.length !== exprLen ) {
+					suggestions.push( {
+						text: "^B" + expr + "^b" + p.substr( exprLen ),
+						value: p.substr( exprLen - p.length ) } );
+				}
+			}
+
+		}
+
+		// return result
+		return {
+			replaceStart: replaceStart,
+			suggestions: suggestions
+		};
+	},
+
+	// focus rectangle layout callback
+	_layoutFocusRect: function ( w, h ) {
+		var fr = this.focusRectObject;
+		if ( !fr || !fr.resize ) return;
+		fr.resize( w + fr.offset * 2, h + fr.offset * 2 );
+		fr.setTransform( -fr.offset, -fr.offset );
+	},
+
+	// focus rectangle focus change callback
+	_focusChangedRect: function ( nf ) {
+		if ( this.focusRect ) {
+			if ( !this.focusRectObject ) {
+				this.focusRectObject = this.gameObject.addChild( 'ui/panel', {
+					active: ( this == nf ),
+					name: "FocusRect",
+					fixedPosition: true,
+					style: UI.style.focusRect,
+				} );
+			} else {
+				this.focusRectObject.active = ( this == nf );
+			}
+		}
+	},
+
+	_blur: function () { this.ui.blur(); },
+
+	_focus: function () { if ( this.ui.focusable ) this.ui.focus(); },
+
+	_scrollIntoView: function ( expandAmount ) {
+		var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
+		// params are used by input to scroll caret into view
+		if ( arguments.length != 0 ) {
+			lpx = arguments[ 0 ]; lpy = arguments[ 1 ];
+			lw = arguments[ 2 ]; lh = arguments[ 3 ];
+		}
+		// find nearest scrollable
+		var p = this.parent;
+		var c = this;
+		var scrollable = null;
+		while( p ) {
+			if ( p.ui && p.render && p.render && p.render.image && p.render.image.autoDraw == c ){
+				scrollable = p;
+				break;
+			}
+			c = p;
+			p = p.parent;
+		}
+		if ( !scrollable || scrollable[ 'scrollTop' ] === undefined || scrollable[ 'scrollLeft' ] === undefined ) return;
+
+		// convert coordinate to scrollable's system
+		var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
+		var sw = scrollable.width, sh = scrollable.height;
+		var gp = this.localToGlobal( lpx, lpy );
+		var lp = scrollable.globalToLocal( gp.x, gp.y );
+		var t = lp.y + scrollable.scrollTop,
+			b = t + lh;
+		var l = lp.x + scrollable.scrollLeft,
+			r = l + lw;
+
+		// expand b-h and l-r a bit
+		var m = Math.min( lw, lh ) * ( expandAmount ? expandAmount : 0 );
+		if ( lh + m * 2 < sh ) { t -= m; b += m; }
+		if ( lw + m * 2 < sw ) { l -= m; r += m; }
+
+		// make sure it's in view
+		if ( b > sy + sh && b - t < sh ) { // bottom
+			scrollable.scrollTop = b - sh;
+		} else if ( t < sy ) { // top
+			scrollable.scrollTop = t;
+		}
+		if ( r > sx + sw && r - l < sw ) { // right
+			scrollable.scrollLeft = r - sw;
+		} else if ( l < sx ) { // left
+			scrollable.scrollLeft = l;
+		}
+	},
 
 }
 

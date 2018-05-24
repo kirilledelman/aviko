@@ -12,7 +12,6 @@
 
 	Events:
 		'change' - when field changes (as you type)
-		'focusChanged' - when control focus is set or cleared (same as UI event)
 		'editStart' - when control begin text edit
 		'editEnd' - when control ended text edit
 		'accept' - on blur, if contents changed
@@ -29,7 +28,7 @@ include( './ui' );
 	// inner props
 	var ui = new UI(), tc, rt, bg, shp;
 	var tabEnabled = false;
-	var disabled = false;
+	var disabled = false, disabledCanFocus = true;
 	var selectable = true;
 	var resetText = "";
 	var formatting = false;
@@ -45,7 +44,8 @@ include( './ui' );
 	var autoGrow = false;
 	var numeric = false;
 	var integer = false;
-	var code = false;
+	var autocomplete = null;
+	var autocompleteReplaceStart = -1;
 	var newLinesRequireShift = true;
 	var minValue = -Infinity;
 	var maxValue = Infinity;
@@ -54,76 +54,79 @@ include( './ui' );
 	var canScrollUnfocused = false;
 	var alwaysShowSelection = false;
 	var allowed = null, pattern = null;
-	go.serializeMask = { 'ui':1, 'render':1 };
+	go.serializeMask = [ 'ui', 'render' ];
 
 	// API properties
-	var mappedProps = [
+	var mappedProps = {
 
 		// (String) input contents
-		[ 'text',   function (){ return rt.text; }, function( t ){
+		'text': { get: function (){ return rt.text; }, set: function( t ){
 			var pt = rt.text;
 			var ps0 = rt.selectionStart, ps1 = rt.selectionEnd;
 			rt.text = t;
 			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
 			if ( pt != t && !constructing ) go.fire( 'change', go.value );
 			if ( ps0 != ps1 ) go.fire( 'selectionChanged' );
-		} ],
+		}  },
 
 		// (String) or (Number) depending on if .numeric is set
-		[ 'value',   function (){
-			var v = rt.text;
-			if ( numeric ) {
-				v = integer ? parseInt( rt.text ) : parseFloat( rt.text );
-				if ( isNaN ( v ) && resetText ) v = ( integer ? parseInt( resetText ) : parseFloat( resetText ) );
-				v = Math.max( minValue, Math.min( maxValue, v ) );
-			}
-			return v;
-		}, function( v ){
-			if ( numeric ) {
-				if ( integer ) v = Math.round( v );
-				v = Math.min( maxValue, Math.max( minValue, v ) );
-				if ( !integer ) {
-					// rounding
-					v = Math.round( parseFloat( v.toFixed( 3 ) ) * 10000 ) * 0.0001;
-					v = v.toFixed( 3 ).replace( /(0+)$/, '' ).replace( /\.$/, '' ); // delete trailing zeros, and .
+		'value': {
+			get: function (){
+				var v = rt.text;
+				if ( numeric ) {
+					v = integer ? parseInt( rt.text ) : parseFloat( rt.text );
+					if ( isNaN ( v ) && resetText ) v = ( integer ? parseInt( resetText ) : parseFloat( resetText ) );
+					v = Math.max( minValue, Math.min( maxValue, v ) );
 				}
+				return v;
+			},
+			set: function( v ){
+				if ( numeric ) {
+					if ( integer ) v = Math.round( v );
+					v = Math.min( maxValue, Math.max( minValue, v ) );
+					if ( !integer ) {
+						// rounding
+						v = Math.round( parseFloat( v.toFixed( 3 ) ) * 10000 ) * 0.0001;
+						v = v.toFixed( 3 ).replace( /(0+)$/, '' ).replace( /\.$/, '' ); // delete trailing zeros, and .
+					}
+				}
+				rt.text = v;
+				rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
 			}
-			rt.text = v;
-			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
-		} ],
+		},
 
 		// (Number) current width of the control
-		[ 'width',  function (){ return ui.width; }, function ( w ){ ui.width = w; go.scrollCaretToView(); } ],
+		'width': { get: function (){ return ui.width; }, set: function( w ){ ui.width = w; go.scrollCaretToView(); }  },
 
 		// (Number) current height of the control
-		[ 'height',  function (){ return ui.height; }, function ( h ){ ui.height = h; go.scrollCaretToView(); } ],
+		'height': { get: function (){ return ui.height; }, set: function( h ){ ui.height = h; go.scrollCaretToView(); }  },
 
 		// (Boolean) requires user to press Enter (or 'accept' controller button) to begin editing
-		[ 'acceptToEdit',  function (){ return acceptToEdit; }, function ( ae ){
+		'acceptToEdit': { get: function (){ return acceptToEdit; }, set: function( ae ){
 			acceptToEdit = ae;
 			ui.focusable = !disabled || acceptToEdit;
-		} ],
+		}  },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		[ 'cancelToBlur',  function (){ return cancelToBlur; }, function ( cb ){ cancelToBlur = cb; } ],
+		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function( cb ){ cancelToBlur = cb; }  },
 
 		// (Boolean) clicking outside control will blur the control
-		[ 'blurOnClickOutside',  function (){ return blurOnClickOutside; }, function ( cb ){ blurOnClickOutside = cb; } ],
+		'blurOnClickOutside': { get: function (){ return blurOnClickOutside; }, set: function( cb ){ blurOnClickOutside = cb; }  },
 
 		// (Boolean) show selection even when not editing
-		[ 'alwaysShowSelection',  function (){ return alwaysShowSelection; }, function ( s ){ alwaysShowSelection = s; } ],
+		'alwaysShowSelection': { get: function (){ return alwaysShowSelection; }, set: function( s ){ alwaysShowSelection = s; }  },
 
 		// (Boolean) allows mousewheel to scroll field without being focused in it
-		[ 'canScrollUnfocused',  function (){ return canScrollUnfocused; }, function ( u ){ canScrollUnfocused = u; } ],
+		'canScrollUnfocused': { get: function (){ return canScrollUnfocused; }, set: function( u ){ canScrollUnfocused = u; }  },
 
 		// (Boolean) in multiline input require shift|alt|ctrl|meta to make new lines with Enter key
-		[ 'newLinesRequireShift',  function (){ return newLinesRequireShift; }, function ( u ){ newLinesRequireShift = u; } ],
+		'newLinesRequireShift': { get: function (){ return newLinesRequireShift; }, set: function( u ){ newLinesRequireShift = u; }  },
 
 		// (Number) current position of caret ( from 0 to text.positionLength() )
-		[ 'caretPosition',  function (){ return rt.caretPosition; }, function ( p ){ rt.caretPosition = p; go.scrollCaretToView(); } ],
+		'caretPosition': { get: function (){ return rt.caretPosition; }, set: function( p ){ rt.caretPosition = p; go.scrollCaretToView(); }  },
 
 		// (Boolean) turns display of caret and selection on and off (used by focus system)
-		[ 'editing',  function (){ return editing; }, function ( e ){
+		'editing': { get: function (){ return editing; }, set: function( e ){
 			if ( e != editing ) {
 				editing = e;
 				if ( e ) {
@@ -144,29 +147,30 @@ include( './ui' );
 					rt.showCaret = ui.dragSelect = false;
 				    rt.formatting = formatting;
 				    rt.scrollLeft = 0;
-					if ( code ) go.async( go.cancelAutocomplete, 0.5 );
+					// go.async( cancelAutocomplete, 0.25 );
+					cancelAutocomplete();
 					if ( numeric ) go.value = go.value;
 					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
 					go.fire( 'editEnd', go.value );
 					if ( !alwaysShowSelection ) rt.showSelection = false;
 				}
 			}
-		} ],
+		}  },
 
 		// (string) font name
-		[ 'font',  function (){ return rt.font; }, function ( f ){ rt.font = f; go.scrollCaretToView(); } ],
+		'font': { get: function (){ return rt.font; }, set: function( f ){ rt.font = f; go.scrollCaretToView(); }  },
 
 		// (string) optional bold font name (improves rendering)
-		[ 'boldFont',  function (){ return rt.boldFont; }, function ( f ){ rt.boldFont = f; go.scrollCaretToView(); } ],
+		'boldFont': { get: function (){ return rt.boldFont; }, set: function( f ){ rt.boldFont = f; go.scrollCaretToView(); }  },
 
 		// (string) optional italic font name (improves rendering)
-		[ 'italicFont',  function (){ return rt.italicFont; }, function ( f ){ rt.italicFont = f; go.scrollCaretToView(); } ],
+		'italicFont': { get: function (){ return rt.italicFont; }, set: function( f ){ rt.italicFont = f; go.scrollCaretToView(); }  },
 
 		// (string) optional bold+italic font name (improves rendering)
-		[ 'boldItalicFont',  function (){ return rt.boldItalicFont; }, function ( f ){ rt.boldItalicFont = f; go.scrollCaretToView(); } ],
+		'boldItalicFont': { get: function (){ return rt.boldItalicFont; }, set: function( f ){ rt.boldItalicFont = f; go.scrollCaretToView(); }  },
 
 		// (Number) font size
-		[ 'size',  function (){ return rt.size; }, function ( s ){
+		'size': { get: function (){ return rt.size; }, set: function( s ){
 			var nl = go.numLines;
 			rt.size = s;
 			ui.minHeight = rt.lineHeight + ui.padTop + ui.padBottom;
@@ -175,53 +179,55 @@ include( './ui' );
 			} else {
 				ui.height = ui.minHeight;
 			}
-		} ],
+		}  },
 
 		// (Boolean) only accepts numbers
-		[ 'numeric',  function (){ return numeric; }, function ( n ){
+		'numeric': { get: function (){ return numeric; }, set: function( n ){
 			numeric = n;
 			if ( n ) {
 				rt.multiLine = false;
 				go.value = go.text; // update value
 			}
-		} ],
+		}  },
 
 		// (Number) minimum value for numeric input
-		[ 'min',  function (){ return minValue; }, function ( v ){ minValue = v; } ],
+		'min': { get: function (){ return minValue; }, set: function( v ){ minValue = v; }  },
 
 		// (Number) maximum value for numeric input
-		[ 'max',  function (){ return maxValue; }, function ( v ){ maxValue = v; } ],
+		'max': { get: function (){ return maxValue; }, set: function( v ){ maxValue = v; }  },
 
 		// (Number) step by which to increment/decrement value, when using arrow keys in control
-		[ 'step',  function (){ return step; }, function ( v ){ step = v; } ],
+		'step': { get: function (){ return step; }, set: function( v ){ step = v; }  },
 
 		// (Boolean) maximum value for numeric input
-		[ 'integer',  function (){ return integer; }, function ( v ){ integer = v; } ],
+		'integer': { get: function (){ return integer; }, set: function( v ){ integer = v; }  },
 
-		// (Object) | (Boolean) set to an Object to enable code editor mode
-		// object will be used to resolve "this", when typing "this."
-		// set to false to disable
-		[ 'code',  function (){ return code; }, function ( v ){
-			code = v;
-		} ],
+		// (Function) - callback function that returns an object with two properties:
+		// {
+		//      suggestions: Array of suggestions to display in a popup, or null to hide popup, e.g. [ { text: "suggestion 1", value: "replace value" } ... ]
+		//      replaceStart: position in current field text, from which an accepted suggestion will replace text up to current caret
+		// }
+		// (String) - alternatively, name of the function in UI.base namespace ( e.g. "autocompleteObjectProperty" for UI.base.autocompleteObjectProperty )
+		//  see UI.base.autocompleteObjectProperty for example
+		'autocomplete': { get: function (){ return autocomplete; }, set: function( v ){ autocomplete = v; } },
 
 		// (RegExp) allow typing only these characters. Regular expression against which to compare incoming character, e.g. /[0-9a-z]/i
-		[ 'allowed',  function (){ return allowed; }, function ( a ){ allowed = a; } ],
+		'allowed': { get: function (){ return allowed; }, set: function( a ){ allowed = a; }  },
 
 		// (RegExp) only allow the text that matches this RegExp e.g. /^[0-9]{0,4}$/
-		[ 'pattern',  function (){ return pattern; }, function ( p ){ pattern = p; } ],
+		'pattern': { get: function (){ return pattern; }, set: function( p ){ pattern = p; }  },
 
 		// (Boolean) should text be antialiased
-		[ 'antialias',  function (){ return rt.antialias; }, function ( a ){ rt.antialias = a; } ],
+		'antialias': { get: function (){ return rt.antialias; }, set: function( a ){ rt.antialias = a; }  },
 
 		// (Boolean) word wrapping at control width enabled for multiline field
-		[ 'wrap',  function (){ return rt.wrap; }, function ( w ){ rt.wrap = w; go.scrollCaretToView(); } ],
+		'wrap': { get: function (){ return rt.wrap; }, set: function( w ){ rt.wrap = w; go.scrollCaretToView(); }  },
 
 		// (Number) extra spacing between characters
-		[ 'characterSpacing',  function (){ return rt.characterSpacing; }, function ( v ){ rt.characterSpacing = v; go.scrollCaretToView(); } ],
+		'characterSpacing': { get: function (){ return rt.characterSpacing; }, set: function( v ){ rt.characterSpacing = v; go.scrollCaretToView(); }  },
 
 		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		[ 'background',  function (){ return background; }, function ( b ){
+		'background': { get: function (){ return background; }, set: function( b ){
 			background = b;
 			// set look
 			if ( b === null || b === false ) {
@@ -234,161 +240,167 @@ include( './ui' );
 				go.render = shp;
 			}
 			go.dispatch( 'layout' );
-		} ],
+		}  },
 
 		// (Number) corner roundness when background is solid color
-		[ 'cornerRadius',  function (){ return shp.radius; }, function ( b ){
+		'cornerRadius': { get: function (){ return shp.radius; }, set: function( b ){
 			shp.radius = b;
 			shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-		} ],
+		}  },
 
 		// (Number) outline thickness when background is solid color
-		[ 'lineThickness',  function (){ return shp.lineThickness; }, function ( b ){
+		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function( b ){
 			shp.lineThickness = b;
-		} ],
+		}  },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		[ 'outlineColor',  function (){ return shp.outlineColor; }, function ( c ){
+		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function( c ){
 			shp.outlineColor = (c === false ? '00000000' : c );
-		} ],
+		}  },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		[ 'filled',  function (){ return shp.filled; }, function ( v ){ shp.filled = v; } ],
+		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		[ 'slice',  function (){ return bg.slice; }, function ( v ){ bg.slice = v; } ],
+		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; }  },
 
 		// (Number) texture slice top
-		[ 'sliceTop',  function (){ return bg.sliceTop; }, function ( v ){ bg.sliceTop = v; }, true ],
+		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false  },
 
 		// (Number) texture slice right
-		[ 'sliceRight',  function (){ return bg.sliceRight; }, function ( v ){ bg.sliceRight = v; }, true ],
+		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
 
 		// (Number) texture slice bottom
-		[ 'sliceBottom',  function (){ return bg.sliceBottom; }, function ( v ){ bg.sliceBottom = v; }, true ],
+		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
 
 		// (Number) texture slice left
-		[ 'sliceLeft',  function (){ return bg.sliceLeft; }, function ( v ){ bg.sliceLeft = v; }, true ],
+		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
 
 		// (Boolean) multiple line input
-		[ 'multiLine',  function (){ return rt.multiLine; }, function ( v ){
+		'multiLine': { get: function (){ return rt.multiLine; }, set: function( v ){
 			rt.multiLine = v;
 			go.dispatch( 'layout' );
-			go.scrollCaretToView(); } ],
+			go.scrollCaretToView(); }  },
 
 		// (Number) gets or sets number of visible lines in multiline control
-		[ 'numLines',  function (){ return rt.height / rt.lineHeight; }, function ( v ) {
-			if ( v != 1 ) rt.multiLine = true;
-			ui.minHeight = ui.padTop + ui.padBottom + v * rt.lineHeight;
-			go.scrollCaretToView();
-		}, true ],
+		'numLines': {
+			get: function (){ return rt.height / rt.lineHeight; },
+			set: function( v ) {
+				if ( v != 1 ) rt.multiLine = true;
+				ui.minHeight = ui.padTop + ui.padBottom + v * rt.lineHeight;
+				go.scrollCaretToView();
+			}, serialized: false
+		},
 
 		// (Number) scrollable height
-		[ 'scrollHeight',  function (){ return rt.scrollHeight; } ],
+		'scrollHeight': { get: function (){ return rt.scrollHeight; } },
 
 		// (Number) scrollable width
-		[ 'scrollWidth',  function (){ return rt.scrollHeight; } ],
+		'scrollWidth': { get: function (){ return rt.scrollHeight; } },
 
 		// (Number) vertical scroll offset
-		[ 'scrollTop',  function (){ return rt.scrollTop; }, function ( v ){ rt.scrollTop = v; }, true ],
+		'scrollTop': { get: function(){ return rt.scrollTop; }, set: function ( v ){ rt.scrollTop = v; }, serialized: false },
 
 		// (Number) horizontal scroll offset
-		[ 'scrollLeft',  function (){ return rt.scrollLeft; }, function ( v ){ rt.scrollLeft = v; }, true ],
+		'scrollLeft': { get: function (){ return rt.scrollLeft; }, set: function( v ){ rt.scrollLeft = v; }, serialized: false },
 
 		// (Number) scrollable width
-		[ 'scrollWidth',  function (){ return rt.scrollHeight; } ],
+		'scrollWidth': { get: function (){ return rt.scrollHeight; } },
 
 		// (Boolean) auto grow / shrink vertically multiline field
-		[ 'autoGrow',  function (){ return autoGrow; }, function ( v ){
-			rt.multiLine = rt.multiLine || v;
-			autoGrow = v;
-			go.dispatch( 'layout' );
-			go.scrollCaretToView();
-		} ],
+		'autoGrow': {
+			get: function (){ return autoGrow; },
+			set: function( v ){
+				rt.multiLine = rt.multiLine || v;
+				autoGrow = v;
+				go.dispatch( 'layout' );
+				go.scrollCaretToView();
+			}
+		},
 
 		// (Number) multiLine line spacing
-		[ 'lineSpacing',  function (){ return rt.lineSpacing; }, function ( v ){
+		'lineSpacing': { get: function (){ return rt.lineSpacing; }, set: function( v ){
 			rt.lineSpacing = v;
 			go.dispatch( 'layout' );
 			go.scrollCaretToView();
-		} ],
+		}  },
 
 		// (Number) returns line height - font size + line spacing
-		[ 'lineHeight',  function (){ return rt.lineHeight; } ],
+		'lineHeight': { get: function (){ return rt.lineHeight; } },
 
 		// (Boolean) font bold
-		[ 'bold',  function (){ return rt.bold; }, function ( v ){ rt.bold = v; } ],
+		'bold': { get: function(){ return rt.bold; }, set: function ( v ){ rt.bold = v; } },
 
 		// (Boolean) font italic
-		[ 'italic',  function (){ return rt.italic; }, function ( v ){ rt.italic = v; } ],
+		'italic': { get: function (){ return rt.italic; }, set: function( v ){ rt.italic = v; }  },
 
 		// (Boolean) allow text selection
-		[ 'selectable',  function (){ return selectable; }, function ( v ){ selectable = v; rt.showSelection = v; if ( !v ) rt.selectionStart = rt.selectionEnd; } ],
+		'selectable': { get: function (){ return selectable; }, set: function( v ){ selectable = v; rt.showSelection = v; if ( !v ) rt.selectionStart = rt.selectionEnd; }  },
 
 		// (Boolean) select all text when control is first focused
-		[ 'selectAllOnFocus',  function (){ return selectAllOnFocus; }, function ( b ){ selectAllOnFocus = b; } ],
+		'selectAllOnFocus': { get: function (){ return selectAllOnFocus; }, set: function( b ){ selectAllOnFocus = b; }  },
 
 		// (Boolean) allow typing in Tab character (as opposed to tabbing to another UI control)
-		[ 'tabEnabled',  function (){ return tabEnabled; }, function ( v ){ tabEnabled = v; } ],
+		'tabEnabled': { get: function (){ return tabEnabled; }, set: function( v ){ tabEnabled = v; }  },
 
 		// (Boolean) input disabled
-		[ 'disabled',  function (){ return disabled; },
-		 function ( v ){
-			 disabled = v;
-			 // ui.disabled = v || acceptToEdit; //?
+		'disabled': { get: function (){ return disabled; }, set: function( v ){
+			 disabled = ui.disabled = v; // ui.disabled is used in sharedProps state = 'auto' check
 			 if ( v && editing ) go.editing = false;
 			 go.state = 'auto';
 			 go.dispatch( 'layout' );
-		 } ],
+		 }  },
 
 		// (Boolean) input is currently in scrolling mode
-		[ 'scrolling',  function (){ return scrolling; },
-		 function ( v ){
+		'scrolling': { get: function (){ return scrolling; }, set: function( v ){
 			 scrolling = v;
 			 go.state = 'scrolling';
-		 } ],
+		 }  },
 
 		// (Boolean) enable display ^code formatting (while not editing)
-		[ 'formatting',  function (){ return formatting; }, function ( v ){ formatting = v; rt.formatting = ( formatting && !ui.focused ); } ],
+		'formatting': { get: function (){ return formatting; }, set: function( v ){ formatting = v; rt.formatting = ( formatting && !ui.focused ); }  },
+
+		// (Boolean) if using ^code formatting, each new line will auto-reset color, bold, etc.
+		'newLinesResetFormatting': { get: function (){ return rt.newLinesResetFormatting; }, set: function( p ){ rt.newLinesResetFormatting = p; }  },
 
 		// (Number) or (Color) text color
-		[ 'color',  function (){ return rt.textColor; }, function ( v ){ rt.textColor = v; } ],
+		'color': { get: function (){ return rt.textColor; }, set: function( v ){ rt.textColor = v; }  },
 
 		// (Number) or (Color) text selection color
-		[ 'selectionColor',  function (){ return rt.selectionColor; }, function ( v ){ rt.selectionColor = v; } ],
+		'selectionColor': { get: function (){ return rt.selectionColor; }, set: function( v ){ rt.selectionColor = v; }  },
 
 		// (Number) or (Color) ^0 color
-		[ 'color0',  function (){ return rt.color0; }, function ( v ){ rt.color0 = v; } ],
+		'color0': { get: function (){ return rt.color0; }, set: function( v ){ rt.color0 = v; }  },
 
 		// (Number) or (Color) ^1 color
-		[ 'color1',  function (){ return rt.color1; }, function ( v ){ rt.color1 = v; } ],
+		'color1': { get: function (){ return rt.color1; }, set: function( v ){ rt.color1 = v; }  },
 
 		// (Number) or (Color) ^2 color
-		[ 'color2',  function (){ return rt.color2; }, function ( v ){ rt.color2 = v; } ],
+		'color2': { get: function (){ return rt.color2; }, set: function( v ){ rt.color2 = v; }  },
 
 		// (Number) or (Color) ^3 color
-		[ 'color3',  function (){ return rt.color3; }, function ( v ){ rt.color3 = v; } ],
+		'color3': { get: function (){ return rt.color3; }, set: function( v ){ rt.color3 = v; }  },
 
 		// (Number) or (Color) ^4 color
-		[ 'color4',  function (){ return rt.color4; }, function ( v ){ rt.color4 = v; } ],
+		'color4': { get: function (){ return rt.color4; }, set: function( v ){ rt.color4 = v; }  },
 
 		// (Number) or (Color) ^5 color
-		[ 'color5',  function (){ return rt.color5; }, function ( v ){ rt.color5 = v; } ],
+		'color5': { get: function (){ return rt.color5; }, set: function( v ){ rt.color5 = v; }  },
 
 		// (Number) or (Color) ^6 color
-		[ 'color6',  function (){ return rt.color6; }, function ( v ){ rt.color6 = v; } ],
+		'color6': { get: function (){ return rt.color6; }, set: function( v ){ rt.color6 = v; }  },
 
 		// (Number) or (Color) ^7 color
-		[ 'color7',  function (){ return rt.color7; }, function ( v ){ rt.color7 = v; } ],
+		'color7': { get: function (){ return rt.color7; }, set: function( v ){ rt.color7 = v; }  },
 
 		// (Number) or (Color) ^8 color
-		[ 'color8',  function (){ return rt.color8; }, function ( v ){ rt.color8 = v; } ],
+		'color8': { get: function (){ return rt.color8; }, set: function( v ){ rt.color8 = v; }  },
 
 		// (Number) or (Color) ^9 color
-		[ 'color9',  function (){ return rt.color9; }, function ( v ){ rt.color9 = v; } ],
-	];
+		'color9': { get: function (){ return rt.color9; }, set: function( v ){ rt.color9 = v; }  },
+	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.addMappedProperties( go, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// API functions
 
@@ -418,7 +430,8 @@ include( './ui' );
 	rt.autoResize = false;
 	rt.showSelection = true;
 	tc.render = rt;
-	tc.serialized = false;
+	tc.serializeable = false;
+	go.addChild( tc );
 
 	// UI
 	ui.autoMoveFocus = false;
@@ -427,11 +440,6 @@ include( './ui' );
 	ui.focusable = true;
 	go.ui = ui;
 
-	// children are added after component is awake,
-	// because component's children may be overwritten on unserialize
-	go.awake = function () {
-		go.addChild( tc );
-	};
 
 	// layout components
 	ui.layout = function ( w, h ) {
@@ -466,7 +474,6 @@ include( './ui' );
 		    go.state = 'auto';
 		    Input.off( 'mouseDown', go.checkClickOutside );
 	    }
-		go.fire( 'focusChanged', newFocus );
 	}
 
 	// navigation event
@@ -586,120 +593,166 @@ include( './ui' );
 		return i;
 	}
 
-	// helper for code - searches backwards to beginning of expression that can be evaluated for
-	// autocomplete
-	function findExpression( startIndex ) {
+	// helper for autocomplete - searches backwards from startIndex until finding a character
+	// that doesn't match 'acceptableCharactersRegex' param,
+	// returns substring if it matches acceptableExpressionRegex, or empty string
+	go.findExpression = function ( startIndex, acceptableCharactersRegex, acceptableExpressionRegex ) {
 		// word boundary
-		var i = startIndex;
-		var rx = /[^a-z0-9_$.]/i; // characters that can be part of lookupable expression
 		var txt = rt.text;
+		var i = Math.min( startIndex, txt.length - 1 );
+		var m;
 		while( i >= 0 ) {
-			if ( txt.substr( i, 1 ).match( rx ) ) break;
+			m = txt.substr( i, 1 ).match( acceptableCharactersRegex );
+			if ( !m || !m.length ) break;
 			i--;
 		}
 		i++;
 		var expr = txt.substr( i, startIndex - i + 1 );
-		if ( expr.match( /^[.0-9]/ ) || expr.length < 2 ) return ''; // ignore invalid
+		if ( acceptableExpressionRegex && !expr.match( acceptableExpressionRegex ) ) return ''; // ignore invalid
 		return expr;
 	}
 
-	//
-	function autocomplete( accept ) {
+	// helper - returns current line
+	function getCurrentLine() {
+		var txt = rt.text;
+		var cp = rt.caretPosition;
+		var i = cp;
+		var res = '';
+		// go back to beginning of line
+		while ( i >= 0 ) {
+			if ( txt.substr( i, 1 ) == "\n" ) {
+				i++;
+				break;
+			}
+			i--;
+		}
+		if ( i < 0 ) i = 0;
+		return txt.substr( i, cp - i );
+	}
 
-		var expr = findExpression( rt.caretPosition );
-		var exprLen = expr.length;
-		var lastPeriod = -1;
+	// helper - returns all whitespace in front of current line
+	function getLineWhitespacePrefix() {
+		var txt = rt.text;
+		var cp = rt.caretPosition - 1;
+		var i = cp;
+		var res = '';
+		// go back to beginning of line first
+		while ( i >= 0 ) {
+			if ( txt.substr( i, 1 ) == "\n" ) {
+				i++;
+				break;
+			}
+			i--;
+		}
+		if ( i < 0 ) i = 0;
+		// starting from i, collect whitespace
+		var m;
+		do {
+			m = txt.substr( i, 1 );
+			if ( m.match( /\s/ ) ) res += m;
+			else break;
+			i++;
+		} while ( i <= cp );
+		return res;
+	}
+	
+	// autocomplete popup handler
+	function autocompleteCheck( accept )  {
+
 		var suggestions = [];
+
+		// accept selected item in popup
 		if ( accept ) {
 
-			// accept selected item in popup
-			lastPeriod = expr.lastIndexOf( '.' );
 			if ( go.popup && go.popup.selectedIndex >= 0 )
 			suggestions = [ go.popup.items[ go.popup.selectedIndex ] ];
 
+		// call callback to get suggestions and replace start index
 		} else {
 
-			// ends with . - show all available properties
-			if ( expr.substr( -1 ) == '.' ) {
-				lastPeriod = expr.length - 1;
-				var obj = eval( expr.substr( 0, exprLen - 1 ) );
-				if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
-					// add all properties
-					for ( var p in obj ) suggestions.push( p );
-				}
-				// object, ends with partially completed property name - suggest matches
-			} else if ( ( lastPeriod = expr.lastIndexOf( '.' ) ) > 0 ) {
-				var obj = eval( expr.substr( 0, lastPeriod ) );
-				if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
-					// all matching beginning of property name
-					var prop = expr.substr( lastPeriod + 1 );
-					var propLen = prop.length;
-					for ( var p in obj ) {
-						if ( p.substr( 0, propLen ) === prop ) suggestions.push( p );
-					}
-				}
-				// doesn't have . in it yet - predict object from global
-			} else if ( exprLen ) {
-				// all matching beginning of line
-				for ( var p in global ) {
-					if ( p.substr( 0, exprLen ) === expr ) suggestions.push( p );
-				}
-			}
+			var temp = autocomplete( this );
+			suggestions = temp.suggestions;
+			autocompleteReplaceStart = temp.replaceStart;
+
 		}
 
-		// multiple - show popup
+		// multiple suggestions? - show popup
 		if ( suggestions.length > 1 ) {
-			// new one
+
+			// new popup
 			if ( !go.popup ) {
 				go.popup = new GameObject( './popup-menu', {
 					preferredDirection: 'up',
 					noFocus: true,
 					selected: function( item ) {
-						autocomplete( true );
-					}
+						autocompleteCheck( true );
+					},
 				} );
+				go.popup.style = go.baseStyle.popupMenu;
 			}
-			// update
-			var items = suggestions;
+
+			// sort suggestions
+			suggestions.sort( function ( a, b ) { return a.text < b.text ? -1 : 1; } );
+
 			// only update if items changed
+			var items = suggestions;
 			var ni = go.popup.items.length;
+
+			// definitely changed
 			if ( ni != items.length ) {
+				go.popup.selectedItem = -1;
 				go.popup.items = items;
+
+			// check one by one
 			} else {
 				for ( var i = 0; i < ni; i++ ) {
-					if ( go.popup.items[ i ] != items[ i ] ) {
+					// items are different
+					if ( go.popup.items[ i ].value != items[ i ].value ) {
+						go.popup.selectedItem = -1;
 						go.popup.items = items;
 						break;
+					// item label only is different (submatch)
+					} else if ( go.popup.items[ i ].text != items[ i ].text ) {
+						go.popup.container.getChild( i ).text = items[ i ].text;
 					}
 				}
 			}
-			// update position
+
+			// update popup position
 			var gp = go.localToGlobal( rt.caretX, rt.caretY );
 			go.popup.setTransform( gp.x, gp.y );
 
-		// single suggestion - append selected text
+		// single suggestion? - append selected text
 		} else if ( suggestions.length == 1 ) {
-			var sugg = suggestions[ 0 ];
-			if ( lastPeriod > 0 ) {
-				sugg = sugg.substr( exprLen - lastPeriod - 1 );
-			} else {
-				sugg = sugg.substr( exprLen );
-			}
-			rt.text = rt.text.substr( 0, rt.caretPosition ) + sugg + rt.text.substr( rt.caretPosition );
+
+			// close popup
 			if ( go.popup ) { go.popup.parent = null; go.popup = null; }
+
+			// insert suggestion
+			var sugg = suggestions[ 0 ].value;
+			rt.text = rt.text.substr( 0, autocompleteReplaceStart ) + sugg + rt.text.substr( rt.caretPosition );
+
+			// if accepting
 			if ( accept ) {
-				rt.selectionStart = rt.selectionEnd = rt.caretPosition = rt.caretPosition + sugg.length;
+
+				// clear selection, set cursor to end
+				rt.selectionStart = rt.selectionEnd = rt.caretPosition = autocompleteReplaceStart + sugg.length;
 				go.focus(); go.editing = true; // keep editing
-			} else {
+
+			// if replace start is where cursor is
+			} else if ( autocompleteReplaceStart == rt.caretPosition ) {
+				// select part that differs
 				rt.selectionEnd = ( rt.selectionStart = rt.caretPosition ) + sugg.length;
 			}
+
 		// no matches, remove popup
 		} else {
 			if ( go.popup ) { go.popup.parent = null; go.popup = null; }
 		}
 	}
 
-	go.cancelAutocomplete = function() {
+	// cancels autocomplete
+	function cancelAutocomplete() {
 		go.cancelDebouncer( 'autocomplete' );
 		if ( go.popup ) { go.popup.parent = null; go.popup = null; }
 	}
@@ -856,8 +909,8 @@ include( './ui' );
 		if ( autoGrow ) go.debounce( 'autoGrow', go.checkAutoGrow );
 
 		// autocomplete
-		if ( code && typeof( key ) === 'string' ) {
-			go.debounce( 'autocomplete', autocomplete, 1 );
+		if ( autocomplete && typeof( key ) === 'string' ) {
+			go.debounce( 'autocomplete', autocompleteCheck, 0.5 );
 		}
 
 		// make sure caret is in view
@@ -891,11 +944,11 @@ include( './ui' );
 		    case Key.Tab:
 			    // complete word
 			    if ( go.popup ) {
-			        autocomplete( true );
+			        autocompleteCheck( true );
 			    } else if ( selectable && rt.selectionStart == rt.caretPosition && rt.selectionStart < rt.selectionEnd ) {
 				    rt.caretPosition = rt.selectionEnd;
 				    rt.selectionStart = rt.selectionEnd = 0;
-				    go.cancelAutocomplete();
+				    cancelAutocomplete();
 			    // tab character
 	            } else if ( tabEnabled ) {
 			        ui.keyPress( "\t" );
@@ -908,13 +961,20 @@ include( './ui' );
 	        case Key.Return:
 		        if ( editing ) {
 			        if ( go.popup ) {
-				        autocomplete( true );
+				        autocompleteCheck( true );
 				        return;
 			        } else if ( rt.multiLine && ( !newLinesRequireShift || ( shift || alt || ctrl || meta ) ) ) {
-				        // TODO - if code, count tabs at beginning of this line and add them to here
-				        // TODO - maybe add .lineAtCaret property to RenderText?
-
-				        ui.keyPress( "\n" ); // newline in multiline box
+				        if ( tabEnabled ) {
+					        var post = '';
+					        // code style
+					        if ( autocomplete ){
+						        // if last character was {, add extra tab
+						        if ( txt.substr( caretPosition - 1, 1 ) == '{' ) post = '\t';
+					        }
+					        ui.keyPress( "\n" + getLineWhitespacePrefix() + post );
+				        } else {
+					        ui.keyPress( "\n" ); // newline in multiline box
+				        }
 				        return;
 			        } else {
 				        // text changed?
@@ -929,9 +989,9 @@ include( './ui' );
 
 		    case Key.Escape:
 			    if ( editing ) {
-				    if ( code ) {
+				    if ( autocomplete ) {
 					    if ( go.popup ) {
-						    go.cancelAutocomplete();
+						    cancelAutocomplete();
 						    stopAllEvents();
 						    go.editing = true;
 						    return;
@@ -950,12 +1010,12 @@ include( './ui' );
 
 	        case Key.Backspace:
 	            if ( editing ) ui.keyPress( -1, -1 );
-			    if ( code ) go.cancelAutocomplete();
+			    if ( autocomplete ) cancelAutocomplete();
 	            break;
 
 	        case Key.Delete:
 	            if ( editing ) ui.keyPress( -1, 1 );
-			    if ( code ) go.cancelAutocomplete();
+			    if ( autocomplete ) cancelAutocomplete();
 	            break;
 
 	        case Key.Left:
@@ -983,7 +1043,7 @@ include( './ui' );
 					rt.selectionStart = rt.selectionEnd;
 				}
 				go.scrollCaretToView();
-			    if ( code ) go.cancelAutocomplete();
+			    if ( autocomplete ) cancelAutocomplete();
 	            break;
 
 			case Key.Home:
@@ -1003,7 +1063,7 @@ include( './ui' );
 					rt.selectionStart = rt.selectionEnd;
 				}
 				go.scrollCaretToView();
-			    if ( code ) go.cancelAutocomplete();
+			    if ( autocomplete ) cancelAutocomplete();
 	            break;
 
 			case Key.Up:
@@ -1011,7 +1071,7 @@ include( './ui' );
 				if ( !editing ) break;
 
 				// navigate autocomplete popup
-				if ( code && go.popup ) {
+				if ( autocomplete && go.popup ) {
 					if ( key == Key.Up ) {
 						if ( go.popup.selectedIndex <= 0 ) go.popup.selectedIndex = go.popup.items.length - 1;
 						else go.popup.selectedIndex--;
@@ -1052,7 +1112,7 @@ include( './ui' );
 					else rt.selectionEnd = rt.caretPosition;
 				}
 				go.scrollCaretToView();
-			    if ( code ) go.cancelAutocomplete();
+			    if ( autocomplete ) cancelAutocomplete();
 				break;
 
 			case Key.A:
@@ -1060,7 +1120,7 @@ include( './ui' );
 				if ( selectable && ( meta || ctrl ) ) {
 					rt.selectionStart = 0;
 					rt.caretPosition = rt.selectionEnd = rt.text.positionLength();
-				    if ( code ) go.cancelAutocomplete();
+				    if ( autocomplete ) cancelAutocomplete();
 				}
                 break;
 
@@ -1073,15 +1133,32 @@ include( './ui' );
 					UI.clipboard = txt.substr( ss, se - ss );
 					if ( key == Key.X ) ui.keyPress( -1, 1 );
 					go.fire( 'copy', UI.clipboard );
-				    if ( code ) go.cancelAutocomplete();
+				    if ( autocomplete ) cancelAutocomplete();
 				}
                 break;
 
 		    case Key.V:
 			    if ( typeof( UI.clipboard ) === 'string' ){
-				    if ( code ) go.cancelAutocomplete();
+				    if ( autocomplete ) cancelAutocomplete();
 					ui.keyPress( UI.clipboard );
 				    go.fire( 'paste', UI.clipboard );
+			    }
+			    break;
+
+		    case Key.RightBracket:
+			    // code style }
+			    if ( shift && autocomplete && tabEnabled && editing ) {
+
+				    // if current line is all whitespace with tab on end?
+				    var line = getCurrentLine();
+				    if ( line.match( /^(\s*)\t$/g ) ) {
+					    // delete one character before inserting }
+					    log ( "<<");
+					    ui.keyPress( -1, -1 );
+			            cancelAutocomplete();
+					    selStart = selEnd = caretPosition = rt.caretPosition;
+						haveSelection = false;
+				    }
 			    }
 			    break;
 	    }
@@ -1158,7 +1235,7 @@ include( './ui' );
 	}
 
 	// apply defaults
-	go.baseStyle = Object.create( UI.style.textfield );
+	go.baseStyle = UI.base.mergeStyle( {}, UI.style.textfield );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;

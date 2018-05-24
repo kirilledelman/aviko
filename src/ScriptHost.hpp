@@ -1316,11 +1316,11 @@ public:
 		RootedObject robj( this->js, obj );
 		JSAutoCompartment( this->js, this->global_object );
 		
-		Uint32 t = SDL_GetTicks(); // time script execution
+		// Uint32 t = SDL_GetTicks(); // time script execution
 		// execute
 		JSBool success = JS_ExecuteScript( this->js, robj, scriptResource->compiledScript, rval.address() );
 		if ( success && out ) *out = ArgValue( *rval.address() );
-		printf( "%s took %d ms\n", scriptResource->key.c_str(), SDL_GetTicks() - t );
+		// printf( "%s took %d ms\n", scriptResource->key.c_str(), SDL_GetTicks() - t );
 		
 		return success;
 	}
