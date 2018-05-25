@@ -187,7 +187,7 @@ include( './ui' );
 	};
 
 	// opens dropdown on click
-	button.click = function () {
+	button.click = function ( btn ) {
 		go.showDropdown( true );
 	}
 

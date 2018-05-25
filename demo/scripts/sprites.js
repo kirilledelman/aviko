@@ -134,8 +134,9 @@ new (function (){
 		flex: 1,
 		valueWidth: 130,
 		showAll: false,
-		showHeader: false,
-		rightClickMenu: false,
+		showBackButton: false,
+		showContextMenu: false,
+		showMoreButton: false,
 		target: sprite.render
 	} );
 

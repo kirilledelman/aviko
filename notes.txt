@@ -1,8 +1,11 @@
-Checkbox doesnt toggle with enter
+button mouseup isn't changing button state
+Right click on [null] dropdown is cancelled
+Right click on [null] dropdown label not appending field context actions
 
 Propertylist
-	test popup menus with disabled items
-	save as JSON, new Object from JSON
+	{ button: "text", action } -> row of buttons under btnBack
+	file path lookup for textfield autocomplete ->
+		save as JSON, new Object from JSON
 
 
 Move render code for sprite to separate static method
@@ -12,6 +15,8 @@ Negative outline with .color .a < 1 doesn't work
 
 Image
 	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
+	add drawing methods for shapes, sprites
+	add image texture from drawing instructions - similar to svg,  ???
 
 Textfield
 	copying formatted text includes first formatting char

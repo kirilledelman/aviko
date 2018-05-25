@@ -158,7 +158,7 @@ include( './ui' );
 					name: text,
 					index: i,
 					focusable: !noFocus,
-					disabled: ( disabled === true ),
+					disabled: disabled,
 					focusGroup: 'popup',
 					click: go.itemSelected,
 					mouseOver: go.itemSetFocus,
@@ -302,6 +302,7 @@ include( './ui' );
 
 	// item clicked
 	go.itemSelected = function () {
+		if ( this.disabled ) return;
 		stopAllEvents();
 		go.fire( 'selected', this.item );
 		go.parent = null;
@@ -309,9 +310,7 @@ include( './ui' );
 
 	// focuses item on mouse over
 	go.itemSetFocus = function () {
-		if ( !this.disabled ) {
-			go.selectedIndex = this.index;
-		}
+		go.selectedIndex = this.index;
 	}
 
 	// 'change' event

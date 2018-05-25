@@ -392,7 +392,8 @@ UI.style = UI.style || {
 					label: { color: 0xFFFFFF }
 				},
 				disabled: {
-					label: { color: 0x999999 }
+					background: undefined,
+					label: { color: 0xA0A0A0 }
 				},
 			}
 		},
@@ -515,7 +516,7 @@ UI.style = UI.style || {
 			states: {
 				off: { background: 0xF0F0F0, label: { color: 0x0 } },
 				focus: { background: 0x006eb2, label: { color: 0xFFFFFF } },
-				disabled: { background: false, label: { color: 0x0, opacity: 1 } },
+				disabled: { background: 0xF0F0F0, label: { color: 0x999999 } },
 				over: { background: 0x006eb2, label: { color: 0xFFFFFF } },
 				down: { background: 0x004b7a, label: { color: 0xFFFFFF } },
 			}
@@ -988,6 +989,7 @@ UI.base = UI.base || {
 		var replaceStart = textfield.caretPosition; // if we support partial / midword matches in the future
 		var suggestions = [];
 		var target = ( textfield.target || global );
+		function funcParen( o, p, d ) { return ( typeof ( o[ p ] ) === 'function' ) ? ( d === 2 ? '()' : '(' ) : ''; }
 
 		// ends with . - show all available properties
 		if ( expr.substr( -1 ) == '.' ) {
@@ -995,7 +997,7 @@ UI.base = UI.base || {
 			var obj = eval( expr.substr( 0, exprLen - 1 ), target );
 			if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
 				// add all properties
-				for ( var p in obj ) suggestions.push( { text: p, value: p } );
+				for ( var p in obj ) suggestions.push( { text: p + funcParen( obj, p, 2 ), value: p + funcParen( obj, p, 1 ) } );
 			}
 
 		// object, ends with partially completed property name - suggest matches
@@ -1010,8 +1012,8 @@ UI.base = UI.base || {
 				for ( var p in obj ) {
 					if ( p.substr( 0, propLen ) === prop && p.length !== propLen ) {
 						suggestions.push( {
-							text: "^B" + prop + "^b" + p.substr( propLen ),
-							value: p.substr( -( p.length + ( lastPeriod - exprLen ) ) - 1 ) } );
+							text: "^B" + prop + "^b" + p.substr( propLen ) + funcParen( obj, p, 2 ),
+							value: p.substr( -( p.length + ( lastPeriod - exprLen ) ) - 1 ) + funcParen( obj, p, 1 ) } );
 					}
 				}
 
@@ -1024,8 +1026,8 @@ UI.base = UI.base || {
 			for ( var p in global ) {
 				if ( p.substr( 0, exprLen ) === expr && p.length !== exprLen ) {
 					suggestions.push( {
-						text: "^B" + expr + "^b" + p.substr( exprLen ),
-						value: p.substr( exprLen - p.length ) } );
+						text: "^B" + expr + "^b" + p.substr( exprLen ) + funcParen( global, p, 2 ),
+						value: p.substr( exprLen - p.length ) + funcParen( global, p, 1 ) } );
 				}
 			}
 

@@ -66,13 +66,13 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Shapes",
 		src: 'sprites',
-		click: buttonClick
+		//click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Text",
 		src: 'sprites',
-		click: buttonClick
+		//click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {

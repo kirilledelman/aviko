@@ -75,7 +75,7 @@ void RigidBodyBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([]( void* p, int val ) { return ((RigidBodyBehavior*)p)->bodyType; }),
 	 static_cast<ScriptIntCallback>([]( void* p, int val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
-		rb->bodyType = (b2BodyType) val;
+		rb->bodyType = (b2BodyType) min( b2BodyType::b2_dynamicBody + 1, max( 0, val ) );
 		if ( rb->body ) rb->body->SetType( rb->bodyType );
 		return val;
 	}));

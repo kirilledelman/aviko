@@ -113,8 +113,9 @@ include( './ui' );
 		layoutAlignY: LayoutAlign.Center,
 		states: {},
 		disabled: true,
-		focusable: false,
+		disabledCanFocus: false,
 		fitChildren: false,
+		eventMask: [ 'mouseDown', 'click', 'navigation', 'mouseUp' ]
 	});
 	checkbox.image.pad = checkbox.image.margin = 0;
 	checkbox.label.active = false;
@@ -145,11 +146,8 @@ include( './ui' );
 		// focused
 	    if ( newFocus == ui ) {
 		    go.scrollIntoView();
-		    go.state = 'focus';
-	    } else {
-		    go.state = 'auto';
 	    }
-
+	    go.state = 'auto';
 		go.fire( 'focusChanged', newFocus );
 	}
 
@@ -162,7 +160,7 @@ include( './ui' );
 		if ( name == 'accept' ) {
 
 			// simulated click
-			ui.fire( 'click', 0, 0, 0, go.x, go.y );
+			ui.fire( 'click', 1, 0, 0, go.x, go.y );
 
 			// animate down / up
 			go.state = 'down';
@@ -203,8 +201,8 @@ include( './ui' );
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
 		if ( disabled || btn != 1 ) return;
-		go.state = 'auto';
 		go.fire( currentEventName(), btn, x, y, wx, wy );
+		go.state = 'auto';
 	}
 
 	// keyboard
