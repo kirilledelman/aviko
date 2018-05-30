@@ -30,6 +30,10 @@ typedef function<ArgValue (void*, uint32_t, ArgValue)> ScriptIndexCallback; // f
 /// function callback with arguments
 typedef function<bool (void*, ScriptArguments&)> ScriptFunctionCallback;
 
+/// static function that returns enumerable properties of the class (used with Vector)
+typedef ArgValueVector* EnumerateInstanceProperties( ScriptableClass* self );
+/// static function that resolves instance property by defining it on object and returning true
+typedef bool ResolveInstanceProperty( ScriptableClass* self, ArgValue prop );
 
 /* MARK:	-				Script Class Name
  
@@ -42,11 +46,25 @@ typedef function<bool (void*, ScriptArguments&)> ScriptFunctionCallback;
 
 
 /// template for mapping CLASS -> "Class"
-template <class T> struct ScriptClassName { static const string& name(){ static string _name = "?"; return _name; } };
+template <class T> struct ScriptClassDesc {
+	static const string& name(){ static string _name = "?"; return _name; }
+	static EnumerateInstanceProperties* enumerate(){ static EnumerateInstanceProperties* _enum = NULL; return _enum; }
+	static ResolveInstanceProperty* resolve(){ static ResolveInstanceProperty* _resolve = NULL; return _resolve; }
+};
 
 /// for each class that needs to be scriptable, use this macro to define class name
-#define SCRIPT_CLASS_NAME(CLASS,CLASSNAME) template <> struct ScriptClassName<CLASS> { static const string& name(){ static string _name = CLASSNAME; return _name; } };
+#define SCRIPT_CLASS_NAME(CLASS,CLASSNAME) template <> struct ScriptClassDesc<CLASS> { \
+	static const string& name(){ static string _name = CLASSNAME; return _name; } \
+	static EnumerateInstanceProperties* enumerate(){ return NULL; } \
+	static ResolveInstanceProperty* resolve(){ return NULL; } \
+};
 
+/// as above, extra params for enumerate and resolve funcs - used for array-like access
+#define SCRIPT_CLASS_NAME_EXT(CLASS,CLASSNAME,ENUMFUNC,RESOLVEFUNC) template <> struct ScriptClassDesc<CLASS> { \
+	static const string& name(){ static string _name = CLASSNAME; return _name; } \
+	static EnumerateInstanceProperties* enumerate(){ static EnumerateInstanceProperties* _enum = ENUMFUNC; return _enum; } \
+	static ResolveInstanceProperty* resolve(){ static ResolveInstanceProperty* _resolve = RESOLVEFUNC; return _resolve; } \
+};
 
 /* MARK:	-				Script Host
  
@@ -311,6 +329,8 @@ private:
 		JSAutoCompartment( cx, obj );
 		
 		// find class
+		void* self = JS_GetPrivate( obj );
+		if ( !self ) return false;
 		JSClass* jc = JS_GetClass( obj );
 		ClassDef *cdef = CDEF( string( jc->name ) );
 		
@@ -321,17 +341,95 @@ private:
 			string propName(idString);
 			JS_free( cx, idString );
 			
-			return script.PropGetterSetter( cx, 0, JS_GetPrivate( obj ), cdef, propName, vp );
+			return script.PropGetterSetter( cx, 0, self, cdef, propName, vp );
 			
 		// id is integer
 		} else if( JSID_IS_INT( id ) ){
 			string numProp("#");
-			return script.PropGetterSetter( cx, 0, JS_GetPrivate( obj ), cdef, numProp, vp, JSID_TO_INT( id ) );
+			return script.PropGetterSetter( cx, 0, self, cdef, numProp, vp, JSID_TO_INT( id ) );
 		}
 		
 		return true;
 	}
-	// define function
+	
+	/// used to return enumerable element indexes using class callback
+	template<class CLASS>
+	static JSBool EnumerateProp (JSContext *cx, JS::Handle<JSObject*> obj, JSIterateOp enum_op,
+								 JS::MutableHandle<JS::Value> statep, JS::MutableHandleId idp) {
+		// scoped request
+		JSAutoRequest req( cx );
+		JSAutoCompartment( cx, obj ); // JSNewEnumerateOp
+		
+		// begin
+		ArgValueVector* props = NULL;
+		bool noMore = false;
+		if ( enum_op == JSENUMERATE_INIT || enum_op == JSENUMERATE_INIT_ALL ) {
+			// make sure we're on base class
+			CLASS* self = (CLASS*) JS_GetPrivate( obj );
+			jsval numProps;
+			if ( self ) {
+				// get property names
+				props = (*ScriptClassDesc<CLASS>::enumerate())( self );
+				numProps.setInt32( (int) props->size() );
+			} else {
+				numProps.setInt32( 0 );
+			}
+			statep.set( PRIVATE_TO_JSVAL( props ) );
+			JS_ValueToId( cx, numProps, idp.address() );
+			
+		// next element
+		} else if ( enum_op == JSENUMERATE_NEXT ) {
+			props = (ArgValueVector*) JSVAL_TO_PRIVATE( statep.get() );
+			// still elements in array
+			if ( props && props->size() ){
+				// return last one, pop
+				ArgValue lastVal = props->back();
+				props->pop_back();
+				JS_ValueToId( cx, lastVal.toValue(), idp.address() );
+			} else {
+				noMore = true;
+			}
+			
+		// end loop
+		} else if ( enum_op == JSENUMERATE_DESTROY ) {
+			props = (ArgValueVector*) JSVAL_TO_PRIVATE( statep.get() );
+			noMore = true;
+		}
+		
+		// cleanup
+		if ( noMore ) {
+			statep.set( JSVAL_NULL );
+			if ( props ) delete props;
+		}
+		
+		return true;
+	}
+
+	/// used to resolve a property using a class callback
+	template<class CLASS>
+	static JSBool ResolveProp (JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id, unsigned flags,
+								JS::MutableHandleObject objp) {
+		// scoped request
+		JSAutoRequest req( cx );
+		JSAutoCompartment( cx, obj ); // JSNewEnumerateOp
+		
+		// find class
+		ArgValue prop;
+		if( JSID_IS_STRING( id ) ) {
+			JSString* s = JSID_TO_STRING( id );
+			prop = STRING_TO_JSVAL( s );
+		} else if ( JSID_IS_INT( id ) ){
+			prop = JSID_TO_INT( id );
+		}
+		// ask class to resolve prop - returns true if property is resolved
+		CLASS* self = (CLASS*) JS_GetPrivate( obj );
+		if ( self && (*ScriptClassDesc<CLASS>::resolve())( self, prop ) ) {
+			objp.set( obj );
+		} else {
+			objp.set( NULL );
+		}
+		return true;
+	}
 	
 	
 /* MARK:	-				Function callback
@@ -364,7 +462,7 @@ private:
 		JSObject* obj = &args.thisv().toObject();
 		
 		// look up
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		if ( !classDef ) return false;
 		
 		// get self
@@ -412,8 +510,17 @@ private:
 				// get classname
 				JSClass* clp = JS_GetClass( (JSObject*) obj );
 				
-				// key into table is Class.FunctionName
-				prefix.append( clp->name );
+				// if it's a constructor function
+				if ( strcmp( clp->name, "Function" ) == 0 && JS_IsConstructor( (JSFunction*) obj ) ){
+					// use its name
+					ArgValue funcName = script.GetProperty( "name", obj );
+					if ( funcName.type == TypeString ) {
+						prefix.append( funcName.value.stringValue->c_str() );
+					}
+				} else {
+					// key into table is Class.FunctionName
+					prefix.append( clp->name );
+				}
 				prefix.append( "." );
 			}
 		// built in type
@@ -495,7 +602,7 @@ private:
 		
 		// params
 		CallArgs args = CallArgsFromVp( argc, vp );
-		const char *className = ScriptClassName<CLASS>::name().c_str();
+		const char *className = ScriptClassDesc<CLASS>::name().c_str();
 		// make sure class can be constructed
 		ClassDef* cdef = CDEF( className );
 		if ( cdef->singleton ) {
@@ -627,18 +734,26 @@ public:
 		JSAutoRequest req( this->js );
 		
 		// insert
-		pair<ClassMapIterator,bool> ins = classDefinitions.insert( make_pair( ScriptClassName<CLASS>::name(), ClassDef() ) );
+		pair<ClassMapIterator,bool> ins = classDefinitions.insert( make_pair( ScriptClassDesc<CLASS>::name(), ClassDef() ) );
 		ClassDef *def = &ins.first->second;
 		
 		// init class
-		def->className = ScriptClassName<CLASS>::name();
+		def->className = ScriptClassDesc<CLASS>::name();
 		def->singleton = singleton;
 		def->jsc.name = def->className.c_str(),
 		def->jsc.finalize = (JSFinalizeOp) ScriptHost::Finalize<CLASS>;
 		def->jsc.trace = (JSTraceOp) ScriptHost::TraceScriptableClass<CLASS>;
 		def->jsc.getProperty = (JSPropertyOp) ScriptHost::PropGetter;
 		def->jsc.setProperty = (JSStrictPropertyOp) ScriptHost::PropSetter;
-		def->parent = ( def->parent = CDEF( string( parentClassName ? parentClassName : "ScriptableClass" ) ) ) == def ? NULL : def->parent;
+		if ( ScriptClassDesc<CLASS>::enumerate() != NULL ){
+			def->jsc.enumerate = (JSEnumerateOp) ScriptHost::EnumerateProp<CLASS>;
+			def->jsc.flags |= JSCLASS_NEW_ENUMERATE;
+		}
+		if ( ScriptClassDesc<CLASS>::resolve() != NULL ){
+			def->jsc.resolve = (JSResolveOp) ScriptHost::ResolveProp<CLASS>;
+			def->jsc.flags |= JSCLASS_NEW_RESOLVE;
+		}
+		def->parent = ( def->parent = CDEF( string( parentClassName ? parentClassName : "ScriptableObject" ) ) ) == def ? NULL : def->parent;
 		
 		// register JS class
 		def->proto = JS_InitClass( this->js, this->global_object,
@@ -658,7 +773,7 @@ public:
 	template <class CLASS>
 	void DefineFunction( const char *funcName, ScriptFunctionCallback callback ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		JS_DefineFunction( this->js, classDef->proto, funcName, (JSNative) FuncCallback<CLASS>, 0, JSPROP_ENUMERATE | JSPROP_PERMANENT );//JSPROP_PERMANENT
 		classDef->funcs[ string(funcName) ] = callback;
 	}
@@ -669,9 +784,9 @@ public:
 
 	
 	template <class CLASS>
-	void AddIndexProperty( ScriptIndexCallback getter, ScriptIndexCallback setter, unsigned flags=PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
+	void AddIndexProperty( ScriptIndexCallback getter, ScriptIndexCallback setter, unsigned flags=PROP_ENUMERABLE | PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter, &setter );
 		classDef->getterSetter[ string("#") ] = gs;
 	}
@@ -679,7 +794,7 @@ public:
 	template <class CLASS>
 	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter );
 		classDef->getterSetter[ string("#") ] = gs;
 	}
@@ -687,7 +802,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptValueCallback getter, ScriptValueCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -698,7 +813,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptValueCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ((flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -709,7 +824,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptIntCallback getter, ScriptIntCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
@@ -720,7 +835,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptIntCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags);
@@ -731,7 +846,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptFloatCallback getter, ScriptFloatCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
@@ -742,7 +857,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_ZERO, NULL, NULL, jflags );
@@ -753,7 +868,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptBoolCallback getter, ScriptBoolCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_FALSE, NULL, NULL, jflags );
@@ -764,7 +879,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptBoolCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_FALSE, NULL, NULL, jflags );
@@ -775,7 +890,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptStringCallback getter, ScriptStringCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -786,7 +901,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptStringCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -797,7 +912,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptObjectCallback getter, ScriptObjectCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -808,7 +923,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptObjectCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -819,7 +934,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptArrayCallback getter, ScriptArrayCallback setter, unsigned flags=PROP_ENUMERABLE|PROP_SERIALIZED ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags );
@@ -830,7 +945,7 @@ public:
 	template <class CLASS>
 	void AddProperty( const char *propName, ScriptArrayCallback getter, unsigned flags=PROP_ENUMERABLE ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
 		JS_DefineProperty( this->js, ( (flags & PROP_STATIC) ? JS_GetConstructor( this->js, classDef->proto) : classDef->proto ),
 						  propName, JSVAL_NULL, NULL, NULL, jflags);
@@ -947,7 +1062,10 @@ public:
 	ArgValue MakeInitObject( ArgValue& val );
 	
 	/// populates property names
-	void GetPropertyNames( void* obj, unordered_set<string>& ret );
+	// void GetPropertyNames( void* obj, unordered_set<string>& ret );
+	
+	/// populates properties of object. Params includeIntKeys - include numeric keys of array-like object, useSerializeMask - exclude props in serializeMask, includeFunctions - include non-native functions as source
+	void GetProperties( void* obj, ArgValueVector* ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions );
 	
 	private:
 	
@@ -955,7 +1073,10 @@ public:
 	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized );
 	
 	// places enumerable properties of given object, including all non-readonly props defined for scriptable class into given set. Returns ClassDef, if found.
-	ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL );
+	// ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL );
+	
+	/// populates properties of object. Params includeIntKeys - include numeric keys of array-like object, includeFunctions - include non-native functions as source
+	ClassDef* _GetProperties( void* obj, void* thisObj, unordered_set<string>& ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions, ClassDef* cdef );
 	
 	// used to fill out stubs when unserializing
 	struct _StubRef {
@@ -993,7 +1114,7 @@ public:
 	template <class CLASS>
 	void SetStaticProperty( const char *propName, ArgValue value ){
 		JSAutoRequest req( this->js );
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		JSObject* target = JS_GetConstructor( this->js, classDef->proto );
 		jsval val = value.toValue();
 		JS_SetProperty( this->js, target, propName, &val );
@@ -1139,7 +1260,7 @@ public:
 		void* pdata = JS_GetPrivate( obj );
 		if ( static_cast<CLASS*>( pdata ) == nullptr ) return NULL;
 		// verify class
-		string className = ScriptClassName<CLASS>::name();
+		string className = ScriptClassDesc<CLASS>::name();
 		ClassDef* cdef = CDEF( clp->name );
 		while ( cdef ) {
 			if ( cdef->className.compare( className ) == 0 ) return (CLASS*) pdata;
@@ -1207,7 +1328,7 @@ public:
 	bool NewScriptObject( CLASS* instance ) {
 		JSAutoRequest req( this->js );
 		// find classDef
-		ClassDef *classDef = CDEF( ScriptClassName<CLASS>::name() );
+		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		instance->scriptClassName = classDef->jsc.name;
 		// add
 		instance->scriptObject = JS_NewObject( this->js, &classDef->jsc, classDef->proto, NULL );

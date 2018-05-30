@@ -88,11 +88,6 @@ void Scene::InitClass() {
 	// properties
 	
 	script.AddProperty<Scene>
-	( "debugDraw",
-	 static_cast<ScriptBoolCallback>([]( void* s, bool val ){ return ((Scene*)s)->debugDraw; }),
-	 static_cast<ScriptBoolCallback>([]( void* s, bool val ){ return ((Scene*)s)->debugDraw = val; }));
-	
-	script.AddProperty<Scene>
 	( "backgroundColor",
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((Scene*) b)->backgroundColor->scriptObject); }),
 	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
@@ -357,7 +352,7 @@ void Scene::Render( Event& event ) {
 	GameObject::Render( event );
 	
 	// debug draw world
-	if ( this->debugDraw ) {
+	if ( app.debugDraw ) {
 		GPU_ActivateShaderProgram( 0, NULL );
 		this->world->DrawDebugData();
 	}

@@ -48,7 +48,7 @@ Controller::~Controller(){}
 void Controller::InitClass() {
 	
 	// register class
-	script.RegisterClass<Controller>( "ScriptableObject", false );
+	script.RegisterClass<Controller>( NULL, false );
 
 	// props
 	
@@ -134,17 +134,17 @@ void Controller::InitClass() {
 		if ( !in ) return (void*) NULL;
 		
 		// for each "_key" in passed object
-		unordered_set<string> keys;
-		script.GetPropertyNames( in, keys );
-		unordered_set<string>::iterator it = keys.begin(), end = keys.end();
+		ArgValueVector keys;
+		script.GetProperties( in, &keys, false, false, false );
+		ArgValueVector::iterator it = keys.begin(), end = keys.end();
 		while( it != end ) {
 			// expect array
-			ArgValue vec = script.GetProperty( it->c_str(), in );
+			ArgValue vec = script.GetProperty( it->value.stringValue->c_str(), in );
 			if ( vec.type != TypeArray ) continue;
 			
 			// convert string "_key" -> int
 			int key = -1;
-			key = SDL_atoi( (*it).substr( 1 ).c_str() );
+			key = SDL_atoi( (*it).value.stringValue->substr( 1 ).c_str() );
 			
 			// each binding in array
 			for ( size_t i = 0, nb = vec.value.arrayValue->size(); i < nb; i++ ) {

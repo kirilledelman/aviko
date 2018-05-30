@@ -293,10 +293,9 @@ public:
 	/// compares class names to return desired class instance, or NULL
 	static CLASS* ClassInstance( ScriptableClass* inst ) {
 		if ( !inst ) return NULL;
-		if ( strcmp( inst->scriptClassName, ScriptClassName<CLASS>::name().c_str() ) == 0 ) return static_cast<CLASS*>( inst );
+		if ( strcmp( inst->scriptClassName, ScriptClassDesc<CLASS>::name().c_str() ) == 0 ) return static_cast<CLASS*>( inst );
 		return NULL;
 	}
-	
 	
 // init
 	

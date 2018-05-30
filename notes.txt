@@ -1,9 +1,9 @@
-button mouseup isn't changing button state
-Right click on [null] dropdown is cancelled
-Right click on [null] dropdown label not appending field context actions
+Tooltip - check if target object is topmost by doing query
+
+Don't create shape on body creation in constructor, add method - "makeDefaultShape" or
+something, creating shape from sprite, or shape
 
 Propertylist
-	{ button: "text", action } -> row of buttons under btnBack
 	file path lookup for textfield autocomplete ->
 		save as JSON, new Object from JSON
 
@@ -78,6 +78,9 @@ Image
 Nice to have
 
 =============================================
+
+ScriptResource
+	unload+recompile command
 
 Physics - texture to shape, some sort of shrinkwrap
 	http://www.deluge.co/?q=box2d-tracing-shape-outlines

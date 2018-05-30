@@ -19,9 +19,9 @@ RigidBodyBehavior::RigidBodyBehavior( ScriptArguments* args ) : RigidBodyBehavio
 	this->massData.mass = 10;
 	this->massData.I = 0;
 	
-	// add default shape
-	RigidBodyShape* shp = new RigidBodyShape( NULL );
-	shp->SetBody( this );
+// add default shape
+//	RigidBodyShape* shp = new RigidBodyShape( NULL );
+//	shp->SetBody( this );
 	
 	// obj argument - init object
 	void *initObj = NULL;
@@ -571,11 +571,20 @@ ArgValueVector* RigidBodyBehavior::SetShapesVector( ArgValueVector* in ) {
 	return in;
 }
 
+/// calls MakeShape on render
+bool RigidBodyBehavior::MakeShapeFromRender() {
+	if ( !this->gameObject || !this->gameObject->render ) return false;
+	RigidBodyShape* rbs = this->gameObject->render->MakeShape();
+	if ( rbs ) {
+		this->ReplaceShapes( rbs );
+		return true;
+	} else return false;
+}
 
 /* MARK:	-				Joints
  -------------------------------------------------------------------- */
 
-
+/// replace all joints with one or NULL
 void RigidBodyBehavior::ReplaceJoints( RigidBodyJoint* rbs ) {
 	vector<RigidBodyJoint*>::iterator it = joints.begin();
 	while( it != joints.end() ) {
@@ -602,7 +611,7 @@ ArgValueVector* RigidBodyBehavior::GetJointsVector( bool other ) {
 	return vec;
 }
 
-/// overwrites shapes
+/// overwrites joints
 ArgValueVector* RigidBodyBehavior::SetJointsVector( ArgValueVector* in, bool other ) {
 	vector<RigidBodyJoint*> &list = ( other ? otherJoints : joints );
 	while( list.size() ) list[ 0 ]->SetBody( NULL );

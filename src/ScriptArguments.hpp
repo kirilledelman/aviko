@@ -77,6 +77,7 @@ struct ArgValue {
 		value.stringValue = new string();
 		if ( val ) value.stringValue->assign( val );
 	}
+	ArgValue( ArgValueVector* val ){ type = TypeArray; value.arrayValue = val; }
 	ArgValue( void* val ){ type = TypeObject; value.objectValue = val; }
 	ArgValue( const ArgValue& copyFrom );
 	ArgValue( jsval val );

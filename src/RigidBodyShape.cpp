@@ -77,7 +77,7 @@ RigidBodyShape::~RigidBodyShape() {}
 void RigidBodyShape::InitClass() {
 
 	// register class
-	script.RegisterClass<RigidBodyShape>( "ScriptableObject" );
+	script.RegisterClass<RigidBodyShape>( NULL );
 
 	// props
 	

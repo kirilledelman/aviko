@@ -41,6 +41,7 @@ include( './ui' );
 	var dropdown;
 	var constructing = true;
 	var maxVisibleItems = 10;
+	var autoAddValue = false;
 	go.serializeMask = [ 'ui', 'render', 'children' ];
 
 	// API properties
@@ -64,7 +65,11 @@ include( './ui' );
 						selectedIndex = i;
 					}
 				}
-				go.updateSelectedItem();
+				// item not found
+				if ( selectedIndex == -1 && autoAddValue && items.length ) {
+					items.push( { text: v.toString(), value: v } );
+					go.selectedIndex = items.length - 1;
+				} else go.updateSelectedItem();
 			}  },
 
 		// (Number) 0 based index of item selected in menu
@@ -80,6 +85,9 @@ include( './ui' );
 
 		// (*) 'value' property of selected item
 		'maxVisibleItems': { get: function (){ return maxVisibleItems; }, set: function( v ){ maxVisibleItems = v; }  },
+
+		// (Boolean) when setting .value to value that doesn't exist in items, automatically append this value to items
+		'autoAddValue': { get: function (){ return autoAddValue; }, set: function( v ){ autoAddValue = v; }  },
 
 		// (GameObject) instance of 'ui/button.js' used as main area
 		'button': { get: function (){ return button; } },
@@ -131,6 +139,9 @@ include( './ui' );
 
 		// (Number) spacing between children when layoutType is Horizontal
 		'spacingY': { get: function (){ return button.ui.spacingY; }, set: function( v ){ button.ui.spacingY = v; } },
+
+		// (String) tooltip displayed on mouseOver
+		'tooltip': { get: function () { return button.tooltip; }, set: function( v ) { button.tooltip = v; } },
 
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)

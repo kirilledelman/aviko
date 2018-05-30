@@ -205,6 +205,10 @@ public:
 	
 	/// render callback
 	static void Render( RenderTextBehavior* behavior, GPU_Target* target, Event* event );
+
+// shape from render
+	
+	RigidBodyShape* MakeShape();
 	
 };
 

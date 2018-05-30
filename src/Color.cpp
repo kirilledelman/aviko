@@ -38,7 +38,7 @@ Color::~Color() {}
 void Color::InitClass() {
 	
 	// create class
-	script.RegisterClass<Color>( "ScriptableObject" );
+	script.RegisterClass<Color>( "Color" );
 	
 	// properties
 	script.AddProperty<Color>

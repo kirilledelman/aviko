@@ -21,6 +21,7 @@ include( './ui' );
 	// inner props
 	var ui = new UI(), tc, rt;
 	var constructing = true;
+	var autoResize = false;
 	go.serializeMask = [ 'ui', 'render' ];
 
 	// API properties
@@ -66,7 +67,10 @@ include( './ui' );
 		'italic': { get: function (){ return rt.italic; }, set: function( v ){ rt.italic = v; ui.requestLayout( 'italic' ); }  },
 
 		// (Boolean) automatically wrap text
-		'wrap': { get: function (){ return rt.wrap; }, set: function( v ){ rt.wrap = v; ui.requestLayout( 'wrap' ); }  },
+		'wrap': { get: function (){ return rt.wrap; }, set: function( v ){ rt.wrap = v; if ( v ) rt.multiLine = true; ui.requestLayout( 'wrap' ); }  },
+
+		// (Boolean) make text size to fit text up to maxWidth
+		'autoSize': { get: function (){ return autoResize; }, set: function( v ){ rt.autoResize = autoResize = v; ui.requestLayout( 'autoSize' ); }  },
 
 		// (Boolean) enable display ^code formatting (while not editing)
 		'formatting': { get: function (){ return rt.formatting; }, set: function( v ){ rt.formatting = v; ui.requestLayout( 'formatting' ); }  },
@@ -139,24 +143,35 @@ include( './ui' );
 
 	// immediate
 	go.updateSize = function() {
-		rt.autoResize = true;
-		if ( rt.wrap ) {
-			rt.width = ui.width - (ui.padLeft + ui.padRight);
-			rt.measure();
-			ui.minWidth = rt.size * 2 + (ui.padLeft + ui.padRight);
-		} else {
+		if ( autoResize ) {
+			rt.width = ( ui.maxWidth ? ui.maxWidth : 99999 ) - (ui.padLeft + ui.padRight);
 			rt.measure();
 			ui.minWidth = rt.width + ui.padLeft + ui.padRight;
+		} else {
+			rt.autoResize = true;
+			if ( rt.wrap ) {
+				rt.width = ui.width - (ui.padLeft + ui.padRight);
+				rt.measure();
+				ui.minWidth = rt.size * 2 + (ui.padLeft + ui.padRight);
+			} else {
+				rt.measure();
+				ui.minWidth = rt.width + ui.padLeft + ui.padRight;
+			}
 		}
 		ui.minHeight = rt.height + (ui.padTop + ui.padBottom);
 		rt.width = ui.width - (ui.padLeft + ui.padRight);
-		rt.autoResize = false;
+		rt.autoResize = autoResize;
 	}
 
 	// layout components
 	ui.layout = function ( w, h ) {
 		tc.setTransform( ui.padLeft, ui.padTop );
 		go.updateSize();
+	}
+
+	// rollover / rollout forward
+	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
+		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
 	// apply defaults

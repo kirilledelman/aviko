@@ -64,6 +64,9 @@ public:
 	ArgValueVector* GetShapesVector();
 	ArgValueVector* SetShapesVector( ArgValueVector* in );
 	
+	// make a shape from render component
+	bool MakeShapeFromRender();
+	
 // joints
 	
 	/// joints, where body = this body

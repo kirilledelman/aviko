@@ -98,7 +98,7 @@ RigidBodyJoint::~RigidBodyJoint() {
 void RigidBodyJoint::InitClass() {
 	
 	// register class
-	script.RegisterClass<RigidBodyJoint>( "ScriptableObject" );
+	script.RegisterClass<RigidBodyJoint>( NULL );
 
 	// constants
 	

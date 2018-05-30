@@ -76,20 +76,20 @@ ImageResource::ImageResource( const char* originalKey, string& path, string& ext
 				ArgValue framesObj = script.GetProperty( "frames", json );
 				if ( framesObj.type == TypeObject && framesObj.value.objectValue ) {
 					// get names
-					unordered_set<string> frameNames;
-					script.GetPropertyNames( framesObj.value.objectValue, frameNames );
-					unordered_set<string>::iterator it = frameNames.begin(), end = frameNames.end();
+					ArgValueVector frameNames;
+					script.GetProperties( framesObj.value.objectValue, &frameNames, false, false, false );
+					ArgValueVector::iterator it = frameNames.begin(), end = frameNames.end();
 					string keyName;
 					
 					// for each frame
 					while ( it != end ){
 						
 						// { frame:{x,y,w,h},rotated,trimmed,spriteSourceSize:{x,y,w,h},sourceSize:{w,h},pivot:{x,y} }
-						ArgValue frameObj = script.GetProperty( (*it).c_str(), framesObj.value.objectValue );
+						ArgValue frameObj = script.GetProperty( (*it).value.stringValue->c_str(), framesObj.value.objectValue );
 						
 						// strip extension from key
-						size_t extPos = (*it).find_last_of( '.' );
-						keyName = (extPos != string::npos ? (*it).substr( 0, extPos ) : (*it));
+						size_t extPos = (*it).value.stringValue->find_last_of( '.' );
+						keyName = (extPos != string::npos ? (*it).value.stringValue->substr( 0, extPos ) : (*it).value.stringValue->c_str() );
 						
 						// populate
 						ImageFrame frameInfo;

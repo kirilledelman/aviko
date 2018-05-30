@@ -61,6 +61,10 @@ public:
 		
 	/// render callback
 	static void Render( RenderSpriteBehavior* behavior, GPU_Target* target, Event* event );
+
+// shape from render
+	
+	RigidBodyShape* MakeShape();
 	
 };
 

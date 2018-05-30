@@ -87,7 +87,7 @@ Tween::~Tween() {
 void Tween::InitClass() {
 	
 	// create class
-	script.RegisterClass<Tween>( "Tween" );
+	script.RegisterClass<Tween>( NULL );
 
 	// constants
 	
@@ -114,6 +114,15 @@ void Tween::InitClass() {
 
 	
 	// properties
+	
+	script.AddProperty<Tween>
+	( "target",
+	 static_cast<ScriptObjectCallback>([](void* go, void* p) { return ((Tween*) go)->target; }),
+	 static_cast<ScriptObjectCallback>([](void* go, void* p) {
+		Tween* self = (Tween*) go;
+		self->target = p;
+		return p;
+	}));
 	
 	// easing type
 	script.AddProperty<Tween>
@@ -285,6 +294,10 @@ void Tween::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	
 	if ( this->callback.funcObject ){
 		protectedObjects.push_back( &this->callback.funcObject );
+	}
+	
+	if ( this->target ) {
+		protectedObjects.push_back( &this->target );
 	}
 }
 

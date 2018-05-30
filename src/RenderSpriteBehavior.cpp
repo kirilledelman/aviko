@@ -568,6 +568,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 }
 
 
+/* MARK:	-				Shape from render
+ -------------------------------------------------------------------- */
+
+
+RigidBodyShape* RenderSpriteBehavior::MakeShape() {
+	
+	return NULL;
+}
 
 
 

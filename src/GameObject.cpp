@@ -58,7 +58,7 @@ GameObject::~GameObject() {
 void GameObject::InitClass() {
 	
 	// register GameObject script class
-	script.RegisterClass<GameObject>( "ScriptableObject" );
+	script.RegisterClass<GameObject>( NULL );
 	
 	// properties
 	
@@ -130,7 +130,6 @@ void GameObject::InitClass() {
 		}
 		return self->body ? self->body->scriptObject : NULL;
 	}));
-
 	
 	script.AddProperty<GameObject>
 	( "render",
@@ -384,7 +383,7 @@ void GameObject::InitClass() {
 			JSScript* scr = NULL;
 			unsigned int line;
 			JS_DescribeScriptedCaller( script.js, &scr, &line );
-			printf( ".script path \"%s\" for [GameObject (%s)%p] was not found at %s:%d.\n", key, self->name.c_str(), self, JS_GetScriptFilename( script.js, scr ), line );
+			printf( ".script path \"%s\" for [GameObject (%s)%p] was not found at %s:%d.\nPath resolved to %s\n", key, self->name.c_str(), self, JS_GetScriptFilename( script.js, scr ), line, s->path.c_str() );
 			//script.ReportError( ".script path \"%s\" was not found.\n", key );
 		}
 		return ArgValue();
@@ -1418,7 +1417,10 @@ bool GameObject::HasBody(){ return ( this->body && this->body->live ); }
 // returns current transformation matrix, also updates local coords, if body+dirty
 float* GameObject::Transform() {
 	
-	assert( !isnan(this->_position.x) && !isnan(this->_position.y));
+	if( isnan(this->_position.x) || isnan(this->_position.y) ) {
+		_position.Set(0, 0);
+		// wtf
+	}
 
 	// body + local coords arent up to date, or parent's transform
 	if ( this->HasBody() && ( this->_localCoordsAreDirty || ( this->parent && this->parent->_inverseWorldDirty ) ) ) {
@@ -2186,7 +2188,7 @@ void GameObject::Render( Event& event ) {
 	}
 	
 	// debug ui
-	if ( this->ui && app.debugUI ) ui->DebugDraw( (GPU_Target*) event.behaviorParam );
+	if ( this->ui && app.debugDraw ) ui->DebugDraw( (GPU_Target*) event.behaviorParam );
 	
 	// descend into children
 	int numChildren = (int) this->children.size();

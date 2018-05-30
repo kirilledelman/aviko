@@ -14,6 +14,8 @@
 #define SHADER_OUTLINE	0x20
 #define SHADER_MAXVAL	0x40
 
+class RigidBodyShape;
+
 /// rendering behaviors should inherit from this class and override getBounds method
 class RenderBehavior : public Behavior {
 public:
@@ -135,6 +137,10 @@ public:
 
 	/// helper method for shader compilation
 	static bool CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader );
+
+// shape from render
+	
+	virtual RigidBodyShape* MakeShape() { return NULL; }
 	
 };
 

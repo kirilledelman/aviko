@@ -1298,6 +1298,14 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 		int selEnd = this->selectionEnd;
 		if ( selStart > selEnd ) { int tmp = selStart; selStart = selEnd; selEnd = tmp; }
 		
+		// if wrapping, re-measure scrollWidth
+		if ( wrap ) {
+			this->scrollWidth = 0;
+			while ( lineIndex < totalLines ) {
+				this->scrollWidth = max( this->scrollWidth, (int) this->lines[ lineIndex++ ].width );
+			}
+		}
+		
 		// check size
 		if ( autoResize ) {
 			height = scrollHeight;
@@ -1329,6 +1337,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 		}
 		
 		// for each line
+		lineIndex = 0;
 		while ( lineIndex < totalLines ) {
 			currentLine = &this->lines[ lineIndex ];
             
@@ -1490,3 +1499,12 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	
 }
 
+
+/* MARK:	-				Shape from render
+ -------------------------------------------------------------------- */
+
+
+RigidBodyShape* RenderTextBehavior::MakeShape() {
+	
+	return NULL;
+}

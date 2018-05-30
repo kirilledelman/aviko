@@ -64,7 +64,7 @@ Image::~Image() {
 void Image::InitClass() {
 	
 	// create class
-	script.RegisterClass<Image>( "ScriptableObject" );
+	script.RegisterClass<Image>( "Image" );
 	
 	// props
 	

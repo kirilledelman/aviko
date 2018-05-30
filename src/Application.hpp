@@ -60,8 +60,8 @@ public:
 	/// computed in UpdateBackscreen
 	float backscreenScale = 0.5;
 	
-	// draw UI debug data
-	bool debugUI = false;
+	// draw debug data
+	bool debugDraw = false;
 		
 	/// main display
 	GPU_Target* screen = NULL;

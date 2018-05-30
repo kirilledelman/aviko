@@ -799,3 +799,13 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 	
 }
 
+
+/* MARK:	-				Shape from render
+ -------------------------------------------------------------------- */
+
+
+RigidBodyShape* RenderShapeBehavior::MakeShape() {
+
+	return NULL;
+}
+

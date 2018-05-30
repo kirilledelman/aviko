@@ -1913,6 +1913,11 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 	//printf( "MouseButton inBounds=%d,down=%d, %s.ui\n", inBounds, down, behavior->gameObject->name.c_str() );
 	
 	if ( inBounds ) {
+		
+		// update state
+		bool wasDown = behavior->mouseDown[ btn ];
+		behavior->mouseDown[ btn ] = down;
+		
 		// dispatch mousedown or mouseup
 		Event event( e->name );
 		event.scriptParams.AddIntArgument( btn );
@@ -1923,19 +1928,20 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 		behavior->CallEvent( event );
 		
 		// mouse button was released
-		if ( behavior->mouseDown[ btn ] && !down ){
+		if ( wasDown && !down ){
 			event.name = EVENT_CLICK;
 			behavior->CallEvent( event );
 		}
 		
-		// store mouse down
-		behavior->mouseDown[ btn ] = down;
-		
 	// released button out of bounds
 	} else if( !down ) {
-		
+
 		// was down
 		if ( behavior->mouseDown[ btn ] ) {
+			
+			// update state
+			behavior->mouseDown[ btn ] = down;
+			
 			// generate release outside event
 			Event event( EVENT_MOUSEUPOUTSIDE );
 			event.scriptParams.AddIntArgument( btn );
@@ -1945,11 +1951,7 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 			event.scriptParams.AddFloatArgument( y );
 			behavior->CallEvent( event );
 		}
-		
-		// clear down state
-		behavior->mouseDown[ btn ] = down;
 	}
-	
 }
 
 void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){

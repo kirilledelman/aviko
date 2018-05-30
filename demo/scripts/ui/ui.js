@@ -444,6 +444,26 @@ UI.style = UI.style || {
 		}
 	},
 
+	// tooltip control (ui/tooltip.js)
+	tooltip: {
+
+		// (ui/panel) container
+		panel: {
+			pad: 8,
+			background: 0xFFFFFF,
+			outlineColor: 0x999999,
+			lineThickness: 2,
+			cornerRadius: 2,
+		},
+
+		label: {
+			size: 12,
+			color: 0x0,
+			maxWidth: 200,
+			minWidth: 60,
+		}
+	},
+
 	// property list for editors (ui/property-list.js)
 	propertyList: {
 
@@ -842,6 +862,19 @@ UI.base = UI.base || {
 			// (Color) | (Number) .addColor property of current render component
 			'addColor': { get: function (){ return go.render ? go.render.addColor : null; }, set: function( v ){ if ( go.render ) go.render.addColor = v; } },
 
+			// (String) if set, will show tooltip on mouseOver
+			'tooltip': {
+				get: function (){ return ui.tooltip; },
+				set: function( v ){
+					ui.tooltip = v;
+					if ( v ) {
+						go.on( 'mouseOver', UI.base._showTooltip );
+					} else {
+						go.off( 'mouseOver', UI.base._showTooltip );
+					}
+				}
+			},
+
 			// (Object) used to override style (collection of properties) other than default after creating / during init
 			'style': {
 				get: function (){ return go.baseStyle; },
@@ -989,6 +1022,7 @@ UI.base = UI.base || {
 		var replaceStart = textfield.caretPosition; // if we support partial / midword matches in the future
 		var suggestions = [];
 		var target = ( textfield.target || global );
+		var numeric = /^\d+$/;
 		function funcParen( o, p, d ) { return ( typeof ( o[ p ] ) === 'function' ) ? ( d === 2 ? '()' : '(' ) : ''; }
 
 		// ends with . - show all available properties
@@ -997,7 +1031,12 @@ UI.base = UI.base || {
 			var obj = eval( expr.substr( 0, exprLen - 1 ), target );
 			if ( typeof( obj ) !== 'undefined' && obj !== null && !( typeof( obj ) === 'object' && obj.constructor.name.indexOf( 'Error' ) >= 0 ) ) {
 				// add all properties
-				for ( var p in obj ) suggestions.push( { text: p + funcParen( obj, p, 2 ), value: p + funcParen( obj, p, 1 ) } );
+				var props = Object.getProperties( obj, false, true, true );
+				for ( var i = 0, np = props.length; i < np; i++  ) {
+					var p = props[ i ];
+					if ( p.substr( 0, 2 ) == '__' || numeric.test( p ) ) continue;
+					suggestions.push( { text: p + funcParen( obj, p, 2 ), value: p + funcParen( obj, p, 1 ) } );
+				}
 			}
 
 		// object, ends with partially completed property name - suggest matches
@@ -1009,12 +1048,15 @@ UI.base = UI.base || {
 				// all matching beginning of property name
 				var prop = expr.substr( lastPeriod + 1 );
 				var propLen = prop.length;
-				for ( var p in obj ) {
+				var props = Object.getProperties( obj, false, true, true );
+				for ( var i = 0, np = props.length; i < np; i++  ) {
+					var p = props[ i ];
 					if ( p.substr( 0, propLen ) === prop && p.length !== propLen ) {
 						suggestions.push( {
 							text: "^B" + prop + "^b" + p.substr( propLen ) + funcParen( obj, p, 2 ),
 							value: p.substr( -( p.length + ( lastPeriod - exprLen ) ) - 1 ) + funcParen( obj, p, 1 ) } );
 					}
+					if ( p.substr( 0, 2 ) == '__' || numeric.test( p ) ) continue;
 				}
 
 			}
@@ -1023,7 +1065,9 @@ UI.base = UI.base || {
 		} else if ( exprLen ) {
 
 			// all matching beginning of line
-			for ( var p in global ) {
+			var props = Object.getProperties( global, false, true, true );
+			for ( var i = 0, np = props.length; i < np; i++  ) {
+				var p = props[ i ];
 				if ( p.substr( 0, exprLen ) === expr && p.length !== exprLen ) {
 					suggestions.push( {
 						text: "^B" + expr + "^b" + p.substr( exprLen ) + funcParen( global, p, 2 ),
@@ -1115,6 +1159,26 @@ UI.base = UI.base || {
 		} else if ( l < sx ) { // left
 			scrollable.scrollLeft = l;
 		}
+	},
+
+	_showTooltip: function () {
+		var show = function() {
+			if ( this.ui && this.ui.tooltip ) {
+				var t = new GameObject( './tooltip', {
+					target: this,
+					text: this.ui.tooltip,
+					preferredDirection: 'up',
+				} );
+			}
+		};
+
+		var cancel = function () {
+			this.cancelDebouncer( 'showTooltip' );
+		};
+
+		// after delay
+		this.debounce( 'showTooltip', show, 2 );
+		this.on( 'mouseOut', cancel, true );
 	},
 
 }

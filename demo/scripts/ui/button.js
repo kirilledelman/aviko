@@ -230,12 +230,12 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
+		if ( btn != 1 ) return;
 		if ( ui.focusable ) {
 			ui.focus();
-			stopAllEvents();
 		}
-		if ( disabled || btn != 1 ) return;
 		stopAllEvents();
+		if ( disabled ) return;
 		go.fire( 'click', btn, x, y, wx, wy );
 	}
 

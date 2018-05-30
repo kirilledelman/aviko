@@ -127,9 +127,6 @@ public:
 	
 // rendering
 	
-	/// set to true to draw Box2D debug overlay
-	bool debugDraw = true;
-	
 	// clear color
 	Color *backgroundColor = NULL;
 	

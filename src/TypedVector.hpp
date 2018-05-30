@@ -104,6 +104,9 @@ public:
 	
 	void TraceProtectedObjects( vector<void**> &protectedObjects );
 	
+	static ArgValueVector* EnumerateVectorProperties( ScriptableClass* self );
+	static bool ResolveVectorProperty( ScriptableClass* self, ArgValue prop );
+	
 	// init/destroy
 	TypedVector( ScriptArguments* );
 	TypedVector() {};
@@ -111,7 +114,6 @@ public:
 	
 };
 
-SCRIPT_CLASS_NAME( TypedVector, "Vector" );
-
+SCRIPT_CLASS_NAME_EXT( TypedVector, "Vector", &TypedVector::EnumerateVectorProperties, &TypedVector::ResolveVectorProperty );
 
 #endif /* Vector_hpp */

@@ -35,7 +35,7 @@ void Input::AddKeyboardController () {
 void Input::InitClass() {
 	
 	// register class
-	script.RegisterClass<Input>( "ScriptableObject", true );
+	script.RegisterClass<Input>( NULL, true );
 	
 	// key constants
 	
@@ -67,16 +67,16 @@ void Input::InitClass() {
 	script.SetProperty( "X", ArgValue( SDL_SCANCODE_X ), constants );
 	script.SetProperty( "Y", ArgValue( SDL_SCANCODE_Y ), constants );
 	script.SetProperty( "Z", ArgValue( SDL_SCANCODE_Z ), constants );
-	script.SetProperty( "1", ArgValue( SDL_SCANCODE_1 ), constants );
-	script.SetProperty( "2", ArgValue( SDL_SCANCODE_2 ), constants );
-	script.SetProperty( "3", ArgValue( SDL_SCANCODE_3 ), constants );
-	script.SetProperty( "4", ArgValue( SDL_SCANCODE_4 ), constants );
-	script.SetProperty( "5", ArgValue( SDL_SCANCODE_5 ), constants );
-	script.SetProperty( "6", ArgValue( SDL_SCANCODE_6 ), constants );
-	script.SetProperty( "7", ArgValue( SDL_SCANCODE_7 ), constants );
-	script.SetProperty( "8", ArgValue( SDL_SCANCODE_8 ), constants );
-	script.SetProperty( "9", ArgValue( SDL_SCANCODE_9 ), constants );
-	script.SetProperty( "0", ArgValue( SDL_SCANCODE_0 ), constants );
+	script.SetProperty( "One", ArgValue( SDL_SCANCODE_1 ), constants );
+	script.SetProperty( "Two", ArgValue( SDL_SCANCODE_2 ), constants );
+	script.SetProperty( "Three", ArgValue( SDL_SCANCODE_3 ), constants );
+	script.SetProperty( "Four", ArgValue( SDL_SCANCODE_4 ), constants );
+	script.SetProperty( "Five", ArgValue( SDL_SCANCODE_5 ), constants );
+	script.SetProperty( "Six", ArgValue( SDL_SCANCODE_6 ), constants );
+	script.SetProperty( "Seven", ArgValue( SDL_SCANCODE_7 ), constants );
+	script.SetProperty( "Eight", ArgValue( SDL_SCANCODE_8 ), constants );
+	script.SetProperty( "Nine", ArgValue( SDL_SCANCODE_9 ), constants );
+	script.SetProperty( "Zero", ArgValue( SDL_SCANCODE_0 ), constants );
 	script.SetProperty( "Return", ArgValue( SDL_SCANCODE_RETURN ), constants );
 	script.SetProperty( "Enter", ArgValue( SDL_SCANCODE_RETURN ), constants );
 	script.SetProperty( "Escape", ArgValue( SDL_SCANCODE_ESCAPE ), constants );

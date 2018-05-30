@@ -1,5 +1,6 @@
 #include "RenderBehavior.hpp"
 #include "GameObject.hpp"
+#include "RigidBodyShape.hpp"
 
 // static
 RenderBehavior::ShaderVariant RenderBehavior::shaders[ SHADER_MAXVAL ];

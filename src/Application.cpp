@@ -357,10 +357,10 @@ void Application::InitClass() {
 	}));
 	
 	script.AddProperty<Application>
-	("debugUI",
-	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.debugUI; }),
+	("debugDraw",
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.debugDraw; }),
 	 static_cast<ScriptBoolCallback>([](void* self, bool v){
-		return (app.debugUI = v);
+		return (app.debugDraw = v);
 	}));
 	
 	script.AddProperty<Application>
@@ -516,6 +516,33 @@ void Application::InitClass() {
 		string *str = ((ArgValue*) p)->value.stringValue;
 		// return character length
 		sa.ReturnInt( StringPositionLength( str->c_str() ));
+		return true;
+	}));
+	
+	script.DefineClassFunction
+	( "Object", "getProperties", true,
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
+		ArgValueVector ret;
+		void* obj = NULL;
+		const char* error = "usage: getProperties( Object object, [ Boolean useSerializeMask, [ Boolean includeReadOnly, [ Boolean includeFunctions ] ] ] )";
+		bool useSerializeMask = false,
+			 includeReadOnly = false,
+		     includeFunctions = false;
+		// read params
+		if ( sa.args.size() >= 1 ) {
+			if ( sa.args[ 0 ].type == TypeArray ) obj = sa.args[ 0 ].arrayObject;
+			else if ( sa.args[ 0 ].type == TypeObject ) obj = sa.args[ 0 ].value.objectValue;
+			else if ( sa.args[ 0 ].type == TypeFunction ) obj = sa.args[ 0 ].value.objectValue;
+			sa.ReadArgumentsFrom( 1, 0, TypeBool, &useSerializeMask, TypeBool, &includeReadOnly, TypeBool, &includeFunctions );
+		}
+		//TypeObject, &obj,
+		if ( obj == NULL ) {
+			script.ReportError( error );
+			return false;
+		}
+		// read props
+		script.GetProperties( obj, &ret, useSerializeMask, includeReadOnly, includeFunctions );
+		sa.ReturnArray( ret );
 		return true;
 	}));
 	
@@ -1199,18 +1226,26 @@ string ResolvePath( const char* filepath, const char* ext, const char* optionalS
 		JSScript* curScript = NULL;
 		if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
 			const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+			string shortPath = scriptPath;
+			shortPath = shortPath.substr( app.currentDirectory.length() );
 			// find script
-			unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
-			while ( it != app.scriptManager.map.end() ) {
-				if ( it->second->path.compare( scriptPath ) == 0 ) {
-					// remove filename from current script
-					vector<string> parts = Resource::splitString( it->second->path, "/" );
-					parts.pop_back();
-					if ( startsWithTwoDots ) parts.pop_back();
-					startingPath = Resource::concatStrings( parts, "/" );
-					break;
+			ScriptResource* sr = app.scriptManager.Get( shortPath.c_str() );
+			if ( sr->error ) {
+				unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
+				while ( it != app.scriptManager.map.end() ) {
+					if ( it->second->path.compare( scriptPath ) == 0 ) {
+						sr = it->second;
+						break;
+					}
+					it++;
 				}
-				it++;
+			}
+			if ( !sr->error ) {
+				// remove filename from current script
+				vector<string> parts = Resource::splitString( sr->path, "/" );
+				parts.pop_back();
+				if ( startsWithTwoDots ) parts.pop_back();
+				startingPath = Resource::concatStrings( parts, "/" );
 			}
 		}
 	}

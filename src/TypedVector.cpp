@@ -25,6 +25,9 @@ TypedVector::TypedVector( ScriptArguments* args ) {
 				script.SetProperty( "array", args->args[ 1 ], this->scriptObject );
 			}
 		}
+	} else {
+		// default
+		script.SetProperty( "type", ArgValue( "Number" ), this->scriptObject );
 	}
 	
 }
@@ -60,7 +63,7 @@ TypedVector::~TypedVector() {
 void TypedVector::InitClass() {
 	
 	// create class
-	script.RegisterClass<TypedVector>( "Vector" );
+	script.RegisterClass<TypedVector>( NULL );
 	
 	// properties
 	
@@ -99,7 +102,7 @@ void TypedVector::InitClass() {
 	 static_cast<ScriptValueCallback>([](void *p, ArgValue val ){
 		TypedVector* self = (TypedVector*) p;
 		return self->InitWithType( val );
-	}), PROP_ENUMERABLE | PROP_EARLY | PROP_SERIALIZED );
+	}), PROP_NOSTORE | PROP_ENUMERABLE | PROP_EARLY | PROP_SERIALIZED );
 	
 	// get or set vector as array
 	script.AddProperty<TypedVector>
@@ -241,6 +244,47 @@ void TypedVector::Notify() {
 	
 }
 
+
+/* MARK:	-				Property callbacks
+ -------------------------------------------------------------------- */
+
+
+/// return new ArgValueVector with enumerable property names
+ArgValueVector* TypedVector::EnumerateVectorProperties( ScriptableClass* self ) {
+	
+	// printf( "(EnumerateVectorProperties %p)", self );
+	ArgValueVector* ret = new ArgValueVector();
+	ret->emplace_back( "array" );
+	ret->emplace_back( "length" );
+	ret->emplace_back( "type" );
+	ret->emplace_back( "isValid" );
+	ret->emplace_back( "push" );
+	ret->emplace_back( "pop" );
+	ret->emplace_back( "slice" );
+	ret->emplace_back( "toString" );
+	ret->emplace_back( "clear" );
+	// add numeric keys
+	TypedVector* vec = (TypedVector*) self;
+	// static char str[ 16 ];
+	for ( size_t i = 0, nk = vec->GetLength(); i < nk; i++ ) {
+		ret->emplace_back( (int) i ); // SDL_itoa( (int) i, str, 10 ) );
+	}
+	return ret;
+	
+}
+
+///
+bool TypedVector::ResolveVectorProperty( ScriptableClass* self, ArgValue prop ) {
+	// return true if string ( default behavior )
+	if ( prop.type == TypeString ) return true;
+	// integer?
+	else {
+		if ( prop.value.intValue < 0 ) return false;
+		TypedVector* vec = (TypedVector*) self;
+		return ( prop.value.intValue < vec->GetLength() );
+	}
+}
+
 /* MARK:	-				Ops
  -------------------------------------------------------------------- */
 
@@ -376,7 +420,7 @@ int TypedVector::GetLength() {
 		default:
 			break;
 	}
-	return -1;
+	return 0;
 }
 	
 /// resizes array / fills with default value
@@ -669,37 +713,44 @@ ArgValue TypedVector::PopElement() {
 	switch( type ) {
 		case TypeBool:
 			vb = ((vector<bool>*) container);
+			if ( !vb->size() ) return ArgValue();
 			b = vb->back();
 			vb->pop_back();
 			return ArgValue( b );
 		case TypeChar:
 			vc = ((vector<Uint8>*) container);
+			if ( !vc->size() ) return ArgValue();
 			c = vc->back();
 			vc->pop_back();
 			return ArgValue( c );
 		case TypeInt:
 			vi = ((vector<int>*) container);
+			if ( !vi->size() ) return ArgValue();
 			i = vi->back();
 			vi->pop_back();
 			return ArgValue( i );
 		case TypeFloat:
 			vf = ((vector<float>*) container);
+			if ( !vf->size() ) return ArgValue();
 			f = vf->back();
 			vf->pop_back();
 			return ArgValue( f );
 		case TypeDouble:
 			vd = ((vector<double>*) container);
+			if ( !vd->size() ) return ArgValue();
 			d = vd->back();
 			vd->pop_back();
 			return ArgValue( d );
 		case TypeString:
 			vs = ((vector<string>*) container);
+			if ( !vs->size() ) return ArgValue();
 			s = vs->back();
 			vs->pop_back();
 			return ArgValue( s.c_str() );
 		case TypeObject:
 		case TypeArray:
 			vo = ((vector<void*>*) container);
+			if ( !vo->size() ) return ArgValue();
 			o = vo->back();
 			vo->pop_back();
 			return ArgValue( o ) ;

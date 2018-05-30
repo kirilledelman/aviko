@@ -113,6 +113,11 @@ public:
 	
 	/// UIs without layout handler will call this on gameObject's render component
 	void Resize( float w, float h );
+	
+// shape from render
+	
+	RigidBodyShape* MakeShape();
+	
 };
 
 float DistanceToLine( float px, float py, float x1, float y1, float x2, float y2 );

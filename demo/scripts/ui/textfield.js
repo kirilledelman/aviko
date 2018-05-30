@@ -476,6 +476,12 @@ include( './ui' );
 	    }
 	}
 
+	// rollover / rollout - just redispatch on object
+	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
+		stopAllEvents();
+		go.fire( currentEventName(), x, y, wx, wy );
+	}
+
 	// navigation event
 	ui.navigation = function ( name, value ) {
 
@@ -969,7 +975,8 @@ include( './ui' );
 					        // code style
 					        if ( autocomplete ){
 						        // if last character was {, add extra tab
-						        if ( txt.substr( caretPosition - 1, 1 ) == '{' ) post = '\t';
+						        var lastChar = txt.substr( caretPosition - 1, 1 )
+						        if ( lastChar == '{' || lastChar == '[' || lastChar == '(' ) post = '\t';
 					        }
 					        ui.keyPress( "\n" + getLineWhitespacePrefix() + post );
 				        } else {
@@ -1146,14 +1153,15 @@ include( './ui' );
 			    break;
 
 		    case Key.RightBracket:
-			    // code style }
-			    if ( shift && autocomplete && tabEnabled && editing ) {
+		    case Key.Zero:
+
+			    // code style } ) ]
+			    if ( autocomplete && tabEnabled && editing && ( key !== Key.Zero || shift ) ) {
 
 				    // if current line is all whitespace with tab on end?
 				    var line = getCurrentLine();
 				    if ( line.match( /^(\s*)\t$/g ) ) {
 					    // delete one character before inserting }
-					    log ( "<<");
 					    ui.keyPress( -1, -1 );
 			            cancelAutocomplete();
 					    selStart = selEnd = caretPosition = rt.caretPosition;
@@ -1162,7 +1170,6 @@ include( './ui' );
 			    }
 			    break;
 	    }
-
 		if ( selStart != rt.selectionStart || selEnd != rt.selectionEnd ) {
 			txt = rt.text;
 			selStart = txt.positionToIndex( rt.selectionStart );
