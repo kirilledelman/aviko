@@ -62,15 +62,9 @@ include( './ui' );
 					modalBackground = new GameObject( './panel', {
 						width: App.windowWidth,
 						height: App.windowHeight,
-						style: go.baseStyle.modalBackground
+						style: go.baseStyle.modalBackground,
+						blocking: true,
 					} );
-					modalBackground.ui.mouseMove = modalBackgroundCallback;
-					modalBackground.ui.mouseOver = modalBackgroundCallback;
-					modalBackground.ui.mouseOut = modalBackgroundCallback;
-					modalBackground.ui.mouseDown = modalBackgroundCallback;
-					modalBackground.ui.mouseUp = modalBackgroundCallback;
-					modalBackground.ui.mouseWheel = modalBackgroundCallback;
-					modalBackground.ui.click = modalBackgroundCallback;
 					if ( go.parent ) {
 						go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
 					}
@@ -190,6 +184,7 @@ include( './ui' );
 	ui.layoutType = Layout.Vertical;
 	ui.fitChildren = false;
 	ui.focusable = false;
+	ui.blocking = true;
 	go.ui = ui;
 
 	// lay out components

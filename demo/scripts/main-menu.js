@@ -48,13 +48,16 @@ new (function (){
 		minHeight: 40,
 	} );
 
-
 	// button click handler
 	var buttonClick = function () {
 		// load scene
-		var sub = App.pushScene( include( this.src ) );
-		// animate transition on first update
-		sub.on( 'update', function (){ transitionScene( sub, scene, -1 ); }, true );
+		var sub = include( this.src );
+
+		// animate transition
+		async( function () {
+			App.pushScene( sub );
+			transitionScene( sub, scene, -1 );
+		}, 0.5 );
 	};
 
 	buttons.addChild( 'ui/button', {
@@ -66,13 +69,13 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Shapes",
 		src: 'sprites',
-		//click: buttonClick
+		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Text",
 		src: 'sprites',
-		//click: buttonClick
+		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {

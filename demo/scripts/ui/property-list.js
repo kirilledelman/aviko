@@ -84,8 +84,8 @@ include( './ui' );
 		//          hidden: (Function) - return true to conditionally hide this field. Function's only param is target
 		//          deletable: (Boolean) - show "Delete property" option in right-click menu
 		//          actions: (Array) - context menu actions when right-clicking on property. Format same as .actions property, but no buttons
-		//          reloadOnChange: (Array), (String) - reload these other properties on change, or (Boolean) true to reload all
-		//          liveUpdate: (Boolean) for numeric and string field force update as you type if true
+		//          reloadOnChange: (Array), (String) - reload this/these properties on change, or (Boolean) true to reload all, or string "refresh" to refresh entire object
+		//          liveUpdate: (Boolean) for numeric and string field force update as you type if true, or after pressing Enter if false
 		//
 		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
 		//          properties: (Object) - apply properties to sub-property-list
@@ -364,7 +364,7 @@ include( './ui' );
 	function editFunctionBody() {
 
 		// force "edit value"
-		go.addProperty( this.name, 'function', this.fieldValue, 'edit' );
+		go.addProperty( this.name, 'Function', this.fieldValue, 'edit' );
 
 	}
 
@@ -397,11 +397,12 @@ include( './ui' );
 			// input fields:
 
 			case 'number':
+				if ( typeof( pdef.liveUpdate ) === 'undefined' ) pdef.liveUpdate = true;
 				field = cont.addChild( './textfield', {
 					name: pname,
 					target: curTarget,
-					change: pdef.liveUpdate ? go.fieldChanged : undefined,
-					editEnd: pdef.liveUpdate ? undefined : go.fieldChanged,
+					change: pdef.liveUpdate === false ? undefined : go.fieldChanged,
+					editEnd: pdef.liveUpdate === false ? go.fieldChanged : undefined,
 					numeric: true,
 					minWidth: valueWidth,
 					integer: ( pdef && pdef.integer !== undefined ) ? pdef.integer : false,
@@ -415,11 +416,12 @@ include( './ui' );
 				break;
 
 			case 'string':
+				if ( typeof( pdef.liveUpdate ) === 'undefined' ) pdef.liveUpdate = false;
 				field = cont.addChild( './textfield', {
 					name: pname,
 					target: curTarget,
 					change: pdef.liveUpdate === false ? undefined : go.fieldChanged,
-					editEnd: pdef.liveUpdate === false ? go.fieldChanged : undefined ,
+					editEnd: pdef.liveUpdate === false ? go.fieldChanged : undefined,
 					minWidth: valueWidth,
 					value: fieldValue,
 					autoGrow: true,
@@ -801,6 +803,7 @@ include( './ui' );
 				_gs.push( g );
 			} else {
 				unsortedGroup = g;
+				log("found unsorted group ", stringify(g));
 				continue;
 			}
 			var props = regroup[ g.name ] = [];
@@ -845,6 +848,8 @@ include( './ui' );
 				}
 				return a < b ? -1 : 1;
 			});
+		} else {
+			regroup[ ' ' ] = unsortedGroup.properties;
 		}
 
 		// for each group
@@ -853,9 +858,10 @@ include( './ui' );
 			var props = i < ng ? regroup[ _gs[ i ].name ] : regroup[ ' ' ];
 			if ( props === undefined || !props.length ) continue;
 			numGroups++;
+			var groupTitle = null;
 			if ( i < ng || numGroups > 1 ) {
 				// add group title
-				var groupTitle = cont.addChild( './text', {
+				groupTitle = cont.addChild( './text', {
 					forceWrap: true,
 					flex: 1,
 					text: (i < ng ? _gs[ i ].name : 'Miscellaneous'),
@@ -864,10 +870,16 @@ include( './ui' );
 				// clear top margin if first
 				if ( i == 0 ) groupTitle.marginTop = 0;
 			}
+
 			// for each property
+			var numAdded = 0;
 			for ( var j = 0, np = props.length; j < np; j++ ) {
 				var pname = props[ j ];
 				var pdef;
+
+				// skip disabled properties
+				if ( _properties[ pname ] === false ) continue;
+
 				// purely numeric? special # property
 				if ( numeric.test( pname ) ) pdef = _properties[ '#' ] || { deletable: true };
 				else pdef = _properties[ pname ] || { deletable: true };
@@ -897,7 +909,13 @@ include( './ui' );
 				}
 
 				numRows++;
+				numAdded++;
 
+			}
+
+			// if nothing added to group, remove header
+			if ( numAdded === 0 && groupTitle ) {
+				groupTitle.parent = null;
 			}
 
 		}
@@ -972,9 +990,12 @@ include( './ui' );
 		// reload other fields option
 		var reloads = this.pdef.reloadOnChange;
 		go.debounce( 'reload', function() {
-			// true = reload all
-			if ( reloads === true ) {
+			// refresh
+			if ( reloads === 'refresh' ) {
 				go.refresh();
+			// true = reload all
+			} if ( reloads === true ) {
+				go.reload();
 			// single other field
 			} else if ( typeof( reloads ) === 'string' ) {
 				go.reload( reloads );
@@ -1499,7 +1520,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 	],*/
 	properties: {
 		'name': { tooltip: "Object name. It does not have to be unique." },
-		'script': { reloadOnChange: true, tooltip: "Path to .js file defining this GameObject's functionality." },
+		'script': { reloadOnChange: 'refresh', tooltip: "Path to .js file defining this GameObject's functionality." },
 		'x': { step: 1, tooltip: "Horizontal position relative to parent." },
 		'y': { step: 1, tooltip: "Vertical position relative to parent." },
 		'z': { step: 1, tooltip: "Depth offset relative to parent." },
@@ -1572,9 +1593,9 @@ Vector.__propertyListConfig = Vector.__propertyListConfig ||
 			{ text: "GameObject", value: "GameObject" },
 			], style: { autoAddValue: true },
 			tooltip: "Vector container type.",
-			reloadOnChange: true
+			reloadOnChange: 'refresh'
 		},
-		length: { min: 0, step: 1, liveUpdate: false, integer: true, reloadOnChange: true, tooltip: "Number of elements in Vector. Set to 0 to truncate." },
+		length: { min: 0, step: 1, liveUpdate: false, integer: true, reloadOnChange: 'refresh', tooltip: "Number of elements in Vector. Set to 0 to truncate." },
 		array: { readOnly: true, reloadOnChange: true, inline: true, tooltip: "Vector values as array. Modifying this array's elements will have no effect. Setting ^Barray^b property to another Array, however will overwrite the values." },
 		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true }
 	}

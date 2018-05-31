@@ -485,7 +485,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( ( e.motion.x - app.backScreenDstRect.x ) * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( ( e.motion.y - app.backScreenDstRect.y ) * app.backscreenScale );
 		CallEvent( event );
-		UIEvent( event );
+		UIEvent( event, true );
 	} else if ( etype == SDL_MOUSEBUTTONUP ) {
 		event.name = EVENT_MOUSEUP;
 		event.behaviorParam = &e;
@@ -494,7 +494,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( ( e.motion.x - app.backScreenDstRect.x ) * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( ( e.motion.y - app.backScreenDstRect.y ) * app.backscreenScale );
 		CallEvent( event );
-		UIEvent( event );
+		UIEvent( event, true );
 	} else if ( etype == SDL_MOUSEMOTION ) {
 		event.name = EVENT_MOUSEMOVE;
 		event.behaviorParam = &e;
@@ -504,7 +504,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( e.motion.xrel * app.backscreenScale );
 		event.scriptParams.AddFloatArgument( e.motion.yrel * app.backscreenScale );
 		CallEvent( event );
-		UIEvent( event );
+		UIEvent( event, true );
 	} else if ( etype == SDL_MOUSEWHEEL ) {
 		event.name = EVENT_MOUSEWHEEL;
 		event.behaviorParam = &e;
@@ -512,7 +512,7 @@ void Input::HandleEvent( SDL_Event& e ) {
 		event.scriptParams.AddFloatArgument( e.wheel.y * mouseWheelScale );
 		event.scriptParams.AddFloatArgument( e.wheel.x * mouseWheelScale );
 		CallEvent( event );
-		UIEvent( event );
+		UIEvent( event, true );
 	} else if ( etype == SDL_JOYDEVICEADDED ) {
 		// add to joysticks
 		SDL_Joystick* jck = SDL_JoystickOpen( e.jdevice.which );
@@ -596,10 +596,11 @@ void Input::HandleEvent( SDL_Event& e ) {
  -------------------------------------------------------------------- */
 
 
-void Input::UIEvent( Event &event ) {
+void Input::UIEvent( Event &event, bool blockable ) {
 	if ( !app.sceneStack.size() || event.stopped ) return;
 	Scene* scene = app.sceneStack.back();
 	event.bubbles = true;
+	event.isBlockableUIEvent = blockable;
 	event.behaviorsOnly = true;
 	event.behaviorParam = &event;
 	scene->DispatchEvent( event );

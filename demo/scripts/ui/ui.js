@@ -549,7 +549,7 @@ UI.style = UI.style || {
 			any: {
 				acceptToEdit: true,
 				cancelToBlur: false,
-				blurOnClickOutside: false,
+				blurOnClickOutside: true,
 				fitChildren: false,
 				minHeight: 25,
 				states: { disabled: { label: { color: 0x666666 } }, }
@@ -741,6 +741,9 @@ UI.base = UI.base || {
 					ui.focusRect = fr;
 				}
 			},
+
+			// (Boolean) blocks mouse events from reaching objects higher in in hierarchy tree
+			'blocking': { get: function (){ return ui.blocking; }, set: function( v ){ ui.blocking = v; } },
 
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
 			'layoutType': { get: function (){ return ui.layoutType; }, set: function( v ){ ui.layoutType = v; } },

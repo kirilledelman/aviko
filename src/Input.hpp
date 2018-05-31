@@ -53,7 +53,7 @@ public:
 // ui
 	
 	/// passes event on current scene's UIBehaviors
-	void UIEvent( Event& event );
+	void UIEvent( Event& event, bool blockable=false );
 	
 	// controllers check these axis names and forward events to UIBehaviors if matched
 	string navigationXAxis = "horizontal";

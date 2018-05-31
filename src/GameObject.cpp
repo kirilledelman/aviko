@@ -1070,6 +1070,11 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		}
 	}
 	
+	// if it's a UI event considered in bounds by this UI or one of children, and this UI is blocking, auto-stop it
+	if ( this->ui && this->ui->blocking && event.isBlockableUIEvent ) {
+		event.willBlockUIEvent = true;
+	}
+	
 	// if a lambda callback is provided, call it
 	if ( forEachGameObject != NULL ) if ( !(*forEachGameObject)( this ) ) return;
 	
@@ -1093,6 +1098,15 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 	if ( event.bubbles && callOnSelf ) {
 		this->CallEvent( event );
 	}
+	
+	// if it's a UI event considered in bounds by this UI or one of children, and this UI is blocking, auto-stop it
+	if ( this->ui && this->ui->blocking && event.isBlockableUIEvent ) {
+		// stop
+		if ( event.isUIEventInBounds ) event.stopped = true;
+		// reset
+		event.isUIEventInBounds = event.willBlockUIEvent = false;
+	}
+	
 }
 
 // calls handler for event on each behavior

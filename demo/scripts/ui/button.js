@@ -249,7 +249,7 @@ include( './ui' );
 	}
 
 	// up
-	ui.mouseUp = function ( btn, x, y, wx, wy ) {
+	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
 		go.state = 'auto';
 		if ( disabled || btn != 1 ) return;
 		go.fire( currentEventName(), btn, x, y, wx, wy );

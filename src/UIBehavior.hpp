@@ -171,6 +171,12 @@ public:
 	void CheckClipping();
 	RenderSpriteBehavior* clippedBy = NULL;
 	
+	/// blocks UI events from bubbling up
+	bool blocking = false;
+	
+	/// currently 'over' UIBehaviors
+	static unordered_set<UIBehavior*> rollovers;
+	
 	// debug draw
 	void DebugDraw( GPU_Target* targ );
 	

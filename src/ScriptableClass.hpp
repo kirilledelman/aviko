@@ -25,6 +25,15 @@ struct Event {
 	/// only dispatched on behaviors
 	bool behaviorsOnly = false;
 	
+	/// a subset of events originating from Input class, subject to UI->blockable
+	bool isBlockableUIEvent = false;
+	
+	/// UI behavior considering this event in bounds will set this to true
+	bool isUIEventInBounds = false;
+	
+	/// will be set to true when entering blocking UI event subtree
+	bool willBlockUIEvent = false;
+	
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
 	

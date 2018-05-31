@@ -297,7 +297,7 @@ void Scene::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallback *fo
 	app.overlay->DispatchEvent( event, callOnSelf, forEachGameObject );
 	
 	// continue default behavior
-	GameObject::DispatchEvent( event, callOnSelf, forEachGameObject );
+	if ( !event.stopped ) GameObject::DispatchEvent( event, callOnSelf, forEachGameObject );
 	
 }
 

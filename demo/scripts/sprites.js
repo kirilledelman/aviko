@@ -5,12 +5,13 @@ new (function (){
 		name: "Sprites",
 		backgroundColor: Color.Background,
 		opacity: 0,
+		x: App.windowWidth
 	} );
 
 	scene.ui = new UI( {
-		layoutType: Layout.Vertical,
+		layoutType: Layout.Horizontal,
 		layoutAlignX: LayoutAlign.Stretch,
-		layoutAlignY: LayoutAlign.Start,
+		layoutAlignY: LayoutAlign.Stretch,
 		pad: 20,
 		wrapEnabled: true,
 		fitChildren: false,
@@ -19,8 +20,18 @@ new (function (){
 		height: App.windowHeight,
 	} );
 
+	var leftColumn = scene.addChild( 'ui/panel', {
+		flex: 1,
+		pad: 0,
+		minWidth: 150,
+		spacing: 10,
+		layoutType: Layout.Vertical,
+		layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Start,
+	} );
+
 	// title
-	var title = scene.addChild( 'ui/text', {
+	var title = leftColumn.addChild( 'ui/text', {
 		name: "Title",
 		size: 30,
 		color: Color.Title,
@@ -32,7 +43,7 @@ new (function (){
 	} );
 
 	// scrollable description
-	var description = scene.addChild( 'ui/textfield', {
+	var description = leftColumn.addChild( 'ui/textfield', {
 		size: 14,
 		disabled: true,
 		bold: false,
@@ -53,7 +64,7 @@ new (function (){
 	} );
 
 	// page selector scrollbar
-	var scrollbar = scene.addChild( 'ui/scrollbar', {
+	var scrollbar = leftColumn.addChild( 'ui/scrollbar', {
 		orientation: 'horizontal',
 		totalSize: 4,
 		position: 0,
@@ -69,22 +80,20 @@ new (function (){
 	});
 
 	// back to main menu button
-	scene.addChild( 'ui/button', {
+	leftColumn.addChild( 'ui/button', {
 		text: "Back to main menu",
-		selfAlign: LayoutAlign.Stretch,
-		forceWrap: true, // new column after this
 		click: function () {
 			App.popScene();
+			App.scene.ui.requestLayout();
 			transitionScene( App.scene, scene, 1 );
 			scene = null;
 		}
 	} );
 
-	// example holder
-	var example = scene.addChild( 'ui/panel', {
-		flex: 1,
+	var rightColumn = scene.addChild( 'ui/panel', {
 		pad: 0,
 		minWidth: 300,
+		selfAlign: LayoutAlign.Stretch,
 		spacingY: 5,
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
@@ -92,7 +101,7 @@ new (function (){
 	} );
 
 	// sample sprite container
-	var spriteContainer = example.addChild( 'ui/scrollable', {
+	var spriteContainer = rightColumn.addChild( 'ui/scrollable', {
 		minHeight: 150,
 		layoutType: Layout.None,
 		scrollbars: false,
@@ -130,8 +139,9 @@ new (function (){
 	} );
 
 	// properties
-	var props = example.addChild( 'ui/property-list', {
+	var props = rightColumn.addChild( 'ui/property-list', {
 		flex: 1,
+		minWidth: 300,
 		valueWidth: 130,
 		showAll: false,
 		showBackButton: false,
@@ -188,10 +198,10 @@ new (function (){
 					'addColor': {
 						inline: true,
 						properties: {
-							'r': { min: -1, max: 1, step: 0.1 },
-							'g': { min: -1, max: 1, step: 0.1 },
-							'b': { min: -1, max: 1, step: 0.1 },
-							'a': { min: -1, max: 1, step: 0.1 },
+							'r': { min: -1, max: 1, step: 0.1, reloadOnChange: true },
+							'g': { min: -1, max: 1, step: 0.1, reloadOnChange: true },
+							'b': { min: -1, max: 1, step: 0.1, reloadOnChange: true },
+							'a': { min: -1, max: 1, step: 0.1, reloadOnChange: true },
 							'hex': false,
 						}
 					},

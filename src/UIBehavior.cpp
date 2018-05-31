@@ -16,6 +16,7 @@
  */
 
 
+unordered_set<UIBehavior*> UIBehavior::rollovers;
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -63,7 +64,9 @@ UIBehavior::UIBehavior() {
 // destructor
 UIBehavior::~UIBehavior() {
 	
-
+	// remove self from roll overs
+	UIBehavior::rollovers.erase( this );
+	
 }
 
 
@@ -129,6 +132,11 @@ void UIBehavior::InitClass() {
 		else if ( !val && ui == ui->scene->focusedUI ) ui->Blur();
 		return val;
 	}));
+
+	script.AddProperty<UIBehavior>
+	( "blocking",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->blocking; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return (((UIBehavior*) b)->blocking = val); }));
 	
 	script.AddProperty<UIBehavior>
 	( "autoMoveFocus",
@@ -1857,18 +1865,54 @@ void UIBehavior::CheckClipping() {
 
 
 void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
+	bool inBounds = false;
 	float x = e->scriptParams.args[ 0 ].value.floatValue;
 	float y = e->scriptParams.args[ 1 ].value.floatValue;
 	float localX = 0, localY = 0;
-	bool inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
 	
-	// if clipped by RenderSprite/image+autoDraw, check if still in bounds
-	if ( inBounds && behavior->clippedBy ) {
-		float clippedLocalX, clippedLocalY;
-		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+	// pass param = behavior to force rollout
+	if ( param != behavior ) {
+		// otherwise detect mouseover
+		inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
+		
+		// if clipped by RenderSprite/image+autoDraw, check if still in bounds
+		if ( inBounds && behavior->clippedBy ) {
+			float clippedLocalX, clippedLocalY;
+			inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+		}
+	}
+
+	// inbounds event
+	if ( inBounds ) {
+		
+		// first rollover of blocking event detected
+		if ( e->willBlockUIEvent && !e->isUIEventInBounds ) {
+			// clear all current rollovers
+			unordered_set<UIBehavior*>::iterator it = UIBehavior::rollovers.begin();
+			while ( it != UIBehavior::rollovers.end() ) {
+				// forced rollout
+				if ( (*it)->mouseOver ) {
+					// mouse was down
+					if ((*it)->mouseDown[ 0 ] ||
+						(*it)->mouseDown[ 1 ] ||
+						(*it)->mouseDown[ 2 ] ||
+						(*it)->mouseDown[ 3 ] ) {
+						// force up
+						UIBehavior::MouseButton( *it, *it, e );
+					}
+					// force rollout
+					UIBehavior::MouseMove( *it, *it, e ); // this also erases *it from rollovers
+					it = UIBehavior::rollovers.begin();
+				} else it++;
+			}
+		}
+		// consume
+		e->isUIEventInBounds = true;
+		// add to rollovers
+		if ( !e->willBlockUIEvent ) UIBehavior::rollovers.insert( behavior );
 	}
 	
-	// entered bounds
+	// just entered bounds
 	if ( inBounds && !behavior->mouseOver ) {
 		
 		behavior->mouseOver = true;
@@ -1880,10 +1924,14 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		event.scriptParams.AddFloatArgument( x );
 		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
-	// exited bounds
+		
+	// just exited bounds
 	} else if ( !inBounds && behavior->mouseOver ) {
 		
 		behavior->mouseOver = false;
+	
+		// remove from rollovers
+		UIBehavior::rollovers.erase( behavior );
 		
 		// dispatch a rollover event
 		Event event( EVENT_MOUSEOUT );
@@ -1893,7 +1941,6 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
 	}
-	
 }
 
 void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
@@ -1910,13 +1957,24 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
 	}
 	
-	//printf( "MouseButton inBounds=%d,down=%d, %s.ui\n", inBounds, down, behavior->gameObject->name.c_str() );
+	// special force mouse up mode
+	if ( behavior == param ) {
+		inBounds = false;
+		down = false;
+		if ( behavior->mouseDown[ 0 ] ) btn = 0;
+		else if ( behavior->mouseDown[ 1 ] ) btn = 1;
+		else if ( behavior->mouseDown[ 2 ] ) btn = 2;
+		else if ( behavior->mouseDown[ 3 ] ) btn = 3;
+	}
 	
 	if ( inBounds ) {
 		
 		// update state
 		bool wasDown = behavior->mouseDown[ btn ];
 		behavior->mouseDown[ btn ] = down;
+		
+		// mark event as inbounds
+		e->isUIEventInBounds = true;
 		
 		// dispatch mousedown or mouseup
 		Event event( e->name );
@@ -1958,6 +2016,9 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 
 	// forward event if mouse is over
 	if ( behavior->mouseOver ) {
+		// mark event as inbounds
+		e->isUIEventInBounds = true;
+		// call it
 		behavior->CallEvent( *e );
 	}
 
@@ -2022,6 +2083,7 @@ void UIBehavior::ActiveChanged( UIBehavior* behavior, GameObject* topObject, Eve
 			behavior->Blur();
 			// clear mouse flags
 			behavior->mouseOver = false;
+			UIBehavior::rollovers.erase( behavior );
 			behavior->mouseDown[ 0 ] = behavior->mouseDown[ 1 ] = behavior->mouseDown[ 2 ] = behavior->mouseDown[ 3 ] = false;
 		}
 	}
@@ -2032,6 +2094,7 @@ bool UIBehavior::active( bool a ) {
 	if ( !a ) {
 		this->Blur();
 		this->mouseOver = false;
+		UIBehavior::rollovers.erase( this );
 		this->mouseDown[ 0 ] = this->mouseDown[ 1 ] = this->mouseDown[ 2 ] = this->mouseDown[ 3 ] = false;
 	}
 	// return new active
@@ -2055,6 +2118,8 @@ void UIBehavior::Detached( UIBehavior* behavior, GameObject* go, Event* e ){
 	
 	// clear scene
 	behavior->scene = NULL;
+	behavior->mouseOver = false;
+	UIBehavior::rollovers.erase( behavior );
 	
 }
 
