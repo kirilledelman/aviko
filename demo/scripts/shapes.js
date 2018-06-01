@@ -2,7 +2,7 @@ new (function (){
 
 	// create scene
 	var scene = new Scene( {
-		name: "Sprites",
+		name: "Shapes",
 		backgroundColor: Color.Background,
 		cameraX: App.windowWidth
 	} );
@@ -37,7 +37,7 @@ new (function (){
 		bold: true,
 		align: TextAlign.Center,
 		wrap: false,
-		text: "Sprites",
+		text: "Shapes",
 	} );
 
 	// scrollable description
@@ -60,20 +60,17 @@ new (function (){
 		multiLine: true,
 		focusRect: true,
 		canScrollUnfocused: true,
-		text:
-		"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n\n" +
-		"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
-		"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
-		"Sprite sheets (texture atlases) in JSON format can be used to " +
-		"combine multiple small sprites into one texture to increase performance.\n\n" +
-		"Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.\n\n" +
-		"Sprite texture can be flipped and tiled in horizontal or vertical direction.\n\n" +
-		"To help create user interface elements define stretchable regions on texture by setting ^B.slice^n properties."
+		text: "Aviko can render a variety of geometric shapes by assigning an instance of ^B^1RenderShape^n^c class to " +
+		"^BGameObject^b's ^B.render^b property.\n\n" +
+		"The shape itself is determined by the value of ^B.shape^b property, set to one of constant values in ^BShapes^b enumeration:\n" +
+		"^IArc, Circle, Ellipse, Line, Polygon, Rectangle, RoundedRectangle, Sector, Triangle, Chain.^i\n\n" +
+		"The shape parameters are shared between different shape types, and can be changed on the fly.\n\n" +
+		"Some shapes can be solid (filled), and have an additional colored outline.",
 
 	} );
 
 	// back to main menu button
-	leftColumn.addChild( 'ui/button', {
+	var backButton = leftColumn.addChild( 'ui/button', {
 		text: "Back to main menu",
 		click: function () {
 			App.popScene();
@@ -114,45 +111,39 @@ new (function (){
 
 	// sprite
 	var sprite = spriteContainer.addChild( {
-		render: new RenderSprite( 'smiley.png' ),
+		render: new RenderShape( {
+			shape: Shape.Circle,
+			color: 0xF06620,
+			radius: 40,
+			lineThickness: 2,
+			startAngle: 45,
+			x: 40, y: 30,
+			y1: -50, x2: -40, y2: 60,
+		} ),
 		x: 150, y: 70,
 	} );
-	sprite.render.pivotX = sprite.render.pivotY = 0.5;
-
-	// rotate checkbox
-	spriteContainer.addChild( 'ui/checkbox', {
-		text: "^BSpin",
-		x: 230, y: 125,
-		change: function () {
-			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
-			else sprite.update = function ( dt ) {
-				sprite.angle += 10 * dt;
-			}
-		}
-	} );
+	// generate star -> points
+	var r0 = 40, r1 = 20;
+	for ( var i = 0; i < 5; i++ ) {
+		var th = Math.PI * 0.2;
+		sprite.render.points.push( r0 * Math.cos( th * i * 2 ), r0 * Math.sin( th * i * 2 ) );
+		sprite.render.points.push( r1 * Math.cos( th * ( 1 + i * 2 ) ), r1 * Math.sin( th * ( 1 + i * 2 ) ) );
+	}
 
 	// properties
 	var props = rightColumn.addChild( 'ui/property-list', {
 		flex: 1,
 		minWidth: 300,
 		valueWidth: 130,
-		showAll: false,
+		showAll: true,
 		showBackButton: false,
 		showContextMenu: false,
 		showMoreButton: false,
-		target: sprite.render
+		target: sprite.render,
+		properties: {
+			active: false,
+		}
 	} );
-
-	// overrides
-	props.properties = {
-		'texture': { enum: [
-			{ text: "smiley.png", value: "/textures/smiley.png" },
-			{ text: "clown.png", value: "/textures/clown.png" },
-			{ text: "poop.png", value: "/textures/poop.png" },
-		]},
-		image: false,
-		active: false,
-	};
 
 	backButton.focus();
 	return scene;

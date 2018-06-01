@@ -127,16 +127,6 @@ void RenderBehavior::InitClass() {
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderBehavior*) b)->stippleAlpha; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ( ((RenderBehavior*) b)->stippleAlpha = val ); }) );
 	
-	script.AddProperty<RenderBehavior>
-	( "pivotX", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );
-	
-	script.AddProperty<RenderBehavior>
-	( "pivotY", //
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotY; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotY = val ); }) );
-
 	// clear shaders structure
 	memset( &shaders, 0, sizeof( shaders ) );
 
@@ -463,94 +453,12 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		
 		// read pixel color
 		features +=
+		( featuresMask & SHADER_OUTLINE ) ?
+		"src = readPixel( coord * texSize );\n" :
 		"src = readPixel( coord * texSize ) * color + addColor;\n";
 	} else {
 		features +=
 		"src = color + addColor;";
-	}
-	
-	// blending with background modes
-	if ( featuresMask & SHADER_BLEND ) {
-		params +=
-		"uniform sampler2D background;\n\
-		uniform vec2 backgroundSize;\n\
-		uniform int blendMode;";
-		funcs +=
-		"vec3 rgb2hsv(vec3 c) {\n\
-			vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\
-			vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\
-			vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\
-			float d = q.x - min(q.w, q.y);\n\
-			float e = 1.0e-10;\n\
-			return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\
-		} \n\
-		vec3 hsv2rgb(vec3 c) { \n\
-			vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0); \n\
-			vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www); \n\
-			return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y); \n\
-		}";
-		features +=
-		"vec2 fragCoord = gl_FragCoord.xy;\n\
-		if ( blendMode == 12 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
-		features += glsles ?
-		"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
-		"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
-		features +=
-		"if ( blendMode == 1 ) src.rgb += bg.rgb; // add \n\
-		else if ( blendMode == 2 ) src.rgb = bg.rgb - src.rgb; // sub \n\
-		else if ( blendMode == 3 ) src.rgb = bg.rgb * src.rgb; // mul \n\
-		else if ( blendMode == 4 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) * (vec3(1.0,1.0,1.0) - src.rgb); // screen \n\
-		else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb; // burn \n\
-		else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb); // dodge\n\
-		else if ( blendMode == 7 ) { // invert \n\
-			src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb );\n\
-		} else if ( blendMode == 8 ) { // colorize \n\
-			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-			src.rgb = hsv2rgb( vec3( srcHSV.x, srcHSV.y, bgHSV.z ) );\n\
-		} else if ( blendMode == 9 ) { // hue \n\
-			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-			src.rgb = hsv2rgb( vec3( srcHSV.x, bgHSV.y, bgHSV.z ) );\n\
-		} else if ( blendMode == 10 ) { // sat \n\
-			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-			src.rgb = hsv2rgb( vec3( bgHSV.x, srcHSV.y, bgHSV.z ) );\n\
-		} else if ( blendMode == 11 ) { // lum \n\
-			vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
-			vec3 srcHSV = rgb2hsv( src.rgb ); \n\
-			src.rgb = hsv2rgb( vec3( bgHSV.x, bgHSV.y, srcHSV.z ) );\n\
-		} else if ( blendMode == 12 ) src.rgb = bg.rgb; // refract \n\
-		\n";
-	}
-	
-	// stippling
-	if ( featuresMask & SHADER_STIPPLE ) {
-		params +=
-		"uniform int stipple;\n\
-		uniform int stippleAlpha;\n";
-		features +=
-		"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
-		int limit = 0;\n\
-		int stippleValue = stipple; \n\
-		if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
-		if (index == 0) limit = 625;\n\
-		else if (index == 1) limit = 5625;\n\
-		else if (index == 2) limit = 1875;\n\
-		else if (index == 3) limit = 6875;\n\
-		else if (index == 4) limit = 8125;\n\
-		else if (index == 5) limit = 3125;\n\
-		else if (index == 6) limit = 9375;\n\
-		else if (index == 7) limit = 4375;\n\
-		else if (index == 8) limit = 2500;\n\
-		else if (index == 9) limit = 7500;\n\
-		else if (index == 10) limit = 1250;\n\
-		else if (index == 11) limit = 6250;\n\
-		else if (index == 12) limit = 10000;\n\
-		else if (index == 13) limit = 5000;\n\
-		else if (index == 14) limit = 8750;\n\
-		else if (index >= 15) limit = 3750;\n\
-		if ( stippleValue < limit ) discard;\n";
 	}
 	
 	// effects
@@ -584,9 +492,93 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		}";
 		features +=
 		"vec4 smp = outlineSample( coord * texSize - outlineOffsetRadius.xy );\n\
-		src.rgb = mix( outlineColor.rgb, src.rgb, src.a );\n\
-		if ( outlineOffsetRadius.z > 0.0 ) src.a = color.a * max( smp.a * outlineColor.a, src.a );\n\
-		else src.a = color.a * max( smp.a * outlineColor.a, src.a ) * ( 1.0 - src.a );";
+		src.rgb = mix( outlineColor.rgb, src.rgb * color.rgb, src.a ) + addColor.rgb;\n\
+		if ( outlineOffsetRadius.z > 0.0 ) src.a = max( smp.a * outlineColor.a, src.a ) * color.a;\n\
+		else src.a = max( smp.a * outlineColor.a, src.a ) * ( 1.0 - src.a ) * color.a;";
+	}
+	
+	// blending with background modes
+	if ( featuresMask & SHADER_BLEND ) {
+		params +=
+		"uniform sampler2D background;\n\
+		uniform vec2 backgroundSize;\n\
+		uniform int blendMode;";
+		funcs +=
+		"vec3 rgb2hsv(vec3 c) {\n\
+		vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\
+		vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\
+		vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\
+		float d = q.x - min(q.w, q.y);\n\
+		float e = 1.0e-10;\n\
+		return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\
+		} \n\
+		vec3 hsv2rgb(vec3 c) { \n\
+		vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0); \n\
+		vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www); \n\
+		return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y); \n\
+		}";
+		features +=
+		"vec2 fragCoord = gl_FragCoord.xy;\n\
+		if ( blendMode == 12 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
+		features += glsles ?
+		"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
+		"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
+		features +=
+		"if ( blendMode == 1 ) src.rgb += bg.rgb; // add \n\
+		else if ( blendMode == 2 ) src.rgb = bg.rgb - src.rgb; // sub \n\
+		else if ( blendMode == 3 ) src.rgb = bg.rgb * src.rgb; // mul \n\
+		else if ( blendMode == 4 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) * (vec3(1.0,1.0,1.0) - src.rgb); // screen \n\
+		else if ( blendMode == 5 ) src.rgb = vec3(1.0,1.0,1.0) - (vec3(1.0,1.0,1.0) - bg.rgb) / src.rgb; // burn \n\
+		else if ( blendMode == 6 ) src.rgb = bg.rgb / (vec3(1.0,1.0,1.0) - src.rgb); // dodge\n\
+		else if ( blendMode == 7 ) { // invert \n\
+		src.rgb = ( vec3(1.0,1.0,1.0) - bg.rgb );\n\
+		} else if ( blendMode == 8 ) { // colorize \n\
+		vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+		vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+		src.rgb = hsv2rgb( vec3( srcHSV.x, srcHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 9 ) { // hue \n\
+		vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+		vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+		src.rgb = hsv2rgb( vec3( srcHSV.x, bgHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 10 ) { // sat \n\
+		vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+		vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+		src.rgb = hsv2rgb( vec3( bgHSV.x, srcHSV.y, bgHSV.z ) );\n\
+		} else if ( blendMode == 11 ) { // lum \n\
+		vec3 bgHSV = rgb2hsv( bg.rgb ); \n\
+		vec3 srcHSV = rgb2hsv( src.rgb ); \n\
+		src.rgb = hsv2rgb( vec3( bgHSV.x, bgHSV.y, srcHSV.z ) );\n\
+		} else if ( blendMode == 12 ) src.rgb = bg.rgb; // refract \n\
+		\n";
+	}
+	
+	// stippling
+	if ( featuresMask & SHADER_STIPPLE ) {
+		params +=
+		"uniform int stipple;\n\
+		uniform int stippleAlpha;\n";
+		features +=
+		"int index = int(mod(gl_FragCoord.x * 16.0, 64.0) / 16.0) + int(mod(gl_FragCoord.y * 16.0, 64.0) / 16.0) * 4;\n\
+		int limit = 0;\n\
+		int stippleValue = stipple; \n\
+		if ( stippleAlpha > 0 ) stippleValue = 16 * int( src.a * float(stipple) / 15.0 );\n\
+		if (index == 0) limit = 625;\n\
+		else if (index == 1) limit = 5625;\n\
+		else if (index == 2) limit = 1875;\n\
+		else if (index == 3) limit = 6875;\n\
+		else if (index == 4) limit = 8125;\n\
+		else if (index == 5) limit = 3125;\n\
+		else if (index == 6) limit = 9375;\n\
+		else if (index == 7) limit = 4375;\n\
+		else if (index == 8) limit = 2500;\n\
+		else if (index == 9) limit = 7500;\n\
+		else if (index == 10) limit = 1250;\n\
+		else if (index == 11) limit = 6250;\n\
+		else if (index == 12) limit = 10000;\n\
+		else if (index == 13) limit = 5000;\n\
+		else if (index == 14) limit = 8750;\n\
+		else if (index >= 15) limit = 3750;\n\
+		if ( stippleValue < limit ) discard;\n";
 	}
 	
 	// add discarding when alpha = 0

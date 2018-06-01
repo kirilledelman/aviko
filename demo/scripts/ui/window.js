@@ -199,6 +199,7 @@ include( './ui' );
 			modalBackground.resize( App.windowWidth, App.windowHeight );
 			go.setTransform( ( App.windowWidth - w ) * 0.5, ( App.windowHeight - h ) * 0.5 );
 		}
+		go.fire( 'layout', w, h );
 	}
 
 	function modalBackgroundCallback() {

@@ -37,6 +37,9 @@ public:
 	// ignore push, splice, etc..
 	bool lockedSize = false;
 	
+	// can't change type after creation
+	bool lockedType = false;
+	
 // notifications
 	
 	/// set to callback func to call on change (used by BodyShape etc)

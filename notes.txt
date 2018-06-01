@@ -1,29 +1,23 @@
-Tooltip - check if target object is topmost by doing query
 
-Don't create shape on body creation in constructor, add method - "makeDefaultShape" or
-something, creating shape from sprite, or shape
+Body
+	add method - "makeDefaultShape" creating shape from sprite, or shape
 
 Propertylist
 	file path lookup for textfield autocomplete ->
 		save as JSON, new Object from JSON
-
+	texture etc. lookup for textfields
 
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default
 
-Negative outline with .color .a < 1 doesn't work
 
 Image
 	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
 	add drawing methods for shapes, sprites
 	add image texture from drawing instructions - similar to svg,  ???
 
-Textfield
-	copying formatted text includes first formatting char
-
 ScriptableObject
 	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
-	change serializeMask to TypedArray<string>?
 
 GameObject
 	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash

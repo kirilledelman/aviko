@@ -803,7 +803,6 @@ include( './ui' );
 				_gs.push( g );
 			} else {
 				unsortedGroup = g;
-				log("found unsorted group ", stringify(g));
 				continue;
 			}
 			var props = regroup[ g.name ] = [];
@@ -1502,11 +1501,11 @@ Color.__propertyListConfig = Color.__propertyListConfig ||
 {
 	showAll: false,
 	properties: {
-		'r': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
-		'g': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
-		'b': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
-		'a': { min: 0, max: 1, step: 0.1, reloadOnChange: true },
-		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i }, reloadOnChange: true },
+		'r': { min: 0, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Red." },
+		'g': { min: 0, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Green." },
+		'b': { min: 0, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Blue." },
+		'a': { min: 0, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Alpha (opacity)." },
+		'hex': { style: { selectAllOnFocus: true, pattern: /^[0-9a-f]{0,8}$/i }, reloadOnChange: true, tooltip: "Color as a hexadecimal RGBA value." },
 	},
 	groups: [ { properties: [ 'r', 'g', 'b', 'a', 'hex' ] } ]
 }
@@ -1514,10 +1513,9 @@ Color.__propertyListConfig = Color.__propertyListConfig ||
 GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 {
 	showAll: true,
-	/*actions: [
+	actions: [
 		{ text: "Add child", action: function() { this.pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } },
-		// { text: "Test Button", button: true, action: function(){ log( this ); }, targetUpdated: function( pl ) { log( this, pl ); } }
-	],*/
+	],
 	properties: {
 		'name': { tooltip: "Object name. It does not have to be unique." },
 		'script': { reloadOnChange: 'refresh', tooltip: "Path to .js file defining this GameObject's functionality." },
@@ -1558,7 +1556,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 			actions: [
 			{ text:"new UI", action: function() { this.pushToTarget( this.target.ui = new UI(), 'ui' ); } }
 		] },
-		'__propertyListConfig': false,
+		// '__propertyListConfig': false,
 		'worldX': false, 'worldY': false, 'worldScale': false, 'worldScaleX': false, 'worldScaleY': false,
 		'worldAngle': false, 'scale': false, 'numChildren': false,
 	},
@@ -1577,7 +1575,6 @@ Vector.__propertyListConfig = Vector.__propertyListConfig ||
 	showAll: true,
 	actions: [
 		{ text: "Add element", action: function () { this.addProperty( this.target.length, this.target.type ); } },
-		// { text: "Test Button", button: true, action: function(){ log( this ); }, targetUpdated: function( pl ) { log( this, pl ); } }
 	],
 	properties: {
 		type: {
@@ -1592,11 +1589,204 @@ Vector.__propertyListConfig = Vector.__propertyListConfig ||
 			{ text: "Object", value: "Object" },
 			{ text: "GameObject", value: "GameObject" },
 			], style: { autoAddValue: true },
-			tooltip: "Vector container type.",
-			reloadOnChange: 'refresh'
+			reloadOnChange: 'refresh',
+			tooltip: "Vector elements type.",
 		},
 		length: { min: 0, step: 1, liveUpdate: false, integer: true, reloadOnChange: 'refresh', tooltip: "Number of elements in Vector. Set to 0 to truncate." },
 		array: { readOnly: true, reloadOnChange: true, inline: true, tooltip: "Vector values as array. Modifying this array's elements will have no effect. Setting ^Barray^b property to another Array, however will overwrite the values." },
 		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true }
 	}
+}
+
+RenderShape.__propertyListConfig = RenderShape.__propertyListConfig ||
+{
+	showAll: true,
+	properties: {
+		active: { tooltip: "Render component is enabled." },
+
+		shape: {
+			enum: [
+			{ text: "None", value: Shape.None },
+			{ text: "Arc", value: Shape.Arc },
+			{ text: "Circle", value: Shape.Circle },
+			{ text: "Ellipse", value: Shape.Ellipse },
+			{ text: "Line", value: Shape.Line },
+			{ text: "Polygon", value: Shape.Polygon },
+			{ text: "Rectangle", value: Shape.Rectangle },
+			{ text: "Rounded Rectangle", value: Shape.RoundedRectangle },
+			{ text: "Sector", value: Shape.Sector },
+			{ text: "Triangle", value: Shape.Triangle },
+			{ text: "Chain", value: Shape.Chain },
+			], reloadOnChange: true,
+			tooltip: "Shape type.",
+		},
+
+		blendMode: {
+			enum: [
+			{ text: "Normal", value: BlendMode.Normal },
+			{ text: "Add", value: BlendMode.Add },
+			{ text: "Subtract", value: BlendMode.Subtract },
+			{ text: "Multiply", value: BlendMode.Multiply },
+			{ text: "Screen", value: BlendMode.Screen },
+			{ text: "Burn", value: BlendMode.Burn },
+			{ text: "Dodge", value: BlendMode.Dodge },
+			{ text: "Invert", value: BlendMode.Invert },
+			{ text: "Color", value: BlendMode.Color },
+			{ text: "Hue", value: BlendMode.Hue },
+			{ text: "Saturation", value: BlendMode.Saturation },
+			{ text: "Luminosity", value: BlendMode.Luminosity },
+			{ text: "Refract", value: BlendMode.Refract },
+			{ text: "Cut", value: BlendMode.Cut },
+			], tooltip: "Blending operation with the background."
+		},
+
+		color: { inline: true, tooltip: "Base color." },
+		addColor: { inline: true,
+			properties: {
+				'r': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional red." },
+				'g': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional green." },
+				'b': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional blue." },
+				'a': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional alpha." },
+				'hex': false,
+			},
+			tooltip: "Additive color."
+		},
+		outlineColor: { inline: true,
+			hidden: function (t){ return t.lineThickness == 0 || ( t.shape == Shape.Polygon && !t.filled ) || t.shape == Shape.Chain; },
+			tooltip: "The color of shape outline." },
+
+		stipple: { min: 0, max: 1, step: 0.1, tooltip: "Stippling trasparency effect amount." },
+		stippleAlpha: { tooltip: "Determines whether stippling is applied to alpha transparency." },
+
+		lineThickness: { min: 0, step: 1, reloadOnChange: 'outlineColor',
+			hidden: function (t){ return t.shape == Shape.Chain; }
+		},
+		filled: {
+			reloadOnChange: [ 'lineThickness', 'outlineColor' ],
+			hidden: function (t){ return t.shape == Shape.Chain || t.shape == Shape.Line; }
+		},
+		centered: { hidden: function (t){ return !( t.shape == Shape.Circle || t.shape == Shape.Ellipse || t.shape == Shape.Rectangle || t.shape == Shape.RoundedRectangle ); } },
+
+		width: { hidden: function (t){ return !( t.shape == Shape.Rectangle || t.shape == Shape.RoundedRectangle || t.shape == Shape.Ellipse ); } },
+		height: { hidden: function (t){ return !( t.shape == Shape.Rectangle || t.shape == Shape.RoundedRectangle || t.shape == Shape.Ellipse ); } },
+
+		radius: { hidden: function (t){ return !( t.shape == Shape.Circle || t.shape == Shape.Sector || t.shape == Shape.RoundedRectangle ); } },
+		innerRadius: { hidden: function (t){ return !( t.shape == Shape.Sector ); } },
+
+		startAngle: { hidden: function (t){ return !( t.shape == Shape.Sector || t.shape == Shape.Arc ); } },
+		endAngle: { hidden: function (t){ return !( t.shape == Shape.Sector || t.shape == Shape.Arc ); } },
+
+		x: { hidden: function (t){ return !( t.shape == Shape.Line || t.shape == Shape.Arc || t.shape == Shape.Sector || t.shape == Shape.Triangle ); } },
+		y: { hidden: function (t){ return !( t.shape == Shape.Line || t.shape == Shape.Arc || t.shape == Shape.Sector || t.shape == Shape.Triangle ); } },
+		x1: { hidden: function (t){ return !( t.shape == Shape.Triangle ); } },
+		x2: { hidden: function (t){ return !( t.shape == Shape.Triangle ); } },
+		y1: { hidden: function (t){ return !( t.shape == Shape.Triangle ); } },
+		y2: { hidden: function (t){ return !( t.shape == Shape.Triangle ); } },
+
+		points: {
+			inline: true,
+			properties: {
+				array: false,
+				type: false,
+				'#': { liveUpdate: true, deletable: true }
+			},
+			hidden: function (t){ return !( t.shape == Shape.Polygon || t.shape == Shape.Chain ); },
+			tooltip: "Sequence of x, y coordinates for Polygon and Chain shapes.",
+		},
+	},
+	groups: [
+		{ name: "Shape", properties:
+			[ 'active', 'shape', 'centered', 'filled', 'width', 'height', 'radius', 'innerRadius', 'startAngle', 'endAngle',
+				'x', 'y', 'x1', 'y1', 'x2', 'y2',
+				'points', 'lineThickness', ] },
+		{ name: "Blending", properties: [ 'blendMode', 'color', 'addColor', 'outlineColor', 'stipple', 'stippleAlpha' ] },
+	]
+}
+
+RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
+{
+	showAll: true,
+	properties: {
+
+		active: { tooltip: "Render component is enabled." },
+
+		texture: { // todo - autosuggest texture path
+			tooltip: "Path to texture or texture frame."
+		},
+
+		width: { min: 0, step: 1, tooltip: "Texture rendered width." },
+		height: { min: 0, step: 1, tooltip: "Texture rendered height." },
+		originalWidth: { disabled: true, tooltip: "Texture original width." },
+		originalHeight: { disabled: true, tooltip: "Texture original height." },
+
+		image: { nullable: true, tooltip: "Set to an instance of ^BImage^b class to render a dynamic texture.",
+			actions: [ { text:"new Image", action: function() { this.pushToTarget( this.target.image = new Image(), 'image' ); } }
+		] },
+
+		pivotX: { step: 0.1, tooltip: "Sprite rotational pivot X." },
+		pivotY: { step: 0.1, tooltip: "Sprite rotational pivot Y." },
+
+		tileX: { step: 1, tooltip: "Number of times to tile texture tiling in X direction." },
+		tileY: { step: 1, tooltip: "Number of times to tile texture tiling in Y direction." },
+		autoTileX: { tooltip: "Width-based automatic tiling." },
+		autoTileY: { tooltip: "Height-based automatic tiling." },
+
+		flipX: { tooltip: "Flip texture horizontally." },
+		flipY: { tooltip: "Flip texture vertically." },
+
+		slice: false,
+		sliceLeft: { min: 0, step: 1, tooltip: "Left slicing boundary." },
+		sliceTop: { min: 0, step: 1, tooltip: "Top slicing boundary." },
+		sliceBottom: { min: 0, step: 1, tooltip: "Bottom slicing boundary." },
+		sliceRight: { min: 0, step: 1, tooltip: "Right slicing boundary." },
+
+		color: { inline: true, tooltip: "Multiplicative color." },
+		addColor: { inline: true,
+			properties: {
+				'r': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional red." },
+				'g': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional green." },
+				'b': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional blue." },
+				'a': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional alpha." },
+				'hex': false,
+			},
+			tooltip: "Additive color."
+		},
+
+		stipple: { min: 0, max: 1, step: 0.1, tooltip: "Stippling trasparency effect amount." },
+		stippleAlpha: { tooltip: "Determines whether stippling is applied to alpha transparency." },
+
+		outlineColor: { inline: true, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Color of sprite outline." },
+		outlineOffsetX: { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Outline offset in X direction." },
+		outlineOffsetY: { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Outline offset in Y direction." },
+		outlineRadius: { min: -16, max: 16, step: 1, reloadOnChange: [ 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ], tooltip: "Sprite outline line thickness." },
+
+		blendMode: {
+			enum: [
+			{ text: "Normal", value: BlendMode.Normal },
+			{ text: "Add", value: BlendMode.Add },
+			{ text: "Subtract", value: BlendMode.Subtract },
+			{ text: "Multiply", value: BlendMode.Multiply },
+			{ text: "Screen", value: BlendMode.Screen },
+			{ text: "Burn", value: BlendMode.Burn },
+			{ text: "Dodge", value: BlendMode.Dodge },
+			{ text: "Invert", value: BlendMode.Invert },
+			{ text: "Color", value: BlendMode.Color },
+			{ text: "Hue", value: BlendMode.Hue },
+			{ text: "Saturation", value: BlendMode.Saturation },
+			{ text: "Luminosity", value: BlendMode.Luminosity },
+			{ text: "Refract", value: BlendMode.Refract },
+			{ text: "Cut", value: BlendMode.Cut },
+			], tooltip: "Blending operation with the background."
+		},
+
+	},
+	groups: [
+		{ name: "Sprite", properties: [ 'active', 'texture', 'image', ] },
+		{ name: "Transform", properties:
+			[ 'width', 'height', 'originalWidth', 'originalHeight', 'pivotX', 'pivotY', 'flipX', 'flipY',
+				'tileX', 'tileY', 'autoTileX', 'autoTileY', ] },
+		{ name: "Outline", properties: [ 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ] },
+		{ name: "Blending", properties: [ 'blendMode', 'color', 'addColor', 'stipple', 'stippleAlpha' ] },
+		{ name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ] },
+	]
 }

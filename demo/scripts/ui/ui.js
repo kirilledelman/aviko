@@ -628,12 +628,10 @@ UI.style = UI.style || {
 					},
 					over: {
 						background: 0xf6f6f6,
-						lineThickness: 0,
 						label: { color: 0x0 }
 					},
 					down: {
 						background: 0x0066a5,
-						lineThickness: 0,
 						label: { color: 0xFFFFFF }
 					},
 					focus: {
@@ -656,6 +654,20 @@ UI.style = UI.style || {
 
 		},
 
+	},
+
+	// (ui/resizer.js)
+	resizer: {
+
+		minWidth: 6,
+		minHeight: 6,
+
+		states: {
+			off: { background: false },
+			over: { background: 0xFFFFFF },
+			dragging: { background: 0x0066a5 },
+			collapsed: { background: 0x333333 },
+		}
 	},
 
 	// settings for focus rectangle (ui/panel.js)

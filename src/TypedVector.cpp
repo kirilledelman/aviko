@@ -74,6 +74,7 @@ void TypedVector::InitClass() {
 	}),
 	 static_cast<ScriptIndexCallback>([]( void* p, uint32_t index, ArgValue val ){
 		TypedVector* self = (TypedVector*) p;
+		if ( self->lockedSize && index >= self->GetLength() ) return ArgValue();
 		self->SetElement( val, (int) index );
 		self->Notify();
 		return val;
@@ -84,6 +85,7 @@ void TypedVector::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *p, int val ){ return ((TypedVector*) p)->GetLength(); }),
 	 static_cast<ScriptIntCallback>([](void *p, int val){
 		TypedVector* self = (TypedVector*) p;
+		if ( self->lockedSize ) return self->GetLength();
 		self->SetLength( val );
 		self->Notify();
 		return val;
@@ -101,6 +103,7 @@ void TypedVector::InitClass() {
 	}),
 	 static_cast<ScriptValueCallback>([](void *p, ArgValue val ){
 		TypedVector* self = (TypedVector*) p;
+		if ( self->lockedType && self->type != TypeUndefined ) return ArgValue( self->typeName.c_str() );
 		return self->InitWithType( val );
 	}), PROP_NOSTORE | PROP_ENUMERABLE | PROP_EARLY | PROP_SERIALIZED );
 	
@@ -141,6 +144,7 @@ void TypedVector::InitClass() {
 	( "push",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		TypedVector* self = (TypedVector*) go;
+		if ( self->lockedSize ) return true;
 		for ( size_t i = 0, np = sa.args.size(); i < np; i++ ){
 			self->PushElement( sa.args[ i ] );
 		}
@@ -152,6 +156,7 @@ void TypedVector::InitClass() {
 	( "pop",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		TypedVector* self = (TypedVector*) go;
+		if ( self->lockedSize ) return true;
 		sa.ReturnValue( self->PopElement() );
 		self->Notify();
 		return true;
@@ -161,6 +166,7 @@ void TypedVector::InitClass() {
 	( "clear",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		TypedVector* self = (TypedVector*) go;
+		if ( self->lockedSize ) return true;
 		self->Clear();
 		self->Notify();
 		return true;
@@ -186,11 +192,20 @@ void TypedVector::InitClass() {
 		return true;
 	}));
 	
+	script.AddProperty<TypedVector>
+	( "lockedSize",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((TypedVector*) b)->lockedSize; } ) );
+	
+	script.AddProperty<TypedVector>
+	( "lockedType",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((TypedVector*) b)->lockedType; } ) );
+	
 	script.DefineFunction<TypedVector>
 	( "splice",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		TypedVector* self = (TypedVector*) go;
 		int start = 0, numDelete = 0;
+		if ( self->lockedSize ) return true;
 		if ( !sa.ReadArguments( 1, TypeInt, &start, TypeInt, &numDelete ) ) {
 			script.ReportError( "usage: splice( Integer start, [ Integer numDelete, [ insertElement1, insertElement2 ... ] ] )" );
 			return false;
@@ -468,7 +483,7 @@ bool TypedVector::Set( ArgValue& in ) {
 			}
 		}
 		if ( !lockedSize ) this->SetLength( np );
-		for ( int i = 0; i < np; i++ ){
+		for ( int i = 0, n = this->GetLength(); i < n; i++ ){
 			this->SetElement( in.value.arrayValue->at( i ), i );
 		}
 		return true;
@@ -481,7 +496,7 @@ bool TypedVector::Set( ArgValue& in ) {
 			this->InitWithType( v );
 		}
 		if ( !lockedSize ) this->SetLength( np );
-		for ( int i = 0; i < np; i++ ){
+		for ( int i = 0, n = this->GetLength(); i < n; i++ ){
 			ArgValue val = other->GetElement( i );
 			this->SetElement( val, i );
 		}

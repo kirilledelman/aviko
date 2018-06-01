@@ -15,6 +15,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	this->polyPoints = new TypedVector( NULL );
 	ArgValue dv( "Float" );
 	this->polyPoints->InitWithType( dv );
+	this->polyPoints->lockedType = true;
 	this->polyPoints->callback = static_cast<TypedVectorCallback>([this](TypedVector* fv){ this->_renderPointsDirty = true; });
 	
 	// add defaults
@@ -22,7 +23,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 	
 	// outline color
 	Color* color = new Color( NULL );
-	color->SetInts( 0, 0, 0, 0 );
+	color->SetInts( 0, 0, 0, 255 );
 	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// read params
@@ -726,10 +727,13 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		case ShapeType::Triangle:
 			if ( behavior->filled ) {
 				GPU_TriFilled( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, color );
-				if ( outlineColor.a && behavior->lineThickness > 0.0 )
-					GPU_Tri( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, outlineColor );
+				if ( outlineColor.a && behavior->lineThickness > 0.0 ) {
+					float fv[ 6 ] = { behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2 };
+					GPU_Polyline( target, 3, fv, outlineColor, true );
+				}
 			} else {
-				GPU_Tri( target, behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2, color );
+				float fv[ 6 ] = { behavior->x, behavior->y, behavior->x1, behavior->y1, behavior->x2, behavior->y2 };
+				GPU_Polyline( target, 3, fv, color, true );
 			}
 			break;
 			

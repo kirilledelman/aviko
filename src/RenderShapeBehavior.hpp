@@ -75,7 +75,7 @@ public:
 	float startAngle = 0;
 	
 	/// end angle for arcs
-	float endAngle = 359.999;
+	float endAngle = 360;
 	
 	/// holds x,y point pairs for GPU_Polygon
 	TypedVector* polyPoints = NULL;
@@ -88,7 +88,7 @@ public:
 	void UpdatePoints();
 	
 	/// line thickness
-	float lineThickness = 2;
+	float lineThickness = 0;
 	
 	/// if color alpha != 0 draws outline
 	Color *outlineColor = NULL;

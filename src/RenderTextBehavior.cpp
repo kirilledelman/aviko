@@ -494,6 +494,16 @@ void RenderTextBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<RenderTextBehavior>
+	( "pivotX", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "pivotY", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotY = val ); }) );
+	
+	script.AddProperty<RenderTextBehavior>
 	( "autoResize",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->autoResize; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){

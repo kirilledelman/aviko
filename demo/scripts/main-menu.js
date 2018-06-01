@@ -50,14 +50,13 @@ new (function (){
 
 	// button click handler
 	var buttonClick = function () {
-		// load scene
+		// load scene and animate transition
 		var sub = include( this.src );
-
-		// animate transition
+		sub.ui.async( sub.ui.requestLayout, 0.2 );
 		async( function () {
-			App.pushScene( sub );
 			transitionScene( sub, scene, -1 );
-		}, 0.5 );
+			App.pushScene( sub );
+		}, 0.25 );
 	};
 
 	buttons.addChild( 'ui/button', {
@@ -68,7 +67,7 @@ new (function (){
 
 	buttons.addChild( 'ui/button', {
 		text: "Shapes",
-		src: 'sprites',
+		src: 'shapes',
 		click: buttonClick
 	} );
 

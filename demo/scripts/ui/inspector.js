@@ -57,20 +57,36 @@ new (function( params ){
 		title: "Inspector",
 		draggable: true,
 		resizable: true,
+		minHeight: 120,
 		x: 0, y: App.windowHeight * 0.5,
 		width: App.windowWidth, height: App.windowHeight * 0.5,
 		layoutType: Layout.Horizontal,
 		layoutAlignX: LayoutAlign.Start,
 		layoutAlignY: LayoutAlign.Stretch,
-		spacingX: 4,
+		spacingX: 1,
 		fixedPosition: true,
 		ignoreCamera: true,
+	} );
+
+	// scene
+	var sceneExplorer = window.addChild( './panel', {
+		background: 0x333333,
+		minWidth: 100,
+	} );
+
+	// resizer
+	var resizer = window.addChild( './resizer', {
+		minSize: 100,
+		maxSize: 300,
+		collapsible: true,
+		target: sceneExplorer
 	} );
 
 	// console container
 	console = window.addChild( './panel', {
 		flex: 1,
 		fitChildren: false,
+		minWidth: 100,
 		layoutType: Layout.Vertical,
 		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Start
@@ -133,12 +149,26 @@ new (function( params ){
 		}
 	} );
 
+	// resizer 2
+	resizer = window.addChild( './resizer', {
+		minSize: 280,
+		maxSize: 350,
+		collapsible: true,
+	} );
+
 	// property editor
-	this.propertyList = propertyList = window.addChild( './property-list', {
-		minWidth: 300,
+	resizer.target = this.propertyList = propertyList = window.addChild( './property-list', {
+		minWidth: 280,
 		focusGroup: 'inspector',
 		render: new RenderShape( Shape.Rectangle, { color: 0xFFFFFF } ),
 	} );
+
+	// update window minWidth
+	window.layout = function ( w, h ) {
+		window.minWidth = 20 + console.minWidth +
+			Number( sceneExplorer.active ) * sceneExplorer.minWidth +
+			Number( propertyList.active ) * propertyList.minWidth;
+	}
 
 	// events and callbacks
 
