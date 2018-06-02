@@ -711,12 +711,12 @@ include( './ui' );
 		while ( header.numChildren > 2 ) header.removeChild( header.numChildren - 1 );
 
 		// empty target
-		if ( !target ) {
+		/*if ( !target ) {
 			moreButton.disabled = true;
 			return;
 		} else {
 			moreButton.disabled = false;
-		}
+		}*/
 
 		// process actions .hidden and .disabled conditionals
 		if ( _actions.length ) {
@@ -747,24 +747,75 @@ include( './ui' );
 		}
 		moreButton.click = function () {
 			// popup menu items
-			var items = [ { text: "Reload object", action: function (){ this.refresh(); } }, ];
-			// can add properties
-			if ( !readOnly && showAll !== false ) {
-				items.push( {
-					text: "Add property", action: function () {
-						this.addProperty();
-					}
-				} );
+			var items = [];
+			if ( target ) {
+
+				items.push( { text: "Reload object", action: function () { this.refresh(); } } );
+
+				// can add properties
+				if ( !readOnly && showAll !== false ) {
+					items.push( {
+						text: "Add property", action: function () {
+							this.addProperty();
+						}
+					} );
+				}
+
+				// load/save
+				items.push( null );
 			}
+
+			items.push( {
+				text: "Load object",
+				action: function() {
+					this.browsePath(
+						"Load Object",
+                        "Enter a path to a ^B.json^b file to instantiate a new object from, and load into ^B$0^b global variable.",
+                        true,
+						function ( path ) {
+							var obj = null;
+							try {
+								obj = load( path, true );
+							} catch ( e ) {
+								return "Error parsing JSON file.";
+							}
+							if ( obj ) {
+								$0 = unserialize( obj );
+								return true;
+							} else {
+								log( "Couldn't load file." );
+								return "Couldn't load file.";
+							}
+						}
+					);
+				}
+			} );
+
 			// save only if serializable
-			if ( target.serializeable !== false ) {
+			if ( target && target.serializeable !== false ) {
 				items.push( {
-					text: "Serialize to JSON",
-					action: function() { log( stringify( this.target ) ); }
+					text: "Save object",
+					action: function() {
+					this.browsePath(
+						"Save Object",
+                        "Enter a path to a ^B.json^b file to serialize object currently in ^B$0^b global variable.",
+                        false,
+						function ( path ) {
+							if ( save( target, path ) ) {
+								log( "Saved ^B$0^b to ^I" + path + "^i" );
+								return true;
+							} else {
+								log( "Couldn't save to file." );
+								return false;
+							}
+						}
+					);
+				}
 				} );
 			}
+
 			// add object specific actions from .actions section of __propertyListConfig
-			if ( this.actions.length ) {
+			if ( target && this.actions.length ) {
 				items.push( null );
 				items = items.concat( this.actions );
 			}
@@ -787,6 +838,9 @@ include( './ui' );
 			cont.addChild( inspector );
 			return;
 		}
+
+		// no target/stop here
+		if ( !target ) return;
 
 		// displaying standard inspector
 
@@ -1194,11 +1248,97 @@ include( './ui' );
 		}
 	}
 
+	go.browsePath = function ( title, prompt, mustExist, finished ) {
+		// Add modal window
+		var win = App.overlay.addChild( './window', {
+			modal: true,
+			minWidth: 300,
+			pad: 8,
+			title: title,
+			layoutType: Layout.Vertical,
+			layoutAlignX: LayoutAlign.Stretch,
+			layoutAlignY: LayoutAlign.Start,
+			fitChildren: true,
+		} );
+		// instructions
+		win.addChild( './text', {
+			pad: 8,
+			text: prompt,
+			color: 0x0,
+			wrap: true,
+			bold: false,
+		} );
+		// field
+		var fileName = win.addChild( './textfield', {
+			focusGroup: 'browsePath',
+			text: "/",
+			change: function() { this.debounce( 'validate', validate, 1 ); }
+		} );
+		var status = win.addChild( './text', {
+			pad: 4,
+			text: "Enter path to a file.",
+			color: 0x0,
+			wrap: true,
+			bold: false,
+		} );
+		// Cancel, OK
+		var btns = win.addChild( './panel', {
+			layoutType: Layout.Horizontal,
+			layoutAlignX: LayoutAlign.Stretch,
+			spacing: 4,
+			marginTop: 16,
+		} );
+		btns.addChild( './button', {
+			text: "Cancel",
+			focusGroup: 'browsePath',
+			flex: 2,
+			click: win.close
+		} );
+		var btnOk = btns.addChild( './button', {
+			text: "Accept",
+			focusGroup: 'browsePath',
+			disabled: true,
+			flex:3,
+			click: function() {
+				// call done with path
+				var r = finished.call( go, fileName.text );
+				if ( r !== true ) {
+					status.text = r;
+					btnOk.disabled = true;
+					fileName.focus();
+				} else win.close();
+			}
+		} );
+
+		function validate() {
+			// check if file exists
+			var pathOk = ( fileName.text.replace( '.', '' ).split( '/' ).join( '' ).length > 0 );
+			if ( pathOk ) {
+				var exists = fileExists( fileName.text );
+				if ( mustExist ) {
+					if ( exists == 'directory' ) {
+						status.text = "Directory OK, add file name.";
+						btnOk.disabled = true;
+					} else {
+						status.text = exists ? "File found at path." : "Enter path to a file.";
+						btnOk.disabled = ( !exists && mustExist );
+					}
+				} else {
+					status.text = exists ? "File already exists. Will overwrite." : "Path OK";
+					btnOk.disabled = false;
+				}
+			} else {
+				status.text = "Enter path to a file.";
+				btnOk.disabled = true;
+			}
+		}
+	};
+
 	// shows dialog that lets create a new property
 	go.addProperty = function ( forceName, forceType, forceValue, mode ) {
 		if ( typeof ( mode ) === 'undefined' ) mode = 'add';
 		var forceNameIsUndefined = ( typeof( forceName ) === 'undefined' );
-		// Add property window
+		// Add modal window
 		var win = App.overlay.addChild( './window', {
 			modal: true,
 			minWidth: 300,
@@ -1215,7 +1355,7 @@ include( './ui' );
 			text: ( mode == 'add' ? "Enter new property name, type and value." : "Edit property value." ),
 			color: 0x0,
 			wrap: true,
-			bold: false,
+			bold: true,
 		} );
 		// name
 		var nameLabel = win.addChild( './text', {

@@ -547,26 +547,52 @@ void Application::InitClass() {
 	}));
 	
 	script.DefineGlobalFunction
-	( "load",
+	( "fileExists",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		string filename;
 		if ( !sa.ReadArguments( 1, TypeString, &filename ) ) {
-			script.ReportError( "usage: load( String filename )" );
+			script.ReportError( "usage: fileExists( String filename )" );
+			return false;
+		}
+		// check path
+		string path = ResolvePath( filename.c_str(), NULL, NULL );
+		if ( access( path.c_str(), R_OK ) == 0 ) {
+			// file exists - check if file or dir
+			struct stat buf;
+			stat( path.c_str(), &buf );
+			sa.ReturnString( S_ISDIR(buf.st_mode) ? "directory" : "file" );
+		} else sa.ReturnBool( false );
+		return true;
+	}));
+	
+	script.DefineGlobalFunction
+	( "load",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		string filename;
+		bool parse = false;
+		if ( !sa.ReadArguments( 1, TypeString, &filename, TypeBool, &parse ) ) {
+			script.ReportError( "usage: load( String filename, [ Boolean parseJSON=false ] )" );
 			return false;
 		}
 		// read file
 		string path;
 		const char* buf = ReadFile( filename.c_str(), "json", NULL, &path, NULL );
 		if ( !buf ) {
-			script.ReportError( "JSON.load: file '%s' not found", filename.c_str() );
+			script.ReportError( "load: file '%s' not found", path.c_str() );
 			return false;
 		}
-		
-		// call own parse function
-		ScriptArguments parseArgs;
-		parseArgs.AddStringArgument( buf );
+		// if parse + ends with .json
+		if ( parse ) {
+			// call own parse function
+			ScriptArguments parseArgs;
+			parseArgs.AddStringArgument( buf );
+			ArgValue ret = script.CallClassFunction( "JSON", "parse", parseArgs );
+			sa.ReturnValue( ret );
+		} else {
+			// as string
+			sa.ReturnString( buf );
+		}
 		free( (void*) buf );
-		sa.ReturnValue( script.CallClassFunction( "JSON", "parse", parseArgs ) );
 		return true;
 	}));
 	
@@ -608,25 +634,44 @@ void Application::InitClass() {
 	( "save",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		void *obj = NULL;
+		string str;
+		bool overwrite = false;
 		string filename;
-		if ( !sa.ReadArguments( 2, TypeObject, &obj, TypeString, &filename ) ) {
-			script.ReportError( "usage: save( Object obj, String filename )" );
-			return false;
+		if ( !sa.ReadArguments( 2, TypeObject, &obj, TypeString, &filename, TypeBool, &overwrite ) ) {
+			if ( !sa.ReadArguments( 2, TypeString, &str, TypeString, &filename, TypeBool, &overwrite ) ) {
+				script.ReportError( "usage: save( Object obj | String str, String filename, [ Boolean overwrite=false ] )" );
+				return false;
+			}
 		}
 		
-		// call own stringify function
-		ScriptArguments parseArgs;
-		parseArgs.AddObjectArgument( obj );
-		parseArgs.AddObjectArgument( NULL );
-		parseArgs.AddStringArgument( "\t" );
-		ArgValue ret = script.CallGlobalFunction( "stringify", parseArgs );
-		if ( ret.type != TypeString ) {
-			sa.ReturnBool( false );
-			return true;
+		// if object, serialize
+		ArgValue ret;
+		if ( obj ) {
+			// call own stringify function
+			ScriptArguments parseArgs;
+			parseArgs.AddObjectArgument( obj );
+			parseArgs.AddBoolArgument( true );
+			ret = script.CallGlobalFunction( "stringify", parseArgs );
+			if ( ret.type != TypeString ) {
+				sa.ReturnBool( false );
+				return true;
+			}
+		// just save string
+		} else {
+			ret.type = TypeString;
+			ret.value.stringValue = new string( str );
 		}
 		
 		// save to file
-		sa.ReturnBool( SaveFile( ret.value.stringValue->c_str(), ret.value.stringValue->length(), filename.c_str(), "json" ) );
+		bool existsOverwrite = overwrite;
+		bool result = SaveFile( ret.value.stringValue->c_str(), ret.value.stringValue->length(), filename.c_str(), "json", &existsOverwrite );
+		
+		// return bool, or 'exists'
+		if ( result || overwrite ) {
+			sa.ReturnBool( result );
+		} else if ( !overwrite && existsOverwrite ) {
+			sa.ReturnString( "exists" );
+		}
 		
 		// all good
 		return true;
@@ -1398,10 +1443,25 @@ const char* ReadFile( const char* filepath, const char* ext, const char* optiona
 
 /// saves file to "optional/path/to/filename.optionalExt". If subPath is provided, start path is working directory / subPath / filepath, otherwise, start point is working directory
 /// if filepath starts with /, ignores subPath
-bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext ) {
+/// if existsOverwrite is supplied:
+//		if file exists, and initial value of *existsOverwrite == true, file will be overwritten, returns true
+//		if file exists, and initial value of *existsOverwrite == false, will set existsOverwrite = true, and return false
+// if existsOverwrite == NULL and file exists, will not overwrite and return false
+bool SaveFile( const char* data, size_t numBytes, const char* filepath, const char* ext, bool* existsOverwrite=NULL ) {
 	
 	// path
 	string path = ResolvePath( filepath, ext, NULL );
+	
+	// check if exists
+	if ( access( path.c_str(), R_OK ) == 0 ) {
+		if ( existsOverwrite != NULL ) {
+			// overwrite is false
+			if ( *existsOverwrite == false ) {
+				*existsOverwrite = true; // mark exists, fail
+				return false;
+			}
+		} else return false;
+	}
 	
 	// create subfolders leading up to file
 	vector<string> parts = Resource::splitString( path.substr( app.currentDirectory.length() + 1 ), string( "/" ) );

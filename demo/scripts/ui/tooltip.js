@@ -76,6 +76,7 @@ include( './ui' );
 		wrapEnabled: false,
 		ignoreCamera: true,
 	} );
+	panel.ui.mouseOut = hide;
 
 	label = panel.addChild( './text', {
 		multiLine: true,

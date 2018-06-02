@@ -389,7 +389,8 @@ bool Controller::SaveConfig() {
 	
 	// save to file
 	string path = app.configDirectory + this->name;
-	return SaveFile( str.value.stringValue->c_str(), str.value.stringValue->length(), path.c_str(), "json" );
+	bool overwrite = true;
+	return SaveFile( str.value.stringValue->c_str(), str.value.stringValue->length(), path.c_str(), "json", &overwrite );
 }
 
 bool Controller::DeleteConfig() {

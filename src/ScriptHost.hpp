@@ -1197,7 +1197,7 @@ public:
 		int argc;
 		jsval* params = args.GetFunctionArguments( &argc );
 		if ( !JS_CallFunctionName(script.js, class_constructor, funcName, argc, params, &rval ) ) {
-			printf( "CallClassFunction: %s.%s is not a function\n", className, funcName );
+			// printf( "CallClassFunction: %s.%s is not a function\n", className, funcName );
 			return ArgValue();
 		}
 		return ArgValue( rval );

@@ -2,6 +2,9 @@
 Body
 	add method - "makeDefaultShape" creating shape from sprite, or shape
 
+RenderText
+	newLinesResetFormatting - resets formatting on line wrap
+
 Propertylist
 	file path lookup for textfield autocomplete ->
 		save as JSON, new Object from JSON

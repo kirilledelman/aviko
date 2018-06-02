@@ -1185,14 +1185,14 @@ UI.base = UI.base || {
 					preferredDirection: 'up',
 				} );
 			}
-		};
+		}.bind( this );
 
 		var cancel = function () {
-			this.cancelDebouncer( 'showTooltip' );
+			cancelDebouncer( 'showTooltip' );
 		};
 
 		// after delay
-		this.debounce( 'showTooltip', show, 2 );
+		debounce( 'showTooltip', show, 2 );
 		this.on( 'mouseOut', cancel, true );
 	},
 

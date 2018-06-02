@@ -257,6 +257,7 @@ include( './ui' );
 
 	// add modal background under window if present
 	go.added = function () {
+		cancelDebouncer( 'showTooltip' );
 		if ( modalBackground ) {
 			go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
 		}

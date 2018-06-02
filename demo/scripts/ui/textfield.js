@@ -590,7 +590,7 @@ include( './ui' );
 		// find either next, or previous word boundary
 		var i = startIndex + direction;
 		if ( direction < 0 ) i--;
-		var rx = /[\s.@'"\^=]/; // characters that function as "stops" or word boundary
+		var rx = /[\s.@'"\/,\^=]/; // characters that function as "stops" or word boundary
 		while( i > 0 && i < txt.length ) {
 			if ( txt.substr( i, 1 ).match( rx ) ) break;
 			i += direction;
