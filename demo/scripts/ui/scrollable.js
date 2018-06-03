@@ -197,7 +197,6 @@ include( './ui' );
 	ui = new UI();
 	ui.layoutType = Layout.Anchors;
 	ui.focusable = false;
-	ui.blocking = true;
 	go.ui = ui;
 
 	// container

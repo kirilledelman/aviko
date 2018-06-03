@@ -1,6 +1,7 @@
 // system includes and STL
 #include <stdio.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <string>
 #include <sstream>

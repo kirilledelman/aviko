@@ -113,6 +113,7 @@ include( './ui' );
 		ignoreCamera: true,
 		fixedPosition: true,
 		scrollbars: false,
+		blocking: true,
 	} );
 	go.updateItems = function () {
 

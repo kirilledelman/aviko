@@ -566,6 +566,95 @@ void Application::InitClass() {
 	}));
 	
 	script.DefineGlobalFunction
+	( "listDirectory",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		string filename;
+		ArgValueVector *extensions = NULL;
+		if ( !sa.ReadArguments( 1, TypeString, &filename ) ) {
+			script.ReportError( "usage: listDirectory( String filename, [ Array allowedFileExtensions ] )" );
+			return false;
+		}
+		if ( sa.args.size() >= 2 && sa.args[ 1 ].type == TypeArray ) extensions = sa.args[ 1 ].value.arrayValue;
+		ArgValueVector ret;
+
+		// base path
+		string path = ResolvePath( filename.c_str(), NULL, NULL );
+		string filter;
+		struct stat buf;
+		
+		// if current path exists
+		if ( access( path.c_str(), R_OK ) == 0 ) {
+			stat( path.c_str(), &buf );
+			// is not a directory ending with /
+			if ( !( path[ path.length() - 1 ] == '/' && S_ISDIR( buf.st_mode ) ) ){
+				// return empty set
+				sa.ReturnArray( ret );
+				return true;
+			}
+		// path doesn't exist,
+		} else {
+			// find last /
+			size_t lastSlash = path.find_last_of( "/" );
+			if ( lastSlash != string::npos && lastSlash != path.length() - 1 ) {
+				// check if path before slash exists
+				filter = path.substr( lastSlash + 1 );
+				path = path.substr( 0, lastSlash );
+				if ( access( path.c_str(), R_OK ) != 0 ) {
+					// return empty set
+					sa.ReturnArray( ret );
+					return true;
+				}
+			}
+		}
+		
+		// for each file in directory
+		struct dirent *ent;
+		DIR *dir = opendir( path.c_str() );
+		if ( dir != NULL ) {
+			while ( ( ent = readdir( dir ) ) != NULL ) {
+				
+				filename = ent->d_name;
+				
+				// skip . and ..
+				if ( filename.compare( "." ) == 0 || filename.compare( ".." ) == 0 ) continue;
+				
+				// if not a directory, and allowed extensions are supplied
+				string full = path + "/" + filename;
+				stat( full.c_str(), &buf );
+				bool isDir = S_ISDIR( buf.st_mode );
+				if ( !isDir && extensions ) {
+					// for each allowed extension
+					bool allowed = false;
+					for ( size_t i = 0, ne = extensions->size(); i < ne; i++ ) {
+						if ( (*extensions)[ i ].type != TypeString ) continue;
+						// match extension
+						if ( filename.length() > (*extensions)[ i ].value.stringValue->length() ) {
+							string ext = string( "." );
+							ext.append( (*extensions)[ i ].value.stringValue->c_str() );
+							if ( filename.substr( filename.length() - ext.length() ).compare( ext.c_str() ) == 0 ) {
+								allowed = true; break;
+							}
+						}
+					}
+					// no extension matched, skip entry
+					if ( !allowed ) continue;
+				}
+				
+				// if no filter, or matches filter, add to list
+				if ( !filter.length() || ( filename.length() >= filter.length() && filename.substr( 0, filter.length() ).compare( filter ) == 0 ) ) {
+					if ( isDir ) filename.append( "/" );
+					ret.push_back( filename.c_str() );
+				}
+			}
+			closedir (dir);
+		}
+		
+		// done
+		sa.ReturnArray( ret );
+		return true;
+	}));
+	
+	script.DefineGlobalFunction
 	( "load",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		string filename;
@@ -1270,7 +1359,8 @@ string ResolvePath( const char* filepath, const char* ext, const char* optionalS
 		unsigned lineNumber = 0;
 		JSScript* curScript = NULL;
 		if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
-			const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+			const char* sp = JS_GetScriptFilename( script.js, curScript );
+			string scriptPath = sp ? sp : app.currentDirectory;
 			string shortPath = scriptPath;
 			shortPath = shortPath.substr( app.currentDirectory.length() );
 			// find script

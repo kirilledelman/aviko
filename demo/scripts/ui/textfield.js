@@ -44,7 +44,7 @@ include( './ui' );
 	var autoGrow = false;
 	var numeric = false;
 	var integer = false;
-	var autocomplete = null;
+	var autocomplete = null, autocompleteParam = undefined;
 	var autocompleteReplaceStart = -1;
 	var newLinesRequireShift = true;
 	var minValue = -Infinity;
@@ -210,6 +210,11 @@ include( './ui' );
 		// (String) - alternatively, name of the function in UI.base namespace ( e.g. "autocompleteObjectProperty" for UI.base.autocompleteObjectProperty )
 		//  see UI.base.autocompleteObjectProperty for example
 		'autocomplete': { get: function (){ return autocomplete; }, set: function( v ){ autocomplete = v; } },
+
+		// (*) an extra parameter used by autocomplete function.
+		// object property lookup uses this a "this" target
+		// filename autocomplete uses this as an array for allowed file extensions
+		'autocompleteParam': { get: function (){ return autocompleteParam; }, set: function( v ){ autocompleteParam = v; } },
 
 		// (RegExp) allow typing only these characters. Regular expression against which to compare incoming character, e.g. /[0-9a-z]/i
 		'allowed': { get: function (){ return allowed; }, set: function( a ){ allowed = a; }  },
@@ -751,6 +756,9 @@ include( './ui' );
 				rt.selectionEnd = ( rt.selectionStart = rt.caretPosition ) + sugg.length;
 			}
 
+			go.fire( 'change', rt.text );
+			go.debounce( 'autocomplete', autocompleteCheck, 0.5 );
+
 		// no matches, remove popup
 		} else {
 			if ( go.popup ) { go.popup.parent = null; go.popup = null; }
@@ -951,10 +959,11 @@ include( './ui' );
 			    // complete word
 			    if ( go.popup ) {
 			        autocompleteCheck( true );
+				    stopEvent();
 			    } else if ( selectable && rt.selectionStart == rt.caretPosition && rt.selectionStart < rt.selectionEnd ) {
 				    rt.caretPosition = rt.selectionEnd;
 				    rt.selectionStart = rt.selectionEnd = 0;
-				    cancelAutocomplete();
+					if ( autocomplete ) go.debounce( 'autocomplete', autocompleteCheck, 0.5 );
 			    // tab character
 	            } else if ( tabEnabled ) {
 			        ui.keyPress( "\t" );

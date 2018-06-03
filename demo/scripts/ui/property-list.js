@@ -1217,6 +1217,14 @@ include( './ui' );
 								this.reload( field.name );
 							}
 						} );
+						if ( go.copiedValue.type === 'object' ) {
+							items.push( {
+								text: "Paste copy", action: function () {
+									field.target[ field.name ] = clone( this.copiedValue.value );
+									this.reload( field.name );
+								}
+							} );
+						}
 					}
 				}
 			}
@@ -1248,7 +1256,9 @@ include( './ui' );
 		}
 	}
 
+	// Load/Save filename dialog
 	go.browsePath = function ( title, prompt, mustExist, finished ) {
+
 		// Add modal window
 		var win = App.overlay.addChild( './window', {
 			modal: true,
@@ -1260,6 +1270,7 @@ include( './ui' );
 			layoutAlignY: LayoutAlign.Start,
 			fitChildren: true,
 		} );
+
 		// instructions
 		win.addChild( './text', {
 			pad: 8,
@@ -1268,10 +1279,13 @@ include( './ui' );
 			wrap: true,
 			bold: false,
 		} );
+
 		// field
 		var fileName = win.addChild( './textfield', {
 			focusGroup: 'browsePath',
-			text: "/",
+			text: go.__browseFileName || "",
+			autocomplete: UI.base.autocompleteFilePath,
+			autocompleteParam: [ 'json' ],
 			change: function() { this.debounce( 'validate', validate, 1 ); }
 		} );
 		var status = win.addChild( './text', {
@@ -1281,6 +1295,7 @@ include( './ui' );
 			wrap: true,
 			bold: false,
 		} );
+
 		// Cancel, OK
 		var btns = win.addChild( './panel', {
 			layoutType: Layout.Horizontal,
@@ -1302,14 +1317,20 @@ include( './ui' );
 			click: function() {
 				// call done with path
 				var r = finished.call( go, fileName.text );
+				// if done returned error, place it into status, keep editing
 				if ( r !== true ) {
 					status.text = r;
 					btnOk.disabled = true;
 					fileName.focus();
-				} else win.close();
+				} else {
+					// accepted, close
+					win.close();
+					go.__browseFileName = fileName.text;
+				}
 			}
 		} );
 
+		// checks path, enables OK
 		function validate() {
 			// check if file exists
 			var pathOk = ( fileName.text.replace( '.', '' ).split( '/' ).join( '' ).length > 0 );
@@ -1332,6 +1353,9 @@ include( './ui' );
 				btnOk.disabled = true;
 			}
 		}
+
+		// initial focus
+		fileName.focus();
 	};
 
 	// shows dialog that lets create a new property
@@ -1516,7 +1540,7 @@ include( './ui' );
 			propValue.text = val;
 			propValue.tabEnabled = tabs;
 			if ( isCode ) {
-				propValue.target = target;
+				propValue.autocompleteParam = target;
 				propValue.autocomplete = UI.base.autocompleteObjectProperty;
 			} else {
 				propValue.autocomplete = false;

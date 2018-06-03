@@ -1036,7 +1036,7 @@ UI.base = UI.base || {
 		var lastPeriod = 0;
 		var replaceStart = textfield.caretPosition; // if we support partial / midword matches in the future
 		var suggestions = [];
-		var target = ( textfield.target || global );
+		var target = ( textfield.autocompleteParam || global );
 		var numeric = /^\d+$/;
 		function funcParen( o, p, d ) { return ( typeof ( o[ p ] ) === 'function' ) ? ( d === 2 ? '()' : '(' ) : ''; }
 
@@ -1097,6 +1097,30 @@ UI.base = UI.base || {
 			replaceStart: replaceStart,
 			suggestions: suggestions
 		};
+	},
+
+	// textfield callback for autocompleting file path
+	autocompleteFilePath: function ( textfield ) {
+
+		// list files matching text in box
+		var tft = textfield.text;
+		var files = listDirectory( tft, textfield.autocompleteParam );
+		var suggestions = [];
+		var lastSlash = tft.lastIndexOf( '/' );
+		var tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
+		for ( var i = 0; i < files.length; i++ ){
+			var f = files[ i ];
+			suggestions.push( {
+				text: "^B" + f.substr( 0, tail.length ) + "^b" + f.substr( tail.length ),
+				value: f.substr( tail.length ) } );
+		}
+
+		// return result
+		return {
+			replaceStart: textfield.caretPosition,
+			suggestions: suggestions
+		};
+
 	},
 
 	// focus rectangle layout callback

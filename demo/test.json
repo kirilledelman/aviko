@@ -1,0 +1,188 @@
+{
+	"__class__": "GameObject",
+	"z": 0,
+	"y": 0,
+	"ignoreCamera": false,
+	"x": 0,
+	"eventMask": {
+		"__class__": "Vector",
+		"type": "String",
+		"array": [],
+		"length": 0
+	},
+	"body": null,
+	"script": "",
+	"renderAfterChildren": false,
+	"active": true,
+	"ui": null,
+	"opacity": 1,
+	"angle": 0,
+	"skewX": 0,
+	"name": "",
+	"children": [],
+	"scaleY": 1,
+	"scaleX": 1,
+	"skewY": 0,
+	"serializeable": true,
+	"render": {
+		"__class__": "RenderText",
+		"active": true,
+		"pivotY": 0,
+		"antialias": true,
+		"selectionStart": 0,
+		"height": 57,
+		"scrollLeft": 0,
+		"scrollTop": 0,
+		"characterSpacing": 0,
+		"outline": 0,
+		"pivotX": 0,
+		"selectionEnd": 0,
+		"outlineRadius": 0,
+		"dirty": false,
+		"newLinesResetFormatting": false,
+		"showCaret": false,
+		"color8": {
+			"__class__": "Color",
+			"r": 0.6666666865348816,
+			"a": 1,
+			"b": 0.6666666865348816,
+			"g": 0.6666666865348816
+		},
+		"revealStart": 0,
+		"caretPosition": 0,
+		"outlineOffsetX": 0,
+		"color5": {
+			"__class__": "Color",
+			"r": 0.20000000298023224,
+			"a": 1,
+			"b": 1,
+			"g": 1
+		},
+		"selectionColor": {
+			"__class__": "Color",
+			"r": 0,
+			"a": 1,
+			"b": 0.6901960968971252,
+			"g": 0.43921568989753723
+		},
+		"backgroundColor": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 0,
+			"b": 1,
+			"g": 1
+		},
+		"color3": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 1,
+			"g": 0.20000000298023224
+		},
+		"formatting": true,
+		"align": 2,
+		"text": "Aviko is a simple 2D game engine, geared towards learning and rapid prototyping. This demo shows some of Aviko's capabilities, and demo's source code can be used to learn how to accomplish common tasks.",
+		"blendMode": 0,
+		"stippleAlpha": false,
+		"width": 600,
+		"outlineOffsetY": 0,
+		"size": 16,
+		"boldFont": "Roboto-Black",
+		"multiLine": true,
+		"bold": false,
+		"font": "Roboto-Regular",
+		"autoResize": false,
+		"italicFont": "Roboto-Italic",
+		"addColor": {
+			"__class__": "Color",
+			"r": 0,
+			"a": 0,
+			"b": 0,
+			"g": 0
+		},
+		"color7": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 1,
+			"g": 1
+		},
+		"textColor": {
+			"__class__": "Color",
+			"r": 0.20000000298023224,
+			"a": 1,
+			"b": 0.20000000298023224,
+			"g": 0.20000000298023224
+		},
+		"color9": {
+			"__class__": "Color",
+			"r": 0.4000000059604645,
+			"a": 1,
+			"b": 0.4000000059604645,
+			"g": 0.4000000059604645
+		},
+		"color6": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 0.20000000298023224,
+			"g": 1
+		},
+		"color4": {
+			"__class__": "Color",
+			"r": 0.20000000298023224,
+			"a": 1,
+			"b": 0.20000000298023224,
+			"g": 1
+		},
+		"revealEnd": 0,
+		"color1": {
+			"__class__": "Color",
+			"r": 0.20000000298023224,
+			"a": 1,
+			"b": 1,
+			"g": 0.20000000298023224
+		},
+		"color0": {
+			"__class__": "Color",
+			"r": 0,
+			"a": 1,
+			"b": 0,
+			"g": 0
+		},
+		"showSelection": false,
+		"color": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 1,
+			"g": 1
+		},
+		"selectionTextColor": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 1,
+			"g": 1
+		},
+		"wrap": true,
+		"stipple": 0,
+		"outlineColor": {
+			"__class__": "Color",
+			"r": 0,
+			"a": 1,
+			"b": 0,
+			"g": 0
+		},
+		"italic": false,
+		"boldItalicFont": "Roboto-BlackItalic",
+		"color2": {
+			"__class__": "Color",
+			"r": 1,
+			"a": 1,
+			"b": 0.20000000298023224,
+			"g": 0.20000000298023224
+		},
+		"lineSpacing": 0
+	}
+}
