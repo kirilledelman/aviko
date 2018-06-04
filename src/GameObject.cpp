@@ -1048,6 +1048,18 @@ void GameObject::InitClass() {
 		return true;
 	}));
 
+	script.DefineFunction<GameObject>
+	("requestLayout",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		GameObject* self = (GameObject*) p;
+		if ( !self->ui ) return true;
+		if ( sa.args.size() )
+			self->ui->RequestLayout( sa.args[ 0 ] );
+		else
+			self->ui->RequestLayout( ArgValue() );
+		return true;
+	}));
+	
 }
 
 
@@ -1219,7 +1231,11 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			GameObjectIterator it = find( parentList->begin(), listEnd, this );
 			
 			// remove from list
-			if ( it != listEnd ) parentList->erase( it );
+			int removedAt = -1;
+			if ( it != listEnd ) {
+				removedAt = (int) (it - parentList->begin());
+				parentList->erase( it );
+			}
 			
 			// clear
 			this->parent = NULL;
@@ -1229,6 +1245,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			event.name = EVENT_REMOVED;
 			event.behaviorParam = oldParent;
 			event.scriptParams.AddObjectArgument( oldParent->scriptObject );
+			event.scriptParams.AddIntArgument( removedAt );
 			this->CallEvent( event );
 			
 			// call child removed
@@ -1237,6 +1254,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			event.name = EVENT_CHILDREMOVED;
 			event.behaviorParam = this;
 			event.scriptParams.AddObjectArgument( this->scriptObject );
+			event.scriptParams.AddIntArgument( removedAt );
 			oldParent->CallEvent( event );
 		}
 		
@@ -1257,9 +1275,11 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			if ( desiredPosition < 0 ) desiredPosition = numChildren + 1 + desiredPosition;
 			// insert at location
 			if ( desiredPosition <= numChildren ) {
-				newParent->children.insert( newParent->children.begin() + max( 0, desiredPosition ), this );
+				desiredPosition = max( 0, desiredPosition );
+				newParent->children.insert( newParent->children.begin() + desiredPosition, this );
 			} else {
 				newParent->children.push_back( this );
+				desiredPosition = (int) newParent->children.size();
 			}
 			
 			// call event on this object only
@@ -1267,6 +1287,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			event.name = EVENT_ADDED;
 			event.behaviorParam = newParent;
 			event.scriptParams.AddObjectArgument( newParent->scriptObject );
+			event.scriptParams.AddIntArgument( desiredPosition );
 			this->CallEvent( event );
 			
 			// if orphan status is about to change
@@ -1299,6 +1320,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			event.name = EVENT_CHILDADDED;
 			event.behaviorParam = this;
 			event.scriptParams.AddObjectArgument( this->scriptObject );
+			event.scriptParams.AddIntArgument( desiredPosition );
 			newParent->CallEvent( event );
 			
 		// no new parent - means we've definitely been removed from scene
@@ -1312,6 +1334,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			
 		}
 	}
+	
 }
 
 // 

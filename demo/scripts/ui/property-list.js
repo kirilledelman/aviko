@@ -28,7 +28,7 @@
 
 	Events:
 		'change' - a property has changed - callback( targetObject, propertyName, newValue, oldValue )
-		TODO - add "final" param to 'change' event to facilitate undo system
+		'targetChanged'
 
 */
 
@@ -122,6 +122,7 @@ include( './ui' );
 		'target': { get: function (){ return target; }, set: function( v ){
 			target = v;
 			targetStack.length = 0;
+			go.fire( 'targetChanged', v );
 			go.debounce( 'refresh', go.refresh );
 		} },
 
@@ -248,6 +249,7 @@ include( './ui' );
 			if ( targetStack.length ) {
 				var pop = targetStack[ targetStack.length - 1 ];
 				target = pop.target;
+				go.fire( 'targetChanged', target );
 				targetStack.pop();
 				go.refresh( pop.scrollTop );
 				if ( targetStack.length == 0 ) backButton.blur();
@@ -470,7 +472,7 @@ include( './ui' );
 					text: "function " + fieldValue.name + "()",
 					wrapEnabled: false,
 					minWidth: valueWidth,
-					disabled: fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ),
+					disabled: fieldValue.isNative(), // fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ),
 					style: go.baseStyle.values.any,
 					click: editFunctionBody,
 				}, insertChildIndex );
@@ -608,7 +610,7 @@ include( './ui' );
 			ui.layoutAlignX = LayoutAlign.Stretch;
 			ui.layoutAlignY = LayoutAlign.Stretch;
 			ui.fitChildren = false;
-			scrollable.scrollbars = false;
+			scrollable.scrollbars = 'auto';//false;
 
 		} else {
 			if ( scrollable ) scrollable = null;
@@ -824,7 +826,7 @@ include( './ui' );
 				target: this,
 				items: items,
 				selectedIndex: 0,
-				selected: function ( s ) { s.action.call( this ); }.bind( go )
+				selected: function ( s ) { s.action.call( this ); }.bind( go ),
 			} );
 		};
 
@@ -987,7 +989,7 @@ include( './ui' );
 		if ( scrollable ) {
 			scrollable.scrollLeft = scrollable.scrollTop = 0;
 			function _showScrollbars() {
-				this.scrollbars = 'auto';
+				// this.scrollbars = 'auto';
 				this.async( function() {
 					if ( scrollToField ) {
 						scrollToField.scrollIntoView();
@@ -1018,6 +1020,7 @@ include( './ui' );
 	// single field changed, update field
 	go.watchCallback = function ( p, ov, v ) {
 		go.async( function() { go.reload( p ); } );
+		go.fire( 'change', target, p, ov, v );
 		//go.reload( p, v );
 		return v;
 	}
@@ -1135,6 +1138,7 @@ include( './ui' );
 			scrollTop: go.container.scrollTop
 		} );
 		target = newTarget;
+		go.fire( 'targetChanged', newTarget );
 		go.refresh();
 	}
 
@@ -1219,7 +1223,7 @@ include( './ui' );
 						} );
 						if ( go.copiedValue.type === 'object' ) {
 							items.push( {
-								text: "Paste copy", action: function () {
+								text: "Paste clone", action: function () {
 									field.target[ field.name ] = clone( this.copiedValue.value );
 									this.reload( field.name );
 								}
@@ -1692,7 +1696,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'skewX': { min: -90, max: 90, step: 1, tooltip: "Horizontal shear in degrees." },
 		'skewY': { min: -90, max: 90, step: 1, tooltip: "Vertical shear in degrees." },
 		'scene': { tooltip: "Reference to the scene containing this GameObject." },
-		'parent': { nullable: true, tooltip: "Reference to this GameObject's parent." },
+		'parent': { nullable: true, reloadOnChange: 'scene', tooltip: "Reference to this GameObject's parent." },
 		'children': { inline: true, readOnly: true, tooltip: "Children array. Use ^BaddChild^b, and ^BremoveChild^b, or ^Bparent^b property to manage children. Modifying this array's elements will have no effect. Setting ^Bchildren^b property to another array, however will overwrite children." },
 		'active': { tooltip: "Controls GameObject's visibility and whether input and scene events are dispatched." },
 		'eventMask': { inline: true, tooltip: "Event names added to this array will not be processed by GameObject or its descendents.",

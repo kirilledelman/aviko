@@ -52,6 +52,12 @@ public:
 	/// display height
 	Uint16 windowHeight = 480;
 	
+	/// screen width
+	Uint16 screenWidth = 1024;
+	
+	/// screen height
+	Uint16 screenHeight = 768;
+	
 	/// upscaling
 	float windowScalingFactor = 2;
 	
@@ -123,6 +129,7 @@ public:
 	struct LateEvent {
 		bool lateDispatch = false;
 		bool bubbles = false;
+		bool behaviorsOnly = false;
 		ArgValueVector params;
 		LateEvent( bool disp ) : lateDispatch( disp ) {};
 	};
@@ -136,7 +143,7 @@ public:
 	bool isUnserializing = false;
 	
 	/// add / replace event to run right before render
-	ArgValueVector* AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch=false, bool bubbles=false );
+	ArgValueVector* AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch=false, bool bubbles=false, bool behaviorsOnly=false );
 	
 	/// remove late events for object (on destruction)
 	void RemoveLateEvents( ScriptableClass* obj );

@@ -50,7 +50,7 @@ include( './ui' );
 			orientation = o;
 			// re-apply style
 			UI.base.applyProperties( go, go.baseStyle[ orientation + 'Style' ] );
-			go.dispatchLate( 'layout' );
+			ui.requestLayout();
 		}  },
 
 		// (Number) - position of the handle - 0 to (totalSize - handleSize)
@@ -61,7 +61,7 @@ include( './ui' );
 				if ( p != position ) {
 					position = Math.max( 0, Math.min( p, totalSize - handleSize ) );
 					if ( discrete ) position = Math.round( position / handleSize ) * handleSize;
-					go.dispatchLate( 'layout' );
+					ui.requestLayout();
 				}
 			}
 		 },
@@ -71,7 +71,7 @@ include( './ui' );
 			if ( v != totalSize ) {
 				totalSize = v;
 				handle.active = (v > 0);
-				go.dispatchLate( 'layout' );
+				ui.requestLayout();
 			}
 		} },
 
@@ -79,7 +79,7 @@ include( './ui' );
 		'handleSize': { get: function (){ return handleSize; }, set: function( v ){
 			if ( v != handleSize ) {
 				handleSize = v;
-				go.dispatchLate( 'layout' );
+				ui.requestLayout();
 			}
 		} },
 

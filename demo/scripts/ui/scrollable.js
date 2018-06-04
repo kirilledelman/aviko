@@ -18,7 +18,7 @@
 
 	Events:
 		'scroll' - when content scroll position has changed
-
+		'layout' - during layout
 
 */
 
@@ -47,6 +47,7 @@ include( './ui' );
 			if ( s != scrollbars ) {
 				scrollbars = s;
 				go.fireLate( 'updateScrollbars' );
+				go.requestLayout();
 			}
 		}  },
 
@@ -258,7 +259,7 @@ include( './ui' );
 			var ac = (scrollbars == 'auto' ? (container.ui.height > ui.height) : scrollbars);
 			if ( ac != vsb.active ) {
 				vsb.active = ac;
-				if ( ac && go.parent ) go.parent.dispatchLate( 'layout' );
+				if ( ac && go.parent ) go.parent.requestLayout( 'scrollable/verticalScrollbar' );
 			}
 		}
 		// update horizontal scrollbars params
@@ -271,7 +272,7 @@ include( './ui' );
 			var ac = (scrollbars == 'auto' ? (container.ui.width > ui.width) : scrollbars);
 			if ( ac != hsb.active ) {
 				hsb.active = ac;
-				if ( ac && go.parent ) go.parent.dispatchLate( 'layout' );
+				if ( ac && go.parent ) go.parent.requestLayout( 'scrollable/horizontalScrollbar');
 			}
 		}
 	}
@@ -281,6 +282,7 @@ include( './ui' );
 		var sizeChanged = ( w != spr.width || h != spr.height );
 		spr.resize( w, h );
 		if ( sizeChanged ) go.updateScrollbars();
+
 		// refire
 		go.fire( 'layout', w, h );
 	}

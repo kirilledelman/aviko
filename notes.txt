@@ -1,3 +1,6 @@
+ui.js, text.js, image.js
+	setting addColor to 0xNumber sets alpha to 255
+
 
 Body
 	add method - "makeDefaultShape" creating shape from sprite, or shape

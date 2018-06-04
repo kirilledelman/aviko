@@ -129,6 +129,8 @@ void Application::InitRender() {
 	}
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode( 0, &current );
+	this->screenWidth = current.w;
+	this->screenHeight = current.h;
 	
 	// init GPU
 	this->screen = GPU_Init( current.w, current.h, GPU_DEFAULT_INIT_FLAGS );
@@ -178,6 +180,7 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 		if ( sceneStack.size() ) {
 			event.name = EVENT_LAYOUT;
 			event.stopped = false;
+			event.behaviorsOnly = true;
 			event.scriptParams.ResizeArguments( 0 );
 			sceneStack.back()->DispatchEvent( event, true );
 		}
@@ -347,6 +350,12 @@ void Application::InitClass() {
 	
 	script.AddProperty<Application>
 	("windowHeight", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowHeight / app.windowScalingFactor; }) );
+	
+	script.AddProperty<Application>
+	("screenWidth", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.screenWidth; }) );
+
+	script.AddProperty<Application>
+	("screenHeight", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.screenHeight; }) );
 	
 	script.AddProperty<Application>
 	("fullScreen",
@@ -545,6 +554,13 @@ void Application::InitClass() {
 		sa.ReturnArray( ret );
 		return true;
 	}));
+	
+	script.DefineClassFunction
+	( "Function", "isNative", false,
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
+		sa.ReturnBool( (bool) JS_IsNative( (JSObject*) p ) );
+		return true;
+	} ) );
 	
 	script.DefineGlobalFunction
 	( "fileExists",
@@ -1273,7 +1289,7 @@ void Application::GameLoop() {
 
 
 /// add / replace event to run right before render, returns params member of LateEvent struct
-ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch, bool bubbles ) {
+ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eventName, bool dispatch, bool bubbles, bool behaviorsOnly ) {
 	LateEvent* event = NULL;
 	
 	// find existing for this object
@@ -1285,13 +1301,14 @@ ArgValueVector* Application::AddLateEvent( ScriptableClass* obj, const char* eve
 	if ( it != eventMap.end() ) {
 		event = &(it->second);
 		event->lateDispatch = dispatch;
-		event->bubbles = bubbles;
 	} else {
 		// otherwise emplace new
 		auto p = eventMap.emplace( ename, dispatch );
 		event = &(p.first->second);
-		event->bubbles = bubbles;
 	}
+	
+	event->behaviorsOnly = behaviorsOnly;
+	event->bubbles = bubbles;
 	
 	// return result
 	return &event->params;
@@ -1321,6 +1338,7 @@ void Application::RunLateEvents( int maxRepeats ) {
 				LateEvent& le = it->second;
 				Event event( it->first.c_str() );
 				event.bubbles = le.bubbles;
+				event.behaviorsOnly = le.behaviorsOnly;
 				// add params
 				for ( size_t i = 0, np = le.params.size(); i < np; i++ ) event.scriptParams.AddArgument( le.params[ i ] );
 				// call

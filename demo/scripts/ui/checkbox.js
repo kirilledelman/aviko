@@ -81,7 +81,7 @@ include( './ui' );
 				if ( v && ui.focused ) ui.blur();
 				go.state = 'disabled';
 				label.opacity = v ? 0.6 : 1;
-				go.dispatch( 'layout' );
+				go.requestLayout( 'disabled' );
 			}, enumerable: true, configurable: true
 		},
 

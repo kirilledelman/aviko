@@ -244,7 +244,7 @@ include( './ui' );
 				shp.color = b;
 				go.render = shp;
 			}
-			go.dispatch( 'layout' );
+			go.requestLayout( 'background' );
 		}  },
 
 		// (Number) corner roundness when background is solid color
@@ -284,7 +284,7 @@ include( './ui' );
 		// (Boolean) multiple line input
 		'multiLine': { get: function (){ return rt.multiLine; }, set: function( v ){
 			rt.multiLine = v;
-			go.dispatch( 'layout' );
+			go.requestLayout( 'multiLine' );
 			go.scrollCaretToView(); }  },
 
 		// (Number) gets or sets number of visible lines in multiline control
@@ -318,16 +318,14 @@ include( './ui' );
 			set: function( v ){
 				rt.multiLine = rt.multiLine || v;
 				autoGrow = v;
-				go.dispatch( 'layout' );
-				go.scrollCaretToView();
+				go.requestLayout( 'autoGrow' );
 			}
 		},
 
 		// (Number) multiLine line spacing
 		'lineSpacing': { get: function (){ return rt.lineSpacing; }, set: function( v ){
 			rt.lineSpacing = v;
-			go.dispatch( 'layout' );
-			go.scrollCaretToView();
+			go.requestLayout( 'lineSpacing' );
 		}  },
 
 		// (Number) returns line height - font size + line spacing
@@ -353,7 +351,7 @@ include( './ui' );
 			 disabled = ui.disabled = v; // ui.disabled is used in sharedProps state = 'auto' check
 			 if ( v && editing ) go.editing = false;
 			 go.state = 'auto';
-			 go.dispatch( 'layout' );
+			 go.requestLayout( 'disabled' );
 		 }  },
 
 		// (Boolean) input is currently in scrolling mode
@@ -711,7 +709,7 @@ include( './ui' );
 
 			// definitely changed
 			if ( ni != items.length ) {
-				go.popup.selectedItem = -1;
+				go.popup.selectedIndex = -1;
 				go.popup.items = items;
 
 			// check one by one
@@ -719,7 +717,7 @@ include( './ui' );
 				for ( var i = 0; i < ni; i++ ) {
 					// items are different
 					if ( go.popup.items[ i ].value != items[ i ].value ) {
-						go.popup.selectedItem = -1;
+						go.popup.selectedIndex = -1;
 						go.popup.items = items;
 						break;
 					// item label only is different (submatch)

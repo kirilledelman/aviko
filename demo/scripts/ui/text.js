@@ -108,6 +108,9 @@ include( './ui' );
 		// (Number) or (Color) ^9 color
 		'color9': { get: function (){ return rt.color9; }, set: function( v ){ rt.color9 = v; }  },
 
+		// (Color) | (Number) .addColor property of current render component
+		'addColor': { get: function (){ return rt.addColor; }, set: function( v ){ rt.addColor = v; } },
+
 		// (Number) or (Color) background color
 		'backgroundColor': { get: function (){ return rt.backgroundColor; }, set: function( v ){ rt.backgroundColor = v; }  },
 

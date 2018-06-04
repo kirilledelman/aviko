@@ -57,13 +57,19 @@ include( './ui' );
 		},
 
 		// (String) 'icon', 'fit', 'fill', or 'stretch'
-		'mode': { get: function (){ return mode; }, set: function( v ){ mode = v; go.updateParams(); }  },
+		'mode': { get: function (){ return mode; }, set: function( v ){ mode = v; go.updateParams(); } },
 
 		// (Boolean) image is flipped X
-		'flipX': { get: function (){ return rs.flipX; }, set: function( v ){ rs.flipX = v; }  },
+		'flipX': { get: function (){ return rs.flipX; }, set: function( v ){ rs.flipX = v; } },
 
 		// (Boolean) image is flipped X
-		'flipY': { get: function (){ return rs.flipY; }, set: function( v ){ rs.flipY = v; }  },
+		'flipY': { get: function (){ return rs.flipY; }, set: function( v ){ rs.flipY = v; } },
+
+		// (Number) image rotation
+		'rotation': { get: function (){ return sc.angle; }, set: function( v ){ sc.angle = v; } },
+
+		// (Color) | (Number) .addColor property of current render component
+		'addColor': { get: function (){ return rs.addColor; }, set: function( v ){ rs.addColor = v; } },
 
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
@@ -120,6 +126,8 @@ include( './ui' );
 		if ( go.render && (ri.width != w || ri.height != h) ) {
 			go.render.resize( w, h );
 		}
+		// refire
+		go.fire( 'layout', w, h );
 	}
 
 	// update after params change
@@ -140,7 +148,6 @@ include( './ui' );
 			// clear render image (cropping)
 			go.render = ri = null;
 		}
-		go.dispatch( 'layout' );
 		ui.requestLayout( 'image/updateParams' );
 	}
 

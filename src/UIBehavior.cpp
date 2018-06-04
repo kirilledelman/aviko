@@ -1159,7 +1159,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	// if dispatched as event
 	if ( event )  {
 		// add params in reverse order
-		for ( size_t i = event->scriptParams.args.size(); i > 0; i-- ) e.scriptParams.AddArgument( event->scriptParams.args[ i - 1 ] );
+		// for ( size_t i = event->scriptParams.args.size(); i > 0; i-- ) e.scriptParams.AddArgument( event->scriptParams.args[ i - 1 ] );
 	}
 	behavior->CallEvent( e );
 	
@@ -1741,13 +1741,13 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 	
 	// dispatch down
 	GameObject* top = NULL;
-	// fixed position - same object
-	if ( this->fixedPosition ) {
+	// fixed position, or no trigger - same object
+	if ( this->fixedPosition || trigger.type == TypeUndefined ) {
 		
 		top = this->gameObject;
 		
-	// no trigger - use parent
-	} else if ( trigger.type == TypeUndefined ) {
+	// trigger is string - use parent
+	} else if ( trigger.type == TypeString ) {
 		
 		top = ( this->gameObject->parent ? this->gameObject->parent : this->gameObject );
 	
@@ -1764,12 +1764,11 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 			top = p;
 			p = p->parent;
 		}
-		// top = ( this->gameObject ? this->gameObject->GetScene() : NULL );
 		
 	}
-	// printf( "%s Requested layout! %s, top=%s\n", gameObject->name.c_str(), trigger.toString().c_str(), top ? top->name.c_str() : "null" );
+	// printf( "[%s %p] Requested layout. Trigger = %s. Top = [%s %p]\n", gameObject->name.c_str(), gameObject, trigger.toString().c_str(), top ? top->name.c_str() : "null", top );
 	if ( top ) {
-		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false );
+		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false, true );
 		if ( trigger.type != TypeUndefined ) {
 			params->push_back( trigger );
 			params->push_back( ArgValue( this->scriptObject ) );

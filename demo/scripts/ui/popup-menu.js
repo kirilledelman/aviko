@@ -113,7 +113,8 @@ include( './ui' );
 		ignoreCamera: true,
 		fixedPosition: true,
 		scrollbars: false,
-		blocking: true,
+		layout: function () { go.updateSize(); },
+		// blocking: true,
 	} );
 	go.updateItems = function () {
 
@@ -189,8 +190,6 @@ include( './ui' );
 				}
 				selectedItem.scrollIntoView();
 			}
-			container.dispatch( 'layout' );
-			go.updateSize();
 
 			// finished?
 			if ( curItem >= items.length ) {
@@ -200,16 +199,17 @@ include( './ui' );
 					return;
 				}
 
-				go.updateSize();
 				container.scrollbars = 'auto';
-				container.ui.requestLayout( 'popupDone' );
 
 			// add more next frame
 			} else {
-				go.updateSize();
 				updateItemsDebouncer = 'updateItems' + curItem;
 				go.debounce( updateItemsDebouncer, progressiveAdd, 0.1 );
 			}
+
+			// size
+			go.updateSize();
+			container.requestLayout();
 
 			// fade in
 			if ( container.opacity == 0 ) {
@@ -228,14 +228,16 @@ include( './ui' );
 
 	// resizes container
 	go.updateSize = function () {
-		container.width = container.scrollWidth;
-		var totalHeight = 0, numItems = 0;
-		for ( var i = 0; i < container.container.numChildren && numItems < maxVisibleItems; i++ ) {
-			var btn = container.getChild( i );
-			totalHeight += btn.height + container.spacingY + btn.marginTop + btn.marginBottom;
-			if ( items[ i ] !== null ) numItems++;
-		}
-		container.height = container.minHeight = totalHeight;
+		this.debounce( 'updateSize', function() {
+			container.width = container.scrollWidth;
+			var totalHeight = 0, numItems = 0;
+			for ( var i = 0; i < container.container.numChildren && numItems < maxVisibleItems; i++ ) {
+				var btn = container.getChild( i );
+				totalHeight += btn.height + container.spacingY + btn.marginTop + btn.marginBottom;
+				if ( items[ i ] !== null ) numItems++;
+			}
+			container.height = container.minHeight = totalHeight;
+		} );
 	}
 
 	// positions menu next to target

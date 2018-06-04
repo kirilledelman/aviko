@@ -202,11 +202,6 @@ include( './ui' );
 		go.fire( 'layout', w, h );
 	}
 
-	function modalBackgroundCallback() {
-		// log( "modalBackgroundCallback", currentEventName() );
-		stopAllEvents();
-	}
-
 	// dragging window
 	var dragCallback = function ( x, y ) {
 		if ( dragging == 'window' ) {
