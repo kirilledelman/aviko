@@ -69,7 +69,7 @@ include( './ui' );
 		'label': { get: function (){ return label; } },
 
 		// (GameObject) instance of 'ui/image.js' used as icon
-		'image': { get: function (){ return image ? image : makeImage(); } },
+		'image': { get: function (){ return image ? image : makeImage(); }, serialized: false },
 
 		// (Number) space between icon and label
 		'gap': { get: function (){ return ui.spacingX; }, set: function ( v ){ ui.spacingX = v; } },
@@ -172,7 +172,8 @@ include( './ui' );
 	label = go.addChild( 'ui/text', {
 		name: "Label",
 		wrap: false,
-		active: false
+		active: false,
+		serializeable: false,
 	}, 1 );
 
 	// UI
@@ -230,7 +231,6 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( btn != 1 ) return;
 		if ( ui.focusable ) {
 			ui.focus();
 		}
@@ -241,7 +241,7 @@ include( './ui' );
 
 	// mouse down/up state
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
+		if ( disabled ) return;
 		stopAllEvents();
 		go.state = 'down';
 		// forward to gameObject
@@ -251,7 +251,7 @@ include( './ui' );
 	// up
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
 		go.state = 'auto';
-		if ( disabled || btn != 1 ) return;
+		if ( disabled ) return;
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
 
@@ -286,4 +286,9 @@ include( './ui' );
 	UI.base.applyProperties( go, go.baseStyle );
 	go.state = 'auto';
 	constructing = false;
+
+	go.awake = function () {
+		log( "I am a button", go.name );
+		log ( label, label.parent );
+	}
 })(this);

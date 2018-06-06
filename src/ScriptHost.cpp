@@ -8,10 +8,10 @@
 
 
 /// returns init object
-ArgValue ScriptHost::MakeInitObject( ArgValue& val ) {
+ArgValue ScriptHost::MakeInitObject( ArgValue& val, bool force ) {
 	// this will track of all objects already added
 	unordered_map<unsigned long, JSObject*> alreadySerialized;
-	return _MakeInitObject( val, alreadySerialized );
+	return _MakeInitObject( val, alreadySerialized, force );
 };
 
 /// populates property names
@@ -29,7 +29,7 @@ void ScriptHost::GetProperties( void* obj, ArgValueVector* ret, bool useSerializ
 }
 
 // recursively construct init object
-ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized ) {
+ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force ) {
 	
 	// if value is an array
 	if ( val.type == TypeArray ) {
@@ -43,9 +43,12 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 	// otherwise, if value is object
 	} else if ( val.type == TypeObject && val.value.objectValue != NULL ) {
 		
-		// check .serialized property, skip if === false
-		ArgValue serialized = GetProperty( "serializeable", val.value.objectValue );
-		if ( serialized.type == TypeBool && serialized.value.boolValue == false ) return ArgValue();
+		// force option skips serializeable check for top level object only
+		if ( !force ) {
+			// check .serialized property, skip if === false
+			ArgValue serialized = GetProperty( "serializeable", val.value.objectValue );
+			if ( serialized.type == TypeBool && serialized.value.boolValue == false ) return ArgValue();
+		}
 		
 		// object
 		JSObject* obj = (JSObject*) val.value.objectValue;
@@ -112,6 +115,10 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		unordered_set<string>::iterator p = properties.begin(), end = properties.end();
 		ArgValue prop;
 		while ( p != end ) {
+			// skip properties starting with __
+			if ( p->size() >= 2 && (*p)[ 0 ] == '_' && (*p)[ 1 ] == '_' ) {
+				p++; continue;
+			}
 			prop = this->GetProperty( p->c_str(), obj );
 			// skip functions
 			if ( prop.type != TypeFunction ) {

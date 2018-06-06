@@ -993,7 +993,7 @@ UI.base = UI.base || {
 	},
 
 	// creates properties with getter/setters
-	addMappedProperties: function ( go, mappedProps ) {
+	/*addMappedProperties: function ( go, mappedProps ) {
 		if ( go != global ) go.serializeMask = go.serializeMask ? go.serializeMask : {};
 		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
 		for ( var i = 0; i < mappedProps.length; i++ ) {
@@ -1004,7 +1004,7 @@ UI.base = UI.base || {
 			go.__propertyListConfig.properties[ mappedProps[ i ][ 0 ] ] = false; // hide from inspector
 			if ( hidden && go != global ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
 		}
-	},
+	},*/
 
 	// creates properties with getter/setters
 	mapProperties: function( go, mappedProps ) {
@@ -1015,7 +1015,7 @@ UI.base = UI.base || {
 			prop.configurable = true;
 			if ( typeof( prop.enumerable ) === 'undefined' ) prop.enumerable = true;
 			go.__propertyListConfig.properties[ i ] = false; // hide from inspector
-			if ( prop.serialized === false && go !== global ) {
+			if ( ( prop.serialized === false || prop.set === undefined ) && go !== global ) {
 				if ( go.serializeMask.constructor === Array ) go.serializeMask.push( i );
 				else go.serializeMask[ i ] = true;
 			}
@@ -1140,6 +1140,7 @@ UI.base = UI.base || {
 					name: "FocusRect",
 					fixedPosition: true,
 					style: UI.style.focusRect,
+					serializeable: false
 				} );
 			} else {
 				this.focusRectObject.active = ( this == nf );

@@ -2120,5 +2120,10 @@ void UIBehavior::Detached( UIBehavior* behavior, GameObject* go, Event* e ){
 	behavior->mouseOver = false;
 	UIBehavior::rollovers.erase( behavior );
 	
+	// if old parent had UI
+	if ( strcmp( e->name, EVENT_REMOVED ) == 0 && go && go->ui ){
+		go->ui->RequestLayout( ArgValue( e->name ) );
+	}
+	
 }
 

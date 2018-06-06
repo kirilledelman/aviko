@@ -37,11 +37,6 @@ include( './ui' );
 	// API properties
 	var mappedProps = {
 
-		// (Array) - set child objects at once - overrides built-in
-		'children': { get: function (){ return container.children; }, set: function( v ){
-			container.children = v; // overridden
-		} },
-
 		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
 		'scrollbars': { get: function (){ return scrollbars; }, set: function( s ){
 			if ( s != scrollbars ) {
@@ -113,6 +108,14 @@ include( './ui' );
 
 		// (GameObject) the actual container to which all children are added
 		'container': { get: function (){ return container; } },
+
+		// (Array) - set child objects at once (for serialization)
+		'containerChildren': {
+			get: function (){ return container.children; },
+			set: function( v ){
+				container.children = v; // overridden
+			}
+		},
 
 		// map back to this ui (not container)
 

@@ -1,29 +1,36 @@
-ui.js, text.js, image.js
-	setting addColor to 0xNumber sets alpha to 255
 
+UI components
+make sure they're serializable
+addInspectables
+Make sure all focusable components listen for Tab and Shift+Tab keys
+make sure setting .script to a different ui resets the object
+Scrollbar
+.minusButton, .plusButton - add disabling, and paging handler funcs
 
-Body
-	add method - "makeDefaultShape" creating shape from sprite, or shape
+Inspector
+Ctrl+ wheel - zoom
+	+ left - pan
+long right click - popup to pick which object underneath to inspect
+
 
 RenderText
 	newLinesResetFormatting - resets formatting on line wrap
 
+Image
+	child autoDraw is drawn normally when Image height = 0, should be hidden
+	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
+	add drawing methods for shapes, sprites
+
+Body
+	add method - "makeDefaultShape" creating shape from sprite, or shape
+
 Propertylist
-	file path lookup for textfield autocomplete ->
-		save as JSON, new Object from JSON
-	texture etc. lookup for textfields
+	.script, .texture - file lookup field
+
 
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default
 
-
-Image
-	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
-	add drawing methods for shapes, sprites
-	add image texture from drawing instructions - similar to svg,  ???
-
-ScriptableObject
-	add .defaults prop to Constructor object - store all declared properties there, when serializing only store changed
 
 GameObject
 	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash
@@ -32,28 +39,13 @@ GameObject
 	Render method should keep _zSortedChildren updated, draw in order
 	a function to get bounds of gameobject + all vis children
 
-Make sure all focusable components listen for Tab and Shift+Tab keys
-
-Scrollbar
-	.minusButton, .plusButton - add disabling, and paging handler funcs
 
 
-Image
-	child autoDraw is drawn normally when Image height = 0, should be hidden
 
 Top level / Application
-	getTextures( opt.filter ) -> textures + frames
-	getScripts( filt )
-	getSounds( filt )
-	getFonts( filt )
+	getTextureFrames( texture )
 	serialize - save function objects, if Function .serialize = true or something
-	Dump current scene as sceneDump.json on error
-	A function to list files and directories in path -> [ 'filename', 'dirname/' ...  ]
-	Normalize error messages, add verbosity
-	Remove unnecessary printfs
 	'quit' event - dispatched right before exiting.
-
-
 
 Demo project
 	Main screen
@@ -79,6 +71,12 @@ Nice to have
 
 =============================================
 
+Image
+	add image texture from drawing instructions - similar to svg,  ???
+
+Top level / Application
+	Normalize error messages, add verbosity
+
 ScriptResource
 	unload+recompile command
 
@@ -87,8 +85,6 @@ Physics - texture to shape, some sort of shrinkwrap
 
 RenderBehavior
 	Shader - gradients - can maybe have more than one per. Multiplies color by radial or linear grad btw 2 colors
-	Make sure it's possible to use `render` event to draw stuff during actual render, ideally to screen or Image of texture
-
 
 RenderTileMap
 	Tile class for indiv tiles - x,y,z offset, texture, color/addcolor, rotation, flip, scale, etc.

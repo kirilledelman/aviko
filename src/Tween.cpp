@@ -315,7 +315,8 @@ void Tween::Reverse() {
 	
 	// reverse time
 	if ( time > 0 ) time = max( 0.0f, duration - time );
-	
+	// restart
+	if ( !_active ) active( true );
 }
 
 void Tween::Cut() {
@@ -661,8 +662,11 @@ bool Tween::ProcessTween( float deltaTime, float unscaledDeltaTime ) {
 		event.scriptParams.AddObjectArgument( this->scriptObject );
 		this->CallEvent( event );
 		
-		// remove
-		return true;
+		// recalc position (in case reverse was called in finished event)
+		pos = min( this->time / this->duration, 1.0f );
+		
+		// stop if completed
+		if ( pos >= 1) return true;
 	}
 	
 	// keep going

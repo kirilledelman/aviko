@@ -489,6 +489,25 @@ void GameObject::InitClass() {
 	}));
 	
 	script.DefineFunction<GameObject>
+	( "isDescendantOf", //
+	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+		// validate params
+		const char* error = "usage: isDescendantOf( GameObject grandDaddy )";
+		GameObject* self = (GameObject*) go;
+		GameObject* other = NULL;
+		void* otherObj;
+		
+		// if not a valid call report error
+		if ( !sa.ReadArguments( 1, TypeObject, &otherObj ) || ( other = script.GetInstance<GameObject>( otherObj ) ) == NULL ) {
+			script.ReportError( error );
+			return false;
+		}
+		// return result
+		sa.ReturnBool( self->IsDescendantOf( other ) );
+		return true;
+	}));
+	
+	script.DefineFunction<GameObject>
 	( "getChild", // ( int position ) -> GameObject child | NULL if out of range
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		
@@ -957,9 +976,12 @@ void GameObject::InitClass() {
 		if ( !self ) {
 			sprintf( buf, "[GameObject prototype]" );
 		} else if ( self->scriptResource ) {
-			sprintf( buf, "[GameObject (%s) %p]", self->scriptResource->key.c_str(), self );
+			if ( self->name.size() )
+				sprintf( buf, "[GameObject %s <%s> %p]", self->name.c_str(), self->scriptResource->key.c_str(), self );
+			else
+				sprintf( buf, "[GameObject <%s> %p]", self->scriptResource->key.c_str(), self );
 		} else if ( self->name.size() ) {
-			sprintf( buf, "[GameObject \"%s\" %p]", self->name.c_str(), self );
+			sprintf( buf, "[GameObject %s %p]", self->name.c_str(), self );
 		} else sprintf( buf, "[GameObject %p]", self );
 		
 		sa.ReturnString( buf );
@@ -1220,7 +1242,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 	
 	// if parent is different
 	if ( newParent != this->parent ) {
-		
+	
 		// if had parent
 		GameObject* oldParent = this->parent;
 		if ( oldParent ) {
@@ -1267,7 +1289,11 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 		// add to new parent
 		if ( newParent ) {
 			
-			// TODO - detect circular linking
+			// detect circular parenting
+			if ( newParent->IsDescendantOf( this ) ){
+				// unparent new parent first
+				newParent->SetParent( NULL );
+			}
 			
 			// insert into children based on desired position
 			int numChildren = (int) newParent->children.size();
@@ -1306,7 +1332,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 					
 				} else {
 					
-					// means this object has been added to scene, dispatch event and set orphan values on descendents
+					// means this object has been added to scene, dispatch event and set orphan values on descendants
 					GameObjectCallback moveToScene = [](GameObject *obj) { obj->orphan = false; return true; };
 					event.name = EVENT_ADDED_TO_SCENE;
 					this->DispatchEvent( event, true, &moveToScene );
@@ -1338,9 +1364,9 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 }
 
 // 
-bool GameObject::IsDescendentOf( GameObject* grandDaddy ) {
+bool GameObject::IsDescendantOf( GameObject* grandDaddy ) {
 	if ( this->parent == grandDaddy ) return true;
-	else if ( this->parent ) return this->parent->IsDescendentOf( grandDaddy );
+	else if ( this->parent ) return this->parent->IsDescendantOf( grandDaddy );
 	return false;
 }
 
@@ -1372,7 +1398,7 @@ ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 	size_t nc = in->size();
 	for ( size_t i = 0; i < nc; i++ ){
 		ArgValue &val = (*in)[ i ];
-		if ( val.type == TypeObject ) {
+		if ( val.type == TypeObject && val.value.objectValue != NULL ) {
 			GameObject* go = script.GetInstance<GameObject>( val.value.objectValue );
 			if ( go ) go->SetParent( this );
 		}
@@ -2166,7 +2192,7 @@ GPU_Rect GameObject::GetBounds(){
 	return r;
 }
 
-// force recalculate matrices on this object + all descendents
+// force recalculate matrices on this object + all descendants
 void GameObject::DirtyTransform() {
 	
 	// set dirty

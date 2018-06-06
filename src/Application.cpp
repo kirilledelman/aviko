@@ -542,11 +542,13 @@ void Application::InitClass() {
 			if ( sa.args[ 0 ].type == TypeArray ) obj = sa.args[ 0 ].arrayObject;
 			else if ( sa.args[ 0 ].type == TypeObject ) obj = sa.args[ 0 ].value.objectValue;
 			else if ( sa.args[ 0 ].type == TypeFunction ) obj = sa.args[ 0 ].value.objectValue;
+			else obj = script.GetTypePrototypeObject( sa.args[ 0 ].type );
 			sa.ReadArgumentsFrom( 1, 0, TypeBool, &useSerializeMask, TypeBool, &includeReadOnly, TypeBool, &includeFunctions );
 		}
-		//TypeObject, &obj,
+		// fail
 		if ( obj == NULL ) {
 			script.ReportError( error );
+			// sa.ReturnArray( ret );
 			return false;
 		}
 		// read props
@@ -554,13 +556,6 @@ void Application::InitClass() {
 		sa.ReturnArray( ret );
 		return true;
 	}));
-	
-	script.DefineClassFunction
-	( "Function", "isNative", false,
-	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments& sa ){
-		sa.ReturnBool( (bool) JS_IsNative( (JSObject*) p ) );
-		return true;
-	} ) );
 	
 	script.DefineGlobalFunction
 	( "fileExists",
@@ -886,12 +881,13 @@ void Application::InitClass() {
 	( "serialize",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
 		void* initObj = NULL;
-		if ( !sa.ReadArguments( 1, TypeObject, &initObj ) ){
-			script.ReportError( "usage: serialize( Object object )" );
+		bool force = false;
+		if ( !sa.ReadArguments( 1, TypeObject, &initObj, TypeBool, &force ) ){
+			script.ReportError( "usage: serialize( Object object, [ Boolean force ] )" );
 			return false;
 		}
 		ArgValue ret( initObj );
-		ret = script.MakeInitObject( ret );
+		ret = script.MakeInitObject( ret, force );
 		sa.ReturnValue( ret );
 		return true;
 	}) );
@@ -921,7 +917,7 @@ void Application::InitClass() {
 			return false;
 		}
 		ArgValue ret( initObj );
-		ret = script.MakeInitObject( ret );
+		ret = script.MakeInitObject( ret, true );
 		void *def = ret.value.objectValue;
 		ret.value.objectValue = script.InitObject( def );
 		if ( overrides ) script.CopyProperties( overrides, ret.value.objectValue );

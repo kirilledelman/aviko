@@ -1021,6 +1021,36 @@ public:
 		// return
 		return ArgValue( val );
 	}
+
+/* MARK:	-				Helper
+ -------------------------------------------------------------------- */
+	
+	
+	void* GetTypePrototypeObject( ScriptType type ) {
+
+		// only used with string and number right now, can add others if needed
+		JSObject *ret = NULL;
+		switch( type ) {
+			case TypeBool:
+				JS_GetClassPrototype( this->js, JSProtoKey::JSProto_Boolean, &ret );
+				break;
+			case TypeFloat:
+			case TypeInt:
+			case TypeDouble:
+				JS_GetClassPrototype( this->js, JSProtoKey::JSProto_Number, &ret );
+				break;
+			case TypeArray:
+				JS_GetClassPrototype( this->js, JSProtoKey::JSProto_Array, &ret );
+				break;
+			case TypeString:
+				JS_GetClassPrototype( this->js, JSProtoKey::JSProto_String, &ret );
+				break;
+			default:
+				break;
+		}
+		return (void*) ret;
+	}
+	
 	
 /* MARK:	-				Function call
  -------------------------------------------------------------------- */
@@ -1059,7 +1089,7 @@ public:
 
 	
 	/// returns init object
-	ArgValue MakeInitObject( ArgValue& val );
+	ArgValue MakeInitObject( ArgValue& val, bool force=false );
 	
 	/// populates property names
 	// void GetPropertyNames( void* obj, unordered_set<string>& ret );
@@ -1070,7 +1100,7 @@ public:
 	private:
 	
 	// recursively construct init object
-	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized );
+	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force=false );
 	
 	// places enumerable properties of given object, including all non-readonly props defined for scriptable class into given set. Returns ClassDef, if found.
 	// ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL );

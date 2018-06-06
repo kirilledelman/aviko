@@ -16,8 +16,8 @@
 		'editEnd' - when control ended text edit
 		'accept' - on blur, if contents changed
 		'cancel' - on blur, if contents didn't change
-		'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.clipboard )
-		'paste' - some text was pasted from UI.clipboard
+		'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.copiedText )
+		'paste' - some text was pasted from UI.copiedText
 		'selectionChanged' - when selection changes ( event parameter is selected text )
  
 */
@@ -1144,18 +1144,18 @@ include( './ui' );
 				if ( ( meta || ctrl ) && rt.selectionStart != rt.selectionEnd && selectable ) {
 					var ss = txt.positionToIndex( rt.selectionStart );
 					var se = txt.positionToIndex( rt.selectionEnd );
-					UI.clipboard = txt.substr( ss, se - ss );
+					UI.copiedText = txt.substr( ss, se - ss );
 					if ( key == Key.X ) ui.keyPress( -1, 1 );
-					go.fire( 'copy', UI.clipboard );
+					go.fire( 'copy', UI.copiedText );
 				    if ( autocomplete ) cancelAutocomplete();
 				}
                 break;
 
 		    case Key.V:
-			    if ( typeof( UI.clipboard ) === 'string' ){
+			    if ( typeof( UI.copiedText ) === 'string' ){
 				    if ( autocomplete ) cancelAutocomplete();
-					ui.keyPress( UI.clipboard );
-				    go.fire( 'paste', UI.clipboard );
+					ui.keyPress( UI.copiedText );
+				    go.fire( 'paste', UI.copiedText );
 			    }
 			    break;
 

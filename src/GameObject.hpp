@@ -140,7 +140,7 @@ public:
 	void SetWorldScaleX( float sx );
 	void SetWorldScaleY( float sy );
 	
-	/// reset matrix on this object + descendents
+	/// reset matrix on this object + descendants
 	void DirtyTransform();
 	
 	// get world transform
@@ -175,7 +175,7 @@ public:
 	
 // hierarchy and lifecycle
 	
-	/// false, if object is the descendent of scene, true, if part of an orphaned tree
+	/// false, if object is the descendant of scene, true, if part of an orphaned tree
 	bool orphan = true;
 		
 	/// reference to parent object
@@ -196,7 +196,7 @@ public:
 	/// used for serialization
 	ArgValueVector* SetChildrenVector( ArgValueVector* in );
 	
-	bool IsDescendentOf( GameObject* grandDaddy );
+	bool IsDescendantOf( GameObject* grandDaddy );
 	
 	/// garbage collection callback
 	void TraceProtectedObjects( vector<void **> &protectedObjects );
@@ -275,7 +275,7 @@ public:
 	
 // events
 	
-	/// events ignored by this object and descendents
+	/// events ignored by this object and descendants
 	TypedVector* eventMask = NULL;
 	
 	typedef function<bool (GameObject*)> GameObjectCallback;

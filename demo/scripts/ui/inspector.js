@@ -25,9 +25,9 @@ new (function( params ){
 		'$0': {
 			get: function (){ return propertyList.target; },
 			set: function ( t ) {
+				sceneExplorer.async( function (){ this.selectNode( t ); }, 0.5 );
 				if ( t != propertyList.target ) {
 					propertyList.target = t;
-					sceneExplorer.selectNode( t );
 					// target
 					if ( t && typeof( t ) === 'object' ) {
 						log( "$0 =", t );
@@ -85,22 +85,48 @@ new (function( params ){
 				this.marginRight = 0;
 			}
 			this.scrollWidth = this.width;
-			this.container.render.resize( w, h );
+			this.container.render.resize( w, Math.max( h, this.scrollHeight ) );
 
 		},
-		selectNode: function ( n ) {
+		// select node in tree
+		selectNode: function ( node ) {
+			// clear previous
 			var row = this.getChild( 0 );
-			if ( row ) {
-				if ( this.currentNode ) {
-					var prow = row.findRowForNode( this.currentNode );
-					if ( prow ) {
-						prow.button.label.addColor = prow.button.image.addColor = 0x0;
-					}
-				}
-				row = row.findRowForNode( n );
-				if ( row ) row.button.label.addColor = row.button.image.addColor = 0x0066a5;
+			if ( !row ) return;
+			if ( this.currentNode ) {
+				var prow = row.findRowForNode( this.currentNode );
+				if ( prow ) prow.button.label.addColor = prow.button.image.addColor = 0x0;
 			}
-			this.currentNode = n;
+
+			// make sure it's gameobject
+			if ( !node || !(node.constructor == GameObject || node.constructor == Scene ) ) return;
+
+			// highlight
+			highlightGameObject( node );
+
+			// find the chain of node parents
+			var chain = [], n = node;
+			while ( n ) { chain.push( n ); n = n.parent; }
+
+			// expand up to this level
+			for ( var i = chain.length - 1; i > 0; i-- ){
+				// expand
+				if ( !row.expanded ) row.toggleExpand();
+				// find child row
+				var curNode = chain[ i ];
+				var curSub = chain[ i - 1 ];
+				var ni = curNode.children.indexOf( curSub );
+				if ( ni < 0 ) { reloadSceneExplorer(); return; } // fail
+				row = row.container.getChild( ni );
+				if ( !row || row.node != curSub ) { reloadSceneExplorer(); return; } // fail
+			}
+
+			// highlight
+			if ( row ) {
+				row.button.label.addColor = row.button.image.addColor = 0x0066a5;
+				row.button.async( row.button.scrollIntoView, 0.5 );
+			}
+			this.currentNode = node;
 		},
 		findRowForNode: function ( n ) {
 			var row = this.getChild( 0 );
@@ -203,9 +229,7 @@ new (function( params ){
 			if ( row ) row.nodeUpdated();
 		},
 		targetChanged: function ( t ) {
-			// update selected item in scene browser, if visible
-			var row = sceneExplorer.findRowForNode( t );
-			if ( row ) row.nodeUpdated();
+			sceneExplorer.selectNode( t );
 		},
 	} );
 
@@ -241,19 +265,42 @@ new (function( params ){
 	var mouseDown = function ( btn, x, y ) {
 		Input.on( 'mouseUp', function() { cancelDebouncer( 'showInspector' ); }, true );
 		if ( btn != 3 ) return;
+
 		// show
 		debounce( 'showInspector', function () {
-			// if shift isn't pressed
-			if ( !Input.get( Key.LeftShift ) ) {
-				// set target to object under cursor
-				var context = App.scene.query( x, y, 1, 1, true );
-				if ( context.length ) $0 = context[ context.length - 1 ];
-			}
 			// show window
 			App.overlay.addChild( window );
 			window.active = true;
 			input.focus();
-		}.bind( this ), 2.0 );
+
+			// check objects under cursor
+			var context = App.scene.query( x, y, 1, 1, true );
+			if ( context.length ) {
+				if ( context.length == 1 ) {
+					$0 = context[ context.length - 1 ];
+				} else {
+					var items = [];
+					for ( var i = context.length - 1; i >= 0; i-- ) {
+						var node = context[ i ];
+						var scriptName = '';
+						var name = node.name ? node.name : node.constructor.name;
+						if ( node.script ){
+							scriptName = node.script.split( '/' );
+							scriptName = ' ^b<' + scriptName[ scriptName.length - 1 ].replace( /^(.+)\.([^\.]+)$/, "$1" ) + '>';
+						}
+						items.push( { text: name + scriptName, node: node } );
+					}
+					var popup = new GameObject( './popup-menu', {
+						x: x, y: y,
+						items: items,
+						selected: function ( s ) { $0 = s.node; },
+					} );
+
+				}
+			}
+
+		}.bind( this ), 1.0 );
+
 	}.bind( this );
 	Input.on( 'mouseDown', mouseDown );
 
@@ -308,27 +355,7 @@ new (function( params ){
 				},
 				image: { angle: -90, ui: { offsetX: 4, offsetY: 9 } },
 			},
-
-			click: function ( btn, x, y ) {
-				// left click
-				if ( btn == 1 ) {
-					// if clicked on icon
-					if ( x < 20 ) {
-						// toggle expand
-						go.toggleExpand();
-					} else {
-						// select in property inspector
-						$0 = node;
-					}
-				// right click
-				} else if ( btn == 3 ){
-					// popup menu
-					// TODO
-					// Remove from parent
-					// Copy
-					// Save object
-				}
-			}
+			click: rowButtonClick
 		});
 
 		// selected
@@ -338,9 +365,15 @@ new (function( params ){
 
 		// called to update row
 		go.nodeUpdated = function () {
-			go.button.text = (node.numChildren ? ('(' + node.numChildren + ') ^B') : '^B' ) +
-							( node.name.length ? node.name :
-								( node.script ? ( '<' + node.script + '>' ) : node.constructor.name ) );
+			var numKids = (node.numChildren ? ('(' + node.numChildren + ') ^B') : '^B' );
+			var scriptName = '';
+			var name = node.name ? node.name : node.constructor.name;
+			if ( node.script ){
+				var scriptName = node.script.split( '/' );
+				scriptName = ' ^b<' + scriptName[ scriptName.length - 1 ].replace( /^(.+)\.([^\.]+)$/, "$1" ) + '>';
+			}
+
+			go.button.text = numKids + name + scriptName;
 			go.opacity = node.active ? 1 : 0.5;
 			go.button.image.opacity = node.numChildren ? 1 : 0.5;
 		}
@@ -350,6 +383,7 @@ new (function( params ){
 		go.toggleExpand = function () {
 			// collapsed
 			if ( !go.expanded ) {
+				var highlight = UI.highlight;
 				if ( !go.container ) {
 					// container for child rows
 					go.container = go.addChild( {
@@ -364,7 +398,7 @@ new (function( params ){
 					// repopulate container
 					var ch = node.children;
 					for ( var i = 0, nc = ch.length; i < nc; i++ ) {
-						go.container.addChild( SceneExplorerRow( ch[ i ] ) );
+						if ( ch[ i ] !== highlight ) go.container.addChild( SceneExplorerRow( ch[ i ] ) );
 					}
 				} else {
 					// just update
@@ -411,6 +445,7 @@ new (function( params ){
 
 		// node gained a child
 		go.nodeChildAdded = function ( ch, i ) {
+			if ( ch === UI.highlight ) return;
 			go.nodeUpdated();
 			if ( go.container ) {
 				var newRow = SceneExplorerRow( ch );
@@ -438,6 +473,114 @@ new (function( params ){
 		return go;
 	}
 
+	function rowButtonClick( btn, x, y ) {
+		// left click
+		if ( btn == 1 ) {
+			// if clicked on icon
+			if ( x < 20 ) {
+				// toggle expand
+				this.parent.toggleExpand();
+			} else {
+				// select in property inspector
+				$0 = this.parent.node;
+			}
+		// right click
+		} else if ( btn == 3 ) {
+			var items = [
+				{ text: "Copy", action: function () { UI.copiedValue = this.node; } },
+			];
+			// gameobject in copiedValue
+			if ( UI.copiedValue && typeof( UI.copiedValue ) === 'object' && UI.copiedValue.constructor === GameObject && UI.copiedValue != this.parent.node ) {
+				// if not already a child of this node
+				if ( UI.copiedValue.parent != this.node )
+					items.push( { text: "Paste child", action: function () { this.node.addChild( UI.copiedValue ); } } );
+				// can paste copy
+				items.push( { text: "Paste clone", action: function () {
+					var cp = clone( UI.copiedValue );
+					if ( cp ) this.node.addChild( cp );
+				} } );
+			}
+			// not scene
+			if ( this.parent.node.parent ) {
+				items.push( null );
+				items.push( {
+					text: "Duplicate", action: function () {
+						var cp = clone( this.node );
+						this.node.parent.addChild( cp );
+					}
+				} );
+				items.push( { text: "Unparent", action: function () { this.node.parent = null; } } );
+			}
+			// popup menu
+			var popup = new GameObject( './popup-menu', {
+				target: this,
+				items: items,
+				selectedIndex: -1,
+				selected: function ( s ) { s.action.call( this ); }.bind( this.parent ),
+			} );
+		}
+	}
+
+	// creates an effect that highlights go's location
+	function highlightGameObject( go ) {
+		if ( !go || go.constructor != GameObject || !go.parent ) return;
+		if ( UI.highlight ) UI.highlight.parent = null;
+		var highlight = UI.highlight = new GameObject( {
+			x: go.worldX, y: go.worldY,
+			angle: go.worldAngle,
+			scaleX: go.worldScaleX, scaleY: go.worldScaleY } );
+
+		var bounds = highlight.addChild(
+			new GameObject( {
+				render: new RenderShape( {
+					shape: Shape.Rectangle,
+					filled: false,
+					centered: true,
+					color: 0x1a92dc,
+					lineThickness: 2,
+				} )
+			} ) );
+		if ( go.ui ) {
+			highlight.addChild( new GameObject( {
+				render: new RenderShape( {
+					shape: Shape.Rectangle,
+					centered: false,
+					width: go.ui.width, height: go.ui.height,
+					filled: true,
+					stipple: 0.5,
+					color: new Color( 0.15, 0.2, 0.6, 0.6 ),
+				} ),
+				x: go.ui.offsetX, y: go.ui.offsetY,
+			} ) );
+			bounds.render.resize( Math.max( 2, go.ui.width ), Math.max( 2, go.ui.height ) );
+		} else if ( go.render ) {
+			highlight.addChild( new GameObject( {
+				render: new RenderShape( {
+					shape: Shape.Rectangle,
+					centered: false,
+					width: go.render.width, height: go.render.height,
+					filled: true,
+					stipple: 0.5,
+					color: new Color( 0.15, 0.2, 0.6, 0.6 ),
+				} ),
+			} ) );
+			bounds.render.resize( Math.max( 2, go.render.width ), Math.max( 2, go.render.height ) );
+		}
+		bounds.setTransform( bounds.render.width * 0.5, bounds.render.height * 0.5 );
+		bounds.scaleX = ( bounds.render.width + 40 ) / bounds.render.width;
+		bounds.scaleY = ( bounds.render.height + 40 ) / bounds.render.height;
+		bounds.scaleTo( 1, 0.5, Ease.Out );
+		var brc = bounds.render.color;
+		var clr = new Tween( brc, [ 'r', 'g', 'b' ], [ brc.r, brc.g, brc.b ], [ 1, 1, 1 ], 0.25 );
+		clr.finished = function () { clr.reverse(); }
+		highlight.async( function() {
+			highlight.parent = null;
+			UI.highlight = null;
+			clr.stop();
+		}, 2 );
+		// show
+		App.scene.addChild( highlight, -1 );
+	}
 
 })( this );
 

@@ -196,7 +196,7 @@ void Input::InitClass() {
 	script.AddProperty<Input>
 	( "repeatKeyEnabled",
 	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->repeatKeyEnabled; }),
-	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ SDL_ShowCursor( val ); return ((Input*) inp)->repeatKeyEnabled = val; }));
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->repeatKeyEnabled = val; }));
 	
 	script.AddProperty<Input>
 	( "mouseX",

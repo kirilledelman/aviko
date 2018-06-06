@@ -300,7 +300,7 @@ include( './ui' );
 	}
 
 	//
-	function nameObject( obj ) {
+	go.nameObject = function ( obj ) {
 		if ( obj === null ) return '(null)';
 		if ( obj === undefined ) return '(undefined)';
 		if ( typeof( obj ) === 'object' ) {
@@ -309,7 +309,7 @@ include( './ui' );
 			if ( obj.constructor === Color ) return '#' + obj.hex;
 			if ( obj.constructor === Image ) return 'Image(' + obj.width + 'x' + obj.height + ')';
 			if ( obj.constructor === GameObject || obj.constructor === Scene  ) {
-				return ( obj.active ? '' : '^9' ) + ( obj.name.length > 0 ? ( '<' + obj.name + '>' ) : obj.constructor.name );
+				return ( obj.active ? '' : '^9' ) + ( obj.name.length > 0 ? ( obj.name ) : obj.constructor.name );
 			}
 			if ( obj.constructor === Body || obj.constructor === UI || obj.constructor === RenderText || obj.constructor === RenderSprite || obj.constructor === RenderShape ) {
 				return ( obj.active ? '' : '^9' ) + obj.constructor.name;
@@ -320,7 +320,8 @@ include( './ui' );
 	}
 
 	// button callback to show inspector
-	function togglePropList() {
+	function togglePropList( btn ) {
+		if ( btn != 1 ) return; // ignore right click
 		// embedded inspector created on demand
 		if ( !this.propList ) {
 			var myPos = this.parent.children.indexOf( this );
@@ -338,7 +339,7 @@ include( './ui' );
 				showMoreButton: false,
 				topPropertyList: topPropertyList ? topPropertyList : go,
 				type: 'object',
-				change: function () { this.fieldButton.text = nameObject( this.target ); }
+				change: function () { this.fieldButton.text = go.nameObject( this.target ); }
 			} );
 			this.parent.addChild( this.propList, myPos + 1 );
 			this.propList.style = go.baseStyle.values.inline;
@@ -355,7 +356,8 @@ include( './ui' );
 	}
 
 	// button callback to push into an object
-	function pushToTarget() {
+	function pushToTarget( btn ) {
+		if ( btn != 1 ) return; // ignore right click
 		if ( topPropertyList ) {
 			topPropertyList.pushToTarget( this.target[ this.name ], this.name );
 		} else {
@@ -363,8 +365,8 @@ include( './ui' );
 		}
 	}
 
-	function editFunctionBody() {
-
+	function editFunctionBody( btn ) {
+		if ( btn != 1 ) return; // ignore right click
 		// force "edit value"
 		go.addProperty( this.name, 'Function', this.fieldValue, 'edit' );
 
@@ -472,7 +474,7 @@ include( './ui' );
 					text: "function " + fieldValue.name + "()",
 					wrapEnabled: false,
 					minWidth: valueWidth,
-					disabled: fieldValue.isNative(), // fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ),
+					disabled: fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ), //!!fieldValue.isNative()
 					style: go.baseStyle.values.any,
 					click: editFunctionBody,
 				}, insertChildIndex );
@@ -515,7 +517,7 @@ include( './ui' );
 						target: curTarget,
 						name: pname,
 						fieldValue: fieldValue,
-						text: nameObject( fieldValue ),
+						text: go.nameObject( fieldValue ),
 						wrapEnabled: false,
 						minWidth: valueWidth,
 						disabled: (disabled || ( pdef && pdef.disabled )),
@@ -1000,7 +1002,7 @@ include( './ui' );
 		}
 
 		// if this is an inline propList, update our button
-		if ( go.fieldButton ) go.fieldButton.text = nameObject( target );
+		if ( go.fieldButton ) go.fieldButton.text = go.nameObject( target );
 
 		// call update on header extra buttons
 		updateHeaderActionsButtons();
@@ -1103,7 +1105,7 @@ include( './ui' );
 
 			// field is object
 			if ( tp === 'object' ) {
-				field.text = nameObject( val );
+				field.text = go.nameObject( val );
 				if ( field.propList ) {
 					if ( field.propList.target == val ) field.propList.reload();
 					else field.propList.target = val;
@@ -1124,7 +1126,7 @@ include( './ui' );
 		}
 
 		// if this is an inline propList, update our button
-		if ( go.fieldButton ) go.fieldButton.text = nameObject( target );
+		if ( go.fieldButton ) go.fieldButton.text = go.nameObject( target );
 
 		// update actions buttons
 		updateHeaderActionsButtons();
@@ -1210,21 +1212,22 @@ include( './ui' );
 					// copy, paste
 					items.push( null );
 					items.push( {
-						text: "Copy value", action: function () {
-							this.copiedValue = { value: field.value || field.fieldValue, type: field.type };
+						text: "Copy", action: function () {
+							UI.copiedValue = { value: field.value || field.fieldValue, type: field.type };
 						}
 					} );
-					if ( go.copiedValue && go.copiedValue.type == field.type && !readOnly && !field.disabled ) {
+					if ( UI.copiedValue && UI.copiedValue.type == field.type && !readOnly && !field.disabled ) {
+						var pasteName = go.nameObject( UI.copiedValue );
 						items.push( {
-							text: "Paste value (" + go.copiedValue.type + ")", action: function () {
-								field.target[ field.name ] = this.copiedValue.value;
+							text: "Paste (" + pasteName + ")", action: function () {
+								field.target[ field.name ] = UI.copiedValue.value;
 								this.reload( field.name );
 							}
 						} );
-						if ( go.copiedValue.type === 'object' ) {
+						if ( UI.copiedValue.type === 'object' ) {
 							items.push( {
 								text: "Paste clone", action: function () {
-									field.target[ field.name ] = clone( this.copiedValue.value );
+									field.target[ field.name ] = clone( UI.copiedValue.value );
 									this.reload( field.name );
 								}
 							} );
@@ -1724,9 +1727,9 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 			actions: [
 			{ text:"new UI", action: function() { this.pushToTarget( this.target.ui = new UI(), 'ui' ); } }
 		] },
-		// '__propertyListConfig': false,
 		'worldX': false, 'worldY': false, 'worldScale': false, 'worldScaleX': false, 'worldScaleY': false,
 		'worldAngle': false, 'scale': false, 'numChildren': false,
+		'__propertyListConfig': false,
 	},
 	groups: [
 		{ name: "GameObject", properties: [ 'active', 'name', 'script', 'serializeable', 'serializeMask', 'eventMask' ] },
@@ -1762,7 +1765,8 @@ Vector.__propertyListConfig = Vector.__propertyListConfig ||
 		},
 		length: { min: 0, step: 1, liveUpdate: false, integer: true, reloadOnChange: 'refresh', tooltip: "Number of elements in Vector. Set to 0 to truncate." },
 		array: { readOnly: true, reloadOnChange: true, inline: true, tooltip: "Vector values as array. Modifying this array's elements will have no effect. Setting ^Barray^b property to another Array, however will overwrite the values." },
-		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true }
+		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true },
+		'__propertyListConfig': false,
 	}
 }
 
@@ -1861,6 +1865,7 @@ RenderShape.__propertyListConfig = RenderShape.__propertyListConfig ||
 			hidden: function (t){ return !( t.shape == Shape.Polygon || t.shape == Shape.Chain ); },
 			tooltip: "Sequence of x, y coordinates for Polygon and Chain shapes.",
 		},
+		'__propertyListConfig': false,
 	},
 	groups: [
 		{ name: "Shape", properties:
@@ -1946,7 +1951,7 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 			{ text: "Cut", value: BlendMode.Cut },
 			], tooltip: "Blending operation with the background."
 		},
-
+		'__propertyListConfig': false,
 	},
 	groups: [
 		{ name: "Sprite", properties: [ 'active', 'texture', 'image', ] },

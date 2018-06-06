@@ -114,7 +114,8 @@ include( './ui' );
 		fixedPosition: true,
 		scrollbars: false,
 		layout: function () { go.updateSize(); },
-		// blocking: true,
+		blocking: true,
+		mouseOver: function(){ cancelDebouncer( 'showTooltip' ); }
 	} );
 	go.updateItems = function () {
 
@@ -336,5 +337,8 @@ include( './ui' );
 
 	// add self to overlay
 	App.overlay.addChild( go );
+
+	// cancel any tooltips
+	cancelDebouncer( 'showTooltip' );
 
 })(this);

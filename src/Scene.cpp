@@ -407,7 +407,7 @@ ArgValueVector* Scene::RayCast( float x, float y, float dx, float dy, int maxRes
 	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
 	while( it != end ) {
 		_RayCastResult& r = it->second;
-		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendentOf( descendentsOf ) ) ) {
+		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendantOf( descendentsOf ) ) ) {
 			ArgValue& val = *vi;
 			val.type = TypeObject;
 			void* obj = val.value.objectValue = script.NewObject();
@@ -457,7 +457,7 @@ ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults
 	map<float,_RayCastResult>::iterator it = _raycastResult.begin(), end = _raycastResult.end();
 	while( it != end ) {
 		_RayCastResult& r = it->second;
-		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendentOf( descendentsOf ) ) ) {
+		if ( !descendentsOf || ( descendentsOf && r.shape->body->gameObject->IsDescendantOf( descendentsOf ) ) ) {
 			ArgValue& val = *vi;
 			val.type = TypeObject;
 			void* obj = val.value.objectValue = script.NewObject();
