@@ -65,7 +65,15 @@ void GameObject::InitClass() {
 	script.AddProperty<GameObject>
 	( "name",
 	 static_cast<ScriptStringCallback>([](void* go, string ) { return ((GameObject*) go)->name; }),
-	 static_cast<ScriptStringCallback>([](void* go, string val ) { return ((GameObject*) go)->name = val; }));
+	 static_cast<ScriptStringCallback>([](void* go, string val ) {
+		GameObject* self = (GameObject*) go;
+		Event e( EVENT_NAMECHANGED );
+		e.scriptParams.AddStringArgument( val.c_str() );
+		e.scriptParams.AddStringArgument( self->name.c_str() );
+		self->name = val;
+		self->CallEvent( e );
+		return val;
+	}));
 	
 	script.AddProperty<GameObject>
 	( "active",
@@ -1118,13 +1126,19 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		if ( event.stopped ) return;
 	}
 	
-	// for each child
-	for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
-		GameObject* obj = (GameObject*) this->children[ i ];
-		// recurse, if event doesn't need to skip this object
-		if ( obj->active() && obj != event.skipObject ) {
-			obj->DispatchEvent( event, true, forEachGameObject );
-			if ( event.stopped ) return;
+	// behavior said skip children
+	if ( event.skipChildren ) {
+		// reset
+		event.skipChildren = false;
+	} else {
+		// for each child
+		for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
+			GameObject* obj = (GameObject*) this->children[ i ];
+			// recurse, if event doesn't need to skip this object
+			if ( obj->active() && obj != event.skipObject ) {
+				obj->DispatchEvent( event, true, forEachGameObject );
+				if ( event.stopped ) return;
+			}
 		}
 	}
 	
@@ -1249,8 +1263,8 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			
 			// find this object in parent's list of children
 			GameObjectVector *parentList = &oldParent->children;
-			GameObjectIterator listEnd = parentList->end();
-			GameObjectIterator it = find( parentList->begin(), listEnd, this );
+			GameObjectVector::iterator listEnd = parentList->end();
+			GameObjectVector::iterator it = find( parentList->begin(), listEnd, this );
 			
 			// remove from list
 			int removedAt = -1;
@@ -1327,14 +1341,14 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 				if ( newParent->orphan ) {
 					
 					// means this object has been removed from scene, dispatch event and make it orphan
-					event.name = EVENT_REMOVED_FROM_SCENE;
+					event.name = EVENT_REMOVEDFROMSCENE;
 					this->DispatchEvent( event, true, &makeOrphan );
 					
 				} else {
 					
 					// means this object has been added to scene, dispatch event and set orphan values on descendants
 					GameObjectCallback moveToScene = [](GameObject *obj) { obj->orphan = false; return true; };
-					event.name = EVENT_ADDED_TO_SCENE;
+					event.name = EVENT_ADDEDTOSCENE;
 					this->DispatchEvent( event, true, &moveToScene );
 					
 				}
@@ -1354,7 +1368,7 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 			
 			// means this object has been removed from scene, dispatch event and make it orphan
 			Event event( this->scriptObject );
-			event.name = EVENT_REMOVED_FROM_SCENE;
+			event.name = EVENT_REMOVEDFROMSCENE;
 			event.behaviorParam = this;
 			this->DispatchEvent( event, true, &makeOrphan );
 			
@@ -1390,17 +1404,39 @@ ArgValueVector* GameObject::GetChildrenVector() {
 	return vec;
 }
 
-/// overwrites children
+/// overwrites children, if array element is null, keeps existing child in that spot
 ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
-	// remove all children first
-	while( this->children.size() ) this->children[ 0 ]->SetParent( NULL );
-	// add children
+	// go over passed array
 	size_t nc = in->size();
-	for ( size_t i = 0; i < nc; i++ ){
+	size_t curSize;
+	size_t i = 0;
+	for (; i < nc; i++ ){
+		// each element
 		ArgValue &val = (*in)[ i ];
+		GameObject* go = NULL;
+		curSize = this->children.size();
 		if ( val.type == TypeObject && val.value.objectValue != NULL ) {
-			GameObject* go = script.GetInstance<GameObject>( val.value.objectValue );
-			if ( go ) go->SetParent( this );
+			go = script.GetInstance<GameObject>( val.value.objectValue );
+		}
+		// if a valid gameobject, and not same as child at this spot
+		if ( go && ( i >= curSize || go != this->children[ i ] ) ) {
+			// if there's a child here
+			if ( i < curSize ) {
+				// remove it
+				this->children[ i ]->SetParent( NULL );
+			}
+			// insert in this spot
+			go->SetParent( this, (int) i );
+			
+		// otherwise
+		} else {
+			// skip over this spot
+		}
+	}
+	// remove remaining
+	if ( in->size() < this->children.size() ) {
+		for ( int j = (int) this->children.size() - 1; j >= nc; j-- ){
+			this->children[ j ]->SetParent( NULL );
 		}
 	}
 	return in;
@@ -2009,7 +2045,7 @@ bool GameObject::active( bool a ) {
 		this->_active = a;
 		
 		// dispatch to self and children
-		Event event( EVENT_ACTIVE_CHANGED, this->scriptObject );
+		Event event( EVENT_ACTIVECHANGED, this->scriptObject );
 		this->DispatchEvent( event, true );
 		
 	}

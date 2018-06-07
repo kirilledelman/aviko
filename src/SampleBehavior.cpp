@@ -18,12 +18,12 @@ SampleBehavior::SampleBehavior() {
 	
 	// register event functions
 	AddEventCallback( EVENT_UPDATE, (BehaviorEventCallback) &SampleBehavior::Update );
-	AddEventCallback( EVENT_LATE_UPDATE, (BehaviorEventCallback) &SampleBehavior::LateUpdate );
+	AddEventCallback( EVENT_LATEUPDATE, (BehaviorEventCallback) &SampleBehavior::LateUpdate );
 	AddEventCallback( EVENT_ADDED, (BehaviorEventCallback) &SampleBehavior::Added );
 	AddEventCallback( EVENT_REMOVED, (BehaviorEventCallback) &SampleBehavior::Removed );
-	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &SampleBehavior::AddedToScene );
-	AddEventCallback( EVENT_REMOVED_FROM_SCENE, (BehaviorEventCallback) &SampleBehavior::RemovedFromScene );
-	AddEventCallback( EVENT_ACTIVE_CHANGED, (BehaviorEventCallback) &SampleBehavior::ActiveChanged );
+	AddEventCallback( EVENT_ADDEDTOSCENE, (BehaviorEventCallback) &SampleBehavior::AddedToScene );
+	AddEventCallback( EVENT_REMOVEDFROMSCENE, (BehaviorEventCallback) &SampleBehavior::RemovedFromScene );
+	AddEventCallback( EVENT_ACTIVECHANGED, (BehaviorEventCallback) &SampleBehavior::ActiveChanged );
 	// AddEventCallback( EVENT_RENDER, (BehaviorEventCallback) &SampleBehavior::Render );
 	
 }

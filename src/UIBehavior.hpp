@@ -37,6 +37,7 @@ public:
 	bool mouseOver = false;
 	bool mouseDown[4] = { false, false, false, false }; // which button was down
 	bool focusable = false;
+	bool disabled = false;
 	
 	//
 	bool IsScreenPointInBounds( float x, float y, float* localX, float* localY );

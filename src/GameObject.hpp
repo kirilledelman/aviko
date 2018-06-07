@@ -10,7 +10,6 @@
 #include "TypedVector.hpp"
 
 typedef vector<GameObject*> GameObjectVector;
-typedef vector<GameObject*>::iterator GameObjectIterator;
 
 typedef list<Behavior*> BehaviorList;
 

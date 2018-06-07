@@ -757,6 +757,9 @@ UI.base = UI.base || {
 			// (Boolean) blocks mouse events from reaching objects higher in in hierarchy tree
 			'blocking': { get: function (){ return ui.blocking; }, set: function( v ){ ui.blocking = v; } },
 
+			// (Boolean) mouse events are disabled
+			'mouseDisabled': { get: function (){ return ui.mouseDisabled; }, set: function( v ){ ui.mouseDisabled = v; } },
+
 			// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
 			'layoutType': { get: function (){ return ui.layoutType; }, set: function( v ){ ui.layoutType = v; } },
 
@@ -898,34 +901,35 @@ UI.base = UI.base || {
 					UI.base.mergeStyle( go.baseStyle, v ) ;
 					UI.base.applyProperties( go, v );
 					go.state = 'auto'; // reset state
-				}, // serialized: false
+				},
 			},
 
-			// (Object) used to change state of control. Holds definitions from initialization
-			'states': { get: function (){ return go._states; }, set: function( v ){ go._states = clone( v ); }, serialized: false },
-
-			// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc). Applies properties from object in .states style property
+			// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc).
+			// Applies properties from corresponding object in .states property
 			'state': {
-				get: function (){ return go._state ? go._state : 'off'; },
+				get: function (){ return go.__state ? go.__state : 'off'; },
 				set: function ( v ){
-					if ( !go._states ) return;
+					go.__state = v;
+					if ( !go.__states ) return;
 					if ( v == 'auto' ) {
 						// apply states in order
-						UI.base.applyProperties( go, go._states[ v = 'off' ] );
-						if ( ui.focused && go._states[ 'focus' ] ) { UI.base.applyProperties( go, go._states[ v = 'focus' ] ); }
+						UI.base.applyProperties( go, go.__states[ v = 'off' ] );
+						if ( ui.focused && go.__states[ 'focus' ] ) { UI.base.applyProperties( go, go.__states[ v = 'focus' ] ); }
 						if ( ui.disabled ) {
 							v = 'disabled';
-							if ( go._states[ 'disabled' ] ) { UI.base.applyProperties( go, go._states[ v ] ); }
+							if ( go.__states[ 'disabled' ] ) { UI.base.applyProperties( go, go.__states[ v ] ); }
 						} else {
-							if ( ui.down && go._states[ 'down' ] ) { UI.base.applyProperties( go, go._states[ v = 'down' ] ); }
-							else if ( ui.over && go._states[ 'over' ] ) { UI.base.applyProperties( go, go._states[ v = 'over' ] ); }
+							if ( ui.down && go.__states[ 'down' ] ) { UI.base.applyProperties( go, go.__states[ v = 'down' ] ); }
+							else if ( ui.over && go.__states[ 'over' ] ) { UI.base.applyProperties( go, go.__states[ v = 'over' ] ); }
 						}
 					} else {
-						UI.base.applyProperties( go, go._states[ v ] );
+						UI.base.applyProperties( go, go.__states[ v ] );
 					}
-					go._state = v;
 				}, serialized: false
 			},
+
+			// (Object) definitions for each state
+			'states': { get: function (){ return go.__states; }, set: function( v ){ go.__states = v ? clone( v ) : v; }, serialized: false },
 
 		};
 
@@ -948,23 +952,30 @@ UI.base = UI.base || {
 
 	},
 
-	// adds group with properties to __propertyListConfig
-	addInspectables: function ( go, groupName, props, propsExtended ) {
+	// adds group with properties to __propertyListConfig ( used by ui components to add component-specific properties )
+	// go - object
+	// groupName - group to add (or replace if group w same name exists in GameObject.prototype.__propertyListConfig)
+	// props: array of property names, in order
+	// propsExtended: (optional) object with property definitions to override
+	// pos: (optional) position where this group should be inserted
+	addInspectables: function ( go, groupName, props, propsExtended, pos ) {
 		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
-		go.__propertyListConfig.groups.push( { name: groupName, properties: props } );
+		go.__propertyListConfig.groups.push( { name: groupName, properties: props, pos: pos } );
 		for ( var p in props ) {
 			go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
 		}
 	},
 
-	// sets properties on an object
+	// sets properties on an object recursively
 	applyProperties: function ( go, props ) {
 		if ( !( props && go ) ) return;
 		for ( var p in props ) {
+			var goType = typeof( go[ p ] );
+			var pType = typeof( props[ p ] );
 			if ( p === 'style' ) continue; // last
 			// object with same name (but not an array)?
-			if ( typeof( props[ p ] ) === 'object' && props[ p ].constructor !== Array &&
-				typeof( go[ p ] ) === 'object' && go[ p ] !== null ) {
+			if ( pType === 'object' && props[ p ].constructor !== Array &&
+				goType === 'object' && go[ p ] !== null ) {
 				// apply properties to it
 				UI.base.applyProperties( go[ p ], props[ p ] );
 			} else {
@@ -991,20 +1002,6 @@ UI.base = UI.base || {
 		}
 		return baseStyle;
 	},
-
-	// creates properties with getter/setters
-	/*addMappedProperties: function ( go, mappedProps ) {
-		if ( go != global ) go.serializeMask = go.serializeMask ? go.serializeMask : {};
-		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
-		for ( var i = 0; i < mappedProps.length; i++ ) {
-			var hidden = ( mappedProps[ i ].length >= 4 && mappedProps[ i ][ 3 ] );
-			Object.defineProperty( go, mappedProps[ i ][ 0 ], {
-				get: mappedProps[ i ][ 1 ], set: mappedProps[ i ][ 2 ], enumerable: !hidden, configurable: true,
-			} );
-			go.__propertyListConfig.properties[ mappedProps[ i ][ 0 ] ] = false; // hide from inspector
-			if ( hidden && go != global ){ go.serializeMask[ mappedProps[ i ][ 0 ] ] = true; }
-		}
-	},*/
 
 	// creates properties with getter/setters
 	mapProperties: function( go, mappedProps ) {
@@ -1104,7 +1101,8 @@ UI.base = UI.base || {
 
 		// list files matching text in box
 		var tft = textfield.text;
-		var files = listDirectory( tft, textfield.autocompleteParam );
+		var files = listDirectory( tft,
+           ( typeof( textfield.autocompleteParam ) === 'string' ) ? textfield.autocompleteParam.split(',') : null );
 		var suggestions = [];
 		var lastSlash = tft.lastIndexOf( '/' );
 		var tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
@@ -1153,7 +1151,12 @@ UI.base = UI.base || {
 	_focus: function () { if ( this.ui.focusable ) this.ui.focus(); },
 
 	_scrollIntoView: function ( expandAmount ) {
-		var lpx = 0, lpy = 0, lw = this.width, lh = this.height;
+		var lpx = 0, lpy = 0, lw, lh;
+		if ( typeof( this.width ) == 'undefined' && this.ui ){
+			lw = this.ui.width; lh = this.ui.height;
+		} else {
+			lw = this.width; lh = this.height;
+		}
 		// params are used by input to scroll caret into view
 		if ( arguments.length != 0 ) {
 			lpx = arguments[ 0 ]; lpy = arguments[ 1 ];

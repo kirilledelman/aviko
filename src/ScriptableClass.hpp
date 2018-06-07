@@ -34,6 +34,9 @@ struct Event {
 	/// will be set to true when entering blocking UI event subtree
 	bool willBlockUIEvent = false;
 	
+	/// is set by disabled UIBehavior
+	bool skipChildren = false;
+	
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
 	

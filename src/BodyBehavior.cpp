@@ -14,9 +14,9 @@ BodyBehavior::BodyBehavior() {
 	// register event functions
 	AddEventCallback( EVENT_ATTACHED, (BehaviorEventCallback) &BodyBehavior::Attached );
 	AddEventCallback( EVENT_DETACHED, (BehaviorEventCallback) &BodyBehavior::Detached );
-	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &BodyBehavior::Attached );
-	AddEventCallback( EVENT_REMOVED_FROM_SCENE, (BehaviorEventCallback) &BodyBehavior::Detached );
-	AddEventCallback( EVENT_ACTIVE_CHANGED, (BehaviorEventCallback) &BodyBehavior::ActiveChanged );
+	AddEventCallback( EVENT_ADDEDTOSCENE, (BehaviorEventCallback) &BodyBehavior::Attached );
+	AddEventCallback( EVENT_REMOVEDFROMSCENE, (BehaviorEventCallback) &BodyBehavior::Detached );
+	AddEventCallback( EVENT_ACTIVECHANGED, (BehaviorEventCallback) &BodyBehavior::ActiveChanged );
 	
 	// is body
 	this->isBodyBehavior = true;

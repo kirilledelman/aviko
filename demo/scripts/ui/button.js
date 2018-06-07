@@ -51,7 +51,7 @@ include( './ui' );
 
 		// (String) or null - texture on icon
 		'icon': {
-			get: function (){ return image ? image.texture : ''; },
+			get: function (){ return image ? image.render.texture : ''; },
 			set: function( v ){
 				if ( v ) {
 					if ( !image ) makeImage();
@@ -69,12 +69,9 @@ include( './ui' );
 		'label': { get: function (){ return label; } },
 
 		// (GameObject) instance of 'ui/image.js' used as icon
-		'image': { get: function (){ return image ? image : makeImage(); }, serialized: false },
+		'image': { get: function (){ return image ? image : makeImage(); } },
 
-		// (Number) space between icon and label
-		'gap': { get: function (){ return ui.spacingX; }, set: function ( v ){ ui.spacingX = v; } },
-
-		// (Boolean) input disabled
+		// (Boolean) disabled
 		'disabled': {
 			get: function (){ return disabled; },
 		    set: function ( v ){
@@ -147,15 +144,14 @@ include( './ui' );
 		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
 
 	};
-
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
-	UI.base.addInspectables( go, 'UI', [ 'text', 'icon', 'disabled', 'cancelToBlur', 'style' ] );
-
-	// create components
+	UI.base.addInspectables( go, 'Button',
+		[ 'text', 'icon', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'style' ],
+		{ 'icon': { autocomplete: 'file', autocompleteParam: 'png,jpg' } }, 1 );
 
 	// set name
-	if ( !go.name ) go.name = "Button";
+	go.name = "Button";
 
 	// sprite background
 	bg = new RenderSprite( background );
@@ -169,7 +165,7 @@ include( './ui' );
 	});
 
 	// label
-	label = go.addChild( 'ui/text', {
+	label = new GameObject( 'ui/text', {
 		name: "Label",
 		wrap: false,
 		active: false,
@@ -189,15 +185,13 @@ include( './ui' );
 	ui.layout = function( w, h, r ) {
 		shp.resize( w, h );
 		bg.resize( w, h );
-		label.ui.maxWidth = w - ( ui.padLeft + ui.padRight ) - ( image ? ( ui.spacingX + image.ui.width + image.ui.marginLeft + image.ui.marginRight ) : 0 );
+		label.ui.maxWidth = w - ( ui.padLeft + ui.padRight )
+			- ( image ? ( ui.spacingX + image.ui.width + image.ui.marginLeft + image.ui.marginRight ) : 0 );
 	}
 
 	// focus changed
 	ui.focusChanged = function ( newFocus, oldFocus ) {
-		// focused
-	    if ( newFocus == ui ) {
-		    go.scrollIntoView();
-	    }
+	    if ( newFocus == ui ) go.scrollIntoView();
 	    go.state = 'auto';
 		go.fire( 'focusChanged', newFocus );
 	}
@@ -207,7 +201,7 @@ include( './ui' );
 
 		stopAllEvents();
 
-		// enter = click
+		// same as click or enter
 		if ( name == 'accept' && !disabled ) {
 
 			// simulated click
@@ -215,9 +209,9 @@ include( './ui' );
 
 			// animate down / up
 			go.state = 'down';
-			go.async( function() { go.state = 'auto'; }, 0.1 );
+			go.debounce( 'up', function() { go.state = 'auto'; }, 0.1 );
 
-		// escape = blur
+		// same as escape
 		} else if ( name == 'cancel' ) {
 
 			if ( cancelToBlur ) ui.blur();
@@ -231,9 +225,7 @@ include( './ui' );
 
 	// click - forward to gameObject
 	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( ui.focusable ) {
-			ui.focus();
-		}
+		if ( ui.focusable ) ui.focus();
 		stopAllEvents();
 		if ( disabled ) return;
 		go.fire( 'click', btn, x, y, wx, wy );
@@ -244,7 +236,6 @@ include( './ui' );
 		if ( disabled ) return;
 		stopAllEvents();
 		go.state = 'down';
-		// forward to gameObject
 		go.fire( 'mouseDown', btn, x, y, wx, wy );
 	}
 
@@ -255,12 +246,20 @@ include( './ui' );
 		go.fire( currentEventName(), btn, x, y, wx, wy );
 	}
 
-	// keyboard
+	// keyboard focus
 	ui.keyDown = function ( code, shift ) {
-		// handle tab key
+		// handle default keys (regardless of controller config)
 	    switch ( code ) {
 		    case Key.Tab:
 			    ui.moveFocus( shift ? -1 : 1 );
+			    stopEvent();
+			    break;
+		    case Key.Enter:
+			    ui.navigation( 'accept', 1 );
+			    stopEvent();
+			    break;
+		    case Key.Escape:
+			    ui.navigation( 'cancel', 1 );
 			    stopEvent();
 			    break;
 	    }
@@ -273,12 +272,19 @@ include( './ui' );
 		go.fire( currentEventName(), x, y, wx, wy );
 	}
 
+	// helper for adding an icon when needed
 	function makeImage(){
-		image = go.addChild( new GameObject({
-			ui: new UI(),
-			render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
-		} ), 0);
+		image = go.addChild(
+			new GameObject({
+				ui: new UI(),
+				render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
+			}), 0 );
 		return image;
+	}
+
+	// add children late, to allow serializing buttons with extra children
+	go.awake = function () {
+		go.addChild( label );
 	}
 
 	// apply defaults
@@ -287,8 +293,4 @@ include( './ui' );
 	go.state = 'auto';
 	constructing = false;
 
-	go.awake = function () {
-		log( "I am a button", go.name );
-		log ( label, label.parent );
-	}
 })(this);

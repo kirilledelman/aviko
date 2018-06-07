@@ -47,13 +47,13 @@ UIBehavior::UIBehavior() {
 	AddEventCallback( EVENT_KEYUP, (BehaviorEventCallback) &UIBehavior::Key);
 	AddEventCallback( EVENT_KEYPRESS, (BehaviorEventCallback) &UIBehavior::KeyPress);
 	AddEventCallback( EVENT_NAVIGATION, (BehaviorEventCallback) &UIBehavior::Navigation);
-	AddEventCallback( EVENT_ADDED_TO_SCENE, (BehaviorEventCallback) &UIBehavior::Attached );
-	AddEventCallback( EVENT_REMOVED_FROM_SCENE, (BehaviorEventCallback) &UIBehavior::Detached );
+	AddEventCallback( EVENT_ADDEDTOSCENE, (BehaviorEventCallback) &UIBehavior::Attached );
+	AddEventCallback( EVENT_REMOVEDFROMSCENE, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ATTACHED, (BehaviorEventCallback) &UIBehavior::Attached );
 	AddEventCallback( EVENT_DETACHED, (BehaviorEventCallback) &UIBehavior::Detached );
 	AddEventCallback( EVENT_ADDED, (BehaviorEventCallback) &UIBehavior::Attached );
 	AddEventCallback( EVENT_REMOVED, (BehaviorEventCallback) &UIBehavior::Detached );
-	AddEventCallback( EVENT_ACTIVE_CHANGED, (BehaviorEventCallback) &UIBehavior::ActiveChanged );
+	AddEventCallback( EVENT_ACTIVECHANGED, (BehaviorEventCallback) &UIBehavior::ActiveChanged );
 	AddEventCallback( EVENT_LAYOUT, (BehaviorEventCallback) &UIBehavior::Layout );
 	
 	// flag
@@ -133,6 +133,13 @@ void UIBehavior::InitClass() {
 		return val;
 	}));
 
+	// blocks all mouse events
+	script.AddProperty<UIBehavior>
+	( "mouseDisabled",
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->disabled; }),
+	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return (((UIBehavior*) b)->disabled = val); }));
+	
+	// auto stops mouse events after processing all children first
 	script.AddProperty<UIBehavior>
 	( "blocking",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((UIBehavior*) b)->blocking; }),
@@ -1909,6 +1916,13 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		e->isUIEventInBounds = true;
 		// add to rollovers
 		if ( !e->willBlockUIEvent ) UIBehavior::rollovers.insert( behavior );
+		
+		// disabled? ignore
+		if ( behavior->disabled ) {
+			e->skipChildren = true;
+			return;
+		}
+		
 	}
 	
 	// just entered bounds
@@ -1968,6 +1982,12 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 	
 	if ( inBounds ) {
 		
+		// disabled? ignore
+		if ( behavior->disabled ) {
+			e->skipChildren = true;
+			return;
+		}
+		
 		// update state
 		bool wasDown = behavior->mouseDown[ btn ];
 		behavior->mouseDown[ btn ] = down;
@@ -2017,6 +2037,11 @@ void UIBehavior::MouseWheel( UIBehavior* behavior, void* param, Event* e){
 	if ( behavior->mouseOver ) {
 		// mark event as inbounds
 		e->isUIEventInBounds = true;
+		// disabled? ignore
+		if ( behavior->disabled ) {
+			e->skipChildren = true;
+			return;
+		}
 		// call it
 		behavior->CallEvent( *e );
 	}

@@ -1,3 +1,5 @@
+icon field on button - modify autocomplete filename to check for :frame - add getTextureFrames( tex )
+
 
 UI components
 make sure they're serializable
@@ -7,10 +9,13 @@ make sure setting .script to a different ui resets the object
 Scrollbar
 .minusButton, .plusButton - add disabling, and paging handler funcs
 
+getProperties doesn't search ScriptObject prototypes
+file overwrite doesnt work?
+save non-native functions
+
 Inspector
 Ctrl+ wheel - zoom
 	+ left - pan
-long right click - popup to pick which object underneath to inspect
 
 
 RenderText
@@ -70,6 +75,9 @@ Image
 Nice to have
 
 =============================================
+
+propertyList
+	multiple selection (if objects are of the same type + only show common properties)
 
 Image
 	add image texture from drawing instructions - similar to svg,  ???

@@ -20,7 +20,6 @@ new (function( params ){
 
 	// properties
 	var mappedProps = {
-
 		// (Object) currently inspected target
 		'$0': {
 			get: function (){ return propertyList.target; },
@@ -35,21 +34,6 @@ new (function( params ){
 				}
 			}, serialized: false
 		},
-
-		// (Object) secondary target
-		'$1': {
-			get: function (){ return target2; },
-			set: function ( t ) {
-				if ( t != target2 ) {
-					// target
-					if ( target2 && typeof( target2 ) === 'object' ) {
-						log( "$1 =", t );
-					}
-					target2 = t;
-				}
-			}, serialized: false
-		},
-
 	};
 	UI.base.mapProperties( global, mappedProps );
 
@@ -70,7 +54,7 @@ new (function( params ){
 		active: false,
 	} );
 
-	// scene
+	// scene explorer
 	var sceneExplorer = this.sceneExplorer = window.addChild( './scrollable', {
 		minWidth: 150,
 		layoutType: Layout.Vertical,
@@ -78,16 +62,21 @@ new (function( params ){
 		layoutAlignY: LayoutAlign.Start,
 		scrollbars: 'auto',
 		pad: 2,
+
+		// scene explorer layout
 		layout: function ( w, h ) {
+			// auto fit scroll bar
 			if ( this.verticalScrollbar && this.verticalScrollbar.active ) {
 				this.marginRight = this.verticalScrollbar.width + this.verticalScrollbar.marginLeft;
 			} else {
 				this.marginRight = 0;
 			}
+			// auto resize
 			this.scrollWidth = this.width;
 			this.container.render.resize( w, Math.max( h, this.scrollHeight ) );
 
 		},
+
 		// select node in tree
 		selectNode: function ( node ) {
 			// clear previous
@@ -95,7 +84,10 @@ new (function( params ){
 			if ( !row ) return;
 			if ( this.currentNode ) {
 				var prow = row.findRowForNode( this.currentNode );
-				if ( prow ) prow.button.label.addColor = prow.button.image.addColor = 0x0;
+				if ( prow ) {
+					prow.button.label.color = 0x0;
+					prow.button.render.active = false;
+				}
 			}
 
 			// make sure it's gameobject
@@ -123,8 +115,9 @@ new (function( params ){
 
 			// highlight
 			if ( row ) {
-				row.button.label.addColor = row.button.image.addColor = 0x0066a5;
-				row.button.async( row.button.scrollIntoView, 0.5 );
+				row.button.label.color = 0x0066a5;
+				row.button.render.active = true;
+				row.button.async( function() { UI.base._scrollIntoView.apply( row.button ); }, 0.5 );
 			}
 			this.currentNode = node;
 		},
@@ -186,28 +179,28 @@ new (function( params ){
 		lineSpacing: -2,
 		autocomplete: UI.base.autocompleteObjectProperty,
 		size: 12,
-		focusGroup: 'inspector'
-	} );
-	input.on( 'keyDown', function ( code, shift, ctrl, alt, meta ) {
-		// history
-		if ( ( ctrl || meta ) && history.length ) {
-			if ( code == Key.Up ) {
-				historyPos = ( historyPos == history.length ? ( history.length - 1 ) : ( ( historyPos > 0 ? historyPos : history.length ) - 1 ) );
-			} else if ( code == Key.Down ) {
-				historyPos = ( historyPos + 1 ) % history.length;
-			} else return;
-			input.text = history[ historyPos ];
-			input.caretPosition = input.text.positionLength();
-		// accept
-		} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
-			log ( "> " + input.text ); //.replace( /\^/g, '^^' )
-			history.push( input.text );
-			var r = eval( input.text );
-			input.text = "";
-			input.editing = true;
-			historyPos = history.length;
-			if ( r !== null && typeof ( r ) === 'object' && r.constructor.name.indexOf( 'Error' ) > 0 ) throw r;
-			log( r );
+		focusGroup: 'inspector',
+		keyDown: function ( code, shift, ctrl, alt, meta ) {
+			// history
+			if ( ( ctrl || meta ) && history.length ) {
+				if ( code == Key.Up ) {
+					historyPos = ( historyPos == history.length ? ( history.length - 1 ) : ( ( historyPos > 0 ? historyPos : history.length ) - 1 ) );
+				} else if ( code == Key.Down ) {
+					historyPos = ( historyPos + 1 ) % history.length;
+				} else return;
+				input.text = history[ historyPos ];
+				input.caretPosition = input.text.positionLength();
+			// accept
+			} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
+				log ( "> " + input.text ); //.replace( /\^/g, '^^' )
+				history.push( input.text );
+				var r = eval( input.text );
+				input.text = "";
+				input.editing = true;
+				historyPos = history.length;
+				if ( r !== null && typeof ( r ) === 'object' && r.constructor.name.indexOf( 'Error' ) > 0 ) throw r;
+				log( r );
+			}
 		}
 	} );
 
@@ -338,29 +331,38 @@ new (function( params ){
 			layoutAlignY: LayoutAlign.Start,
 		} );
 		// main button
-		go.button = go.addChild( './button', {
-			focusable: false,
+		go.button = go.addChild( {
+			render: new RenderShape( {
+				shape: Shape.Rectangle,
+				centered: false,
+				filled: true,
+				color: 0xd9e2e7,
+				active: false
+			} )
+		} );
+		go.button.ui = new UI( {
 			fitChildren: false,
 			minHeight: 20,
 			pad: 2,
-			focusRect:false,
 			spacing: 4,
-			icon: UI.style.propertyList.values.object.icon, // down arrow
-			style: {
-				label: { size: 12, color: 0x0, align: TextAlign.Left, bold: false, flex: 1 },
-				states: {
-					off: { label: { color: 0x0 }, background: false },
-					over: { background: 0xd9e2e7 },
-					down: { background: 0xd9e2e7 },
-				},
-				image: { angle: -90, ui: { offsetX: 4, offsetY: 9 } },
-			},
-			click: rowButtonClick
+			layoutType: Layout.Horizontal,
+			layoutAlignX: LayoutAlign.Stretch,
+			layoutAlignY: LayoutAlign.Center,
+			click: rowButtonClick.bind( go.button )
 		});
+		go.button.image = go.button.addChild( './image', {
+			texture: UI.style.propertyList.values.object.icon,
+			rotation: -90,
+		} );
+		go.button.label = go.button.addChild( './text', {
+			size: 12, color: 0x0, align: TextAlign.Left, bold: false, flex: 1,
+			autoSize: true,
+		} );
 
 		// selected
 		if ( node == propertyList.target ) {
-			go.button.label.addColor = go.button.image.addColor = 0x0066a5;
+			go.button.label.color = 0x0066a5;
+			go.button.render.active = true;
 		}
 
 		// called to update row
@@ -373,7 +375,7 @@ new (function( params ){
 				scriptName = ' ^b<' + scriptName[ scriptName.length - 1 ].replace( /^(.+)\.([^\.]+)$/, "$1" ) + '>';
 			}
 
-			go.button.text = numKids + name + scriptName;
+			go.button.label.text = numKids + name + scriptName;
 			go.opacity = node.active ? 1 : 0.5;
 			go.button.image.opacity = node.numChildren ? 1 : 0.5;
 		}
@@ -406,16 +408,12 @@ new (function( params ){
 						go.container.getChild( i ).nodeUpdated();
 					}
 				}
-				go.button.image.angle = 0;
-				go.button.image.ui.offsetX = 0;
-				go.button.image.ui.offsetY = 0;
+				go.button.image.rotation = 0;
 				go.container.active = true;
 			} else {
 				// collapse
 				if ( go.container ) go.container.active = false;
-				go.button.image.angle = -90;
-				go.button.image.ui.offsetX = 4;
-				go.button.image.ui.offsetY = 9;
+				go.button.image.rotation = -90;
 			}
 			// flag
 			go.expanded = !go.expanded;
@@ -426,6 +424,8 @@ new (function( params ){
 			node.off( 'removed', go.nodeRemoved );
 			node.off( 'childRemoved', go.nodeChildRemoved );
 			node.off( 'childAdded', go.nodeChildAdded );
+			node.off( 'activeChanged', go.nodeUpdated );
+			node.off( 'nameChanged', go.nodeUpdated );
 		}
 
 		go.nodeRemoved = function () { go.parent = null; }
@@ -469,7 +469,8 @@ new (function( params ){
 		node.on( 'removed', go.nodeRemoved, true );
 		node.on( 'childRemoved', go.nodeChildRemoved );
 		node.on( 'childAdded', go.nodeChildAdded );
-
+		node.on( 'activeChanged', go.nodeUpdated );
+		node.on( 'nameChanged', go.nodeUpdated );
 		return go;
 	}
 
@@ -510,7 +511,12 @@ new (function( params ){
 					}
 				} );
 				items.push( { text: "Unparent", action: function () { this.node.parent = null; } } );
+				items.push( null );
 			}
+			items.push( { text: "Add child", action: function () {
+				this.node.addChild( new GameObject() );
+				if ( !this.expanded ) this.toggleExpand();
+			} } );
 			// popup menu
 			var popup = new GameObject( './popup-menu', {
 				target: this,

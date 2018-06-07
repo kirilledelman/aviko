@@ -433,6 +433,15 @@ include( './ui' );
 					style: go.baseStyle.values.any
 				}, insertChildIndex );
 				field.style = go.baseStyle.values.string;
+				// supported autocomplete
+				if ( pdef.autocomplete ) {
+					switch( pdef.autocomplete ){
+						case 'file':
+						field.autocomplete = UI.base.autocompleteFilePath;
+						field.autocompleteParam = pdef.autocompleteParam; // 'png,jpg'
+						break;
+					}
+				}
 				break;
 
 			// dropdown:
@@ -658,14 +667,18 @@ include( './ui' );
 					var g = other.groups[ i ];
 					var found = false;
 					for ( var j = 0; j < _groups.length; j++ ) {
+						// same name? replace
 						if ( _groups[ j ].name === g.name ) {
 							_groups[ j ] = g;
 							found = true;
 							break;
 						}
 					}
+					// new group
 					if ( !found ) {
-						_groups.push( g );
+						// insert or push
+						if ( g.pos !== undefined ) _groups.splice( g.pos, 0, g );
+						else _groups.push( g );
 					}
 				}
 			}
@@ -713,14 +726,6 @@ include( './ui' );
 
 		// remove extra buttons from header
 		while ( header.numChildren > 2 ) header.removeChild( header.numChildren - 1 );
-
-		// empty target
-		/*if ( !target ) {
-			moreButton.disabled = true;
-			return;
-		} else {
-			moreButton.disabled = false;
-		}*/
 
 		// process actions .hidden and .disabled conditionals
 		if ( _actions.length ) {

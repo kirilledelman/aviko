@@ -50,10 +50,13 @@ new (function (){
 
 	// button click handler
 	var buttonClick = function () {
+		// block all buttons while scene is loading
+		buttons.eventMask = [ 'mouseDown', 'click', 'mouseUp', 'keyDown', 'keyUp', 'keyPress', 'navigate' ];
 		// load scene and animate transition
 		var sub = include( this.src );
 		sub.ui.async( sub.ui.requestLayout, 0.2 );
-		async( function () {
+		this.async( function () {
+			buttons.eventMask = [];
 			transitionScene( sub, scene, -1 );
 			App.pushScene( sub );
 		}, 0.25 );
