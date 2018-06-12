@@ -949,6 +949,7 @@ void GameObject::InitClass() {
 		// dispatch
 		GameObject* self = (GameObject*) go;
 		self->DispatchEvent( event, true );
+		sa.ReturnBool( !event.stopped );
 		return true;
 	}));
 	
@@ -1135,7 +1136,7 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
 			GameObject* obj = (GameObject*) this->children[ i ];
 			// recurse, if event doesn't need to skip this object
-			if ( obj->active() && obj != event.skipObject ) {
+			if ( obj->active() && obj != event.skipObject && obj != event.skipObject2 ) {
 				obj->DispatchEvent( event, true, forEachGameObject );
 				if ( event.stopped ) return;
 			}
@@ -2294,7 +2295,7 @@ void GameObject::Render( Event& event ) {
 	for( int i = 0; i < numChildren; i++ ) {
 		GameObject* obj = this->children[ i ];
 		// recurse if render behavior didn't ask to skip it
-		if ( obj->active() && obj != event.skipObject ) obj->Render( event );
+		if ( obj->active() && obj != event.skipObject && obj != event.skipObject2 ) obj->Render( event );
 	}	
 	
 	// render after children?

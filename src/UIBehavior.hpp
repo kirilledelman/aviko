@@ -186,6 +186,8 @@ public:
 	/// registers class for scripting
 	static void InitClass();
 
+	/// garbage collection callback
+	void TraceProtectedObjects( vector<void **> &protectedObjects );
 	
 };
 

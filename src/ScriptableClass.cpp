@@ -154,19 +154,24 @@ void ScriptableClass::InitClass() {
 			
 			// function specified
 			if ( handler ) {
-				// insert at priority
-				EventListeners::iterator it = list.begin(), end = list.end();
-				bool inserted = false;
-				while ( it != end ) {
-					if ( it->priority > priority ) {
-						list.emplace( it, handler, once );
-						inserted = true;
-						break;
+				// check if already exists
+				EventListeners::iterator it, end = list.end();
+				it = find_if( list.begin(), end, [&handler](const ScriptFunctionObject &arg) { return arg.funcObject == handler; } );
+				if ( it == end ) {
+					// insert at priority
+					it = list.begin();
+					bool inserted = false;
+					while ( it != end ) {
+						if ( it->priority > priority ) {
+							list.emplace( it, handler, once );
+							inserted = true;
+							break;
+						}
+						it++;
 					}
-					it++;
+					// append to event listeners
+					if ( !inserted ) list.emplace_back( handler, once );
 				}
-				// append to event listeners
-				if ( !inserted ) list.emplace_back( handler, once );
 			// no function specified
 			} else {
 				// make array of currently attached listeners
@@ -273,6 +278,7 @@ void ScriptableClass::InitClass() {
 		// dispatch
 		ScriptableClass* self = (ScriptableClass*) go;
 		self->ScriptableClass::CallEvent( event );
+		sa.ReturnBool( !event.stopped );
 		return true;
 	}));
 	

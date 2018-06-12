@@ -1,9 +1,11 @@
 icon field on button - modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
+Blend modes blendTarget is off by half texture size
 
 UI components
 make sure they're serializable
 addInspectables
+can turn into 12pt size now
 Make sure all focusable components listen for Tab and Shift+Tab keys
 make sure setting .script to a different ui resets the object
 Scrollbar
@@ -76,14 +78,18 @@ Nice to have
 
 =============================================
 
-propertyList
-	multiple selection (if objects are of the same type + only show common properties)
-
 Image
+	draw, drawMask - allow passing String, and Image as first param
+	colorAtPixel(x,y)
+	make gradient
+	shortcut GPU drawing methods - sprite, line, pixel, rects, arcs, etc..
 	add image texture from drawing instructions - similar to svg,  ???
 
 Top level / Application
 	Normalize error messages, add verbosity
+
+PropertyList
+	multiple selection (if objects are of the same type + only show common properties)
 
 ScriptResource
 	unload+recompile command
@@ -104,24 +110,14 @@ Input class
 
 Dropdown - jump to item by typing
 
-Image
-	colorAtPixel(x,y)
-	make gradient
-	shortcut GPU drawing methods - sprite, line, pixel, rects, arcs, etc..
-
 Textured shapes/polys
 	need to figure out how to compute uvs - maybe in shader based on screen coord?
 
 RenderSprite .texture = "https://...."
 
-stopEvent should work with ui events / rollovers - ?
-
 add convenience anchor/placement methods
 
 UIBehavior / setparent - to accelerate UI event dispatching - add a counter to gameobject - "numChildrenWithUI" or something and maintain it
-
-RenderBehavior
-	.renderAfterChildren
 
 Add Color.Red, Blue, etc. constants
 

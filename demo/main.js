@@ -19,7 +19,7 @@
 App.setWindowSize( 640, 480, 1 );
 
 // auto-configure controller
-include( 'ui/controller-configurator', {
+var configurator = include( 'ui/controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',
@@ -47,12 +47,40 @@ include( 'ui/controller-configurator', {
 		}
 	],
 	ready: function ( controller ) {
-		// quit if pressing select + start
-		controller.on( ['select','start' ], function () {
-			if ( this.get( 'select' ) && this.get( 'start' ) ) quit();
-		} );
+		// if pressing select + start
+		controller.on( ['select','start' ], maybeExit );
 	}
 } );
+
+// used by controller to pop scene or exit app
+function maybeExit() {
+	// 'this' here is Controller instance
+	if ( this.get( 'select' ) && this.get( 'start' ) ) {
+		stopEvent();
+		sceneBack();
+	}
+}
+
+// smooth transition back, or exit, if in main menu
+function sceneBack() {
+	// if can pop scene
+	if ( App.sceneStack.length > 1 ){
+		var scene = App.popScene();
+		transitionScene( App.scene, scene, 1 );
+	// otherwise quit
+	} else {
+		quit();
+	}
+}
+
+// pushes new scene in via a transition
+function sceneForward( sub ){
+	if (sub.ui) sub.ui.async( sub.ui.requestLayout, 0.3 );
+	this.async( function () {
+		transitionScene( sub, App.scene, -1 );
+		App.pushScene( sub );
+	}, 0.25 );
+}
 
 // inspector - hold right mouse button down to activate
 var inspector = include( 'ui/inspector' );
@@ -86,5 +114,6 @@ function transitionScene( newScene, oldScene, dir ) {
 		gc();
 	}
 	// done
+	newScene.requestLayout();
 	return newScene;
 }

@@ -478,6 +478,8 @@ void Color::FromHex( string& hex, float &r, float &g, float &b, float& a ) {
 
 bool Color::Set( ScriptArguments &sa ) {
 
+	this->_hsvDirty = true;
+	
 	// one argument
 	if ( sa.args.size() == 1 ) {
 		
@@ -491,7 +493,6 @@ bool Color::Set( ScriptArguments &sa ) {
 				this->g = other->g;
 				this->b = other->b;
 				this->a = other->a;
-				this->_hsvDirty = true;
 				return true;
 			} else return false;
 			
@@ -525,6 +526,8 @@ bool Color::Set( ScriptArguments &sa ) {
 
 void Color::Set( ArgValue &val ) {
 	
+	this->_hsvDirty = true;
+	
 	// copy from another color
 	if ( val.type == TypeObject ) {
 		
@@ -535,7 +538,6 @@ void Color::Set( ArgValue &val ) {
 			this->g = other->g;
 			this->b = other->b;
 			this->a = other->a;
-			this->_hsvDirty = true;
 		}
 		
 	// parse string
@@ -553,6 +555,17 @@ void Color::Set( ArgValue &val ) {
 		} else {
 			this->SetInt( v, false );
 		}
+	} else if ( val.type == TypeArray ) {
+		
+		if ( val.value.arrayValue->size() >= 1 ) val.value.arrayValue->at( 0 ).toNumber( this->r );
+		if ( val.value.arrayValue->size() >= 2 ) val.value.arrayValue->at( 1 ).toNumber( this->g );
+		if ( val.value.arrayValue->size() >= 3 ) val.value.arrayValue->at( 2 ).toNumber( this->b );
+		if ( val.value.arrayValue->size() >= 4 ) val.value.arrayValue->at( 3 ).toNumber( this->a );
+		this->rgba.r = (Uint8) max( 0, min( 255, (int) ( this->r * 255.0f) ));
+		this->rgba.g = (Uint8) max( 0, min( 255, (int) ( this->g * 255.0f) ));
+		this->rgba.b = (Uint8) max( 0, min( 255, (int) ( this->b * 255.0f) ));
+		this->rgba.a = (Uint8) max( 0, min( 255, (int) ( this->a * 255.0f) ));
+		
 	}
 	
 }
@@ -590,6 +603,7 @@ void Color::SetInts( int red, int green, int blue, int alpha ) {
 	this->g = green / 255.0f;
 	this->b = blue / 255.0f;
 	this->a = alpha / 255.0f;
+	this->_hsvDirty = true;
 }
 
 void Color::SetFloats( float red, float green, float blue, float alpha ) {
@@ -601,5 +615,7 @@ void Color::SetFloats( float red, float green, float blue, float alpha ) {
 	this->rgba.g = (Uint8) max( 0, min( 255, (int) (green * 255.0f) ));
 	this->rgba.b = (Uint8) max( 0, min( 255, (int) (blue * 255.0f) ));
 	this->rgba.a = (Uint8) max( 0, min( 255, (int) (alpha * 255.0f) ));
+	this->_hsvDirty = true;
+	
 }
 

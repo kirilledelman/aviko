@@ -38,16 +38,13 @@
 			},
 		];
 
-		// callbacks (all optional; note that these callbacks aren't events)
+		// callbacks/events
 
 		configurator.controllerAdded = function ( controller ) {
 			// called whenever a new controller is connected
-			// return false if you don't want to use this controller
-			// otherwise, this callback can be used to add handlers for
-			// buttons and axis etc.
-			// if this controller isn't configured, configurator will display
-			// its interface after you return true, and call willShow() callback
-			return true;
+			// call stopEvent() if you don't want to use this controller
+			// if this controller isn't configured, configurator call willShow event
+			// and will display configuration interface
 		}
 
 		configurator.controllerRemoved = function ( controller ) {
@@ -67,7 +64,7 @@
 		}
 
 		configurator.ready = function ( controller ) {
-			// called after controller has been configured
+			// called after controller has finished configuring
 			// or was configured previously
 			// can use this callback to add new player into game
 			// or confirm that controller is available and ready
@@ -79,12 +76,14 @@
 
 		configurator.configure( controller ) - re-configures controller, replaces config if successful
 
+		configurator.refresh(); - dispatches 'controllerAdded' for all connected controllers
 
  */
 
 include( './ui' );
-new (function( params ){
+(function( params ) {
 
+	var go = new GameObject( { name: "Controller Configurator" } );
 	var axis = [];
 	var buttons = [];
 	var container, scene, title, subtitle, prompt, action, error, instruction;
@@ -92,7 +91,6 @@ new (function( params ){
 	var currentlyConfiguring = null;
 	var currentButton, currentAxis, axisDirection, currentSection;
 	var buttonsFirst = false;
-	var callbacks = {};
 	var showDelay = 1.5;
 	var style = {};
 	var currentlyPressed = null;
@@ -104,80 +102,74 @@ new (function( params ){
 	var mappedProps = {
 
 		// (Array) of { id, minus, plus, description, descriptionMinus, descriptionPlus }
-		'axis': { get: function (){ return axis; }, set: function( v ){ axis = v; } },
+		'axis': { get: function () { return axis; }, set: function ( v ) { axis = v; } },
 
 		// (Array) of { id, description }
-		'buttons': { get: function (){ return buttons; }, set: function( v ){ buttons = v; } },
+		'buttons': { get: function () { return buttons; }, set: function ( v ) { buttons = v; } },
 
 		// (Boolean) buttons before axis
-		'buttonsFirst': { get: function (){ return buttonsFirst; }, set: function( v ){ buttonsFirst = v; } },
+		'buttonsFirst': { get: function () { return buttonsFirst; }, set: function ( v ) { buttonsFirst = v; } },
 
 		// (GameObject) container when configurator is open
-		'container': { get: function (){ return container; } },
+		'container': { get: function () { return container; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'title': { get: function (){ return title; } },
+		'title': { get: function () { return title; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'subtitle': { get: function (){ return subtitle; } },
+		'subtitle': { get: function () { return subtitle; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'prompt': { get: function (){ return prompt; } },
+		'prompt': { get: function () { return prompt; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'action': { get: function (){ return action; } },
+		'action': { get: function () { return action; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'error': { get: function (){ return error; } },
+		'error': { get: function () { return error; } },
 
 		// (GameObject) (ui/text.js) when configurator is open
-		'instruction': { get: function (){ return instruction; } },
+		'instruction': { get: function () { return instruction; } },
 
 		// (Boolean) true when configurator is open
-		'isOpen': { get: function (){ return !!currentlyConfiguring; } },
-
-		// (Function) callback for when controller is connected
-		'controllerAdded': { get: function (){ return callbacks.controllerAdded; }, set: function( v ){ callbacks.controllerAdded = v; }, serialized: false },
-
-		// (Function) callback for when controller is disconnected
-		'controllerRemoved': { get: function (){ return callbacks.controllerRemoved; }, set: function( v ){ callbacks.controllerRemoved = v; }, serialized: false },
-
-		// (Function) callback before configurator is displayed for another controller
-		'willShow': { get: function (){ return callbacks.willShow; }, set: function( v ){ callbacks.willShow = v; }, serialized: false },
-
-		// (Function) callback before configurator is dismissed
-		'willHide': { get: function (){ return callbacks.willHide; }, set: function( v ){ callbacks.willHide = v; }, serialized: false },
-
-		// (Function) callback after controller is deemed ready to use
-		'ready': { get: function (){ return callbacks.ready; }, set: function( v ){ callbacks.ready = v; }, serialized: false },
+		'isOpen': { get: function () { return !!currentlyConfiguring; } },
 
 		// (Number) delay in seconds before configurator is displayed
-		'showDelay': { get: function (){ return showDelay; }, set: function( v ){ showDelay = v; } },
+		'showDelay': { get: function () { return showDelay; }, set: function ( v ) { showDelay = v; } },
 
 		// (Object) used to apply style (collection of properties) - use to preconfigure look of title, prompt etc.
 		'style': {
-			get: function (){ return style; },
-			set: function ( v ){ style = v; if ( container ) UI.base.applyProperties( this, style );
-		} },
+			get: function () { return style; },
+			set: function ( v ) {
+				style = v;
+				if ( container ) UI.base.applyProperties( go, style );
+			}
+		},
 
 	};
-	UI.base.mapProperties( this, mappedProps );
+	UI.base.mapProperties( go, mappedProps );
 
 	// API functions
 
-	this.reset = function ( controller ) {
+	go.reset = function ( controller ) {
 		controller.reset( true );
 		var index = controllersToConfigure.indexOf( controller );
 		if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
 	}
 
-	this.configure = configureController;
+	go.configure = configureController;
+
+	go.refresh = function () {
+		for ( var i = 0, nc = Input.controllers.length; i < nc; i++ ) {
+			controllerAdded ( Input.controllers[ i ] );
+		}
+	}
 
 	// optional init parameter ( can pass as include( 'ui/controller-configurator', { ... init ... } ) )
 
-	if ( params != global ) UI.base.applyProperties( this, params );
+	if ( params != global ) UI.base.applyProperties( go, params );
 
-	// display elements - feel free to modify, or adjust in willShow callback
+	// display elements - feel free to modify, or adjust in willShow
 
 	// create container
 	container = new GameObject( './panel', {
@@ -253,34 +245,33 @@ new (function( params ){
 
 	// internals
 
-	Input.on( 'controllerAdded', function ( controller ) {
-
-		// if have callback
-		if ( callbacks.controllerAdded ) {
-			// ask if want to use this one
-			if ( callbacks.controllerAdded( controller ) === false ) return;
-		}
-		// configure
-		if ( !controller.configured ) {
-			async( function () { configureController( controller ); }, showDelay );
-		} else if ( callbacks.ready ) callbacks.ready( controller );
-
-	}.bind( this ));
-
 	Input.on( 'controllerRemoved', function ( controller ) {
 
 		// currently configuring, do next without finishing
 		if ( currentlyConfiguring == controller ) {
 			nextController( false );
-		// remove from list
+			// remove from list
 		} else {
 			var index = controllersToConfigure.indexOf( controller );
 			if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
 		}
 		// callback
-		if ( callbacks.controllerRemoved ) callbacks.controllerRemoved( controller );
+		go.fire( 'controllerRemoved', controller );
 
-	}.bind( this ));
+	}.bind( go ) );
+
+	var controllerAdded = function ( controller ) {
+
+		// ask if want to use this one
+		if ( !go.fire( 'controllerAdded', controller ) ) return;
+
+		// configure
+		if ( !controller.configured ) {
+			async( function () { configureController( controller ); }, showDelay );
+		} else go.fire( 'ready', controller );
+
+	}.bind( go );
+	Input.on( 'controllerAdded', controllerAdded );
 
 	function configureController ( controller ) {
 
@@ -295,7 +286,7 @@ new (function( params ){
 		App.pushScene( scene );
 
 		// reapply style
-		this.style = style;
+		go.style = style;
 
 		// listeners
 		App.on( 'resized', container.resize );
@@ -311,7 +302,7 @@ new (function( params ){
 
 	}
 
-	function nextButton() {
+	function nextButton () {
 
 		currentSection = 'buttons';
 		error.text = "";
@@ -327,7 +318,7 @@ new (function( params ){
 		action.text = buttons[ currentButton ].description;
 	}
 
-	function nextAxis() {
+	function nextAxis () {
 
 		currentSection = 'axis';
 		error.text = "";
@@ -356,7 +347,7 @@ new (function( params ){
 		action.text = desc;
 	}
 
-	function keyDown( k, s, a, c, g, r ) {
+	function keyDown ( k, s, a, c, g, r ) {
 
 		// ignore repeat key
 		if ( r ) return;
@@ -388,7 +379,7 @@ new (function( params ){
 
 	}
 
-	function keyUp( k ) {
+	function keyUp ( k ) {
 
 		// if configuring a gamepad, ignore keyboard presses
 		if ( currentlyConfiguring.name != 'Keyboard' ) return;
@@ -410,7 +401,7 @@ new (function( params ){
 
 	}
 
-	function joyDown( k, c ) {
+	function joyDown ( k, c ) {
 
 		// controller must match
 		if ( currentlyConfiguring != c ) return;
@@ -435,7 +426,7 @@ new (function( params ){
 
 	}
 
-	function joyUp( k, c ) {
+	function joyUp ( k, c ) {
 
 		// controller must match
 		if ( currentlyConfiguring != c ) return;
@@ -458,7 +449,7 @@ new (function( params ){
 
 	}
 
-	function joyAxis( v, a, c ) {
+	function joyAxis ( v, a, c ) {
 
 		// controller must match
 		if ( currentlyConfiguring != c ||
@@ -508,16 +499,16 @@ new (function( params ){
 
 	}
 
-	function joyHat( x, y, h, c ) {
+	function joyHat ( x, y, h, c ) {
 
 		// controller must match
 		if ( currentlyConfiguring != c ||
 			currentSection == 'buttons' ) return;
 
 		var val = ( y < 0 ? 0 :
-					( y > 0 ? 2 :
-						( x > 0 ? 1 :
-							( x < 0 ? 3 : -1 ) ) ) );
+			( y > 0 ? 2 :
+				( x > 0 ? 1 :
+					( x < 0 ? 3 : -1 ) ) ) );
 		var dir = ( y != 0 ? 'y' : ( x != 0 ? 'x' : '') );
 
 		// if not waiting to release
@@ -545,7 +536,11 @@ new (function( params ){
 		// clear reset
 		if ( waitForHat == h && val == -1 ) {
 			// all good
-			axis[ currentAxis ][ 'accepted' + axisDirection ] = { hat: h, dir: waitForHatDirection, val: waitForHatValue };
+			axis[ currentAxis ][ 'accepted' + axisDirection ] = {
+				hat: h,
+				dir: waitForHatDirection,
+				val: waitForHatValue
+			};
 			if ( axisDirection == 0 ) {
 				// no need to define opposite axis
 				axisDirection++;
@@ -562,7 +557,7 @@ new (function( params ){
 
 	}
 
-	function checkInUse() {
+	function checkInUse () {
 		for ( var i in buttons ) {
 			var b = buttons[ i ].accepted;
 			if ( b != undefined && (
@@ -594,7 +589,7 @@ new (function( params ){
 	}
 
 	// skip a button or axis
-	function skipToNext() {
+	function skipToNext () {
 
 		currentlyPressed = null;
 		var skipText;
@@ -606,7 +601,7 @@ new (function( params ){
 
 		} else {
 
-			skipText = (axis[ currentAxis ].description ? axis[ currentAxis ].description + " / ": "" );
+			skipText = (axis[ currentAxis ].description ? axis[ currentAxis ].description + " / " : "" );
 			skipText += ( axisDirection ? axis[ currentAxis ].plus : axis[ currentAxis ].minus );
 			axis[ currentAxis ][ 'accepted' + axisDirection ] = null;
 			nextAxis();
@@ -617,7 +612,7 @@ new (function( params ){
 		error.text = "^N^0Skipped ^B" + skipText;
 	}
 
-	function closeConfigurator() {
+	function closeConfigurator () {
 
 		// clear references
 		container.background.autoDraw = null;
@@ -634,7 +629,7 @@ new (function( params ){
 		Input.off( 'joyHat', joyHat );
 
 		// notify
-		if ( callbacks.willHide ) callbacks.willHide();
+		go.fire( 'willHide' );
 
 		// remove scene
 		App.popScene();
@@ -642,13 +637,13 @@ new (function( params ){
 	}
 
 	// called in the beginning, and after each controller in queue is finished
-	function nextController( saveCurrent ) {
+	function nextController ( saveCurrent ) {
 		// apply bindings
 		if ( saveCurrent ) {
 			currentlyConfiguring.reset();
 			for ( var i in buttons ) {
 				var b = buttons[ i ].accepted;
-				if ( b ){
+				if ( b ) {
 					if ( b.key != undefined ) {
 						currentlyConfiguring.bind( buttons[ i ].id, b.key );
 					} else if ( b.button != undefined ) {
@@ -700,7 +695,7 @@ new (function( params ){
 			if ( currentlyConfiguring.bindings != null ) {
 				currentlyConfiguring.configured = true;
 				currentlyConfiguring.save();
-				if ( callbacks.ready ) callbacks.ready( currentlyConfiguring );
+				go.fire( 'ready', currentlyConfiguring );
 			}
 		}
 
@@ -725,7 +720,7 @@ new (function( params ){
 		for ( var i in axis ) axis[ i ].accepted0 = axis[ i ].accepted1 = null;
 
 		// callback
-		if ( callbacks.willShow ) callbacks.willShow( currentlyConfiguring );
+		go.fire( 'willShow', currentlyConfiguring );
 
 		// start configuring
 		if ( buttonsFirst ) {
@@ -736,5 +731,7 @@ new (function( params ){
 
 	}
 
-})( this );
+	return go;
+
+})( this )
 

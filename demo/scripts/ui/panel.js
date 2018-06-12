@@ -115,6 +115,7 @@ include( './ui' );
 	ui.layout = function( w, h ) {
 		shp.resize( w, h );
 		bg.resize( w, h );
+		go.fire( 'layout', w, h );
 	}
 
 	// apply defaults

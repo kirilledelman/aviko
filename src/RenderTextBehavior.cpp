@@ -443,6 +443,7 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
 		// reload all font variants
+		rs->fontSize = val;
 		if ( rs->fontResource && rs->fontResource->size != val ) rs->SetFont( rs->fontName.c_str(), val, false, false );
 		if ( rs->fontBoldResource && rs->fontBoldResource->size != val ) rs->SetFont( rs->fontBoldName.c_str(), val, true, false );
 		if ( rs->fontItalicResource && rs->fontItalicResource->size != val ) rs->SetFont( rs->fontItalicName.c_str(), val, false, true );
@@ -460,6 +461,57 @@ void RenderTextBehavior::InitClass() {
 		rs->_dirty = true;
 		return rs->outlineWidth;
 	}));
+	
+	script.AddProperty<RenderTextBehavior>
+	( "outlineColor",
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->outlineColor->scriptObject); }),
+	 static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+		RenderBehavior* rs = (RenderBehavior*) b;
+		if ( val.type == TypeObject ) {
+			// replace if it's a color
+			Color* other = script.GetInstance<Color>( val.value.objectValue );
+			if ( other ) rs->outlineColor = other;
+		} else {
+			rs->outlineColor->Set( val );
+		}
+		return rs->outlineColor->scriptObject;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "outlineOffsetX",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->outlineOffsetX != val ) {
+			rs->outlineOffsetX = val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "outlineOffsetY",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetY; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->outlineOffsetY != val ) {
+			rs->outlineOffsetY = val;
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
+	
+	script.AddProperty<RenderTextBehavior>
+	( "outlineRadius",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineRadius; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RenderBehavior *rs = (RenderBehavior*) b;
+		if ( rs->outlineRadius != val ) {
+			rs->outlineRadius = fmax( -16, fmin( val, 16 ) );
+			rs->UpdateTexturePad();
+		}
+		return val;
+	}) );
 	
 	script.AddProperty<RenderTextBehavior>
 	( "text", //
@@ -1054,6 +1106,8 @@ RenderTextBehavior::GlyphInfo* RenderTextBehavior::GetGlyph(Uint16 c, bool b, bo
 		GPU_UnsetImageVirtualResolution( gi->surface );
 		GPU_SetImageFilter( gi->surface, GPU_FILTER_NEAREST );
 		GPU_SetSnapMode( gi->surface, GPU_SNAP_NONE );
+		GPU_SetBlendFunction( gi->surface, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
+		GPU_SetBlendEquation( gi->surface, GPU_EQ_ADD, GPU_EQ_ADD);
 		SDL_FreeSurface( ss );
 	}
 	
@@ -1336,6 +1390,8 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			this->surfaceRect.w = this->surface->base_w;
 			this->surfaceRect.h = this->surface->base_h;
 			GPU_ActivateShaderProgram( 0, NULL );
+			GPU_SetShapeBlendFunction( GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
+			GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_ADD);
 			
 			// push matrices
 			GPU_MatrixMode( GPU_PROJECTION );
@@ -1399,7 +1455,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 						selRect.w = character->width;
 					}
 					
-					GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL );
+					// GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL ); // why?
 					GPU_RectangleFilled2( this->surface->target, selRect, this->selectionColor->rgba );
 					character->color = this->selectionTextColor->rgba;
 				}
@@ -1427,7 +1483,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					caretRect.y = y;
 					caretRect.h = lineHeight;
 					caretRect.w = max( 1.0f, this->fontSize * 0.1f );
-					GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL );
+					// GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL ); // pointless
 					GPU_RectangleFilled2( this->surface->target, caretRect, character->color );
 				}
 				
@@ -1438,7 +1494,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					
 					// set color
 					GPU_SetColor( character->glyphInfo->surface, character->color );
-					GPU_SetBlendMode( this->surface, GPU_BLEND_MOD_ALPHA );
+					// GPU_SetBlendMode( this->surface, GPU_BLEND_MOD_ALPHA );
 					
 					// draw
 					GPU_Blit( character->glyphInfo->surface, NULL, this->surface->target, rect.x, rect.y );
@@ -1486,7 +1542,9 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 		GPU_SetBlendEquation( behavior->surface, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
 	} else {
 		// normal mode
-		GPU_SetBlendMode( behavior->surface, GPU_BLEND_NORMAL );
+		GPU_SetBlendFunction( behavior->surface, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
+		GPU_SetBlendEquation( behavior->surface, GPU_EQ_ADD, GPU_EQ_ADD);
+		
 	}
 	behavior->surface->color = color;
 	

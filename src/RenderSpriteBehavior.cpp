@@ -138,7 +138,7 @@ void RenderSpriteBehavior::InitClass() {
 				rs->height = img->image->base_h;
 			}
 			// assigned image's autoDraw is direct child of this gameObject
-			if ( img->autoDraw && img->autoDraw->parent == rs->gameObject ){
+			if ( img->autoDraw && rs->gameObject && img->autoDraw->parent == rs->gameObject ){
 				// update clipping of all descendent UIObjects
 				vector<UIBehavior*> uis;
 				rs->gameObject->GetBehaviors( true, uis );
@@ -165,7 +165,6 @@ void RenderSpriteBehavior::InitClass() {
 		rs->width = val;
 		if ( rs->imageInstance ) {
 			rs->imageInstance->width = val;
-			rs->imageInstance->_sizeDirty = true;
 		}
 		return rs->width;
 	 }),
@@ -183,7 +182,6 @@ void RenderSpriteBehavior::InitClass() {
 		rs->height = val;
 		if ( rs->imageInstance ) {
 			rs->imageInstance->height = val;
-			rs->imageInstance->_sizeDirty = true;
 		}
 		return rs->height;
 	 }),
@@ -387,7 +385,6 @@ void RenderSpriteBehavior::Resize( float w, float h ) {
 	if ( this->imageInstance ) {
 		this->imageInstance->width = this->width;
 		this->imageInstance->height = this->height;
-		this->imageInstance->_sizeDirty = true;
 	}
 }
 
@@ -471,6 +468,10 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			// tell render loop to not draw it (since we just drew it to texture)
 			event->skipObject = behavior->imageInstance->autoDraw;
 			event->skipObject->DirtyTransform();
+		} else if ( behavior->imageInstance->autoMask && behavior->imageInstance->autoMask->parent == behavior->gameObject ){
+			// tell render loop to not draw it (since we just drew it to texture)
+			event->skipObject2 = behavior->imageInstance->autoMask;
+			event->skipObject2->DirtyTransform();
 		}
 		
 		// size
@@ -493,7 +494,8 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		GPU_SetBlendEquation( image, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
 	} else {
 		// normal mode
-		GPU_SetBlendMode( image, GPU_BLEND_NORMAL );
+		GPU_SetBlendFunction( image, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
+		GPU_SetBlendEquation( image, GPU_EQ_ADD, GPU_EQ_ADD);
 	}
 	image->color = color;
 

@@ -755,7 +755,7 @@ include( './ui' );
 			}
 
 			go.fire( 'change', rt.text );
-			go.debounce( 'autocomplete', autocompleteCheck, 0.5 );
+			// go.debounce( 'autocomplete', autocompleteCheck, 0.5 );
 
 		// no matches, remove popup
 		} else {

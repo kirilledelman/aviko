@@ -120,6 +120,21 @@ include( './ui' );
 		// (Integer) characters to skip rendering from beginning of string
 		'revealEnd': { get: function (){ return rt.revealEnd; }, set: function( s ){ rt.revealEnd = s; }  },
 
+		// (Number) or (Color) pixel shader outline color
+		'outlineColor': { get: function (){ return rt.outlineColor; }, set: function( v ){ rt.outlineColor = v; }  },
+
+		// (Number) thickness of pixel shader outline
+		'outlineRadius': { get: function (){ return rt.outlineRadius; }, set: function( v ){ rt.outlineRadius = v; }  },
+
+		// (Number) X offset of pixel shader outline
+		'outlineOffsetX': { get: function (){ return rt.outlineOffsetX; }, set: function( v ){ rt.outlineOffsetX = v; }  },
+
+		// (Number) X offset of pixel shader outline
+		'outlineOffsetY': { get: function (){ return rt.outlineOffsetY; }, set: function( v ){ rt.outlineOffsetY = v; }  },
+
+		// (RenderText) returns reference to RenderText object
+		'renderText': { get: function (){ return rt; } },
+
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );

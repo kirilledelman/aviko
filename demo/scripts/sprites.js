@@ -76,10 +76,7 @@ new (function (){
 	var backButton = leftColumn.addChild( 'ui/button', {
 		text: "Back to main menu",
 		click: function () {
-			App.popScene();
-			App.scene.ui.requestLayout();
-			transitionScene( App.scene, scene, 1 );
-			scene = null;
+			sceneBack();
 		}
 	} );
 

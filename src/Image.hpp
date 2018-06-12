@@ -10,31 +10,29 @@ public:
 	
 	// render target
 	GPU_Image* image = NULL;
+	GPU_Image* mask = NULL;
 	GPU_Target* blendTarget = NULL;
 	
 	// stored width / height
 	int width = 0;
 	int height = 0;
-	bool _sizeDirty = true;
-	
-	// drawing offsets
-	float x = 0;
-	float y = 0;
-	float angle = 0;
-	float scaleX = 1;
-	float scaleY = 1;
-	
+		
 	/// force redraw this object each frame
 	GameObject* autoDraw = NULL;
+	GameObject* autoMask = NULL;
+	bool autoMaskInverted = false;
 	
 	/// keeps track of last redraw
 	int lastRedrawFrame = 0;
 	
 	/// helper to make/replace current image
-	bool MakeImage();
+	GPU_Image* MakeImage( bool makingMask=false );
 	
 	/// draw gameobject
-	void Draw( GameObject* go );
+	void Draw( GameObject* go, bool toMask=false, float x=0, float y=0, float angle=0, float scaleX=1, float scaleY=1 );
+	
+	/// applies mask to image
+	void ApplyMask( bool inverted );
 	
 	/// save
 	void Save( const char* filename );
@@ -54,6 +52,9 @@ public:
 	// scripting
 	
 	static void InitClass();
+	
+	/// garbage collection callback
+	void TraceProtectedObjects( vector<void **> &protectedObjects );
 	
 	// init/destroy
 	Image();

@@ -1,5 +1,5 @@
 #include "Tween.hpp"
-
+#include "Application.hpp"
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -276,7 +276,6 @@ void Tween::InitClass() {
 		while( it != activeTweens->end() ) {
 			if ( !obj || (*it)->target == obj ) {
 				Tween* t = (*it);
-				it = activeTweens->erase( it );
 				t->active( false );
 			} else it++;
 		}
@@ -581,11 +580,6 @@ void Tween::active( bool r ) {
 			// restart if ended
 			if ( time >= duration ) time = 0;
 			activeTweens->insert( this );
-			script.ProtectObject( &this->scriptObject, true );
-		} else {
-			unordered_set<Tween*>::iterator it = activeTweens->find( this );
-			if( it != activeTweens->end() ) activeTweens->erase( it );
-			script.ProtectObject( &this->scriptObject, false );
 		}
 	}
 }
@@ -608,13 +602,10 @@ void Tween::StopTweens( void* target, const char* prop ) {
 					}
 				}
 			}
-			if ( remove ) {
-				it = Tween::activeTweens->erase( it );
-				t->active( false );
-			} else {
-				it++;
-			}
-		} else it++;
+			if ( remove ) t->active( false );
+		}
+		it++;
+
 	}
 }
 
@@ -666,7 +657,7 @@ bool Tween::ProcessTween( float deltaTime, float unscaledDeltaTime ) {
 		pos = min( this->time / this->duration, 1.0f );
 		
 		// stop if completed
-		if ( pos >= 1) return true;
+		if ( pos >= 1 ) return true;
 	}
 	
 	// keep going
@@ -679,11 +670,16 @@ void Tween::ProcessActiveTweens( float deltaTime, float unscaledDeltaTime ) {
 	// advance all active tweens
 	unordered_set<Tween*>::iterator it = activeTweens->begin();
 	while( it != activeTweens->end() ) {
-		if ( !(*it)->_active || (*it)->ProcessTween( deltaTime, unscaledDeltaTime ) ) {
+		if ( (*it)->_active && (*it)->ProcessTween( deltaTime, unscaledDeltaTime ) ) {
 			(*it)->_active = false;
-			it = activeTweens->erase( it );
-			continue;
 		}
 		it++;
+	}
+	// remove inactive
+	it = activeTweens->begin();
+	while( it != activeTweens->end() ) {
+		if ( !(*it)->_active ) {
+			it = activeTweens->erase( it );
+		} else it++;
 	}
 }

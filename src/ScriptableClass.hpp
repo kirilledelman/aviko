@@ -39,6 +39,7 @@ struct Event {
 	
 	/// behavior can set this to a specific gameobject to skip over it when doing hierarchy dispatch. Used with Image/autoDraw 
 	GameObject* skipObject = NULL;
+	GameObject* skipObject2 = NULL;
 	
 	// used during render and UI events
 	Scene* scene = NULL;
@@ -128,6 +129,19 @@ public:
 		
 	}
 	
+	// true if .eventName, or "on" event listeners registered
+	bool HasListenersForEvent( const char* eventName ) {
+		EventListenersMap::iterator hit = this->eventListeners.find( string( eventName ) );
+		bool hasHandler = ( hit != this->eventListeners.end() && hit->second.size() > 0 );
+		if ( !hasHandler && dispatchEventsToPropertyFunctions ) {
+			ArgValue hval = script.GetProperty( eventName, this->scriptObject );
+			if ( hval.type == TypeFunction ) {
+				return true;
+			}
+		}
+		return hasHandler;
+	}
+	
 	// trace ops
 	
 	virtual void TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -161,7 +175,8 @@ public:
 			if ( this->timeLeft <= 0 ){
 				ScriptArguments args;
 				this->func.Invoke( args );
-				return true;
+				// timeLeft is still 0 after Invoke (for serial debounce)
+				return ( this->timeLeft <= 0 );
 			}
 			return false;
 		}
@@ -206,7 +221,8 @@ public:
 			ScheduledCallList::iterator lit = list.begin(), lend = list.end();
 			while ( lit != lend ) {
 				if ( lit->index == index ) {
-					lit = list.erase( lit );
+					// if not about to be destroyed, erase
+					if ( lit->timeLeft > 0 ) lit = list.erase( lit );
 					return true;
 				}
 				lit++;
@@ -253,7 +269,8 @@ public:
 			unordered_map<string, ScheduledCall> &debouncers = it->second;
 			unordered_map<string, ScheduledCall>::iterator dit = debouncers.find( name );
 			if ( dit != debouncers.end() ) {
-				debouncers.erase( dit );
+				// if not about to clear, erase
+				if ( dit->second.timeLeft > 0 ) debouncers.erase( dit );
 				return true;
 			}
 		}

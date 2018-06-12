@@ -41,7 +41,9 @@ new (function (){
 	var buttons = scene.addChild( 'ui/panel', {
 		name: "Buttons",
 		backgroundColor: new Color( 'F0F0F066' ),
-		layoutType: Layout.Horizontal,
+		layoutType: Layout.Vertical,
+		layoutAlignX: Layout.Stretch,
+		layoutAlignY: Layout.Stretch,
 		wrapEnabled: true,
 		spacing: 8,
 		flex: 1,
@@ -53,13 +55,9 @@ new (function (){
 		// block all buttons while scene is loading
 		buttons.eventMask = [ 'mouseDown', 'click', 'mouseUp', 'keyDown', 'keyUp', 'keyPress', 'navigate' ];
 		// load scene and animate transition
-		var sub = include( this.src );
-		sub.ui.async( sub.ui.requestLayout, 0.2 );
-		this.async( function () {
-			buttons.eventMask = [];
-			transitionScene( sub, scene, -1 );
-			App.pushScene( sub );
-		}, 0.25 );
+		sceneForward( include( this.src ) );
+		// reenable buttons
+		this.async( function () { buttons.eventMask = []; }, 0.25 );
 	};
 
 	buttons.addChild( 'ui/button', {
@@ -77,36 +75,42 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Text",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Input",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Transforms",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Physics",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Transforms",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "UI",
 		src: 'sprites',
+		disabled: true,
 		click: buttonClick
 	} );
 
@@ -117,12 +121,20 @@ new (function (){
 		click: buttonClick
 	} );
 
+	buttons.addChild( 'ui/button', {
+		text: "Word Fish",
+		src: 'word-fish/menu',
+		click: buttonClick
+	} );
+
 	scene.addChild( 'ui/button', {
 		text: "Exit",
 		click: function () {
 			quit();
 		}
 	} );
+
+
 
 	// focus on first button
 	buttons.getChild( 0 ).focus(); //*/

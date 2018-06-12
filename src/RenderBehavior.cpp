@@ -177,9 +177,9 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 			GPU_Rect srcRect = { 0, 0, (float) targ->base_w, (float) targ->base_h };
 			GPU_Blit( targ->image, &srcRect, *blendTarg, 0, 0 );
 			// pop
-			GPU_MatrixMode( GPU_PROJECTION );
-			GPU_PopMatrix();
 			GPU_MatrixMode( GPU_MODELVIEW );
+			GPU_PopMatrix();
+			GPU_MatrixMode( GPU_PROJECTION );
 			GPU_PopMatrix();
 		}
 		
@@ -579,12 +579,6 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		else if (index == 14) limit = 8750;\n\
 		else if (index >= 15) limit = 3750;\n\
 		if ( stippleValue < limit ) discard;\n";
-	}
-	
-	// add discarding when alpha = 0
-	if ( featuresMask & SHADER_TEXTURE ) {
-		features +=
-		"if ( src.a == 0.0 ) discard; // for z-fighting sprites \n";
 	}
 	
 	// vertex shader

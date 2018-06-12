@@ -870,6 +870,18 @@ void UIBehavior::InitClass() {
 
 }
 
+/// garbage collection callback
+void UIBehavior::TraceProtectedObjects( vector<void **> &protectedObjects ) {
+	
+	if ( navigationLeft ) protectedObjects.push_back( &navigationLeft->scriptObject );
+	if ( navigationRight ) protectedObjects.push_back( &navigationRight->scriptObject );
+	if ( navigationUp ) protectedObjects.push_back( &navigationUp->scriptObject );
+	if ( navigationDown ) protectedObjects.push_back( &navigationDown->scriptObject );
+	
+	// call super
+	Behavior::TraceProtectedObjects( protectedObjects );
+}
+
 
 /* MARK:	-				Focus and navigation
  -------------------------------------------------------------------- */
@@ -1108,10 +1120,13 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	
 	// check if gameObject is current scene
 	if ( behavior->gameObject == event->scene ) {
-		// apply anchor layout using screen size
-		float x, y;
-		behavior->GetAnchoredPosition( NULL, x, y, behavior->layoutWidth, behavior->layoutHeight );
-		behavior->gameObject->SetPosition( x, y );
+		// if ui has no layout handler (automatic behavior)
+		if ( !behavior->HasListenersForEvent( EVENT_LAYOUT ) ) {
+			// apply anchor layout using screen size
+			float x, y;
+			behavior->GetAnchoredPosition( NULL, x, y, behavior->layoutWidth, behavior->layoutHeight );
+			behavior->gameObject->SetPosition( x, y );
+		}
 	}
 	
 	// collect children with active UI component

@@ -24,7 +24,7 @@ new (function( params ){
 		'$0': {
 			get: function (){ return propertyList.target; },
 			set: function ( t ) {
-				sceneExplorer.async( function (){ this.selectNode( t ); }, 0.5 );
+				sceneExplorer.async( function (){ this.selectNode( t ); } );
 				if ( t != propertyList.target ) {
 					propertyList.target = t;
 					// target
@@ -81,7 +81,7 @@ new (function( params ){
 		selectNode: function ( node ) {
 			// clear previous
 			var row = this.getChild( 0 );
-			if ( !row ) return;
+			if ( !row || this.currentNode == node ) return;
 			if ( this.currentNode ) {
 				var prow = row.findRowForNode( this.currentNode );
 				if ( prow ) {
@@ -317,6 +317,7 @@ new (function( params ){
 	// repopulates scene explorer
 	function reloadSceneExplorer () {
 		sceneExplorer.removeAllChildren();
+		sceneExplorer.currentNode = null;
 		var sceneRow = SceneExplorerRow( App.scene );
 		sceneExplorer.addChild( sceneRow );
 	}
@@ -530,12 +531,18 @@ new (function( params ){
 	// creates an effect that highlights go's location
 	function highlightGameObject( go ) {
 		if ( !go || go.constructor != GameObject || !go.parent ) return;
-		if ( UI.highlight ) UI.highlight.parent = null;
+		if ( UI.highlight ) {
+			// wait for previous to finish
+			async( function(){ highlightGameObject( go ) }, 1 );
+			return;
+		}
+		// attach highlight to scene
 		var highlight = UI.highlight = new GameObject( {
 			x: go.worldX, y: go.worldY,
 			angle: go.worldAngle,
 			scaleX: go.worldScaleX, scaleY: go.worldScaleY } );
 
+		// show location/UI bounds
 		var bounds = highlight.addChild(
 			new GameObject( {
 				render: new RenderShape( {
@@ -544,46 +551,36 @@ new (function( params ){
 					centered: true,
 					color: 0x1a92dc,
 					lineThickness: 2,
+					width: 2, height: 2,
 				} )
 			} ) );
 		if ( go.ui ) {
-			highlight.addChild( new GameObject( {
-				render: new RenderShape( {
-					shape: Shape.Rectangle,
-					centered: false,
-					width: go.ui.width, height: go.ui.height,
-					filled: true,
-					stipple: 0.5,
-					color: new Color( 0.15, 0.2, 0.6, 0.6 ),
-				} ),
-				x: go.ui.offsetX, y: go.ui.offsetY,
-			} ) );
 			bounds.render.resize( Math.max( 2, go.ui.width ), Math.max( 2, go.ui.height ) );
-		} else if ( go.render ) {
-			highlight.addChild( new GameObject( {
-				render: new RenderShape( {
-					shape: Shape.Rectangle,
-					centered: false,
-					width: go.render.width, height: go.render.height,
-					filled: true,
-					stipple: 0.5,
-					color: new Color( 0.15, 0.2, 0.6, 0.6 ),
-				} ),
-			} ) );
-			bounds.render.resize( Math.max( 2, go.render.width ), Math.max( 2, go.render.height ) );
+			bounds.setTransform( bounds.render.width * 0.5, bounds.render.height * 0.5 );
 		}
-		bounds.setTransform( bounds.render.width * 0.5, bounds.render.height * 0.5 );
 		bounds.scaleX = ( bounds.render.width + 40 ) / bounds.render.width;
 		bounds.scaleY = ( bounds.render.height + 40 ) / bounds.render.height;
 		bounds.scaleTo( 1, 0.5, Ease.Out );
+
+		// flash bounds color
 		var brc = bounds.render.color;
-		var clr = new Tween( brc, [ 'r', 'g', 'b' ], [ brc.r, brc.g, brc.b ], [ 1, 1, 1 ], 0.25 );
-		clr.finished = function () { clr.reverse(); }
-		highlight.async( function() {
-			highlight.parent = null;
-			UI.highlight = null;
-			clr.stop();
-		}, 2 );
+		var clr = new Tween( brc, [ 'r', 'g', 'b' ], [ brc.r, brc.g, brc.b ], [ 1, 1, 1 ], 0.2 );
+		clr.count = 7;
+		clr.finished = function () { if ( this.count-- ) this.reverse(); }
+
+		// flash render
+		if ( go.render ) {
+			var rac = go.render.addColor;
+			var rfc = new Tween( rac, [ 'r', 'g', 'b', 'a' ], [ rac.r, rac.g, rac.b, rac.a ], [ 1, -0.5, -0.5, 1 ], 0.2 );
+			rfc.count = 7;
+			rfc.finished = function () {
+				if ( this.count-- ) { this.reverse(); }
+			}
+		}
+
+		// remove after 2 sec
+		highlight.async( function () { highlight.parent = null; UI.highlight = null; }, 2 );
+
 		// show
 		App.scene.addChild( highlight, -1 );
 	}

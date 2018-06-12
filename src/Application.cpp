@@ -143,6 +143,17 @@ void Application::InitRender() {
 	this->windowWidth = this->screen->base_w;
 	this->windowHeight = this->screen->base_h;
 	GPU_UnsetVirtualResolution( this->screen );
+	GPU_SetBlendMode( this->screen->image, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+	GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+	if ( !GPU_AddDepthBuffer( this->screen ) ){
+		printf( "Warning: depth buffer is not supported.\n" );
+	}
+	GPU_SetDepthTest( this->screen, true );
+	GPU_SetDepthWrite( this->screen, true );
+	GPU_SetDepthFunction( this->screen, GPU_ComparisonEnum::GPU_LEQUAL );
+	this->screen->camera.z_near = -1024;
+	this->screen->camera.z_far = 1024;
+	
 	
 	// resizable
 	SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
@@ -205,12 +216,15 @@ void Application::UpdateBackscreen() {
 	}
 	
 	// create backscreen
-	this->backScreen = GPU_CreateImage( this->windowWidth / this->windowScalingFactor, this->windowHeight / this->windowScalingFactor, GPU_FORMAT_RGBA );
+	this->backScreen = GPU_CreateImage( this->windowWidth / this->windowScalingFactor, this->windowHeight / this->windowScalingFactor, GPU_FORMAT_RGB );
 	this->backScreenSrcRect = { 0, 0, (float) this->backScreen->base_w, (float) this->backScreen->base_h };
 	GPU_UnsetImageVirtualResolution( this->backScreen );
 	GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
 	GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
 	GPU_LoadTarget( this->backScreen );
+	GPU_SetShapeBlending( true );
+	GPU_SetBlendMode( this->backScreen, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+	GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
 	if ( !GPU_AddDepthBuffer( this->backScreen->target ) ){
 		printf( "Warning: depth buffer is not supported.\n" );
 	}
@@ -297,13 +311,23 @@ void Application::InitClass() {
 			// generate event
 			Event event;
 			event.name = EVENT_SCENECHANGED;
-			event.scriptParams.AddObjectArgument( current ? current->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( current ? current->scriptObject : NULL );
 			app.CallEvent( event );
 		}
 		return val;
 	 })
     );
+	
+	script.AddProperty<Application>
+	("sceneStack",
+	static_cast<ScriptArrayCallback>([](void* self, ArgValueVector* val ){
+		ArgValueVector* v = new ArgValueVector();
+		for( size_t i = 0; i < app.sceneStack.size(); i++ ){
+			v->emplace_back( app.sceneStack[ i ]->scriptObject );
+		}
+		return v;
+	}) );
 	
 	script.AddProperty<Application>
 	("overlay",
@@ -413,8 +437,8 @@ void Application::InitClass() {
 		if ( newScene != oldScene ) {
 			Event event;
 			event.name = EVENT_SCENECHANGED;
-			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
 			app.CallEvent( event );
 		}
 		
@@ -458,11 +482,11 @@ void Application::InitClass() {
 		if ( newScene != oldScene ) {
 			Event event;
 			event.name = EVENT_SCENECHANGED;
-			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
+			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
 			app.CallEvent( event );
 		}
-		sa.ReturnObject( newScene ? newScene->scriptObject : NULL );
+		sa.ReturnObject( oldScene ? oldScene->scriptObject : NULL );
 		return true;
 	}) );
 	
@@ -1127,6 +1151,13 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 		oit++;
 	}
 	
+	// protect running tweens
+	unordered_set<Tween*>::iterator tit = Tween::activeTweens->begin();
+	while( tit != Tween::activeTweens->end() ) {
+		if ( (*tit)->_active ) protectedObjects.push_back( &(*tit)->scriptObject );
+		tit++;
+	}
+	
 	// call super
 	ScriptableClass::TraceProtectedObjects( protectedObjects );
 }
@@ -1250,6 +1281,9 @@ void Application::GameLoop() {
 		// late events (scheduled by `fireLate` and `dispatchLate` / Application::AddLateEvent )
 		RunLateEvents();
 		
+		// clear with scene's bg color
+		GPU_ClearColor( this->screen, scene->backgroundColor->rgba );
+		
 		// render scene graph
 		if ( scene ) {
 			// render to backscreen
@@ -1260,9 +1294,6 @@ void Application::GameLoop() {
 			event.behaviorParam = NULL;
 			event.skipObject = NULL;
 			event.stopped = false; // reused
-
-			// clear with scene's bg color
-			GPU_ClearColor( this->screen, scene->backgroundColor->rgba );
 		
 		}
 		
