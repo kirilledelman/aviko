@@ -334,6 +334,11 @@ void Application::InitClass() {
 	 static_cast<ScriptObjectCallback>([](void* self, void* val ){ return app.overlay->scriptObject; }) );
 	
 	script.AddProperty<Application>
+	("timeScale",
+	 static_cast<ScriptFloatCallback>([](void* self, float v ) { return app.timeScale; }),
+	 static_cast<ScriptFloatCallback>([](void* self, float v ) { return app.timeScale = max( 0.0f, v ); }));
+	
+	script.AddProperty<Application>
 	("time", static_cast<ScriptFloatCallback>([](void* self, float v ) { return app.time; }) );
 	
 	script.AddProperty<Application>
@@ -954,17 +959,18 @@ void Application::InitClass() {
 	( "async",
 	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
 		// validate params
-		const char* error = "usage: async( Function handler [, Number delay ] )";
+		const char* error = "usage: async( Function handler [, Number delay, [ Boolean useUnscaledTime ] ] )";
 		void* handler = NULL;
 		float delay = 0;
+		bool unscaled = false;
 		
 		// validate
-		if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay ) ) {
+		if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay, TypeBool, &unscaled ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// schedule call
-		sa.ReturnInt( ScriptableClass::AddAsync( (void*) script.global_object, handler, delay ) );
+		sa.ReturnInt( ScriptableClass::AddAsync( (void*) script.global_object, handler, delay, unscaled ) );
 		return true;
 	}));
 	
@@ -991,18 +997,19 @@ void Application::InitClass() {
 	( "debounce",
 	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
 		// validate params
-		const char* error = "usage: debounce( String debounceId, Function handler [, Number delay ] )";
+		const char* error = "usage: debounce( String debounceId, Function handler [, Number delay, [ Boolean useUnscaledTime ] ] )";
 		void* handler = NULL;
 		string name;
 		float delay = 0;
+		bool unscaled = false;
 		
 		// validate
-		if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay ) ) {
+		if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay, TypeBool, &unscaled ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// schedule call
-		ScriptableClass::AddDebouncer( (void*) script.global_object, name, handler, delay );
+		ScriptableClass::AddDebouncer( (void*) script.global_object, name, handler, delay, unscaled );
 		return true;
 	}));
 	
@@ -1204,7 +1211,7 @@ void Application::GameLoop() {
 		
 		// read time / delta time
 		_time = SDL_GetTicks();
-		this->unscaledDeltaTime = (float) _time * 0.001f - this->time;
+		this->unscaledDeltaTime = (float) _time * 0.001f - this->unscaledTime;
 		this->deltaTime = this->unscaledDeltaTime * this->timeScale;
 		this->time += this->deltaTime;
 		this->unscaledTime += this->unscaledDeltaTime;

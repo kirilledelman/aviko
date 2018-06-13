@@ -39,18 +39,19 @@ void ScriptableClass::InitClass() {
 	( "async",
 	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
 		// validate params
-		const char* error = "usage: async( Function handler [, Number delay ] )";
+		const char* error = "usage: async( Function handler [, Number delay, [ Boolean useUnscaledTime ] ] )";
 		void* handler = NULL;
 		float delay = 0;
+		bool unscaled = false;
 		
 		// validate
 		ScriptableClass* self = (ScriptableClass*) o;
-		if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay ) ) {
+		if ( !sa.ReadArguments( 1, TypeFunction, &handler, TypeFloat, &delay, TypeBool, &unscaled ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// schedule call
-		sa.ReturnInt( ScriptableClass::AddAsync( self->scriptObject, handler, delay ) );
+		sa.ReturnInt( ScriptableClass::AddAsync( self->scriptObject, handler, delay, unscaled ) );
 		return true;
 	}));
 	
@@ -78,19 +79,20 @@ void ScriptableClass::InitClass() {
 	( "debounce",
 	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
 		// validate params
-		const char* error = "usage: debounce( String debounceId, Function handler [, Number delay ] )";
+		const char* error = "usage: debounce( String debounceId, Function handler [, Number delay, [ Boolean useUnscaledTime ] ] )";
 		void* handler = NULL;
 		string name;
 		float delay = 0;
+		bool unscaled = false;
 		
 		// validate
 		ScriptableClass* self = (ScriptableClass*) o;
-		if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay ) ) {
+		if ( !sa.ReadArguments( 2, TypeString, &name, TypeFunction, &handler, TypeFloat, &delay, TypeBool, &unscaled ) ) {
 			script.ReportError( error );
 			return false;
 		}
 		// schedule call
-		ScriptableClass::AddDebouncer( self->scriptObject, name, handler, delay );
+		ScriptableClass::AddDebouncer( self->scriptObject, name, handler, delay, unscaled );
 		return true;
 	}));
 	
@@ -320,3 +322,44 @@ void ScriptableClass::InitClass() {
 	}));
 	
 }
+
+
+void ScriptableClass::ProcessScheduledCalls( float dt ) {
+	AsyncMap::iterator it = scheduledAsyncs->begin();
+	while ( it != scheduledAsyncs->end() ) {
+		ScheduledCallList &list = it->second;
+		ScheduledCallList::iterator lit = list.begin();
+		if ( lit == list.end() ) {
+			it = scheduledAsyncs->erase( it );
+			continue;
+		}
+		while ( lit != list.end() ) {
+			if ( lit->TimePassed( dt, app.timeScale ) ) {
+				lit = list.erase( lit );
+			} else {
+				lit++;
+			}
+		}
+		it++;
+	}
+	DebouncerMap::iterator dit = scheduledDebouncers->begin();
+	while( dit != scheduledDebouncers->end() ) {
+		unordered_map<string, ScheduledCall> &debouncers = dit->second;
+		unordered_map<string, ScheduledCall>::iterator dbit = debouncers.begin();
+		if ( dbit == debouncers.end() ) {
+			dit = scheduledDebouncers->erase( dit );
+			continue;
+		}
+		while ( dbit != debouncers.end() ) {
+			ScheduledCall& sched = dbit->second;
+			//printf( "Debouncer %s\n", dbit->first.c_str()  );
+			if ( sched.TimePassed( dt, app.timeScale ) ) {
+				dbit = debouncers.erase( dbit );
+			} else {
+				dbit++;
+			}
+		}
+		dit++;
+	}
+}
+

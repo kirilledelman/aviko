@@ -2,33 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/config/Keyboard.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/config/MICREAL USB Gamepad.json" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Color.cpp" afterPath="$PROJECT_DIR$/src/Color.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.cpp" afterPath="$PROJECT_DIR$/src/Image.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.hpp" afterPath="$PROJECT_DIR$/src/Image.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.cpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Tween.cpp" afterPath="$PROJECT_DIR$/src/Tween.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.cpp" afterPath="$PROJECT_DIR$/src/UIBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.hpp" afterPath="$PROJECT_DIR$/src/UIBehavior.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/inspector.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/main-menu.js" afterPath="$PROJECT_DIR$/demo/scripts/main-menu.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/game.js" afterPath="$PROJECT_DIR$/demo/scripts/word-fish/game.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/menu.js" afterPath="$PROJECT_DIR$/demo/scripts/word-fish/menu.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/panel.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/panel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/shapes.js" afterPath="$PROJECT_DIR$/demo/scripts/shapes.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/sprites.js" afterPath="$PROJECT_DIR$/demo/scripts/sprites.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/text.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/text.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/player.js" afterPath="$PROJECT_DIR$/demo/scripts/word-fish/player.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/water.js" afterPath="$PROJECT_DIR$/demo/scripts/word-fish/water.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="nikogame.iws" />
@@ -55,7 +39,7 @@
         <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/menu.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="77" column="57" selection-start-line="77" selection-start-column="57" selection-end-line="77" selection-end-column="57" />
+              <caret line="106" column="17" selection-start-line="106" selection-start-column="17" selection-end-line="106" selection-end-column="17" />
               <folding />
             </state>
           </provider>
@@ -64,11 +48,12 @@
       <file leaf-file-name="game.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/game.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.21699545">
-              <caret line="132" column="66" selection-start-line="132" selection-start-column="66" selection-end-line="132" selection-end-column="66" />
+            <state vertical-scroll-proportion="0.4089636">
+              <caret line="83" column="0" selection-start-line="83" selection-start-column="0" selection-end-line="83" selection-end-column="0" />
               <folding>
-                <element signature="e#5328#7012#0" expanded="false" />
-                <element signature="e#8806#9000#0" expanded="false" />
+                <element signature="e#10052#11950#0" expanded="false" />
+                <element signature="e#12032#13695#0" expanded="false" />
+                <element signature="e#13784#13978#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -78,18 +63,10 @@
         <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/player.js">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="15" column="46" selection-start-line="15" selection-start-column="46" selection-end-line="15" selection-end-column="46" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="water.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/water.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="4" column="32" selection-start-line="4" selection-start-column="32" selection-end-line="4" selection-end-column="43" />
-              <folding />
+              <caret line="89" column="34" selection-start-line="89" selection-start-column="34" selection-end-line="89" selection-end-column="34" />
+              <folding>
+                <element signature="e#883#2427#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -144,10 +121,11 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
         <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/demo/scripts/word-fish/sky.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/word-fish/menu.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/word-fish/player.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
         <option value="$PROJECT_DIR$/demo/scripts/word-fish/water.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/word-fish/menu.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/word-fish/player.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/word-fish/letter.js" />
         <option value="$PROJECT_DIR$/demo/scripts/word-fish/game.js" />
       </list>
     </option>
@@ -456,20 +434,20 @@
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.15665236" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3390558" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.34406295" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" x="100" y="127" width="1240" height="632" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32210243" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32210243" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -497,13 +475,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/panel.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -766,13 +737,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="440" column="86" selection-start-line="440" selection-start-column="86" selection-end-line="440" selection-end-column="86" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.73109245">
@@ -808,26 +772,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/menu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="77" column="57" selection-start-line="77" selection-start-column="57" selection-end-line="77" selection-end-column="57" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.35854343">
           <caret line="670" column="0" selection-start-line="670" selection-start-column="0" selection-end-line="670" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/player.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="15" column="46" selection-start-line="15" selection-start-column="46" selection-end-line="15" selection-end-column="46" />
           <folding />
         </state>
       </provider>
@@ -840,21 +788,56 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33333334">
+          <caret line="1373" column="4" selection-start-line="1373" selection-start-column="4" selection-end-line="1373" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/water.js">
       <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.90756303">
+          <caret line="54" column="8" selection-start-line="54" selection-start-column="8" selection-end-line="54" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/player.js">
+      <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="4" column="32" selection-start-line="4" selection-start-column="32" selection-end-line="4" selection-end-column="43" />
+          <caret line="89" column="34" selection-start-line="89" selection-start-column="34" selection-end-line="89" selection-end-column="34" />
+          <folding>
+            <element signature="e#883#2427#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="106" column="17" selection-start-line="106" selection-start-column="17" selection-end-line="106" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/letter.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.9468892">
+          <caret line="52" column="30" selection-start-line="52" selection-start-column="30" selection-end-line="52" selection-end-column="30" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/word-fish/game.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.21699545">
-          <caret line="132" column="66" selection-start-line="132" selection-start-column="66" selection-end-line="132" selection-end-column="66" />
+        <state vertical-scroll-proportion="0.4089636">
+          <caret line="83" column="0" selection-start-line="83" selection-start-column="0" selection-end-line="83" selection-end-column="0" />
           <folding>
-            <element signature="e#5328#7012#0" expanded="false" />
-            <element signature="e#8806#9000#0" expanded="false" />
+            <element signature="e#10052#11950#0" expanded="false" />
+            <element signature="e#12032#13695#0" expanded="false" />
+            <element signature="e#13784#13978#0" expanded="false" />
           </folding>
         </state>
       </provider>

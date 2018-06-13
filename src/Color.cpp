@@ -151,6 +151,24 @@ void Color::InitClass() {
 		 return true;
 	 }));
 	
+	/// change to floats
+	script.DefineFunction<Color>
+	( "hsv",
+	 static_cast<ScriptFunctionCallback>([]( void* o, ScriptArguments& sa ) {
+		// validate params
+		const char* error = "usage: hsv( Float hue, Float saturation, Float value )";
+		Color* self = (Color*) o;
+		float h = 0, s = 0, v = 0;
+		if ( !sa.ReadArguments( 3, TypeFloat, &h, TypeFloat, &s, TypeFloat, &v ) ){
+			script.ReportError( error );
+			return false;
+		}
+		
+		// apply
+		self->SetHSV( h, s, v );
+		return true;
+	}));
+	
 	script.DefineFunction<Color>
 	( "rgbaTo",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {

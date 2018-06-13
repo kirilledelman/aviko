@@ -81,5 +81,16 @@
 		}
 	}
 
+	go.eat = function( ltr ) {
+		log( "Ate ", ltr.letter );
+		ltr.parent = null;
+	}
+
+	go.discard = function( ltr ) {
+		log( "Discarded ", ltr.letter );
+		// ltr.parent = null;
+		ltr.sink();
+	}
+
 
 })( this );

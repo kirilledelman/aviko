@@ -1,17 +1,32 @@
 (function(){
 
+	// vars
 	var inOrderMode = true;
-
-	// words - todo - move to an external json file
+	var points = 0;
 	var curWord = -1;
 	var curLetter = 0;
-	var position = 10;
 	var word = null;
-	var controlEnabled = false;
+	var controlEnabled = false, collisionEnabled = false, acceptingEnabled = false;
+	var russianAlphabet = ['А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я' ];
+	var englishAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split( '' );
+	var alphabet;
+	var container, wordContainer, game, score, player, wordIcon;
+
+	// words - todo - move to an external json file
 	var allWords = [
-		{ icon: 'poop', word: 'POOP' },
-		{ icon: 'clown', word: 'CLOWN' }
+		{ icon: 'poop', word: [ 'К','А','К','А','Ш','К','А' ]},
+		{ icon: 'clown', word: [ 'К','Л','О','У','Н' ] }
 	];
+	alphabet = russianAlphabet;
+
+	// shuffle
+	var j, x, i;
+    for (i = allWords.length - 1; i > 0; i--) {
+        j = Math.floor( Math.random() * ( i + 1 ) );
+        x = allWords[ i ];
+        allWords[i] = allWords[j];
+        allWords[j] = x;
+    }
 
 	// scene
 	var scene = new Scene( {
@@ -21,9 +36,138 @@
 	} );
 
 	// add all the static components
-	var container, wordContainer, game, score, player, wordIcon;
 	addComponents();
 
+	// spawns letter
+	function spawnLetter( numLetters ) {
+
+		// ignore if game is over
+		if ( App.scene != scene ) return;
+
+		// multiple if needed
+		if ( !numLetters ) numLetters = 1;
+		for ( var i = 0; i < numLetters; i++ ) {
+
+			// pick letter
+			var ltr = alphabet[ 0 ];
+			var tricky = Math.random() > 0.9 ? ( Math.random() * 0.25 ) : false;
+			var useful = 0;
+
+			// check if useful letters are already swimming
+			for ( var j = 0; j < game.letters.length; j++ ){
+				if ( game.letters[ j ].useful ) { useful++; }
+			}
+			// allowed letters
+			var usefulLetters = [];
+			if ( inOrderMode ) usefulLetters.push( word.word[ Math.max( 0, curLetter ) ] );
+			else {
+				// ones not yet uncovered
+				for ( var j = 1; j < wordContainer.numChildren; j++ ){
+					var l = wordContainer.getChild( j );
+					if ( l.hidden ) usefulLetters.push( l.name );
+				}
+			}
+
+			// in order?
+			if ( inOrderMode ) {
+				// only one is needed
+				useful = ( useful == 0 );
+			// free mode
+			} else {
+				// can have up to 2 useful
+				useful = ( useful < 2 );
+			}
+
+			// sometimes, don't pick useful when needed
+			if ( Math.random() <= 0.2 || !usefulLetters.length ) useful = false;
+
+			// pick useful letter
+			if ( useful ) {
+
+				ltr = usefulLetters[ Math.floor( Math.random() * usefulLetters.length ) ];
+
+			// pick unuseful letter
+			} else {
+
+				do {
+					ltr = alphabet[ Math.floor( alphabet.length * Math.random() ) ];
+				} while ( usefulLetters.indexOf( ltr ) >= 0 );
+			}
+
+
+			// avoid picking same Y position twice in a row
+			var lane;
+			while ( ( lane = Math.floor( 1 + Math.random() * 5 ) ) == game.lastLane );
+			game.lastLane = lane;
+
+			// spawn
+			var letter = game.addChild( './letter', {
+				x: 310 + Math.round( Math.random() * 2 ) * scene.gridSize,
+				y: lane * scene.gridSize,
+				lane: lane,
+				letter: ltr,
+				name: ltr,
+				game: game,
+				tricky: tricky,
+				useful: useful
+			}, 2 );
+			game.letters.push( letter );
+		}
+	}
+	game.spawnLetter = spawnLetter;
+
+	// collision/etc
+	function checkCollision() {
+		for ( var i = game.letters.length - 1; i >= 0; i-- ){
+			var letter = game.letters[ i ];
+			var dx = Math.abs( letter.x - player.x ), dy = Math.abs( letter.y - player.y );
+			if ( collisionEnabled && dy < scene.gridSize * 0.5 && dx < scene.gridSize ) {
+				playerTouchedLetter( letter );
+				continue;
+			}
+			for ( var j = game.letters.length - 1; j >= 0; j-- ){
+				if ( i == j ) continue;
+				letter2 = game.letters[ j ];
+				dx = Math.abs( letter.x - letter2.x );
+				if ( letter.lane == letter2.lane && dx < scene.gridSize ) {
+					letterTouchedLetter( letter, letter2 );
+				}
+			}
+		}
+		player.debounce( 'checkCollision', checkCollision, 0.5 );
+	}
+
+	//
+	function playerTouchedLetter( ltr ) {
+		// check if it's useful
+		var bottomLetter = null;
+		for ( var i = 1; i < wordContainer.numChildren; i++ ) {
+			var bl = wordContainer.getChild( i );
+			if ( bl.hidden && bl.name == ltr.name && ( !inOrderMode || i - 1 == curLetter ) ) {
+				bottomLetter = bl;
+				break;
+			}
+		}
+
+		// useful
+		if ( bottomLetter && acceptingEnabled ) {
+			bottomLetter.accept( true );
+			player.eat( ltr );
+		// discard
+		} else {
+			player.discard( ltr );
+		}
+	}
+
+	function letterTouchedLetter ( a, b ) {
+		// sink
+		if ( Math.random() > 0.5 ) {
+			a.sink();
+		// move over
+		} else {
+			a.bump();
+		}
+	}
 
 	// called at the beginning of the game, and after each word is completed
 	function nextWord() {
@@ -38,25 +182,26 @@
                     [ 'y', 'angle' ], [ letter.y, 0 ], [ letter.y + 64, Math.random() * 90 - 45 ],
                     1, Ease.In ).finished = function ( tween ) {
 					// if not wordIcon, remove on complete
-					if ( tween.target != wordIcon ) {
-						log( "unparented", tween.target );
-						tween.target.parent = null;
-					}
+					if ( tween.target != wordIcon ) tween.target.parent = null;
 				}
 			}
 		}
-		// new word
+
+		// pick new word
 		curWord = ( curWord + 1 ) % allWords.length;
 		word = allWords[ curWord ];
+		collisionEnabled = false;
+		acceptingEnabled = false;
 
-		// when old word is gone
+		// when the old word is gone
 		wordIcon.async( function () {
+
 			// set new word icon
 			wordIcon.render.texture = word.icon;
 			wordIcon.scale = 1;
 			wordIcon.angle = 0;
 			wordIcon.x = 320 + wordIcon.render.originalWidth * 0.5;
-			wordIcon.y = -wordIcon.render.originalHeight * 0.5;
+			wordIcon.y = -( wordIcon.render.originalHeight * 0.5 + 16 );
 			// move icon to center of screen
 			wordIcon.moveTo( 152, wordIcon.y, 0.5, Ease.Out ).finished = function (){
 				// wait a bit
@@ -65,6 +210,7 @@
 					wordIcon.scaleTo( 32 / wordIcon.render.originalHeight, 0.7, Ease.InOut );
 					wordIcon.moveTo( 32, -32, 0.5, Ease.In ).finished = function () {
 						wordIcon.moveTo( 32, 20, 0.5, Ease.Out, Ease.Bounce );
+						collisionEnabled = true;
 					};
 					// add letters
 					for ( var i = 0; i < word.word.length; i++ ) {
@@ -104,12 +250,16 @@
 						// animate each letters in sequence
 						letter.async( function () {
 							this.moveBy( -300, 0, 1, Ease.Out, Ease.Bounce );
+							if ( this.index == word.word.length - 1 ) {
+								acceptingEnabled = true;
+							}
 						}, 0.4 * i );
 					} // end for
 
 					// animation to highlight letter as current
 					function makeCurrent() {
 						var coverCopy = clone( this.cover );
+						coverCopy.setTransform( this.cover.defaultX, this.cover.defaultY, 0 );
 						coverCopy.render.color = 0xFFFFFF;
 						coverCopy.render.stipple = 1;
 						coverCopy.scale = 2;
@@ -124,8 +274,9 @@
 
 					// animation to show, or hide letter again (penalty)
 					function accept( val ) {
+						// letter is accepted
 						if ( val ) {
-							// TODO - make next letter current
+							// uncover
 							this.hidden = false;
 							this.render.addColor = [ 0.2, 0.8, 1, 0 ];
 							this.cover.render.color = 0xFFFFFF;
@@ -144,18 +295,17 @@
 									this.render.addColor.rgbaTo( 0, 0, 0, 2, Ease.Out );
 								}.bind( this );
 							}.bind( this );
+							// next letter
+							nextLetter();
 						} else {
 							// TODO
 						}
 					}
 
-					// if in order mode, highlight letter
+					// if in order mode, highlight next letter
 					if ( inOrderMode ) {
-						curLetter = 0;
-						wordContainer.async( function() {
-							letter = wordContainer.getChild( 1 );
-							letter.makeCurrent();
-						}, 3 );
+						curLetter = -1;
+						wordContainer.async( nextLetter, 3 );
 					}
 
 				}, 1 );
@@ -163,15 +313,40 @@
 		}, 1.25 );
 
 	}
-	scene.nextWord = nextWord;
 
-	// START sequence - player enter, show word
-	player.swimHorizontal( 32 );
-	player.swimVertical( 64 );
-	scene.async( function () {
-		nextWord();
-		controlEnabled = true;
-	}, 1 );
+	// called after a letter is accepted
+	function nextLetter() {
+
+		// count how many letters left
+		var left = 0, letter;
+		for ( var i = 1; i < wordContainer.numChildren; i++ ) {
+			letter = wordContainer.getChild( i );
+			if ( letter.hidden ) left++;
+		}
+
+		// no more - word complete
+		if ( !left || ( inOrderMode && curLetter == word.word.length - 1 ) ) {
+
+			// increase score
+			points += 10 * word.word.length;
+			score.render.text = ( '000000' + points.toString() ).substr( -6 );
+			score.render.color.set( 0.2, 0.8, 1 );
+			score.render.color.rgbaTo( 1, 1, 1, 1, 1 );
+			score.scale = 1.25;
+			score.scaleTo( 1, 0.25, Ease.Out );
+
+			// next word
+			scene.async( nextWord, 1 );
+
+		} else if ( inOrderMode ) {
+
+			// next letter
+			curLetter++;
+			letter = wordContainer.getChild( curLetter + 1 );
+			letter.makeCurrent();
+		}
+
+	}
 
 	// adds static components - background, water, sky etc.
 	function addComponents() {
@@ -180,7 +355,8 @@
 		container = new GameObject( { name: "Container" } );
 
 		// main game container - sprites etc are added here
-		game = new GameObject( { name: "Game" } );
+		game = new GameObject( { name: "Game", travelSpeed: 30 } );
+		game.letters = [];
 
 		// render target that clips game container
 		var renderImage = new Image( 304, 224, game );
@@ -195,14 +371,13 @@
 		score = new GameObject( {
 			name: "Score",
 			render: RenderText( {
-				text: '00000',
+				text: '000000',
 				align: TextAlign.Right,
 				font: 'UpheavalPro',
 				autoResize: true,
-				size: 16,
-				width: 60, height: 20,
+				size: 16, pivotX: 0.5, pivotY: 0.5
 			}),
-			x: 258, y: 12,
+			x: 278, y: 17,
 		} );
 
 		// assemble
@@ -215,12 +390,14 @@
 		var sky = new GameObject( {
 			name: "Sky",
 			script: './sky',
+			game: game
 		} );
 
 		// water
 		var water = new GameObject( {
 			name: "Water",
 			script: './water',
+			game: game
 		} );
 
 		// player
@@ -228,6 +405,7 @@
 			script: './player',
 			name: "Player",
 			x: -64, y: 96,
+			removedFromScene: function (){ player.cancelDebouncer( 'checkCollision' ); log( "bye" ); }
 		} );
 
 		// word/icon container
@@ -252,11 +430,12 @@
 
 		// set children
 		game.children = [ sky, water, player, wordContainer ];
+		player.debounce( 'checkCollision', checkCollision );
 
 	}
 
 	// process input - move player
-	scene.controllerInput = function ( name, val, controller ) {
+	function processInput( name, val, controller ) {
 
 		if ( !controlEnabled ) return;
 
@@ -297,27 +476,43 @@
 				var l = wordContainer.getChild( i );
 				if ( l.hidden ) {
 					l.accept( true );
-					if ( i < wordContainer.numChildren - 1 ) {
-						wordContainer.getChild( i + 1 ).async( function(){ this.makeCurrent(); }, 1 );
-					}
 					break;
 				}
 				else h++;
 			}
 
-			if ( h >= wordContainer.numChildren - 2 ) {
-				scene.async( nextWord, 1 );
+		// pause
+		} else if ( name == 'start' && val ) {
+
+			if ( App.timeScale ) {
+				App.timeScale = 0;
+				score.render.text = "^6PAUSED";
+			} else {
+				App.timeScale = 1;
+				score.render.text = ('000000' + points.toString()).substr(-6);
 			}
 		}
 	}
+	scene.controllerInput = processInput;
 
 	// scale/recenter
-	scene.scaleScene = function( w, h ) {
+	function scaleScene( w, h ) {
 		var sh = w / 640;
 		var sv = h / 480;
 		container.scale = 2 * Math.min( sh, sv );
 		container.x = 0.5 * ( w - 320 * container.scale );
 		container.y = 0.5 * ( h - 240 * container.scale );
 	}
+	scene.scaleScene = scaleScene;
+
+	// START sequence - player enter, show word
+	player.swimHorizontal( 32 );
+	player.swimVertical( 64 );
+	scene.async( function () {
+		nextWord();
+		spawnLetter( 3 );
+		controlEnabled = true;
+	}, 1 );
+
 	return scene;
 })();

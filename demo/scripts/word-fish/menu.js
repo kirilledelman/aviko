@@ -104,7 +104,8 @@
 	App.on( 'sceneChanged', function ( newScene, oldScene ) {
 		// re-entering this scene from game
 		if ( game && oldScene == game ){
-
+			// unpause
+			App.timeScale = 1;
 			// destroy game
 			if ( game ) game = null;
 			scaleScene( App.windowWidth, App.windowHeight );

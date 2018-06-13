@@ -19,6 +19,8 @@ Inspector
 Ctrl+ wheel - zoom
 	+ left - pan
 
+Body
+	SyncObjectToBody - NaN
 
 RenderText
 	newLinesResetFormatting - resets formatting on line wrap

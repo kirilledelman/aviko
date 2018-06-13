@@ -8,22 +8,19 @@
 	// waves
 	var wavePoints = 32;
 	var distanceBetweenPoints = 304 / ( wavePoints - 1 );
-	var pts = [ -10, 20 ];
+	var pts = [ -10, 16 ];
 	for ( var i = 0; i < wavePoints; i++ ) {
-		pts.push( 304 * ( i / ( wavePoints - 1 ) ), 20 );
+		pts.push( 304 * ( i / ( wavePoints - 1 ) ), 16 );
 	}
 	pts.push( 314, 20, 314, 240, -10, 240 );
 	go.render.points = pts;
 
-	// use to speed up / slow down
-	go.travelSpeed = 20.0;
-
 	// update
 	go.update = function ( dt ){
 		// update waves
-		var phase = travelSpeed / ( 2.0 * Math.PI );
+		var phase = go.game.travelSpeed / ( 2.0 * Math.PI );
 		for ( var i = 0; i < wavePoints; i++ ) {
-			go.render.points[ i * 2 + 3 ] = 20 + Math.sin( App.time * phase + i ) * 4;
+			go.render.points[ i * 2 + 3 ] = 20 + Math.sin( App.time * phase + i ) * 2;
 		}
 	}
 
@@ -42,11 +39,11 @@
 				color: [ 0.2, 0.8, 1, 0.75 ],
 			}, 0 ),
 			climbSpeed: size * 10,
-			x: go.travelSpeed + 320 * Math.random(),
+			x: go.game.travelSpeed + 320 * Math.random(),
 			y: 220,
 			opacity: 0.5,
 			update: function( dt ) {
-				this.x -= travelSpeed * dt + Math.cos( App.time * this.climbSpeed * 0.07 ) * 0.5;
+				this.x -= go.game.travelSpeed * dt + Math.cos( App.time * this.climbSpeed * 0.07 ) * 0.5 * App.timeScale;
 				this.y -= this.climbSpeed * dt;
 				if ( this.y < 40 ) {
 					this.render.stipple = 1.0 - ( this.y - 20 ) / 20 ;
@@ -69,14 +66,14 @@
 				color: 0x6699FF,
 				pivotX: 0.5, pivotY: 0
 			} ),
-			x: go.travelSpeed + 320 * Math.random(),
+			x: go.game.travelSpeed + 320 * Math.random(),
 			y: 10,
 			angle: Math.round( ( 90 * Math.random() - 30 ) / 15 ) * 15,
 			angleDelta: Math.random() * 10 - 5,
 			opacity: 0,
 			life: 0, timeToLive: 1 + 0.5 * Math.random(),
 			update: function( dt ) {
-				this.x -= travelSpeed * dt;
+				this.x -= go.game.travelSpeed * dt;
 				this.opacity = 0.5 * Math.sin( ( this.life / this.timeToLive ) * Math.PI );
 				this.angle += this.angleDelta * dt;
 				this.life += dt;

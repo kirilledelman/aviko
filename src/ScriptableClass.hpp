@@ -170,7 +170,9 @@ public:
 		float timeLeft = 0;
 		float timeSet = 0;
 		int index = 0;
-		bool TimePassed( float dt ) {
+		bool unscaled = false;
+		bool TimePassed( float dt, float ts ) {
+			if ( !unscaled ) dt *= ts;
 			this->timeLeft -= dt;
 			if ( this->timeLeft <= 0 ){
 				ScriptArguments args;
@@ -181,9 +183,10 @@ public:
 			return false;
 		}
 		ScheduledCall(){ index = ++ScriptableClass::asyncIndex; }
-		ScheduledCall( void* obj, void* fun, float delay ) : func( fun, true ) {
+		ScheduledCall( void* obj, void* fun, float delay, bool unscaledTime ) : func( fun, true ) {
 			func.thisObject = obj;
 			timeSet = timeLeft = delay;
+			unscaled = unscaledTime;
 			index = ++ScriptableClass::asyncIndex;
 		}
 	};
@@ -201,9 +204,9 @@ public:
 	static DebouncerMap* scheduledDebouncers;
 	
 	/// adds scheduled async
-	static int AddAsync( void* obj, void* func, float delay ) {
+	static int AddAsync( void* obj, void* func, float delay, bool unscaled ) {
 		list<ScheduledCall>& asyncs = (*scheduledAsyncs)[ obj ];
-		asyncs.emplace_front( obj, func, delay );
+		asyncs.emplace_front( obj, func, delay, unscaled );
 		return asyncs.front().index;
 	}
 	
@@ -232,7 +235,7 @@ public:
 	}
 	
 	/// add/replaces debounce
-	static void AddDebouncer( void *obj, string name, void* func, float delay ){
+	static void AddDebouncer( void *obj, string name, void* func, float delay, bool unscaled ){
 		unordered_map<string, ScheduledCall> &debouncers = (*scheduledDebouncers)[ obj ];
 		unordered_map<string, ScheduledCall>::iterator it = debouncers.find( name );
 		// already exists
@@ -246,12 +249,14 @@ public:
 			} else {
 				sched.timeLeft = sched.timeSet;
 			}
+			sched.unscaled = unscaled;
 		// new
 		} else {
 			ScheduledCall &sched = debouncers[ name ];
 			sched.func.funcObject = func;
 			sched.func.thisObject = obj;
 			sched.timeLeft = sched.timeSet = delay;
+			sched.unscaled = unscaled;
 		}
 		
 	}
@@ -277,44 +282,7 @@ public:
 		return false;
 	}
 	
-	static void ProcessScheduledCalls( float dt ) {
-		AsyncMap::iterator it = scheduledAsyncs->begin();
-		while ( it != scheduledAsyncs->end() ) {
-			ScheduledCallList &list = it->second;
-			ScheduledCallList::iterator lit = list.begin();
-			if ( lit == list.end() ) {
-				it = scheduledAsyncs->erase( it );
-				continue;
-			}
-			while ( lit != list.end() ) {
-				if ( lit->TimePassed( dt ) ) {
-					lit = list.erase( lit );
-				} else {
-					lit++;
-				}
-			}
-			it++;
-		}
-		DebouncerMap::iterator dit = scheduledDebouncers->begin();
-		while( dit != scheduledDebouncers->end() ) {
-			unordered_map<string, ScheduledCall> &debouncers = dit->second;
-			unordered_map<string, ScheduledCall>::iterator dbit = debouncers.begin();
-			if ( dbit == debouncers.end() ) {
-				dit = scheduledDebouncers->erase( dit );
-				continue;
-			}
-			while ( dbit != debouncers.end() ) {
-				ScheduledCall& sched = dbit->second;
-				//printf( "Debouncer %s\n", dbit->first.c_str()  );
-				if ( sched.TimePassed( dt ) ) {
-					dbit = debouncers.erase( dbit );
-				} else {
-					dbit++;
-				}
-			}
-			dit++;
-		}
-	}
+	static void ProcessScheduledCalls( float dt );
 	
 // safe casting
 

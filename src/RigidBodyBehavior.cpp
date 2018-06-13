@@ -19,10 +19,6 @@ RigidBodyBehavior::RigidBodyBehavior( ScriptArguments* args ) : RigidBodyBehavio
 	this->massData.mass = 10;
 	this->massData.I = 0;
 	
-// add default shape
-//	RigidBodyShape* shp = new RigidBodyShape( NULL );
-//	shp->SetBody( this );
-	
 	// obj argument - init object
 	void *initObj = NULL;
 	if ( args && args->ReadArguments( 1, TypeObject, &initObj ) ) {
