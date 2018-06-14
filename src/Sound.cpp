@@ -3,6 +3,7 @@
 
 Sound* Sound::musicSound = NULL;
 unordered_map<int, Sound*> Sound::soundChannels;
+unordered_set<Sound*> Sound::activeSounds;
 
 
 /* MARK:	-				Init / destroy
@@ -33,6 +34,8 @@ Sound::~Sound() {
 		if ( this->playing ) {
 			this->Stop();
 		}
+		//
+		activeSounds.erase( this );
 		// release resource
 		this->soundResource->AdjustUseCount( -1 );
 		this->soundResource = NULL;
@@ -223,7 +226,8 @@ void Sound::Play( int loops ) {
 		}
 		
 		// prevent this sound from being garbage collected while playing
-		script.ProtectObject( &this->scriptObject, true );
+		// script.ProtectObject( &this->scriptObject, true );
+		activeSounds.insert( this );
 		
 		// flag
 		this->paused = false;
@@ -257,7 +261,8 @@ void Sound::Play( int loops ) {
 	}
 	
 	// prevent this sound from being garbage collected
-	script.ProtectObject( &this->scriptObject, true );
+	// script.ProtectObject( &this->scriptObject, true );
+	activeSounds.insert( this );
 	
 	// set
 	this->playing = true;
@@ -285,7 +290,8 @@ void Sound::Pause() {
 	this->paused = true;
 	
 	// allow this sound from being garbage collected
-	script.ProtectObject( &this->scriptObject, false );
+	// script.ProtectObject( &this->scriptObject, false );
+	activeSounds.erase( this );
 	
 }
 
@@ -310,7 +316,8 @@ void Sound::Stop() {
 	this->paused = false;
 	
 	// allow this sound from being garbage collected
-	script.ProtectObject( &this->scriptObject, false );
+	// script.ProtectObject( &this->scriptObject, false );
+	activeSounds.erase( this );
 	
 }
 
@@ -324,7 +331,8 @@ void Sound::Finished() {
 	this->CallEvent( event );
 	
 	// allow this sound from being garbage collected
-	script.ProtectObject( &this->scriptObject, false );
+	// script.ProtectObject( &this->scriptObject, false );
+	activeSounds.erase( this );
 }
 
 
@@ -338,7 +346,7 @@ void Sound::ChannelFinished( int channel ) {
 	unordered_map<int, Sound*>::iterator it = Sound::soundChannels.find( channel );
 	if ( it != Sound::soundChannels.end() ) {
 		Sound* snd = it->second;
-		if ( snd->soundChannel == channel ) snd->Finished();
+		if ( snd->scriptObject && snd->soundChannel == channel ) snd->Finished();
 	}
 }
 

@@ -1,15 +1,21 @@
 (function( go ){
 
-	go.render = new RenderSprite( 'smiley' );
-	go.render.pivotX = go.render.pivotY = 0.5;
-	go.render.flipX = true;
-	go.scale = 0.3;
-
 	// animated swimming
 	var velX = 0, velY = 0, minVel = 8, maxVel = 64, velEaseDist = 8,
 		destX, destY;
+	var tex = './textures/fish:Frame00';
+
+	// no frame animation support yet
+	var idleAnim = [ 1, 2, 3, 2 ], idleFPS = 4;
+	var anim = idleAnim, animFPS = idleFPS;
+	var loopAnim = true;
+	var seqFrame = 0, prevFrame = -1;
 
 	//
+	go.render = new RenderSprite();
+	go.render.pivotX = go.render.pivotY = 0.5;
+
+	// absolute Y pos
 	go.swimVertical = function ( val ) {
 		if ( destX === undefined ) destX = x;
 		if ( destY === undefined ) destY = y;
@@ -18,7 +24,7 @@
 		go.update = swim;
 	}
 
-	// relative offset
+	// absolute X pos
 	go.swimHorizontal = function ( val ) {
 		if ( destX === undefined ) destX = x;
 		if ( destY === undefined ) destY = y;
@@ -29,6 +35,9 @@
 
 	// easing towards destX, destY
 	function swim( dt ){
+		// frames
+		animate( dt );
+
 		// update velocity
 		var dist, distAbs, vel;
 		dist = destY - go.y;
@@ -77,18 +86,69 @@
 			go.angle = 0;
 			go.scaleX = go.scaleY;
 			velX = 0; velY = 0;
-			go.update = null;
+			go.update = animate;
 		}
 	}
 
+	function animate( dt ) {
+		// anim
+		seqFrame += animFPS * dt;
+		if ( seqFrame >= anim.length ) {
+			//seqFrame -= Math.floor( seqFrame );
+			seqFrame = 0;
+			if ( !loopAnim ) {
+				loopAnim = true;
+				anim = idleAnim;
+				animFPS = idleFPS;
+				log( "reverting to idle" );
+			}
+		}
+		var frame = Math.floor( seqFrame );
+		if ( frame != prevFrame ) {
+			go.render.texture = tex + anim[ frame ];
+			prevFrame = frame;
+		}
+	}
+
+	// eat letter animation
 	go.eat = function( ltr ) {
-		log( "Ate ", ltr.letter );
-		ltr.parent = null;
+		// eat anim
+		anim = [ 4, 5 ];
+		animFPS = 2;
+		prevFrame = -1;
+		seqFrame = 0;
+		loopAnim = false;
+
+		// animate crunch
+		ltr.update = null;
+		ltr.parent = go;
+		ltr.setTransform( 20, 0, 0 );
+		(new Tween( ltr,
+			[ 'scaleX', 'scaleY', 'x', 'stipple' ],
+			[ ltr.scaleX, ltr.scaleY, ltr.x, 0 ],
+			[ 0.2, 0, 8, 0.5 ],
+	        0.5, Ease.Out )).finished =
+			function(){
+				ltr.parent = null;
+			};
+		// sound
+		go.sfx = new Sound( './sound/eat' + Math.floor(1 + Math.random() * 5) + '.wav' );
+		go.sfx.play();
 	}
 
 	go.discard = function( ltr ) {
-		log( "Discarded ", ltr.letter );
-		// ltr.parent = null;
+		// bump anim
+		anim = [ 6 ];
+		animFPS = 0.5;
+		seqFrame = 0;
+		prevFrame = -1;
+		loopAnim = false;
+
+		// sfx
+		go.sfx = new Sound( './sound/hit' + Math.floor(1 + Math.random() * 3) + '.wav' );
+		go.sfx.play();
+
+		// log( "Discarded ", ltr.letter );
 		ltr.sink();
 	}
 

@@ -14,11 +14,11 @@
 				font: 'blogger-sans-bold',
 				text: l,
 				color: 0xFFFFFF,
-				outlineColor: [ 0.1, 0.15, 0.4, 0.6 ],
+				outlineColor: [ 0.05, 0.07, 0.2, 1 ],
 				outlineRadius: 2,
-				outlineOffsetY: 0,
+				outlineOffsetY: 1,
 				size: 32 - Math.random() * 16,
-				antialias: false,
+				// antialias: false,
 				autoResize: true,
 				pivotX: 0.5, pivotY: 0.5
 			} );
@@ -58,6 +58,10 @@
 	go.sink = function () {
 		go.update = null;
 		go.render.color.hexTo( '3366FF', 1 );
+		// remove
+		var index = go.game.letters.indexOf( go );
+		if ( index >= 0 ) go.game.letters.splice( index, 1 );
+		//
 		go.moveTo( go.x - go.game.travelSpeed * velMultiplier, go.y + 220, 1.5, Ease.In ).finished = function () {
 			// remove
 			var index = go.game.letters.indexOf( go );

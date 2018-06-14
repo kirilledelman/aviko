@@ -92,9 +92,6 @@ Application::~Application() {
 	
 	printf( "(frames:%d, seconds:%f) average FPS: %f\n", this->frames, this->unscaledTime, ((float) this->frames / (float) this->unscaledTime) );
 	
-	// close mixer
-	Mix_CloseAudio();
-	
 	// destroy window
 	GPU_Quit();
 	
@@ -1165,6 +1162,13 @@ void Application::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 		tit++;
 	}
 	
+	// protect playing sounds
+	unordered_set<Sound*>::iterator sit = Sound::activeSounds.begin(), send = Sound::activeSounds.end();
+	while ( sit != send ) {
+		protectedObjects.push_back( &(*sit)->scriptObject );
+		sit++;
+	}
+	
 	// call super
 	ScriptableClass::TraceProtectedObjects( protectedObjects );
 }
@@ -1313,6 +1317,9 @@ void Application::GameLoop() {
 	
 	sceneStack.clear();
 	script.GC();
+	
+	// close mixer
+	Mix_CloseAudio();	
 	
 	// exit requested
 }

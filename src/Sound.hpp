@@ -11,6 +11,7 @@ public:
 	
 	/// used to route notification of sound ending
 	static unordered_map<int, Sound*> soundChannels;
+	static unordered_set<Sound*> activeSounds;
 	static Sound* musicSound;
 	
 	SoundResource* soundResource = NULL;

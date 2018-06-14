@@ -63,7 +63,20 @@ struct Event {
 	/// construct named event with scriptObject as first script parameter, if provided
 	Event( const char* name, void* scriptObject=NULL ) : Event::Event( scriptObject ) { this->name =  name; }
 	// destructor
-	~Event(){ eventStack.pop_back(); }
+	~Event(){
+		if ( eventStack.back() == this ) {
+			eventStack.pop_back();
+		} else {
+			vector<Event*>::iterator it = eventStack.begin();
+			printf( "eventStack order broken, Event: %s\n", this->name );
+			while ( it != eventStack.end() ) {
+				if ( *it == this ) {
+					eventStack.erase( it );
+					break;
+				}
+			}
+		}
+	}
 	
 };
 

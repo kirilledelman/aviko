@@ -14,10 +14,9 @@
 
 	// words - todo - move to an external json file
 	var allWords = [
-		{ icon: 'poop', word: [ 'К','А','К','А','Ш','К','А' ]},
-		{ icon: 'clown', word: [ 'К','Л','О','У','Н' ] }
+		{ icon: 'clown', word: 'CLOWN' }
 	];
-	alphabet = russianAlphabet;
+	alphabet = englishAlphabet; // russianAlphabet;
 
 	// shuffle
 	var j, x, i;
@@ -33,6 +32,9 @@
 		name: "Word Fish",
 		backgroundColor: 0x001133,
 		gridSize: 32,
+		success: new Sound( './sound/success.wav' ),
+		begin: new Sound( './sound/begin.wav' ),
+		music: new Sound( './sound/8BitClouds.ogg' ),
 	} );
 
 	// add all the static components
@@ -41,8 +43,8 @@
 	// spawns letter
 	function spawnLetter( numLetters ) {
 
-		// ignore if game is over
-		if ( App.scene != scene ) return;
+		// ignore if game is over, or too many already on screen
+		if ( App.scene != scene || game.letters.length > 4 ) return;
 
 		// multiple if needed
 		if ( !numLetters ) numLetters = 1;
@@ -50,7 +52,7 @@
 
 			// pick letter
 			var ltr = alphabet[ 0 ];
-			var tricky = Math.random() > 0.9 ? ( Math.random() * 0.25 ) : false;
+			var tricky = false; //Math.random() > 0.9 ? ( Math.random() * 0.25 ) : false;
 			var useful = 0;
 
 			// check if useful letters are already swimming
@@ -121,7 +123,7 @@
 		for ( var i = game.letters.length - 1; i >= 0; i-- ){
 			var letter = game.letters[ i ];
 			var dx = Math.abs( letter.x - player.x ), dy = Math.abs( letter.y - player.y );
-			if ( collisionEnabled && dy < scene.gridSize * 0.5 && dx < scene.gridSize ) {
+			if ( collisionEnabled && dy < scene.gridSize * 0.5 && letter.x > player.x && dx < scene.gridSize ) {
 				playerTouchedLetter( letter );
 				continue;
 			}
@@ -134,7 +136,7 @@
 				}
 			}
 		}
-		player.debounce( 'checkCollision', checkCollision, 0.5 );
+		player.debounce( 'checkCollision', checkCollision, 0.25 );
 	}
 
 	//
@@ -185,11 +187,14 @@
 					if ( tween.target != wordIcon ) tween.target.parent = null;
 				}
 			}
+
+			scene.success.play();
 		}
 
 		// pick new word
 		curWord = ( curWord + 1 ) % allWords.length;
 		word = allWords[ curWord ];
+		if ( typeof ( word.word ) == 'string' ) word.word = word.word.split( '' );
 		collisionEnabled = false;
 		acceptingEnabled = false;
 
@@ -211,6 +216,7 @@
 					wordIcon.moveTo( 32, -32, 0.5, Ease.In ).finished = function () {
 						wordIcon.moveTo( 32, 20, 0.5, Ease.Out, Ease.Bounce );
 						collisionEnabled = true;
+						scene.begin.play();
 					};
 					// add letters
 					for ( var i = 0; i < word.word.length; i++ ) {
@@ -305,7 +311,7 @@
 					// if in order mode, highlight next letter
 					if ( inOrderMode ) {
 						curLetter = -1;
-						wordContainer.async( nextLetter, 3 );
+						wordContainer.async( nextLetter, 0.25 );
 					}
 
 				}, 1 );
@@ -513,6 +519,9 @@
 		spawnLetter( 3 );
 		controlEnabled = true;
 	}, 1 );
+
+	// music
+	scene.music.play( 0 );
 
 	return scene;
 })();

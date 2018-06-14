@@ -4,6 +4,8 @@
 	var scene = new Scene( {
 		name: "Word Fish Menu",
 		backgroundColor: 0x223388,
+		music: new Sound( './sound/Pinwheel.ogg' ),
+		select: new Sound( './sound/select.wav' )
 	} );
 	// App.debugDraw = true;
 
@@ -31,7 +33,6 @@
 				outlineRadius: 4,
 				outlineOffsetY: 2,
 				characterSpacing: -4, lineSpacing: -20,
-				pad: -10,
 				marginTop: 20,
 				size: 64,
 				color: 0xFFFFFF,
@@ -82,6 +83,8 @@
 				game = include( './game' );
 				game.scaleScene( App.windowWidth, App.windowHeight );
 				sceneForward( game );
+				scene.select.play();
+				scene.music.stop();
 			}, 0.5 );
 		}
 	}
@@ -111,6 +114,10 @@
 			scaleScene( App.windowWidth, App.windowHeight );
 			gc();
 
+			// play theme
+			oldScene.music.stop();
+			scene.music.play( 0 );
+
 		// leaving menu to go back
 		} else if ( newScene != scene && newScene != game ) {
 
@@ -122,8 +129,12 @@
 			for ( var i in Input.controllers )
 				Input.controllers[ i ].off( [ 'accept', 'cancel', 'select', 'start', 'vertical', 'horizontal' ], controllerInput );
 
+			// stop music
+			scene.music.stop();
+
 		}
 	});
 	scaleScene( App.windowWidth, App.windowHeight );
+	scene.music.play( 0 );
 	return scene;
 })();

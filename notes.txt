@@ -1,4 +1,7 @@
-icon field on button - modify autocomplete filename to check for :frame - add getTextureFrames( tex )
+playing newly created sounds crashes
+
+
+modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
 Blend modes blendTarget is off by half texture size
 
@@ -27,7 +30,6 @@ RenderText
 
 Image
 	child autoDraw is drawn normally when Image height = 0, should be hidden
-	remove x,y,angle, scale, etc properties - use them only with draw () call momentarily
 	add drawing methods for shapes, sprites
 
 Body
@@ -40,6 +42,8 @@ Propertylist
 Move render code for sprite to separate static method
 Add App.cursor = texture or empty for default
 
+Animator class
+	tracks, keys, named animations, events, scrubbing
 
 GameObject
 	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash
@@ -79,6 +83,15 @@ Image
 Nice to have
 
 =============================================
+
+GameObject
+	transplantTo( newParent ) - transplant, keep relative transform
+	$( 'childname,childname,childname' ) -> [] children
+	$( 'name/name/name' ) -> great-grandchild
+	$( 'child/childname,childname,childname' ) -> [] grandchildren
+	$( 'name/name/name' ) -> great-grandchild
+	$( '../sibling' ) -> sibling named
+	can extend later to filter by properties
 
 Image
 	draw, drawMask - allow passing String, and Image as first param
@@ -156,26 +169,11 @@ Install MS Visual Studio in windows, look at how to compile on win.
 
 
 
-GameObject
-setParent - need circular check, also, scene shouldn't override its setparent, and disable it
-.isChildOf( another ) - check descendency
-$( 'childname,childname,childname' ) -> [] children
-$( 'name/name/name' ) -> great-grandchild
-$( 'child/childname,childname,childname' ) -> [] grandchildren
-$( 'name/name/name' ) -> great-grandchild
-$( '../sibling' ) -> sibling named
-can extend later to filter by properties
-
-
-
 RenderParticles - Liquidfun ParticleSystem , or series of points render behavior
 
-RenderSprite
-	displace shader?
 
 
 
-Can extend Texture to add masks, blur, etc filters on Texture object
 Can use this class to download images .src = url
 And to save images to disk
 

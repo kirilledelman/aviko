@@ -94,6 +94,8 @@ void RenderSpriteBehavior::InitClass() {
 		RenderSpriteBehavior* rs = (RenderSpriteBehavior*) b;
 		ImageResource* img = NULL;
 		if ( val.type == TypeString && val.value.stringValue->length()	) {
+			// check if changed
+			if ( img && img->key.compare( val.value.stringValue->c_str() ) == 0 ) return val;
 			// "texture" - make sure it exists
 			img = app.textureManager.Get( val.value.stringValue->c_str() );
 			if ( img->error == ERROR_NONE ) {

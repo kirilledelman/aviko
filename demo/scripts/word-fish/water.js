@@ -29,7 +29,8 @@
 		var size = Math.round( 2 + Math.random() * 3 );
 		var bubble = go.addChild( {
 			name: "Bubble",
-			render: new RenderShape( {
+			render: new RenderSprite ( './textures/fish:Frame007' ),
+			/*new RenderShape( {
 				shape: Shape.Ellipse,
 				width: size,
 				height: size * 0.7,
@@ -37,11 +38,12 @@
 				lineThickness: 1,
 				outlineColor: [ 0.2, 0.8, 1, 1 ],
 				color: [ 0.2, 0.8, 1, 0.75 ],
-			}, 0 ),
+			}, 0 ),*/
 			climbSpeed: size * 10,
 			x: go.game.travelSpeed + 320 * Math.random(),
 			y: 220,
-			opacity: 0.5,
+			opacity: 0.75,
+			scale: Math.random() > 0.8 ? 1 : 0.5,
 			update: function( dt ) {
 				this.x -= go.game.travelSpeed * dt + Math.cos( App.time * this.climbSpeed * 0.07 ) * 0.5 * App.timeScale;
 				this.y -= this.climbSpeed * dt;
@@ -60,7 +62,7 @@
 	function emitRay() {
 		var ray = go.addChild( {
 			name: "Sunbeam",
-			render: new RenderSprite( './grad.png', {
+			render: new RenderSprite( './textures/grad.png', {
 				height: 32 + Math.random() * 32,
 				width: 4 + Math.random() * 8,
 				color: 0x6699FF,
