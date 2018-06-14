@@ -36,7 +36,12 @@
 		go.x -= dt * go.game.travelSpeed * velMultiplier;
 		go.y = go.lane * go.game.scene.gridSize + 0.25 * wobbleSpeed * Math.cos( App.time * wobbleSpeed * 2 );
 
-		// offscreen
+		if ( go.useful && go.x < go.game.player.x ) {
+			go.render.outlineColor = [ 0.8, 0.3, 0.2, 1 ];
+			go.useful = false;
+		}
+
+		// offscreen / done
 		if ( go.x < -32 ) {
 			go.parent = null;
 		}

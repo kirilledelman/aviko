@@ -262,7 +262,7 @@ bool _isPropertyInMask( ArgValue& property, ArgValue& serializeMaskVal ) {
 }
 
 ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unordered_set<string>& ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions, ClassDef* cdef ) {
-	JSAutoRequest req( this->js );
+	//JSAutoRequest req( this->js );
 	
 	// first, see if there's serializeMask prop
 	ArgValue serializeMaskVal;
@@ -355,7 +355,7 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 
 /// unserialize obj using initObject
 void* ScriptHost::InitObject( void* initObj ) {
-	JSAutoRequest r( this->js );
+	//JSAutoRequest r( this->js );
 	app.isUnserializing = true;
 	
 	// populate this object
@@ -761,7 +761,7 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 /// tracing function
 bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
 	// scope
-	JSAutoRequest req( cx );
+	//JSAutoRequest req( cx );
 	
 	// determine if there's log handler registered
 	ScriptableClass::EventListenersMap::iterator hit = app.eventListeners.find( string( EVENT_LOG ) );
@@ -817,7 +817,7 @@ bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
 /// callback for Javascript errors
 void ScriptHost::ErrorReport ( JSContext *cx, const char *message, JSErrorReport *report ){
 	// scope
-	JSAutoRequest req( cx );
+	//JSAutoRequest req( cx );
 		
 	// this error is handled
 	JS_ClearPendingException( cx );

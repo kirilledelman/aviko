@@ -34,6 +34,11 @@ Sound::~Sound() {
 		if ( this->playing ) {
 			this->Stop();
 		}
+		// definitely remove from channels
+		unordered_map<int, Sound*>::iterator it = Sound::soundChannels.find( this->soundChannel );
+		if ( it != Sound::soundChannels.end() && it->second == this ) {
+			Sound::soundChannels.erase( it );
+		}
 		//
 		activeSounds.erase( this );
 		// release resource
@@ -303,8 +308,10 @@ void Sound::Stop() {
 	// stop channel
 	if ( this->soundResource->sample ) {
 		Mix_HaltChannel( this->soundChannel );
-		if ( Sound::soundChannels[ this->soundChannel ] == this )
+		unordered_map<int, Sound*>::iterator it = Sound::soundChannels.find( this->soundChannel );
+		if ( it != Sound::soundChannels.end() && it->second == this ) {
 			Sound::soundChannels.erase( this->soundChannel );
+		}
 	// stop music
 	} else if ( this->soundResource->music ) {
 		Mix_HaltMusic();
@@ -327,8 +334,10 @@ void Sound::Finished() {
 	this->playing = false;
 	
 	// dispatch event
-	Event event( EVENT_FINISHED, this->scriptObject );
+	/*
+	 Event event( EVENT_FINISHED, this->scriptObject );
 	this->CallEvent( event );
+	*/
 	
 	// allow this sound from being garbage collected
 	// script.ProtectObject( &this->scriptObject, false );

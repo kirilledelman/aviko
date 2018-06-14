@@ -46,7 +46,7 @@ string SoundResource::ResolveKey( const char* ckey, string& fullpath, string& ex
 
 SoundResource::~SoundResource() {
 	
-	printf( "Unloading sound %s\n", this->key.c_str() );
+	// printf( "Unloading sound %s\n", this->key.c_str() );
 	
 	
 }

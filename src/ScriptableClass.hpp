@@ -71,9 +71,13 @@ struct Event {
 			printf( "eventStack order broken, Event: %s\n", this->name );
 			while ( it != eventStack.end() ) {
 				if ( *it == this ) {
-					eventStack.erase( it );
-					break;
+					printf( "~~%s~~\n", this->name );
+					it = eventStack.erase( it );
+					if ( it == eventStack.end() ) break;
+				} else {
+					printf( "%s\n", (*it)->name ? (*it)->name : "???" );
 				}
+				it++;
 			}
 		}
 	}

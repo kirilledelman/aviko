@@ -14,7 +14,17 @@
 
 	// words - todo - move to an external json file
 	var allWords = [
-		{ icon: 'clown', word: 'CLOWN' }
+		{ icon: 'clown', word: 'CLOWN' },
+		{ icon: 'bee', word: 'BEE' },
+		{ icon: 'chick', word: 'CHICK' },
+		{ icon: 'cloud', word: 'CLOUD' },
+		{ icon: 'panda', word: 'PANDA' },
+		{ icon: 'pizza', word: 'PIZZA' },
+		{ icon: 'poop', word: 'POOP' },
+		{ icon: 'snake', word: 'SNAKE' },
+		{ icon: 'star', word: 'STAR' },
+		{ icon: 'sun', word: 'SUN' },
+		{ icon: 'elephant', word: 'ELEPHANT' },
 	];
 	alphabet = englishAlphabet; // russianAlphabet;
 
@@ -212,9 +222,10 @@
 				// wait a bit
 				wordIcon.async( function () {
 					// scale down and move to default pos
-					wordIcon.scaleTo( 32 / wordIcon.render.originalHeight, 0.7, Ease.InOut );
-					wordIcon.moveTo( 32, -32, 0.5, Ease.In ).finished = function () {
-						wordIcon.moveTo( 32, 20, 0.5, Ease.Out, Ease.Bounce );
+					wordIcon.scaleTo( Math.min( 32 / wordIcon.render.originalHeight, 32 / wordIcon.render.originalWidth ),
+					                  0.7, Ease.InOut );
+					wordIcon.moveTo( 18, -32, 0.5, Ease.In ).finished = function () {
+						wordIcon.moveTo( 18, 20, 0.5, Ease.Out, Ease.Bounce );
 						collisionEnabled = true;
 						scene.begin.play();
 					};
@@ -252,11 +263,11 @@
 						} );
 						letter.cover.defaultX = letter.cover.x;
 						letter.cover.defaultY = letter.cover.y;
-						letter.x = 300 + ( 64 + i * 32 ) + ( 6 - letter.cover.x );
+						letter.x = 300 + ( 48 + i * 32 ) + ( 6 - letter.cover.x );
 						// animate each letters in sequence
 						letter.async( function () {
 							this.moveBy( -300, 0, 1, Ease.Out, Ease.Bounce );
-							if ( this.index == word.word.length - 1 ) {
+							if ( this.index == 0 ) {
 								acceptingEnabled = true;
 							}
 						}, 0.4 * i );
@@ -436,6 +447,7 @@
 
 		// set children
 		game.children = [ sky, water, player, wordContainer ];
+		game.player = player;
 		player.debounce( 'checkCollision', checkCollision );
 
 	}
@@ -477,7 +489,7 @@
 		// TEST
 		} else if ( name == 'accept' && val ) {
 
-			var h = 0;
+			/* var h = 0;
 			for( var i = 1; i < wordContainer.numChildren; i++ ) {
 				var l = wordContainer.getChild( i );
 				if ( l.hidden ) {
@@ -485,7 +497,7 @@
 					break;
 				}
 				else h++;
-			}
+			}*/
 
 		// pause
 		} else if ( name == 'start' && val ) {
@@ -522,6 +534,5 @@
 
 	// music
 	scene.music.play( 0 );
-
 	return scene;
 })();

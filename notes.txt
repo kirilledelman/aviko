@@ -1,5 +1,4 @@
-playing newly created sounds crashes
-
+Sound FINISHED event crashes
 
 modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 

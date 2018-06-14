@@ -100,7 +100,7 @@
 				loopAnim = true;
 				anim = idleAnim;
 				animFPS = idleFPS;
-				log( "reverting to idle" );
+				//log( "reverting to idle" );
 			}
 		}
 		var frame = Math.floor( seqFrame );
@@ -132,21 +132,21 @@
 				ltr.parent = null;
 			};
 		// sound
-		go.sfx = new Sound( './sound/eat' + Math.floor(1 + Math.random() * 5) + '.wav' );
-		go.sfx.play();
+		var sfx = new Sound( './sound/eat' + Math.floor(1 + Math.random() * 5) + '.wav' );
+		sfx.play();
 	}
 
 	go.discard = function( ltr ) {
 		// bump anim
 		anim = [ 6 ];
-		animFPS = 0.5;
+		animFPS = 2;
 		seqFrame = 0;
 		prevFrame = -1;
 		loopAnim = false;
 
 		// sfx
-		go.sfx = new Sound( './sound/hit' + Math.floor(1 + Math.random() * 3) + '.wav' );
-		go.sfx.play();
+		var sfx = new Sound( './sound/hit' + Math.floor(1 + Math.random() * 3) + '.wav' );
+		sfx.play();
 
 		// log( "Discarded ", ltr.letter );
 		ltr.sink();
