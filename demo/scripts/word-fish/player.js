@@ -94,13 +94,11 @@
 		// anim
 		seqFrame += animFPS * dt;
 		if ( seqFrame >= anim.length ) {
-			//seqFrame -= Math.floor( seqFrame );
 			seqFrame = 0;
 			if ( !loopAnim ) {
 				loopAnim = true;
 				anim = idleAnim;
 				animFPS = idleFPS;
-				//log( "reverting to idle" );
 			}
 		}
 		var frame = Math.floor( seqFrame );
@@ -148,7 +146,7 @@
 		var sfx = new Sound( './sound/hit' + Math.floor(1 + Math.random() * 3) + '.wav' );
 		sfx.play();
 
-		// log( "Discarded ", ltr.letter );
+		// sink
 		ltr.sink();
 	}
 

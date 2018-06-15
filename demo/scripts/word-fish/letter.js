@@ -5,20 +5,21 @@
 	var velMultiplier = 1 + Math.random() * 1;
 	var wobbleSpeed = 5 + Math.random() * 5;
 	var rot = 0;
+	var missed = false;
 
 	Object.defineProperty( go, 'letter', {
 		get: function(){ return letter; },
 		set: function( l ){
 			letter = l;
 			go.render = new RenderText( {
-				font: 'blogger-sans-bold',
+				font: 'expressway',//'blogger-sans-bold',
 				text: l,
 				color: 0xFFFFFF,
 				outlineColor: [ 0.05, 0.07, 0.2, 1 ],
 				outlineRadius: 2,
 				outlineOffsetY: 1,
 				size: 32 - Math.random() * 16,
-				// antialias: false,
+				antialias: false,
 				autoResize: true,
 				pivotX: 0.5, pivotY: 0.5
 			} );
@@ -26,6 +27,14 @@
 		}
 	} );
 
+	// red outline to indicate missed letter
+	Object.defineProperty( go, 'missed', {
+		get: function(){ return missed; },
+		set: function( m ){
+			missed = m;
+			go.render.outlineColor = m ? [ 0.8, 0.3, 0.2, 1 ] : [ 0.05, 0.07, 0.2, 1 ];
+		}
+	} );
 
 	// think function
 	go.update = function ( dt ) {
@@ -37,23 +46,21 @@
 		go.y = go.lane * go.game.scene.gridSize + 0.25 * wobbleSpeed * Math.cos( App.time * wobbleSpeed * 2 );
 
 		if ( go.useful && go.x < go.game.player.x ) {
-			go.render.outlineColor = [ 0.8, 0.3, 0.2, 1 ];
+			go.missed = true;
 			go.useful = false;
 		}
 
-		// offscreen / done
-		if ( go.x < -32 ) {
-			go.parent = null;
-		}
+		// when offscreen disappear
+		if ( go.x < -32 ) go.parent = null;
 
-		// tricks
+		// tricky letters do a trick at a random point on the screen
 		if ( go.tricky && go.x < 152 * ( 1 + go.tricky ) ) {
 			if ( go.useful ) {
 				// TODO tricky useful
 			} else {
 				// useless trick
 				// TODO
-				go.sink();
+				go.bump( true );
 			}
 			go.tricky = false;
 		}
@@ -77,15 +84,20 @@
 	}
 
 	// move to another lane
-	go.bump = function () {
-		var t = new Tween( go, 'lane', go.lane, go.lane < 5 ? ( go.lane + 1 ) : ( go.lane - 1), 1, Ease.InOut );
+	go.bump = function ( randomLane ) {
+		var newLane = randomLane ?
+			( Math.floor( go.lane + 1 + Math.random() * 8 ) % 5 ) :
+			( go.lane < 5 ? ( go.lane + 1 ) : ( go.lane - 1 ) );
+		var t = new Tween( go, 'lane', go.lane, newLane, 1, Ease.InOut );
 	}
 
+	// letter is removed
 	go.removed = function () {
-		// remove from array
+		// remove from letter array
 		var index = go.game.letters.indexOf( go );
 		if ( index >= 0 ) go.game.letters.splice( index, 1 );
-		// schedule next
+
+		// schedule next letter spawn
 		go.game.async( go.game.spawnLetter, 0.5 + Math.random() * 0.5 );
 	}
 

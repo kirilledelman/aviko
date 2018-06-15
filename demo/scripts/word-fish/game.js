@@ -14,19 +14,23 @@
 
 	// words - todo - move to an external json file
 	var allWords = [
-		{ icon: 'clown', word: 'CLOWN' },
-		{ icon: 'bee', word: 'BEE' },
-		{ icon: 'chick', word: 'CHICK' },
-		{ icon: 'cloud', word: 'CLOUD' },
-		{ icon: 'panda', word: 'PANDA' },
-		{ icon: 'pizza', word: 'PIZZA' },
-		{ icon: 'poop', word: 'POOP' },
-		{ icon: 'snake', word: 'SNAKE' },
-		{ icon: 'star', word: 'STAR' },
-		{ icon: 'sun', word: 'SUN' },
-		{ icon: 'elephant', word: 'ELEPHANT' },
+		{ icon: 'clown', word: 'КЛОУН' },
+		{ icon: 'bee', word: 'ПЧЕЛА' },
+		{ icon: 'chick', word: 'ЦЫПЛЁНОК' },
+		{ icon: 'panda', word: 'ПАНДА' },
+		{ icon: 'pizza', word: 'ПИЦЦА' },
+		{ icon: 'poop', word: 'КАКАШКА' },
+		{ icon: 'snake', word: 'ЗМЕЯ' },
+		{ icon: 'elephant', word: 'СЛОН' },
+		{ icon: 'balloon', word: 'ШАР' },
+		{ icon: 'cat', word: 'КОТ' },
+		{ icon: 'crab', word: 'КРАБ' },
+		{ icon: 'fish', word: 'РЫБА' },
+		{ icon: 'gecco', word: 'ГЕККО' },
+		{ icon: 'robot', word: 'РОБОТ' },
+		{ icon: 'key', word: 'КЛЮЧ' },
 	];
-	alphabet = englishAlphabet; // russianAlphabet;
+	alphabet = russianAlphabet;
 
 	// shuffle
 	var j, x, i;
@@ -204,7 +208,16 @@
 		// pick new word
 		curWord = ( curWord + 1 ) % allWords.length;
 		word = allWords[ curWord ];
-		if ( typeof ( word.word ) == 'string' ) word.word = word.word.split( '' );
+		if ( typeof ( word.word ) == 'string' ) {
+			// determine if UTF 8
+			var cc = word.word.charCodeAt( 0 );
+			if ( cc > 128 ) {
+				// split by pairs
+				var ww = [];
+				for ( var i = 0; i < word.word.length; i += 2 ) ww.push( word.word.substr( i, 2 ) );
+				word.word = ww;
+			} else word.word = word.word.split( '' );
+		}
 		collisionEnabled = false;
 		acceptingEnabled = false;
 
@@ -217,8 +230,9 @@
 			wordIcon.angle = 0;
 			wordIcon.x = 320 + wordIcon.render.originalWidth * 0.5;
 			wordIcon.y = -( wordIcon.render.originalHeight * 0.5 + 16 );
-			// move icon to center of screen
-			wordIcon.moveTo( 152, wordIcon.y, 0.5, Ease.Out ).finished = function (){
+			scene.begin.play();
+			// move icon to right corner
+			wordIcon.moveTo( 300 - wordIcon.render.originalWidth * 0.5, wordIcon.y, 0.5, Ease.Out ).finished = function (){
 				// wait a bit
 				wordIcon.async( function () {
 					// scale down and move to default pos
@@ -227,21 +241,21 @@
 					wordIcon.moveTo( 18, -32, 0.5, Ease.In ).finished = function () {
 						wordIcon.moveTo( 18, 20, 0.5, Ease.Out, Ease.Bounce );
 						collisionEnabled = true;
-						scene.begin.play();
 					};
-					// add letters
+					// add letter cards on bottom
 					for ( var i = 0; i < word.word.length; i++ ) {
 						var letter = wordContainer.addChild( {
 							name: word.word[ i ],
 							index: i,
 							y: 12,
 							render: new RenderText( {
-								font: 'blogger-sans-bold',
+								font: 'expressway', // 'blogger-sans-bold',
 								text: word.word[ i ],
 								outlineColor: 0x0,
 								outlineRadius: 2,
 								outlineOffsetY: 1,
 								size: 20,
+								pivotY: 0.2,
 								antialias: false,
 							} ),
 							hidden: true,
@@ -338,6 +352,8 @@
 		var left = 0, letter;
 		for ( var i = 1; i < wordContainer.numChildren; i++ ) {
 			letter = wordContainer.getChild( i );
+			letter.missed = false;
+			letter.useful = false;
 			if ( letter.hidden ) left++;
 		}
 
@@ -471,6 +487,7 @@
 				scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
 			}
 		}
+
 		if ( name == 'vertical' ) {
 			if ( val ) {
 				scene.debounce( 'keepSwimmingVertically', KeepSwimmingVertically, 0.45 );
@@ -479,33 +496,27 @@
 			}
 			KeepSwimmingVertically( val );
 		} else if ( name == 'horizontal' ) {
-			if ( val ) {
-				scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
-			} else {
-				scene.cancelDebouncer( 'KeepSwimmingHorizontally' );
-			}
-			KeepSwimmingHorizontally( val );
 
-		// TEST
-		} else if ( name == 'accept' && val ) {
+			 /* if ( val ) {
+			    scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
+			 } else {
+			 scene.cancelDebouncer( 'KeepSwimmingHorizontally' );
+			 }
+			 KeepSwimmingHorizontally( val );
 
-			/* var h = 0;
-			for( var i = 1; i < wordContainer.numChildren; i++ ) {
-				var l = wordContainer.getChild( i );
-				if ( l.hidden ) {
-					l.accept( true );
-					break;
-				}
-				else h++;
-			}*/
+			 } */
 
-		// pause
 		} else if ( name == 'start' && val ) {
 
+			// pause
 			if ( App.timeScale ) {
+				game.parent.render.stipple = 0.5;
+				App.scene.music.pause();
 				App.timeScale = 0;
 				score.render.text = "^6PAUSED";
 			} else {
+				game.parent.render.stipple = 0;
+				App.scene.music.play();
 				App.timeScale = 1;
 				score.render.text = ('000000' + points.toString()).substr(-6);
 			}
