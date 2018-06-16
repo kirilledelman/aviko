@@ -10,6 +10,7 @@
 	// App.debugDraw = true;
 
 	// menu
+	var prompt;
 	var menu = scene.addChild( 'ui/panel', {
 		name: "Menu",
 		layoutType: Layout.Vertical,
@@ -48,14 +49,16 @@
 				spacing: 10,
 				flex: 1,
 				children: [
-					new GameObject( 'ui/text', {
-						text: "Push any button\nto start",
+					prompt = new GameObject( 'ui/text', {
+						text: "^4[Select]^c to toggle\n\n^B^3RUSSIAN^c^b ^9ENGLISH^c" +
+						"\n\nAny other button to start",
 						multiLine: true,
-						font: 'UpheavalPro',
+						font: 'Fairfax', //'UpheavalPro',
+						boldFont: 'FairfaxBold',
 						align: TextAlign.Center,
 						antialias: false,
 						align: TextAlign.Center,
-						size: 16,
+						size: 11, // 16,
 						color: 0xFFFFFF,
 					} )
 				],
@@ -73,14 +76,24 @@
 		],
 	} );
 	var game = null;
+	var language = 1;
 
 	// bind controls
 	function controllerInput( name, val ) {
 		if ( game ) game.controllerInput( name, val, this );
 		else if ( val ){
+			if ( name == 'select' ) {
+				language = ( language + 1 ) % 2;
+				prompt.text = "^4[Select]^c to toggle\n\n" +
+					( language ? "^B^3RUSSIAN^c^b ^9ENGLISH^c" : "^9RUSSIAN^c ^B^3ENGLISH^c^b" ) +
+					"\n\nAny other button to start";
+				return;
+			}
+
 			// delayed start (to allow select+start to act first)
 			scene.debounce( 'start', function () {
 				game = include( './game' );
+				game.language = language;
 				game.scaleScene( App.windowWidth, App.windowHeight );
 				sceneForward( game );
 				scene.select.play();

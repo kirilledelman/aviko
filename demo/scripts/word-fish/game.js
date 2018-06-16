@@ -7,30 +7,61 @@
 	var curLetter = 0;
 	var word = null;
 	var controlEnabled = false, collisionEnabled = false, acceptingEnabled = false;
-	var russianAlphabet = ['А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я' ];
-	var englishAlphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split( '' );
-	var alphabet;
+	var alphabet = [
+		[ 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z' ],
+		[ 'А','Б','В','Г','Д','Е','Ё','Ж','З','И','Й','К','Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ч','Ш','Щ','Ъ','Ы','Ь','Э','Ю','Я' ],
+	];
 	var container, wordContainer, game, score, player, wordIcon;
 
 	// words - todo - move to an external json file
 	var allWords = [
-		{ icon: 'clown', word: 'КЛОУН' },
-		{ icon: 'bee', word: 'ПЧЕЛА' },
-		{ icon: 'chick', word: 'ЦЫПЛЁНОК' },
-		{ icon: 'panda', word: 'ПАНДА' },
-		{ icon: 'pizza', word: 'ПИЦЦА' },
-		{ icon: 'poop', word: 'КАКАШКА' },
-		{ icon: 'snake', word: 'ЗМЕЯ' },
-		{ icon: 'elephant', word: 'СЛОН' },
-		{ icon: 'balloon', word: 'ШАР' },
-		{ icon: 'cat', word: 'КОТ' },
-		{ icon: 'crab', word: 'КРАБ' },
-		{ icon: 'fish', word: 'РЫБА' },
-		{ icon: 'gecco', word: 'ГЕККО' },
-		{ icon: 'robot', word: 'РОБОТ' },
-		{ icon: 'key', word: 'КЛЮЧ' },
+		{ icon: 'clown', words: [ 'CLOWN', 'КЛОУН' ] },
+		{ icon: 'bee', words: [ 'BEE', 'ПЧЕЛА' ] },
+		{ icon: 'chick', words: [ 'CHICK', 'ЦЫПЛЁНОК' ] },
+		{ icon: 'panda', words: [ 'PANDA', 'ПАНДА' ] },
+		{ icon: 'pizza', words: [ 'PIZZA', 'ПИЦЦА' ] },
+		{ icon: 'poop', words: [ 'POOP', 'КАКАШКА' ] },
+		{ icon: 'snake', words: [ 'SNAKE', 'ЗМЕЯ' ] },
+		{ icon: 'elephant', words: [ 'ELEPHANT', 'СЛОН' ] },
+		{ icon: 'balloon', words: [ 'BALLOON', 'ШАР' ] },
+		{ icon: 'cat', words: [ 'CAT', 'КОТ' ] },
+		{ icon: 'crab', words: [ 'CRAB', 'КРАБ' ] },
+		{ icon: 'fish', words: [ 'FISH', 'РЫБА' ] },
+		{ icon: 'gecco', words: [ 'GECCO', 'ГЕККО' ] },
+		{ icon: 'robot', words: [ 'ROBOT', 'РОБОТ' ] },
+		{ icon: 'key', words: [ 'KEY', 'КЛЮЧ' ] },
+		{ icon: 'apple', words: [ 'APPLE', 'ЯБЛОКО' ] },
+		{ icon: 'ball', words: [ 'BALL', 'МЯЧ' ] },
+		{ icon: 'banana', words: [ 'BANANA', 'БАНАН' ] },
+		{ icon: 'bear', words: [ 'BEAR', 'МЕДВЕДЬ' ] },
+		{ icon: 'box', words: [ 'BOX', 'КОРОБКА' ] },
+		{ icon: 'bread', words: [ 'BREAD', 'ХЛЕБ' ] },
+		{ icon: 'car', words: [ 'CAR', 'МАШИНА' ] },
+		{ icon: 'cow', words: [ 'COW', 'КОРОВА' ] },
+		{ icon: 'dog', words: [ 'DOG', 'СОБАКА' ] },
+		{ icon: 'dolphin', words: [ 'DOLPHIN', 'ДЕЛЬФИН' ] },
+		{ icon: 'door', words: [ 'DOOR', 'ДВЕРЬ' ] },
+		{ icon: 'flag', words: [ 'FLAG', 'ФЛАГ' ] },
+		{ icon: 'frog', words: [ 'FROG', 'ЛЯГУШКА' ] },
+		{ icon: 'guitar', words: [ 'GUITAR', 'ГИТАРА' ] },
+		{ icon: 'hare', words: [ 'RABBIT', 'ЗАЯЦ' ] },
+		{ icon: 'house', words: [ 'HOUSE', 'ДОМ' ] },
+		{ icon: 'lemon', words: [ 'LEMON', 'ЛИМОН' ] },
+		{ icon: 'moon', words: [ 'MOON', 'ЛУНА' ] },
+		{ icon: 'mouse', words: [ 'MOUSE', 'МЫШЬ' ] },
+		{ icon: 'mushroom', words: [ 'MUSHROOM', 'ГРИБ' ] },
+		{ icon: 'pencil', words: [ 'PENCIL', 'КАРАНДАШ' ] },
+		{ icon: 'piano', words: [ 'PIANO', 'ПИАНИНО' ] },
+		{ icon: 'pine', words: [ 'PINE', 'ЁЛКА' ] },
+		{ icon: 'plane', words: [ 'PLANE', 'САМОЛЁТ' ] },
+		{ icon: 'rainbow', words: [ 'RAINBOW', 'РАДУГА' ] },
+		{ icon: 'rocket', words: [ 'ROCKET', 'РАКЕТА' ] },
+		{ icon: 'rooster', words: [ 'ROOSTER', 'ПЕТУХ' ] },
+		{ icon: 'snail', words: [ 'SNAIL', 'УЛИТКА' ] },
+		{ icon: 'train', words: [ 'TRAIN', 'ПОЕЗД' ] },
+		{ icon: 'umbrella', words: [ 'UMBRELLA', 'ЗОНТ' ] },
+		{ icon: 'whale', words: [ 'WHALE', 'КИТ' ] },
 	];
-	alphabet = russianAlphabet;
 
 	// shuffle
 	var j, x, i;
@@ -47,25 +78,31 @@
 		backgroundColor: 0x001133,
 		gridSize: 32,
 		success: new Sound( './sound/success.wav' ),
+		letter: new Sound( './sound/letter.wav' ),
 		begin: new Sound( './sound/begin.wav' ),
 		music: new Sound( './sound/8BitClouds.ogg' ),
+		language: 1
 	} );
 
 	// add all the static components
 	addComponents();
 
 	// spawns letter
+	// numLetters = -1 to force spawn 1 useful letter
+	// 0/undefined = one
+	// # num letter
 	function spawnLetter( numLetters ) {
 
 		// ignore if game is over, or too many already on screen
-		if ( App.scene != scene || game.letters.length > 4 ) return;
+		if ( App.scene != scene || ( game.letters.length > 3 && !forceUseful ) ) return;
 
 		// multiple if needed
-		if ( !numLetters ) numLetters = 1;
+		var forceUseful = ( numLetters == -1 );
+		if ( !numLetters || numLetters <= 0 ) numLetters = 1;
 		for ( var i = 0; i < numLetters; i++ ) {
 
 			// pick letter
-			var ltr = alphabet[ 0 ];
+			var ltr = alphabet[ scene.language ][ 0 ];
 			var tricky = false; //Math.random() > 0.9 ? ( Math.random() * 0.25 ) : false;
 			var useful = 0;
 
@@ -97,6 +134,9 @@
 			// sometimes, don't pick useful when needed
 			if ( Math.random() <= 0.2 || !usefulLetters.length ) useful = false;
 
+			// force
+			useful = useful || forceUseful;
+
 			// pick useful letter
 			if ( useful ) {
 
@@ -106,7 +146,7 @@
 			} else {
 
 				do {
-					ltr = alphabet[ Math.floor( alphabet.length * Math.random() ) ];
+					ltr = alphabet[ scene.language ][ Math.floor( alphabet[ scene.language ].length * Math.random() ) ];
 				} while ( usefulLetters.indexOf( ltr ) >= 0 );
 			}
 
@@ -153,7 +193,7 @@
 		player.debounce( 'checkCollision', checkCollision, 0.25 );
 	}
 
-	//
+	// player touch
 	function playerTouchedLetter( ltr ) {
 		// check if it's useful
 		var bottomLetter = null;
@@ -175,9 +215,10 @@
 		}
 	}
 
+	// touch
 	function letterTouchedLetter ( a, b ) {
 		// sink
-		if ( Math.random() > 0.5 ) {
+		if ( b.useful ) {
 			a.sink();
 		// move over
 		} else {
@@ -187,6 +228,7 @@
 
 	// called at the beginning of the game, and after each word is completed
 	function nextWord() {
+		log( "language =", scene.language );
 
 		// clean up / animate previous word away
 		if ( word ) {
@@ -202,22 +244,25 @@
 				}
 			}
 
+			// clear useful and missed
+			for ( var i = 0; i < game.letters.length; i++ ) { game.letters[ i ].useful = game.letters[ i ].missed = false; }
+
+			// word accepted sound
 			scene.success.play();
 		}
 
 		// pick new word
 		curWord = ( curWord + 1 ) % allWords.length;
 		word = allWords[ curWord ];
-		if ( typeof ( word.word ) == 'string' ) {
-			// determine if UTF 8
-			var cc = word.word.charCodeAt( 0 );
-			if ( cc > 128 ) {
-				// split by pairs
-				var ww = [];
-				for ( var i = 0; i < word.word.length; i += 2 ) ww.push( word.word.substr( i, 2 ) );
-				word.word = ww;
-			} else word.word = word.word.split( '' );
-		}
+		word.word = word.words[ scene.language ];
+		// split into array
+		var cc = word.word.charCodeAt( 0 );
+		if ( cc > 128 ) { // utf8
+			// split by pairs
+			var ww = [];
+			for ( var i = 0; i < word.word.length; i += 2 ) ww.push( word.word.substr( i, 2 ) );
+			word.word = ww;
+		} else word.word = word.word.split( '' );
 		collisionEnabled = false;
 		acceptingEnabled = false;
 
@@ -283,7 +328,10 @@
 							this.moveBy( -300, 0, 1, Ease.Out, Ease.Bounce );
 							if ( this.index == 0 ) {
 								acceptingEnabled = true;
+								// force one correct letter spawn
+								spawnLetter( -1 );
 							}
+							scene.letter.async( scene.letter.play, 0.5 );
 						}, 0.4 * i );
 					} // end for
 
@@ -473,38 +521,49 @@
 
 		if ( !controlEnabled ) return;
 
-		function KeepSwimmingVertically( v ) {
+		function KeepSwimming( v ) {
 			if ( typeof( v ) === 'undefined' ) v = controller.get( 'vertical' );
 			if ( v ) {
 				player.swimVertical( Math.round( player.y / scene.gridSize ) * scene.gridSize + scene.gridSize * v );
-				scene.debounce( 'keepSwimmingVertically', KeepSwimmingVertically, 0.45 );
-			}
-		}
-		function KeepSwimmingHorizontally( v ) {
-			if ( typeof( v ) === 'undefined' ) v = controller.get( 'horizontal' );
-			if ( v ) {
-				player.swimHorizontal( Math.round( player.x / scene.gridSize ) * scene.gridSize + scene.gridSize * v );
-				scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
-			}
-		}
-
-		if ( name == 'vertical' ) {
-			if ( val ) {
-				scene.debounce( 'keepSwimmingVertically', KeepSwimmingVertically, 0.45 );
+				scene.debounce( 'KeepSwimming', KeepSwimming, 0.45 );
 			} else {
-				scene.cancelDebouncer( 'keepSwimmingVertically' );
+				v = controller.get( 'horizontal' );
+				if ( v ) {
+					player.swimVertical( Math.round( player.y / scene.gridSize ) * scene.gridSize + scene.gridSize * v );
+					scene.debounce( 'KeepSwimming', KeepSwimming, 0.45 );
+				}
 			}
-			KeepSwimmingVertically( val );
-		} else if ( name == 'horizontal' ) {
+		}
 
-			 /* if ( val ) {
-			    scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
-			 } else {
-			 scene.cancelDebouncer( 'KeepSwimmingHorizontally' );
-			 }
-			 KeepSwimmingHorizontally( val );
+		//function KeepSwimmingVertically( v ) {
+		//	if ( typeof( v ) === 'undefined' ) v = controller.get( 'vertical' );
+		//	if ( v ) {
+		//		player.swimVertical( Math.round( player.y / scene.gridSize ) * scene.gridSize + scene.gridSize * v );
+		//		scene.debounce( 'keepSwimmingVertically', KeepSwimmingVertically, 0.45 );
+		//	}
+		//}
+		//function KeepSwimmingHorizontally( v ) {
+		//	if ( typeof( v ) === 'undefined' ) v = controller.get( 'horizontal' );
+		//	if ( v ) {
+		//		player.swimHorizontal( Math.round( player.x / scene.gridSize ) * scene.gridSize + scene.gridSize * v );
+		//		scene.debounce( 'KeepSwimmingHorizontally', KeepSwimmingHorizontally, 0.3 );
+		//	}
+		//}
 
-			 } */
+		if ( name == 'vertical' || name == 'horizontal' ) {
+
+			if ( val ) {
+				scene.debounce( 'KeepSwimming', KeepSwimming, 0.45 );
+			} else {
+				scene.cancelDebouncer( 'KeepSwimming' );
+			}
+			KeepSwimming( val );
+
+		} if ( name == 'accept' || name == 'cancel' ) {
+
+			if ( val ) {
+				player.swimVertical( Math.round( player.y / scene.gridSize ) * scene.gridSize + scene.gridSize * ( name == 'accept' ? -1 : 1 ) );
+			}
 
 		} else if ( name == 'start' && val ) {
 
