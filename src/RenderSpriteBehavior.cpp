@@ -208,6 +208,12 @@ void RenderSpriteBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<RenderSpriteBehavior>
+	( "pivot", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = ((RenderBehavior*) b)->pivotY = val ); }),
+	 PROP_ENUMERABLE | PROP_NOSTORE );
+	
+	script.AddProperty<RenderSpriteBehavior>
 	( "pivotX", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );

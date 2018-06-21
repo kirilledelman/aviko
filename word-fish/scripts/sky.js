@@ -9,7 +9,7 @@
 
 	// gradient below
 	go.addChild( {
-		render: new RenderSprite( './textures/grad.png', {
+		render: new RenderSprite( 'grad', {
 			color: 0x6699FF,
 			pivotX: 0, pivotY: 0,
 			width: 304, height: 64,

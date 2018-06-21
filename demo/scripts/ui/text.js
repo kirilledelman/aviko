@@ -70,7 +70,7 @@ include( './ui' );
 		'wrap': { get: function (){ return rt.wrap; }, set: function( v ){ rt.wrap = v; if ( v ) rt.multiLine = true; ui.requestLayout( 'wrap' ); }  },
 
 		// (Boolean) make text size to fit text up to maxWidth
-		'autoSize': { get: function (){ return autoResize; }, set: function( v ){ rt.autoResize = autoResize = v; ui.requestLayout( 'autoSize' ); }  },
+		'autoSize': { get: function (){ return autoResize; }, set: function( v ){ rt.autoSize = autoResize = v; ui.requestLayout( 'autoSize' ); }  },
 
 		// (Boolean) enable display ^code formatting (while not editing)
 		'formatting': { get: function (){ return rt.formatting; }, set: function( v ){ rt.formatting = v; ui.requestLayout( 'formatting' ); }  },
@@ -147,7 +147,7 @@ include( './ui' );
 	// text container
 	tc = go.addChild();
 	rt = new RenderText();
-	rt.autoResize = false;
+	rt.autoSize = false;
 	rt.multiLine = true;
 	rt.wrap = false;
 	tc.render = rt;
@@ -166,7 +166,7 @@ include( './ui' );
 			rt.measure();
 			ui.minWidth = rt.width + ui.padLeft + ui.padRight;
 		} else {
-			rt.autoResize = true;
+			rt.autoSize = true;
 			if ( rt.wrap ) {
 				rt.width = ui.width - (ui.padLeft + ui.padRight);
 				rt.measure();
@@ -178,7 +178,7 @@ include( './ui' );
 		}
 		ui.minHeight = rt.height + (ui.padTop + ui.padBottom);
 		rt.width = ui.width - (ui.padLeft + ui.padRight);
-		rt.autoResize = autoResize;
+		rt.autoSize = autoResize;
 	}
 
 	// layout components

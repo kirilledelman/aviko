@@ -17,6 +17,7 @@ FontResource::FontResource( const char* originalKey, string& path, string& ext )
 		return;
 	}
 	string fsize = parts.back().substr( commaPos + 1 );
+	string fontName = parts.back().substr( 0, commaPos );
 	try {
 		this->size = stoi( fsize );
 	} catch ( std::invalid_argument err ) {
@@ -25,20 +26,35 @@ FontResource::FontResource( const char* originalKey, string& path, string& ext )
 		return;
 	}
 	
-	// load
-	if ( access( path.c_str(), R_OK ) == -1 ) {
-		printf( "Font %s was not found\n", path.c_str() );
-		this->error = ERROR_NOT_FOUND;
-	} else {
-		this->font = TTF_OpenFont( path.c_str(), this->size );
+	// default font
+	if ( fontName.compare( "default" ) == 0 ) {
+		
+		// load built in
+		SDL_RWops* rwops = SDL_RWFromMem( RobotoRegular, RobotoRegular_size );
+		this->font = TTF_OpenFontRW( rwops, 1, this->size );
 		if ( !this->font ) {
 			printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );
 			this->error = ERROR_COMPILE;
+		}
+		
+	} else {
+	
+		// load
+		if ( access( path.c_str(), R_OK ) == -1 ) {
+			printf( "Font %s was not found\n", path.c_str() );
+			this->error = ERROR_NOT_FOUND;
+		} else {
+			this->font = TTF_OpenFont( path.c_str(), this->size );
+			if ( !this->font ) {
+				printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );
+				this->error = ERROR_COMPILE;
+			}
 		}
 	}
 	if ( !this->error ) this->path = path;
 	
 }
+
 
 string FontResource::ResolveKey(const char *ckey, string &fullpath, string &extension ) {
 	

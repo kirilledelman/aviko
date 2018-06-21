@@ -1,17 +1,26 @@
 (function( go ){
 
-	// animated swimming
-	var velX = 0, velY = 0, minVel = 8, maxVel = 64, velEaseDist = 8,
-		destX, destY;
-	var tex = './textures/fish:Frame00';
+	// player vars
+	go.points = 0;
+	go.curWord = -1;
+	go.curLetter = 0;
+	go.word = null;
+	go.controlEnabled = false;
+	go.collisionEnabled = false;
+	go.acceptingEnabled = false;
 
-	// no frame animation support yet
+	// animated swimming
+	var velX = 0, velY = 0, minVel = 8, maxVel = 64, velEaseDist = 8;
+	var destX, destY;
+	var tex = 'player:Frame00';
+
+	// no frame animation support yet, so manual frame stuff
 	var idleAnim = [ 1, 2, 3, 2 ], idleFPS = 4;
 	var anim = idleAnim, animFPS = idleFPS;
 	var loopAnim = true;
 	var seqFrame = 0, prevFrame = -1;
 
-	//
+	// render
 	go.render = new RenderSprite();
 	go.render.pivotX = go.render.pivotY = 0.5;
 
@@ -130,7 +139,7 @@
 				ltr.parent = null;
 			};
 		// sound
-		var sfx = new Sound( './sound/eat' + Math.floor(1 + Math.random() * 5) + '.wav' );
+		var sfx = new Sound( 'eat' + Math.floor(1 + Math.random() * 5) );
 		sfx.play();
 	}
 
@@ -143,7 +152,7 @@
 		loopAnim = false;
 
 		// sfx
-		var sfx = new Sound( './sound/hit' + Math.floor(1 + Math.random() * 3) + '.wav' );
+		var sfx = new Sound( 'hit' + Math.floor(1 + Math.random() * 3) );
 		sfx.play();
 
 		// sink

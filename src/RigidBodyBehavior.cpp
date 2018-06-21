@@ -455,11 +455,16 @@ void RigidBodyBehavior::Impulse( b2Vec2 impulse, b2Vec2 point ){
 /// copies body transform to game object
 void RigidBodyBehavior::SyncObjectToBody() {
 	
-	if ( !this->body ) return;
+	if ( !this->body || !this->live ) return;
 	
 	// copy from body
 	b2Vec2 pos = this->body->GetPosition();
 	float angle = (float) this->body->GetAngle() * RAD_TO_DEG;
+	
+	if ( isnan( pos.x) || isnan( pos.y ) ) {
+		printf( "RigidBodyBehavior::SyncObjectToBody pos NAN\n" );
+		return;
+	}
 	
 	pos *= BOX2D_TO_WORLD_SCALE;
 	
@@ -469,11 +474,8 @@ void RigidBodyBehavior::SyncObjectToBody() {
 	if ( angle != 0 ) GPU_MatrixRotate( this->gameObject->_worldTransform, angle, 0, 0, 1 );
 	if ( this->gameObject->_scale.x != 1 || this->gameObject->_scale.y != 1 ) GPU_MatrixScale( this->gameObject->_worldTransform, this->gameObject->_scale.x, this->gameObject->_scale.y, 1 );
 	if ( this->gameObject->_skew.x != 1 || this->gameObject->_skew.y != 1 ) MatrixSkew( this->gameObject->_worldTransform, this->gameObject->_skew.x, this->gameObject->_skew.y );
-	//this->gameObject->DirtyTransform();
 	this->gameObject->_worldTransformDirty = false;
 	this->gameObject->_localCoordsAreDirty = this->gameObject->_inverseWorldDirty = this->gameObject->_transformDirty = true;
-	
-	assert( !isnan( pos.x) && !isnan( pos.y) );
 		
 }
 
@@ -629,7 +631,22 @@ ArgValueVector* RigidBodyBehavior::SetJointsVector( ArgValueVector* in, bool oth
 /// overrides behavior active setter
 void RigidBodyBehavior::EnableBody( bool e ) {
 
-	if ( this->body ) this->body->SetActive( e );
+	// body can't exist without shapes
+	e = ( e && this->body != NULL && shapes.size() > 0 );
+	this->live = e;
+	
+	// update flag
+	if ( this->body ) {
+		this->body->SetActive( e );
+	}
+	
+	// update all joints
+	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
+		joints[ i ]->UpdateJoint();
+	}
+	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
+		otherJoints[ i ]->UpdateJoint();
+	}
 	
 }
 
@@ -663,17 +680,6 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 	// make active, if gameObject and behavior are active
 	this->EnableBody( this->gameObject->active() && this->_active );
 	
-	// have body
-	this->live = true;
-	
-	// update all joints
-	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
-		joints[ i ]->UpdateJoint();
-	}
-	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
-		otherJoints[ i ]->UpdateJoint();
-	}
-	
 }
 
 void RigidBodyBehavior::RemoveBody() {
@@ -688,16 +694,7 @@ void RigidBodyBehavior::RemoveBody() {
 	}
 	this->body = NULL;
 	
-	// no body
-	this->live = false;
-	
-	// update all joints
-	for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
-		joints[ i ]->UpdateJoint();
-	}
-	for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
-		otherJoints[ i ]->UpdateJoint();
-	}
+	this->EnableBody( false );
 	
 }
 

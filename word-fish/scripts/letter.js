@@ -12,7 +12,6 @@
 		set: function( l ){
 			letter = l;
 			go.render = new RenderText( {
-				font: 'expressway',//'blogger-sans-bold',
 				text: l,
 				color: 0xFFFFFF,
 				outlineColor: [ 0.05, 0.07, 0.2, 1 ],
@@ -40,8 +39,8 @@
 	go.update = function ( dt ) {
 
 		// move
-		rot += dt * rotVel;
-		go.angle = Math.round( rot / 5 ) * 15;
+		//rot += dt * rotVel;
+		//go.angle = Math.round( rot / 5 ) * 15;
 		go.x -= dt * go.game.travelSpeed * velMultiplier;
 		go.y = go.lane * go.game.scene.gridSize + 0.25 * wobbleSpeed * Math.cos( App.time * wobbleSpeed * 2 );
 
@@ -53,17 +52,6 @@
 		// when offscreen disappear
 		if ( go.x < -32 ) go.parent = null;
 
-		// tricky letters do a trick at a random point on the screen
-		if ( go.tricky && go.x < 152 * ( 1 + go.tricky ) ) {
-			if ( go.useful ) {
-				// TODO tricky useful
-			} else {
-				// useless trick
-				// TODO
-				go.bump( true );
-			}
-			go.tricky = false;
-		}
 	}
 
 	// just fall down

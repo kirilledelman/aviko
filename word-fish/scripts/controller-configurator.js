@@ -80,7 +80,6 @@
 
  */
 
-include( './ui' );
 (function( params ) {
 
 	var go = new GameObject( { name: "Controller Configurator" } );
@@ -142,12 +141,27 @@ include( './ui' );
 			get: function () { return style; },
 			set: function ( v ) {
 				style = v;
-				if ( container ) UI.base.applyProperties( go, style );
+				if ( container ) applyProperties( go, style );
 			}
 		},
 
 	};
-	UI.base.mapProperties( go, mappedProps );
+	Object.defineProperties( go, mappedProps );
+
+	// sets properties on an object recursively
+	function applyProperties( obj, props ) {
+		if ( !( props && obj ) ) return;
+		for ( var p in props ) {
+			var objType = typeof( obj[ p ] );
+			var pType = typeof( props[ p ] );
+			if ( pType === 'object' && props[ p ].constructor !== Array &&
+				objType === 'object' && obj[ p ] !== null ) {
+				applyProperties( obj[ p ], props[ p ] );
+			} else {
+				obj[ p ] = props[ p ];
+			}
+		}
+	}
 
 	// API functions
 
@@ -167,17 +181,23 @@ include( './ui' );
 
 	// optional init parameter ( can pass as include( 'ui/controller-configurator', { ... init ... } ) )
 
-	if ( params != global ) UI.base.applyProperties( go, params );
+	if ( params != global ) applyProperties( go, params );
 
 	// display elements - feel free to modify, or adjust in willShow
 
 	// create container
-	container = new GameObject( './panel', {
-		background: new Image( App.windowWidth, App.windowHeight ),
-		width: App.windowWidth,
-		height: App.windowHeight,
-		layoutType: Layout.Vertical,
-		layoutAlignX: LayoutAlign.Stretch
+	container = new GameObject( {
+		render: new RenderSprite( new Image( App.windowWidth, App.windowHeight ) ),
+		ui: new UI( {
+			width: App.windowWidth,
+			height: App.windowHeight,
+			layoutType: Layout.Vertical,
+			layoutAlignX: LayoutAlign.Stretch
+		}),
+		resize: function ( w, h ){
+			container.render.resize( w, h );
+			container.ui.resize( w, h );
+		}
 	} );
 	container.render.color.set( 1, 1, 1, 0.15 );
 
@@ -188,59 +208,92 @@ include( './ui' );
 	// automatic initial scale
 	var sx = App.windowWidth * 0.05;
 	var sy = App.windowHeight * 0.05;
-
+	var largeFontSize = Math.max( 16, sx * 1.2 );
+	var mediumFontSize = Math.max( 12, sx );
+	var smallFontSize = Math.max( 9, sx * 0.5 );
+	function layoutText( w, h ) {
+		this.gameObject.render.width = w;
+		this.gameObject.render.measure();
+		this.minHeight = this.gameObject.render.scrollHeight;
+		this.gameObject.render.resize( w, h );
+	}
 	// add text
-	title = container.addChild( './text', {
-		bold: true,
-		align: TextAlign.Center,
-		size: sx * 1.2,
-		marginTop: sy,
-		wrap: true,
-		color: 0x006699,
-		text: "New Controller Detected"
+	title = container.addChild( {
+		render: new RenderText ( {
+			bold: true,
+			align: TextAlign.Center,
+			size: largeFontSize,
+			color: 0x006699,
+			wrap: true,
+			multiLine: true,
+			autoResize: false,
+			text: "New Controller Detected",
+		} ),
+		ui: new UI( { marginTop: sy, minHeight: largeFontSize, layout: layoutText } )
 	} );
-	subtitle = container.addChild( './text', {
-		align: TextAlign.Center,
-		bold: true,
-		size: sx,
-		color: 0x003366,
-		wrap: true,
-		marginTop: sy * 0.5,
-		text: "_controller_"
-	} );
-	container.addChild( new GameObject( { ui: new UI( { flex: 1 } ) } ) ); // spacer
-	prompt = container.addChild( './text', {
-		align: TextAlign.Center,
-		size: sx,
-		color: 0x0,
-		marginTop: sy * 2,
-		wrap: true,
-		text: "Press a button or axis for"
-	} );
-	action = container.addChild( './text', {
-		bold: true,
-		align: TextAlign.Center,
-		size: sx,
-		color: 0xD03399,
-		wrap: true,
-		text: "_description_"
-	} );
-	error = container.addChild( './text', {
-		align: TextAlign.Center,
-		size: sx * 0.5,
-		color: 0x901010,
-		pad: sy,
-		wrap: true,
-		text: ""
+	subtitle = container.addChild( {
+		render: new RenderText ( {
+			align: TextAlign.Center,
+			autoResize: false,
+			bold: true,
+			size: largeFontSize,
+			color: 0x003366,
+			wrap: true,
+			multiLine: true,
+			text: "_controller_"
+		}),
+		ui: new UI( { marginTop: sy * 0.5, minHeight: largeFontSize, layout: layoutText } ),
 	} );
 	container.addChild( new GameObject( { ui: new UI( { flex: 1 } ) } ) ); // spacer
-	instruction = container.addChild( './text', {
-		align: TextAlign.Center,
-		size: sx * 0.5,
-		color: 0x666666,
-		pad: sy,
-		wrap: true,
-		text: "press and hold any button to skip, press and hold any two buttons to abort"
+	prompt = container.addChild( {
+		render: new RenderText( {
+			align: TextAlign.Center,
+			autoResize: false,
+			size: mediumFontSize,
+			color: 0x0,
+			wrap: true,
+			multiLine: true,
+			text: "Press a button or axis for"
+		}),
+		ui: new UI( { marginTop: sy * 2, minHeight: mediumFontSize, layout: layoutText } ),
+	} );
+	action = container.addChild( {
+		render: new RenderText( {
+			bold: true,
+			align: TextAlign.Center,
+			autoResize: false,
+			size: mediumFontSize,
+			color: 0xD03399,
+			wrap: true,
+			multiLine: true,
+			text: "_description_"
+		}),
+		ui: new UI( { minHeight: mediumFontSize, layout: layoutText } ),
+	} );
+	error = container.addChild( {
+		render: new RenderText( {
+			align: TextAlign.Center,
+			autoResize: false,
+			size: smallFontSize,
+			color: 0x901010,
+			pad: sy,
+			wrap: true,
+			multiLine: true,
+		}),
+		ui: new UI( { minHeight: smallFontSize } ),
+	} );
+	container.addChild( new GameObject( { ui: new UI( { flex: 1 } ) } ) ); // spacer
+	instruction = container.addChild( {
+		render: new RenderText( {
+			align: TextAlign.Center,
+			autoResize: false,
+			size: smallFontSize,
+			color: 0x666666,
+			wrap: true,
+			multiLine: true,
+			text: "press + hold any button to skip, press + hold any two buttons to abort"
+		}),
+		ui: new UI( { minHeight: smallFontSize, marginBottom: 8, layout: layoutText } ),
 	} );
 
 	// internals
@@ -282,7 +335,7 @@ include( './ui' );
 		if ( currentlyConfiguring ) return;
 
 		// draw current scene to image
-		container.background.autoDraw = App.scene;
+		container.render.image.autoDraw = App.scene;
 		App.pushScene( scene );
 
 		// reapply style
@@ -305,8 +358,8 @@ include( './ui' );
 	function nextButton () {
 
 		currentSection = 'buttons';
-		error.text = "";
-		prompt.text = (currentlyConfiguring.name == 'Keyboard' ? "Press a key for" : "Press a button for");
+		error.render.text = "";
+		prompt.render.text = (currentlyConfiguring.name == 'Keyboard' ? "Press a key for" : "Press a button for");
 		currentButton++;
 		if ( currentButton >= buttons.length ) {
 			if ( buttonsFirst ) nextAxis();
@@ -315,14 +368,14 @@ include( './ui' );
 		}
 
 		// update description
-		action.text = buttons[ currentButton ].description;
+		action.render.text = buttons[ currentButton ].description;
 	}
 
 	function nextAxis () {
 
 		currentSection = 'axis';
-		error.text = "";
-		prompt.text = (currentlyConfiguring.name == 'Keyboard' ? "Press a key for" : "Move joystick or press a button for");
+		error.render.text = "";
+		prompt.render.text = (currentlyConfiguring.name == 'Keyboard' ? "Press a key for" : "Move joystick or press a button for");
 		axisDirection++;
 		if ( axisDirection >= 2 ) {
 			axisDirection = 0;
@@ -344,7 +397,7 @@ include( './ui' );
 		} else {
 			desc += a.plus ? a.plus : "Plus";
 		}
-		action.text = desc;
+		action.render.text = desc;
 	}
 
 	function keyDown ( k, s, a, c, g, r ) {
@@ -369,11 +422,11 @@ include( './ui' );
 		currentlyPressed = { key: k };
 
 		// check if already in use
-		error.text = "";
+		error.render.text = "";
 		var inUse = checkInUse();
 		if ( inUse ) {
 			currentlyPressed = null;
-			error.text = "Key already in use by ^B" + inUse;
+			error.render.text = "Key already in use by ^B" + inUse;
 			return;
 		}
 
@@ -416,11 +469,11 @@ include( './ui' );
 		debounce( 'configuratorSkip', skipToNext, 2 );
 
 		// check if already in use
-		error.text = "";
+		error.render.text = "";
 		var inUse = checkInUse();
 		if ( inUse ) {
 			currentlyPressed = null;
-			error.text = "Button already in use by ^B" + inUse;
+			error.render.text = "Button already in use by ^B" + inUse;
 			return;
 		}
 
@@ -459,19 +512,19 @@ include( './ui' );
 		if ( waitForAxis !== null ) {
 
 			// check if axis is in use
-			error.text = "";
+			error.render.text = "";
 			currentlyPressed = { axis: a };
 			var inUse = checkInUse();
 			currentlyPressed = null;
 			if ( inUse ) {
-				error.text = "Axis already in use by ^B" + inUse;
+				error.render.text = "Axis already in use by ^B" + inUse;
 				return;
 			}
 
 			// if doing second direction, and first direction was button, show error
 			if ( axisDirection == 1 ) {
 				if ( axis[ currentAxis ].accepted0 && axis[ currentAxis ].accepted0.button != undefined ) {
-					error.text = "Opposite direction must also be a button";
+					error.render.text = "Opposite direction must also be a button";
 					return;
 				}
 			}
@@ -515,19 +568,19 @@ include( './ui' );
 		if ( waitForHat !== null ) {
 
 			// check if axis is in use
-			error.text = "";
+			error.render.text = "";
 			currentlyPressed = { hat: h, dir: dir, val: val };
 			var inUse = checkInUse();
 			currentlyPressed = null;
 			if ( inUse ) {
-				error.text = "Hat already in use by ^B" + inUse;
+				error.render.text = "Hat already in use by ^B" + inUse;
 				return;
 			}
 
 			// if doing second direction, and first direction was button, show error
 			if ( axisDirection == 1 ) {
 				if ( axis[ currentAxis ].accepted0 && axis[ currentAxis ].accepted0.button != undefined ) {
-					error.text = "Opposite direction must also be a button";
+					error.render.text = "Opposite direction must also be a button";
 					return;
 				}
 			}
@@ -609,17 +662,18 @@ include( './ui' );
 		}
 
 		// set error text
-		error.text = "^N^0Skipped ^B" + skipText;
+		error.render.text = "^N^0Skipped ^B" + skipText;
 	}
 
 	function closeConfigurator () {
 
 		// clear references
-		container.background.autoDraw = null;
+		container.render.autoDraw = null;
 		controllersToConfigure = [];
 		currentlyConfiguring = null;
 
 		// clear listeners
+		cancelDebouncer( 'configuratorSkip' );
 		App.off( 'resized', container.resize );
 		Input.off( 'keyDown', keyDown );
 		Input.off( 'keyUp', keyUp );
@@ -704,7 +758,7 @@ include( './ui' );
 		if ( index >= 0 ) controllersToConfigure.splice( index, 1 );
 		if ( controllersToConfigure.length ) {
 			currentlyConfiguring = controllersToConfigure[ 0 ];
-			subtitle.text = currentlyConfiguring.name;
+			subtitle.render.text = currentlyConfiguring.name;
 			subtitle.opacity = 0;
 			subtitle.fadeTo( 1, 1 );
 		} else {

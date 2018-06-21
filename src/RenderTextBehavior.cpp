@@ -45,7 +45,10 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	color = new Color( NULL );
 	color->SetInts( 0, 0, 0, 255 );
 	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
-	
+
+	// default font
+	script.SetProperty( "font", ArgValue( "default" ), this->scriptObject );
+
 	// with arguments
 	if ( args ) {
 		/// load font
@@ -546,6 +549,12 @@ void RenderTextBehavior::InitClass() {
 	}));
 	
 	script.AddProperty<RenderTextBehavior>
+	( "pivot", //
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = ((RenderBehavior*) b)->pivotY = val ); }),
+	 PROP_ENUMERABLE | PROP_NOSTORE );
+	
+	script.AddProperty<RenderTextBehavior>
 	( "pivotX", //
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->pivotX; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotX = val ); }) );
@@ -556,7 +565,7 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderBehavior*) b)->pivotY = val ); }) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "autoResize",
+	( "autoSize",
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->autoResize; }),
 	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
@@ -974,8 +983,8 @@ GPU_Rect RenderTextBehavior::GetBounds() {
 	GPU_Rect rect;
 	rect.w = this->width;
 	rect.h = this->height;
-	rect.x = -this->width * this->pivotX;
-	rect.y = -this->height * this->pivotY;
+	rect.x = -this->width * (this->pivotX <= 1 ? this->pivotX : ( this->pivotX / (float) this->width ) );
+	rect.y = -this->height * (this->pivotY <= 1 ? this->pivotY : ( this->pivotY / (float) this->height ) );
 	return rect;
 }
 
@@ -985,8 +994,8 @@ int RenderTextBehavior::GetCaretPositionAt( float localX, float localY ) {
     if ( this->_dirty ) Repaint();
 	
 	// adjust coord
-	localX += this->width * pivotX;
-	localY += this->height * pivotY;
+	localX += this->width * (this->pivotX <= 1 ? this->pivotX : ( this->pivotX / (float) this->width ) );
+	localY += this->height * (this->pivotY <= 1 ? this->pivotY : ( this->pivotY / (float) this->height ) );
 	
     // locate character
 	int nc = 0;
@@ -1466,14 +1475,14 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 				if ( character->pos == this->caretPosition - 1 ) {
 					// after current character?
 					caretRect.x = x + character->x + character->width;
-					caretX = caretRect.x - width * pivotX;
-					caretY = y - height * pivotY;
+					caretX = caretRect.x - width * (this->pivotX <= 1 ? this->pivotX : ( this->pivotX / (float) width ) );
+					caretY = y - height * (this->pivotY <= 1 ? this->pivotY : ( this->pivotY / (float) height ) );
 					caretLine = (int) lineIndex;
 					drawCaret = this->showCaret && drawCurrentLine;
 				} else if ( character->pos == 0 && this->caretPosition == 0 && lineIndex == 0 ) {
 					caretRect.x = x + character->x;
-					caretX = caretRect.x - width * pivotX;
-					caretY = y - height * pivotY;
+					caretX = caretRect.x - width * (this->pivotX <= 1 ? this->pivotX : ( this->pivotX / (float) width ) );
+					caretY = y - height * (this->pivotY <= 1 ? this->pivotY : ( this->pivotY / (float) height ) );
 					caretLine = (int) lineIndex;
 					drawCaret = this->showCaret && drawCurrentLine;
 				}
@@ -1559,8 +1568,8 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 	
 	// draw
 	GPU_Rect dest = {
-		-behavior->surfaceRect.w * behavior->pivotX - behavior->texturePad,
-		-behavior->surfaceRect.h * behavior->pivotY - behavior->texturePad,
+		-behavior->surfaceRect.w * (behavior->pivotX <= 1 ? behavior->pivotX : ( behavior->pivotX / (float) behavior->width ) ) - behavior->texturePad,
+		-behavior->surfaceRect.h * (behavior->pivotY <= 1 ? behavior->pivotY : ( behavior->pivotY / (float) behavior->height ) ) - behavior->texturePad,
 		behavior->surfaceRect.w + behavior->texturePad * 2,
 		behavior->surfaceRect.h + behavior->texturePad * 2 };
 	GPU_BlitRect( behavior->surface, &behavior->surfaceRect, target, &dest );

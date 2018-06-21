@@ -1788,7 +1788,7 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 		}
 		
 	}
-	// printf( "[%s %p] Requested layout. Trigger = %s. Top = [%s %p]\n", gameObject->name.c_str(), gameObject, trigger.toString().c_str(), top ? top->name.c_str() : "null", top );
+	//printf( "[%s %p] Requested layout. Trigger = %s. Top = [%s %p]\n", gameObject->name.c_str(), gameObject, trigger.toString().c_str(), top ? top->name.c_str() : "null", top );
 	if ( top ) {
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false, true );
 		if ( trigger.type != TypeUndefined ) {
@@ -1969,6 +1969,7 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		event.scriptParams.AddFloatArgument( y );
 		behavior->CallEvent( event );
 	}
+	
 }
 
 void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){

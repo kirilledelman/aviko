@@ -1,23 +1,23 @@
 {
   "frames": {
-    "Frame004": {
+    "fish-title": {
       "frame": {
-        "x": 1,
-        "y": 1,
-        "w": 29,
-        "h": 25
+        "x": 0,
+        "y": 0,
+        "w": 120,
+        "h": 97
       },
       "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
-        "x": 2,
-        "y": 4,
-        "w": 29,
-        "h": 25
+        "x": 4,
+        "y": 19,
+        "w": 120,
+        "h": 97
       },
       "sourceSize": {
-        "w": 32,
-        "h": 32
+        "w": 128,
+        "h": 128
       },
       "pivot": {
         "x": 0.5,
@@ -26,12 +26,12 @@
     },
     "Frame002": {
       "frame": {
-        "x": 32,
-        "y": 1,
+        "x": 120,
+        "y": 0,
         "w": 31,
         "h": 23
       },
-      "rotated": true,
+      "rotated": false,
       "trimmed": true,
       "spriteSourceSize": {
         "x": 1,
@@ -50,8 +50,8 @@
     },
     "Frame001": {
       "frame": {
-        "x": 1,
-        "y": 28,
+        "x": 151,
+        "y": 0,
         "w": 30,
         "h": 24
       },
@@ -72,10 +72,34 @@
         "y": 0.5
       }
     },
+    "Frame004": {
+      "frame": {
+        "x": 120,
+        "y": 23,
+        "w": 29,
+        "h": 25
+      },
+      "rotated": true,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 2,
+        "y": 4,
+        "w": 29,
+        "h": 25
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
     "Frame003": {
       "frame": {
-        "x": 27,
-        "y": 34,
+        "x": 145,
+        "y": 30,
         "w": 29,
         "h": 23
       },
@@ -98,12 +122,12 @@
     },
     "Frame005": {
       "frame": {
-        "x": 57,
-        "y": 1,
+        "x": 120,
+        "y": 52,
         "w": 29,
         "h": 21
       },
-      "rotated": false,
+      "rotated": true,
       "trimmed": true,
       "spriteSourceSize": {
         "x": 3,
@@ -122,12 +146,12 @@
     },
     "Frame006": {
       "frame": {
-        "x": 27,
-        "y": 59,
+        "x": 174,
+        "y": 30,
         "w": 28,
         "h": 24
       },
-      "rotated": false,
+      "rotated": true,
       "trimmed": true,
       "spriteSourceSize": {
         "x": 2,
@@ -146,8 +170,8 @@
     },
     "Frame007": {
       "frame": {
-        "x": 1,
-        "y": 60,
+        "x": 141,
+        "y": 53,
         "w": 14,
         "h": 11
       },
@@ -172,10 +196,10 @@
   "meta": {
     "app": "http://free-tex-packer.com/",
     "version": "0.3.0",
-    "image": "fish.png",
+    "image": "player.png",
     "format": "RGBA8888",
     "size": {
-      "w": 128,
+      "w": 256,
       "h": 128
     },
     "scale": 1

@@ -88,12 +88,20 @@ public:
 	// callback to resize screen
 	void WindowResized( Sint32 newWidth, Sint32 newHeight );
 	
+	// sends top resized and layout events
+	void SendResizedEvents();
+	
 // input
 	
 	Input input;
 
 	// used to consume stdin input
 	struct termios _savedTerminal;
+	
+// clipboard
+
+	// used only on Pi, as there's no system clipboard
+	string clipboard;
 	
 // resource managers
 	

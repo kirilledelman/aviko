@@ -101,7 +101,7 @@ public:
 	unordered_map<string, RESOURCE_TYPE*> map;
 	
 public:
-	
+
 	/// get resource by filename/key
 	RESOURCE_TYPE* Get( const char* ckey, bool incrementUseCount=false ){
 		

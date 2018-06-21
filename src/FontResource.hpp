@@ -17,8 +17,10 @@ public:
 	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
 	
 	// init, destroy
+	FontResource( const char* originalKey, const unsigned char* data );
 	FontResource( const char* originalKey, string& path, string& ext );
 	~FontResource();
 };
+
 
 #endif /* FontResource_hpp */

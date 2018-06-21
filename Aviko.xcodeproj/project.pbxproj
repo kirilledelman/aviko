@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		7129EE5D1FF412EF00BCF1F7 /* ScriptHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */; };
 		713D46BF1FF0276A00BBAEFF /* RigidBodyJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */; };
+		713DD01D20DACB16005E00D2 /* StaticResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713DD01C20DACB16005E00D2 /* StaticResources.cpp */; };
 		7172A4A9203789FD00492B46 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A3203789FD00492B46 /* SDL2_image.framework */; };
 		7172A4AA203789FD00492B46 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A4203789FD00492B46 /* SDL2_mixer.framework */; };
 		7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A5203789FD00492B46 /* SDL2_net.framework */; };
@@ -213,6 +214,7 @@
 		713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RigidBodyJoint.hpp; path = src/RigidBodyJoint.hpp; sourceTree = "<group>"; };
 		713D70201F82CDE80011B7E8 /* Input.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Input.cpp; path = src/Input.cpp; sourceTree = "<group>"; };
 		713D70211F82CDE80011B7E8 /* Input.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Input.hpp; path = src/Input.hpp; sourceTree = "<group>"; };
+		713DD01C20DACB16005E00D2 /* StaticResources.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StaticResources.cpp; path = src/StaticResources.cpp; sourceTree = "<group>"; };
 		713F33A31FE5B046001147CD /* Tween.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tween.cpp; path = src/Tween.cpp; sourceTree = "<group>"; };
 		713F33A41FE5B046001147CD /* Tween.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tween.hpp; path = src/Tween.hpp; sourceTree = "<group>"; };
 		71515BAC1F682EDB004ED8C0 /* ScriptHost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptHost.hpp; path = src/ScriptHost.hpp; sourceTree = "<group>"; };
@@ -429,6 +431,7 @@
 				718533241F9FF7B90080B05A /* Sound.cpp */,
 				71E793911FC47DAD0026ABCB /* Image.hpp */,
 				71E793901FC47DAD0026ABCB /* Image.cpp */,
+				713DD01C20DACB16005E00D2 /* StaticResources.cpp */,
 			);
 			name = Support;
 			sourceTree = "<group>";
@@ -867,6 +870,7 @@
 				71D3CBA41FEB3E9E006F7678 /* b2ChainAndPolygonContact.cpp in Sources */,
 				71D3CBA51FEB3E9E006F7678 /* b2ChainAndPolygonContact.h in Sources */,
 				71D3CBA61FEB3E9E006F7678 /* b2CircleContact.cpp in Sources */,
+				713DD01D20DACB16005E00D2 /* StaticResources.cpp in Sources */,
 				71D3CBA71FEB3E9E006F7678 /* b2CircleContact.h in Sources */,
 				71D3CBA81FEB3E9E006F7678 /* b2Contact.cpp in Sources */,
 				71D3CBA91FEB3E9E006F7678 /* b2Contact.h in Sources */,

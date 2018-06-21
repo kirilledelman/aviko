@@ -1,8 +1,16 @@
+Built in font
+
+
 Sound FINISHED event crashes
+
+Body
+	Add global collision listener to scene?
+	SyncObjectToBody - NaN
 
 modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
 Blend modes blendTarget is off by half texture size
+Add offsetX, offsetY for scrolling effect?
 
 UI components
 make sure they're serializable
@@ -21,11 +29,13 @@ Inspector
 Ctrl+ wheel - zoom
 	+ left - pan
 
-Body
-	SyncObjectToBody - NaN
+
 
 RenderText
+	some fonts draw off texture
 	newLinesResetFormatting - resets formatting on line wrap
+	Built in fonts
+	texture based fonts!
 
 Image
 	child autoDraw is drawn normally when Image height = 0, should be hidden
@@ -189,7 +199,7 @@ Bugs
 =============================================
 
 
-JS_CompileScript leaks memory via js_realloc..
+JS_CompileScript leaks memory via js_realloc?..
 
 Raspberry Pi - pressing Alt disrupts subseq text entry
 
@@ -199,6 +209,7 @@ Raspberry Pi - pressing Alt disrupts subseq text entry
 Installing
 
 =============================================
+
 
 # Common:
 

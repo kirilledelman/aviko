@@ -1557,9 +1557,10 @@ float* GameObject::Transform() {
 	
 	// clear flag
 	this->_transformDirty = false;
-	
-	assert( !isnan(this->_position.x) && !isnan(this->_position.y));
-	
+	if( isnan(this->_position.x) || isnan(this->_position.y) ){
+		printf( "GameObject::Transform position NaN\n" );
+	}
+
 	// return matrix
 	return this->_transform;
 }

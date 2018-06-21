@@ -582,7 +582,7 @@ void Scene::SimulatePhysics() {
 		
 		// call sync on RigidBodyBehavior
 		RigidBodyBehavior* rbb = (RigidBodyBehavior*) body->GetUserData();
-		if ( rbb != NULL ) rbb->SyncObjectToBody();
+		if ( rbb != NULL && rbb->live ) rbb->SyncObjectToBody();
 		
 		// keep going
 		body = body->GetNext();

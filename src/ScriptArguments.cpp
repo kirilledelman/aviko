@@ -25,10 +25,13 @@ ArgValue ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	// helps with removing event listeners while dispatching
 	this->executing = true;
 	
+	JSObject* zis = thisObject ? (JSObject*) thisObject : script.global_object;
+	JSAutoCompartment( script.js, zis );
+
 	jsval rval;
 	int argc;
 	jsval* params = args.GetFunctionArguments( &argc );
-	JS_CallFunction( script.js, thisObject ? (JSObject*) thisObject : script.global_object, (JSFunction*) this->funcObject, argc, params, &rval );
+	JS_CallFunction( script.js, zis, (JSFunction*) this->funcObject, argc, params, &rval );
 	
 	// done
 	this->executing = false;
@@ -271,7 +274,7 @@ ArgValue& ArgValue::operator=( const jsval &val ) {
 				}
 			} else if ( JS_ObjectIsCallable( script.js, objVal ) ) {
 				type = TypeFunction;
-				value.objectValue = JS_ValueToFunction( script.js, val );
+				value.objectValue = objVal; //JS_ValueToFunction( script.js, val );
 			} else {
 				type = TypeObject;
 				value.objectValue = objVal;

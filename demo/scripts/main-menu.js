@@ -121,12 +121,6 @@ new (function (){
 		click: buttonClick
 	} );
 
-	buttons.addChild( 'ui/button', {
-		text: "Word Fish",
-		src: 'word-fish/menu',
-		click: buttonClick
-	} );
-
 	scene.addChild( 'ui/button', {
 		text: "Exit",
 		click: function () {
@@ -138,5 +132,6 @@ new (function (){
 
 	// focus on first button
 	buttons.getChild( 0 ).focus(); //*/
+	sceneForward( include( 'sprites' ) );
 	return scene;
 })();

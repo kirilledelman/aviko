@@ -814,6 +814,7 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 
 RigidBodyShape* RenderShapeBehavior::MakeShape() {
 
+	// TODO
 	return NULL;
 }
 

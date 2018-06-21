@@ -862,6 +862,7 @@ ArgValueVector* TypedVector::Slice( int start, int end ) {
 		default:
 			break;
 	}
+	delete ret;
 	return NULL;
 }
 

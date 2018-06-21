@@ -13,7 +13,6 @@
 	];
 	var container, wordContainer, game, score, player, wordIcon;
 
-	// words - todo - move to an external json file
 	var allWords = [
 		{ icon: 'clown', words: [ 'CLOWN', 'КЛОУН' ] },
 		{ icon: 'bee', words: [ 'BEE', 'ПЧЕЛА' ] },
@@ -77,11 +76,12 @@
 		name: "Word Fish",
 		backgroundColor: 0x001133,
 		gridSize: 32,
-		success: new Sound( './sound/success.wav' ),
-		letter: new Sound( './sound/letter.wav' ),
-		begin: new Sound( './sound/begin.wav' ),
-		music: new Sound( './sound/8BitClouds.ogg' ),
-		language: 1
+		success: new Sound( 'success.wav' ),
+		letter: new Sound( 'letter.wav' ),
+		begin: new Sound( 'begin.wav' ),
+		music: new Sound( '8BitClouds.ogg' ),
+		language: 1,
+		allWords: allWords
 	} );
 
 	// add all the static components
@@ -103,7 +103,6 @@
 
 			// pick letter
 			var ltr = alphabet[ scene.language ][ 0 ];
-			var tricky = false; //Math.random() > 0.9 ? ( Math.random() * 0.25 ) : false;
 			var useful = 0;
 
 			// check if useful letters are already swimming
@@ -138,7 +137,7 @@
 			useful = useful || forceUseful;
 
 			// pick useful letter
-			if ( useful ) {
+			if ( useful && usefulLetters.length ) {
 
 				ltr = usefulLetters[ Math.floor( Math.random() * usefulLetters.length ) ];
 
@@ -150,6 +149,8 @@
 				} while ( usefulLetters.indexOf( ltr ) >= 0 );
 			}
 
+			// wtf
+			if ( ltr == undefined ) return;
 
 			// avoid picking same Y position twice in a row
 			var lane;
@@ -157,14 +158,13 @@
 			game.lastLane = lane;
 
 			// spawn
-			var letter = game.addChild( './letter', {
+			var letter = game.addChild( 'letter', {
 				x: 310 + Math.round( Math.random() * 2 ) * scene.gridSize,
 				y: lane * scene.gridSize,
 				lane: lane,
 				letter: ltr,
 				name: ltr,
 				game: game,
-				tricky: tricky,
 				useful: useful
 			}, 2 );
 			game.letters.push( letter );
@@ -181,6 +181,7 @@
 				playerTouchedLetter( letter );
 				continue;
 			}
+			/* // ignore touching letters
 			for ( var j = game.letters.length - 1; j >= 0; j-- ){
 				if ( i == j ) continue;
 				letter2 = game.letters[ j ];
@@ -188,7 +189,7 @@
 				if ( letter.lane == letter2.lane && dx < scene.gridSize ) {
 					letterTouchedLetter( letter, letter2 );
 				}
-			}
+			} */
 		}
 		player.debounce( 'checkCollision', checkCollision, 0.25 );
 	}
@@ -215,21 +216,8 @@
 		}
 	}
 
-	// touch
-	function letterTouchedLetter ( a, b ) {
-		// sink
-		if ( b.useful ) {
-			a.sink();
-		// move over
-		} else {
-			a.bump();
-		}
-	}
-
 	// called at the beginning of the game, and after each word is completed
 	function nextWord() {
-		log( "language =", scene.language );
-
 		// clean up / animate previous word away
 		if ( word ) {
 
@@ -249,6 +237,9 @@
 
 			// word accepted sound
 			scene.success.play();
+
+			// free memory
+			gc();
 		}
 
 		// pick new word
@@ -271,6 +262,7 @@
 
 			// set new word icon
 			wordIcon.render.texture = word.icon;
+			wordIcon.render.outlineRadius = 2;
 			wordIcon.scale = 1;
 			wordIcon.angle = 0;
 			wordIcon.x = 320 + wordIcon.render.originalWidth * 0.5;
@@ -284,6 +276,7 @@
 					wordIcon.scaleTo( Math.min( 32 / wordIcon.render.originalHeight, 32 / wordIcon.render.originalWidth ),
 					                  0.7, Ease.InOut );
 					wordIcon.moveTo( 18, -32, 0.5, Ease.In ).finished = function () {
+						wordIcon.render.outlineRadius = 0;
 						wordIcon.moveTo( 18, 20, 0.5, Ease.Out, Ease.Bounce );
 						collisionEnabled = true;
 					};
@@ -294,7 +287,6 @@
 							index: i,
 							y: 12,
 							render: new RenderText( {
-								font: 'expressway', // 'blogger-sans-bold',
 								text: word.word[ i ],
 								outlineColor: 0x0,
 								outlineRadius: 2,
@@ -400,10 +392,11 @@
 		var left = 0, letter;
 		for ( var i = 1; i < wordContainer.numChildren; i++ ) {
 			letter = wordContainer.getChild( i );
-			letter.missed = false;
-			letter.useful = false;
 			if ( letter.hidden ) left++;
 		}
+
+		// clear useful and missed
+		for ( var i = 0; i < game.letters.length; i++ ) { game.letters[ i ].useful = game.letters[ i ].missed = false; }
 
 		// no more - word complete
 		if ( !left || ( inOrderMode && curLetter == word.word.length - 1 ) ) {
@@ -454,11 +447,14 @@
 			render: RenderText( {
 				text: '000000',
 				align: TextAlign.Right,
-				font: 'UpheavalPro',
+				font: 'Fairfax',
+				bold: true,
+				antialias: false,
 				autoResize: true,
-				size: 16, pivotX: 0.5, pivotY: 0.5
+				characterSpacing: 1,
+				size: 11, pivot: 0.5
 			}),
-			x: 278, y: 17,
+			x: 284, y: 17,
 		} );
 
 		// assemble
@@ -470,20 +466,20 @@
 		// game view
 		var sky = new GameObject( {
 			name: "Sky",
-			script: './sky',
+			script: 'sky',
 			game: game
 		} );
 
 		// water
 		var water = new GameObject( {
 			name: "Water",
-			script: './water',
+			script: 'water',
 			game: game
 		} );
 
 		// player
 		player = new GameObject( {
-			script: './player',
+			script: 'player',
 			name: "Player",
 			x: -64, y: 96,
 			removedFromScene: function (){ player.cancelDebouncer( 'checkCollision' ); log( "bye" ); }
@@ -505,7 +501,8 @@
 			name: "Word Icon",
 			x: 32, y: 20,
 			render: new RenderSprite( {
-				pivotX: 0.5, pivotY: 0.5,
+				pivot: 0.5,
+				outlineColor: 0x0,
 			})
 		} );
 
@@ -593,16 +590,26 @@
 	}
 	scene.scaleScene = scaleScene;
 
+	// scene changed handler
+	function sceneChanged( newScene, oldScene ) {
+		// leaving game
+		if ( newScene != scene ) {
+			// stop music
+			scene.music.stop();
+			App.off( 'sceneChanged', sceneChanged );
+		}
+	}
+	App.on( 'sceneChanged', sceneChanged );
+
 	// START sequence - player enter, show word
 	player.swimHorizontal( 32 );
 	player.swimVertical( 64 );
+	scene.music.play( 0 );
 	scene.async( function () {
 		nextWord();
 		spawnLetter( 3 );
 		controlEnabled = true;
 	}, 1 );
 
-	// music
-	scene.music.play( 0 );
 	return scene;
 })();

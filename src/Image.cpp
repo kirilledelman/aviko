@@ -56,8 +56,8 @@ Image::~Image() {
 		this->mask = NULL;
 	}
 	if ( this->blendTarget ) {
-		GPU_FreeImage( this->blendTarget->image );
 		GPU_FreeTarget( this->blendTarget );
+		GPU_FreeImage( this->blendTarget->image );
 		this->blendTarget = NULL;
 	}
 	
@@ -476,8 +476,8 @@ GPU_Image* Image::MakeImage( bool makeMask ) {
 		this->image = img;
 		// reset blend target
 		if ( this->blendTarget ) {
-			GPU_FreeImage( this->blendTarget->image );
 			GPU_FreeTarget( this->blendTarget );
+			GPU_FreeImage( this->blendTarget->image );
 			this->blendTarget = NULL;
 		}
 	}

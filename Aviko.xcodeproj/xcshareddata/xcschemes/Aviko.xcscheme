@@ -63,7 +63,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/kirilledelman/Dropbox/Projects/nikogame/demo"
+            argument = "/Users/kirilledelman/Dropbox/Projects/nikogame/word-fish"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

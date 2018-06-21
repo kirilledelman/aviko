@@ -210,7 +210,7 @@ include( './ui' );
 		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
 		'focusGroup': { get: function (){ return ui.focusGroup; }, set: function( f ){
 			backButton.focusGroup = moreButton.focusGroup = ui.focusGroup = f;
-			for ( var i in allFields ) {
+			for ( var i = 0, nf = allFields.length; i < nf; i++ ) {
 				allFields[ i ].focusGroup = f;
 			}
 		}  },
@@ -636,7 +636,7 @@ include( './ui' );
 		// remove previous elements
 		cont.removeAllChildren();
 		cont.ui.height = cont.ui.minHeight = 0;
-		for ( var i in allFields ) {
+		for ( var i = 0, nf = allFields.length; i < nf; i++ ) {
 			var trg = allFields[ i ].target;
 			if ( trg ) trg.unwatch( allFields[ i ].name );
 		}
@@ -1028,7 +1028,7 @@ include( './ui' );
 	go.watchCallback = function ( p, ov, v ) {
 		go.async( function() { go.reload( p ); } );
 		go.fire( 'change', target, p, ov, v );
-		//go.reload( p, v );
+		// go.reload( p, v );
 		return v;
 	}
 
@@ -1071,14 +1071,17 @@ include( './ui' );
 
 	// refreshes properties values in rows from target
 	go.reload = function ( propName, valOverride ) {
+
 		if ( !target ) return;
 
 		// update fields
-		var field, val, tp;
-		for ( var i in allFields ) {
-			field = allFields[ i ];
-			pdef = field.pdef;
-	        val = field.target ? field.target[ field.name ] : undefined;
+		for ( var i = 0, nf = allFields.length; i < nf; i++ ) {
+			var field = allFields[ i ];
+			var pdef = field.pdef;
+			var fieldTarget = field.target;
+			var fieldName = field.name;
+	        var val = fieldTarget ? fieldTarget[ fieldName ] : undefined;
+
 			// if reload is called with field name
 			if ( typeof( propName ) !== 'undefined' ) {
 				// skip all others

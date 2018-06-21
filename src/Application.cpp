@@ -73,7 +73,7 @@ Application::Application() {
 	this->overlay = new GameObject( NULL );
 	this->overlay->SetZ( 1000 );
 	this->overlay->orphan = false;
-	
+		
 	// begin terminal capture
 	struct termios newt;
 	tcgetattr(STDIN_FILENO, &_savedTerminal);
@@ -177,22 +177,28 @@ void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
 		UpdateBackscreen();
 		
 		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
-		
-		// send event
-		Event event( EVENT_RESIZED );
-		event.scriptParams.AddIntArgument( (float) this->windowWidth / app.windowScalingFactor );
-		event.scriptParams.AddIntArgument( (float) this->windowHeight / app.windowScalingFactor );
-		this->CallEvent( event );
-		
-		// and send layout event to scene
-		if ( sceneStack.size() ) {
-			event.name = EVENT_LAYOUT;
-			event.stopped = false;
-			event.behaviorsOnly = true;
-			event.scriptParams.ResizeArguments( 0 );
-			sceneStack.back()->DispatchEvent( event, true );
-		}
 
+		// notify script
+		this->SendResizedEvents();
+
+	}
+}
+
+void Application::SendResizedEvents() {
+	
+	// send event
+	Event event( EVENT_RESIZED );
+	event.scriptParams.AddIntArgument( (float) this->windowWidth / app.windowScalingFactor );
+	event.scriptParams.AddIntArgument( (float) this->windowHeight / app.windowScalingFactor );
+	this->CallEvent( event );
+	
+	// and send layout event to scene
+	if ( sceneStack.size() ) {
+		event.name = EVENT_LAYOUT;
+		event.stopped = false;
+		event.behaviorsOnly = true;
+		event.scriptParams.ResizeArguments( 0 );
+		sceneStack.back()->DispatchEvent( event, true );
 	}
 }
 
@@ -207,8 +213,8 @@ void Application::UpdateBackscreen() {
 	
 	// clear blend target
 	if ( this->blendTarget ) {
-		GPU_FreeImage( this->blendTarget->image );
 		GPU_FreeTarget( this->blendTarget );
+		GPU_FreeImage( this->blendTarget->image );
 		this->blendTarget = NULL;
 	}
 	
@@ -305,12 +311,21 @@ void Application::InitClass() {
 				// clear
 				app.sceneStack.clear();
 			}
-			// generate event
+			
+			// generate events
 			Event event;
 			event.name = EVENT_SCENECHANGED;
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( current ? current->scriptObject : NULL );
 			app.CallEvent( event );
+			
+			// layout as well
+			if ( newScene ) {
+				event.stopped = false;
+				event.name = EVENT_LAYOUT;
+				event.scriptParams.ResizeArguments( 0 );
+				newScene->DispatchEvent( event );
+			}
 		}
 		return val;
 	 })
@@ -401,6 +416,25 @@ void Application::InitClass() {
 	script.AddProperty<Application>
 	("isUnserializing",
 	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.isUnserializing; }));
+	
+	// platform dependent clipboard
+	script.AddProperty<Application>
+	("clipboard",
+	 static_cast<ScriptStringCallback>([](void* self, string v){
+#ifdef __MACOSX__
+		app.clipboard = ExecCommand( "pbpaste" );
+#endif
+		return app.clipboard;
+	}),
+	 static_cast<ScriptStringCallback>([](void* self, string v){
+		app.clipboard = v;
+#ifdef __MACOSX__
+		string s = regex_replace( app.clipboard, regex("\\\""), "\\\"" );
+		s = string("echo \"") + s + "\" | pbcopy";
+		ExecCommand( s.c_str() );
+#endif
+		return app.clipboard;
+	}), PROP_NOSTORE | PROP_ENUMERABLE );
 	
 	// functions
 	
@@ -1197,8 +1231,11 @@ void Application::GameLoop() {
 	app.sceneStack.push_back( new Scene( NULL ) );
 	
 	// load and run "main.js" script
-	ScriptResource* mainScript = scriptManager.Get( "/main.js" );
-	if ( mainScript->error ) return; // bail on compilation or not found error
+	ScriptResource* mainScript = scriptManager.Get( "main.js" );
+	if ( mainScript->error ) {
+		mainScript = scriptManager.Get( "/main.js" ); // in root dir
+		if ( mainScript->error ) return; // bail on compilation or not found error
+	}
 	script.Execute( mainScript );
 	
 	// add default "keyboard" controller to input
@@ -1206,6 +1243,9 @@ void Application::GameLoop() {
 	
 	// init backscreen
 	this->UpdateBackscreen();
+	
+	// initial resized and layout events
+	this->SendResizedEvents();
 	
 	// main loop
 	while( run ) {
@@ -1224,6 +1264,8 @@ void Application::GameLoop() {
 		if ( ++this->frames % 100 == 0 ) {
 			this->fps = 100.0f / (( _time - _timeFps ) * 0.001f );
 			_timeFps = _time;
+			
+			// printf( "%lu %lu %lu\n", scheduledAsyncs->size(), scheduledAsyncs->max_size(), scheduledAsyncs->max_bucket_count() );
 		}
 		
 		// advance tweens
@@ -1481,9 +1523,13 @@ string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, 
 		unsigned lineNumber = 0;
 		JSScript* curScript = NULL;
 		if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
-			const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
+			string scriptPath = JS_GetScriptFilename( script.js, curScript );
+			vector<string> parts = Resource::splitString( scriptPath, "/" );
+			parts.pop_back();
+			if ( startsWithTwoDots ) parts.pop_back();
+			startingPath = Resource::concatStrings( parts, "/" );
 			// find script
-			unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
+			/*unordered_map<string, ScriptResource*>::iterator it = app.scriptManager.map.begin();
 			while ( it != app.scriptManager.map.end() ) {
 				if ( it->second->path.compare( scriptPath ) == 0 ) {
 					// remove filename from current script
@@ -1494,7 +1540,7 @@ string ResolvePath( const char* filepath, const char* commaSeparatedExtensions, 
 					break;
 				}
 				it++;
-			}
+			}*/
 		}
 	}
 	
@@ -1669,7 +1715,7 @@ string GetScriptNameAndLine() {
 	JSScript* curScript = NULL;
 	if ( JS_DescribeScriptedCaller( script.js, &curScript, &lineNumber ) ) {
 		const char* scriptPath = JS_GetScriptFilename( script.js, curScript );
-		char *buf = (char*) malloc( strlen( scriptPath ) + 32 );
+		static char buf[ 512 ];
 		sprintf( buf, "%s:%u", scriptPath, lineNumber );
 		return string( buf );
 	}
@@ -1900,6 +1946,26 @@ string base64_decode( string const& encoded_string ) {
 	}
 	
 	return ret;
+}
+
+// exec command line util
+string ExecCommand( const char* cmd ) {
+	// exec
+	FILE* pipe = popen(cmd, "r");
+	if (!pipe) return "";
+	char buffer[128];
+	std::string result = "";
+	while( !feof( pipe ) ) {
+		if( fgets( buffer, 128, pipe ) != NULL ) {
+			result += buffer;
+		}
+	}
+	pclose(pipe);
+	
+	// truncate newline from end
+	size_t resultSize = result.size();
+	if ( resultSize > 0 && result.c_str()[ resultSize - 1 ] == '\n' ) result.resize( resultSize - 1 );
+	return result;
 }
 
 

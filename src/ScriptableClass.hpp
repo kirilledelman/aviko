@@ -111,40 +111,7 @@ public:
 	bool dispatchEventsToPropertyFunctions = true;
 	
 	/// calls script event listeners on this ScriptableObject
-	virtual void CallEvent( Event& event ) {
-		
-		// ignore if finalizing
-		if ( script.IsAboutToBeFinalized( &this->scriptObject ) || event.stopped ) return;
-		
-		// event listeners array
-		EventListeners* list = &this->eventListeners[ event.name ];
-		
-		// some objects will dispatch events to functions with the same name, for ease of use
-		if ( this->dispatchEventsToPropertyFunctions ) {
-			// check if we have a callback with the same name as property
-			ArgValue funcObject = script.GetProperty( event.name, this->scriptObject );
-			if ( funcObject.type == TypeFunction ) {
-				// call function
-				script.CallFunction( funcObject.value.objectValue, this->scriptObject, event.scriptParams );
-			}
-		}
-		
-		// if event was stopped, exit
-		if ( event.stopped ) return;
-		
-		// call on all listeners - note that listeners may be removed while dispatching
-		EventListeners::iterator it = list->begin();
-		while ( it != list->end() ){
-			ScriptFunctionObject *fobj = &(*it);
-			fobj->thisObject = this->scriptObject;
-			fobj->Invoke( event.scriptParams );
-			if ( fobj->callOnce ) {
-				it = list->erase( it );
-			} else it++;
-			if ( event.stopped ) return;
-		}
-		
-	}
+	virtual void CallEvent( Event& event );
 	
 	// true if .eventName, or "on" event listeners registered
 	bool HasListenersForEvent( const char* eventName ) {

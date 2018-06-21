@@ -7,6 +7,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <regex>
 #include <unordered_map>
 #include <list>
 #include <unordered_set>
@@ -69,6 +70,11 @@ int StringPositionLength( const char* str );
 string base64_encode( unsigned char const*, unsigned int len );
 string base64_decode( string const& s );
 string GetScriptNameAndLine();
+string ExecCommand( const char* cmd );
+
+// built in resources
+extern unsigned char RobotoRegular[];
+extern int RobotoRegular_size;
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

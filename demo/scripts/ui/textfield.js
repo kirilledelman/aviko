@@ -16,7 +16,7 @@
 		'editEnd' - when control ended text edit
 		'accept' - on blur, if contents changed
 		'cancel' - on blur, if contents didn't change
-		'copy' - if text is copied via Ctrl+C or Ctrl+X ( into UI.copiedText )
+		'copy' - if text is copied via Ctrl+C or Ctrl+X ( into App.clipboard )
 		'paste' - some text was pasted from UI.copiedText
 		'selectionChanged' - when selection changes ( event parameter is selected text )
  
@@ -430,7 +430,7 @@ include( './ui' );
 	// text container
 	tc = new GameObject();
 	rt = new RenderText();
-	rt.autoResize = false;
+	rt.autoSize = false;
 	rt.showSelection = true;
 	tc.render = rt;
 	tc.serializeable = false;
@@ -1144,18 +1144,20 @@ include( './ui' );
 				if ( ( meta || ctrl ) && rt.selectionStart != rt.selectionEnd && selectable ) {
 					var ss = txt.positionToIndex( rt.selectionStart );
 					var se = txt.positionToIndex( rt.selectionEnd );
-					UI.copiedText = txt.substr( ss, se - ss );
+					var copiedText = txt.substr( ss, se - ss );
+					App.clipboard = copiedText;
 					if ( key == Key.X ) ui.keyPress( -1, 1 );
-					go.fire( 'copy', UI.copiedText );
+					go.fire( 'copy', copiedText );
 				    if ( autocomplete ) cancelAutocomplete();
 				}
                 break;
 
 		    case Key.V:
-			    if ( typeof( UI.copiedText ) === 'string' ){
+			    var copiedText;
+			    if ( ( meta || ctrl ) && ( copiedText = App.clipboard ) && copiedText.length ){
 				    if ( autocomplete ) cancelAutocomplete();
-					ui.keyPress( UI.copiedText );
-				    go.fire( 'paste', UI.copiedText );
+					ui.keyPress( copiedText );
+				    go.fire( 'paste', copiedText );
 			    }
 			    break;
 
