@@ -1011,13 +1011,16 @@ void Application::InitClass() {
 	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
 		// validate params
 		const char* error = "usage: cancelAsync( Int asyncId )";
-		int index = 0;
+		int index = -1;
 		
-		// validate
-		if ( !sa.ReadArguments( 1, TypeInt, &index ) ) {
-			script.ReportError( error );
-			return false;
+		// one param? cancel single one
+		if ( sa.args.size() >= 1 ) {
+			if ( !sa.ReadArguments( 1, TypeInt, &index ) ) {
+				script.ReportError( error );
+				return false;
+			}
 		}
+		
 		// cancel scheduled call
 		sa.ReturnBool( ScriptableClass::CancelAsync( (void*) script.global_object, index ) );
 		return true;
@@ -1052,13 +1055,17 @@ void Application::InitClass() {
 		const char* error = "usage: cancelDebouncer( String debounceId )";
 		string name;
 		
-		// validate
-		if ( !sa.ReadArguments( 1, TypeString, &name ) ) {
-			script.ReportError( error );
-			return false;
+		// one param? cancel single one
+		if ( sa.args.size() >= 1 ) {
+			if ( !sa.ReadArguments( 1, TypeString, &name ) ) {
+				script.ReportError( error );
+				return false;
+			}
 		}
+		
 		// cancel scheduled call
 		sa.ReturnBool( ScriptableClass::CancelDebouncer( (void*) script.global_object, name ) );
+		
 		return true;
 	}));
 	

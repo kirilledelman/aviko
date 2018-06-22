@@ -2,106 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/StaticResources.cpp" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/config/Keyboard.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/ui/controller-configurator.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/game.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/letter.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/menu.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/player.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sky.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/8BitClouds.ogg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/Pinwheel.ogg" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/begin.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/eat1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/eat2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/eat3.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/eat4.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/eat5.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/hit1.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/hit2.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/hit3.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/letter.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/select.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/sound/success.wav" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/textures/fish.json" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/textures/fish.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/textures/grad.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/scripts/word-fish/water.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/apple.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/ball.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/balloon.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/banana.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/bear.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/bee.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/box.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/bread.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/car.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/cat.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/chick.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/cloud.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/cow.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/crab.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/dog.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/dolphin.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/door.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/elephant.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/fish.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/flag.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/frog.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/gecco.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/grad.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/guitar.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/hare.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/house.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/key.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/lemon.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/moon.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/mouse.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/mushroom.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/panda.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/pencil.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/piano.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/pine.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/pizza.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/plane.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/rainbow.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/robot.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/rocket.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/rooster.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/snail.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/snake.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/star.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/sun.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/train.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/umbrella.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/demo/textures/whale.png" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.hpp" afterPath="$PROJECT_DIR$/src/Application.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/xcshareddata/xcschemes/Aviko.xcscheme" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/xcshareddata/xcschemes/Aviko.xcscheme" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FontResource.cpp" afterPath="$PROJECT_DIR$/src/FontResource.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/FontResource.hpp" afterPath="$PROJECT_DIR$/src/FontResource.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.cpp" afterPath="$PROJECT_DIR$/src/Image.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ResourceManager.hpp" afterPath="$PROJECT_DIR$/src/ResourceManager.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.cpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.cpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TypedVector.cpp" afterPath="$PROJECT_DIR$/src/TypedVector.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.cpp" afterPath="$PROJECT_DIR$/src/UIBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/main-menu.js" afterPath="$PROJECT_DIR$/demo/scripts/main-menu.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/text.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/text.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="nikogame.iws" />
@@ -127,7 +31,7 @@
       <file leaf-file-name="game.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/word-fish/scripts/game.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.27629733">
+            <state vertical-scroll-proportion="7.3884993">
               <caret line="517" column="0" selection-start-line="517" selection-start-column="0" selection-end-line="517" selection-end-column="0" />
               <folding>
                 <element signature="e#3574#5677#0" expanded="false" />
@@ -301,8 +205,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -387,6 +289,8 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -461,28 +365,28 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="22" width="1440" height="831" extended-state="6" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3211876" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.15665236" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.3955651" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.40128756" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" x="100" y="127" width="1240" height="632" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3211876" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
@@ -792,7 +696,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.016830295">
           <caret line="36" column="42" selection-start-line="36" selection-start-column="42" selection-end-line="36" selection-end-column="42" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -800,7 +703,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.6231579">
           <caret line="442" column="24" selection-start-line="442" selection-start-column="24" selection-end-line="442" selection-end-column="24" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -808,7 +710,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.6808036">
           <caret line="193" column="0" selection-start-line="193" selection-start-column="0" selection-end-line="193" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -816,7 +717,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-0.28882438">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -824,7 +724,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.08415147">
           <caret line="85" column="18" selection-start-line="85" selection-start-column="18" selection-end-line="85" selection-end-column="18" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -832,7 +731,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-0.39691445">
           <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -840,7 +738,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.54558206">
           <caret line="141" column="70" selection-start-line="141" selection-start-column="70" selection-end-line="141" selection-end-column="70" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -848,7 +745,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.18513323">
           <caret line="11" column="39" selection-start-line="11" selection-start-column="39" selection-end-line="11" selection-end-column="39" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -870,7 +766,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/word-fish/scripts/game.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.27629733">
+        <state vertical-scroll-proportion="7.3884993">
           <caret line="517" column="0" selection-start-line="517" selection-start-column="0" selection-end-line="517" selection-end-column="0" />
           <folding>
             <element signature="e#3574#5677#0" expanded="false" />
