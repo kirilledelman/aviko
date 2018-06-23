@@ -580,16 +580,6 @@
 	}
 	scene.controllerInput = processInput;
 
-	// scale/recenter
-	function scaleScene( w, h ) {
-		var sh = w / 640;
-		var sv = h / 480;
-		container.scale = 2 * Math.min( sh, sv );
-		container.x = 0.5 * ( w - 320 * container.scale );
-		container.y = 0.5 * ( h - 240 * container.scale );
-	}
-	scene.scaleScene = scaleScene;
-
 	// scene changed handler
 	function sceneChanged( newScene, oldScene ) {
 		// leaving game

@@ -16,7 +16,7 @@
 	// menu container (scaled up to fit screen)
 	var menu = scene.addChild( {
 		name: "Menu Container",
-		scale: 2,
+		//scale: 2,
 		children: [
 			// logo
 			new GameObject( {
@@ -76,6 +76,7 @@
 					( language ? "^B^3RUSSIAN^c^b ^9ENGLISH^c" : "^9RUSSIAN^c ^B^3ENGLISH^c^b" ) +
 					"\n\nAny other button to start";
 
+				App.fullScreen = !App.fullScreen;
 			// any other button
 			} else {
 
@@ -83,7 +84,6 @@
 				scene.debounce( 'start', function () {
 					game = include( 'game' );
 					game.language = language;
-					game.scaleScene( App.windowWidth, App.windowHeight );
 					sceneForward( game );
 					scene.select.play();
 					scene.music.stop();
@@ -103,18 +103,6 @@
 	configurator.on( 'ready', controllerReady );
 	configurator.refresh(); // causes ready to be called on all connected controllers
 
-	// scene scaling and centering
-	function scaleScene( w, h ) {
-		var sh = w / 640;
-		var sv = h / 480;
-		menu.scale = 2 * Math.min( sh, sv );
-		menu.x = 0.5 * ( w - menu.width * menu.scale);
-		menu.y = 0.5 * ( h - menu.height * menu.scale );
-		if ( game ) game.scaleScene( w, h );
-	}
-	App.on( 'resized', scaleScene );
-	scaleScene( App.windowWidth, App.windowHeight );
-
 	// scene change handler
 	App.on( 'sceneChanged', function ( newScene, oldScene ) {
 
@@ -126,7 +114,6 @@
 
 			// destroy game
 			if ( game ) game = null;
-			scaleScene( App.windowWidth, App.windowHeight );
 			gc();
 
 			// play theme

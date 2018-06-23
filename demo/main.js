@@ -15,11 +15,13 @@
  */
 
 
-// set screen size and pixel doubling
+// set screen size
 App.setWindowSize( 640, 480, 1 );
+App.windowResizable = true;
+App.fixedWindowResolution = false;
 
 // auto-configure controller
-var configurator = include( 'ui/controller-configurator', {
+var configurator = include( 'controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',

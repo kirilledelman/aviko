@@ -1,7 +1,7 @@
 resizingWindowKeepsResolution or something
 
 
-Sound FINISHED event crashes
+Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
 
 Body
 	Add global collision listener to scene?
@@ -195,10 +195,11 @@ Bugs
 
 =============================================
 
+Orange Pi
+	text entry bleeds / flashes to screen
 
-JS_CompileScript leaks memory via js_realloc?..
-
-Raspberry Pi - pressing Alt disrupts subseq text entry
+Raspberry Pi
+	pressing Alt disrupts subseq text entry (sdl 2.0.5 and below, fixed later)
 
 
 =============================================
@@ -228,11 +229,19 @@ SDL_gpu - compile from source:
 
 ORi/RPi:
 	CMakeLists.txt - disable all but OpenGL 1 base and OpenGLES 2.x renderer
+	on OPi comment out add_definitions(-DSDL_GPU_USE_BROADCOM_RASPBERRYPI_WORKAROUND)
 	cmake -G "Unix Makefiles"
 	make
 	sudo make install
 
-
+On Orange Pi, if getting "internal compiler error" while building (really out of RAM), try
+Before compilation:
+sudo dd if=/dev/zero of=/swapfile bs=64M count=16
+sudo mkswap /swapfile
+sudo swapon /swapfile
+After:
+sudo swapoff /swapfile
+sudo rm /swapfile
 
 ---------------------------------------------
 

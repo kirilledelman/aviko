@@ -34,7 +34,6 @@ var configurator = include( 'controller-configurator', {
 		controller.on( ['select','start' ], maybeExit );
 	}
 } );
-log (" hi, configurator=", configurator );
 
 // used by controller to pop scene or exit app
 function maybeExit() {

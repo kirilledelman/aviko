@@ -151,29 +151,30 @@ void Application::InitRender() {
 	this->screen->camera.z_near = -1024;
 	this->screen->camera.z_far = 1024;
 	
-	
-	// resizable
 	SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
 	
-#ifdef __MACOSX__
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
 	// make windowed on desktop
 	GPU_SetFullscreen( false, false );
 #endif
 	
 }
 
+/// window resizing callback
 void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
-	if ( ( newWidth && newHeight ) && ( newWidth != this->windowWidth || newHeight != this->windowHeight ) ) {
-		
-#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
+	if ( ( newWidth && newHeight ) && ( fixedWindowResolution || newWidth != this->windowWidth || newHeight != this->windowHeight ) ) {
+
+		// resize window
 		GPU_SetWindowResolution( newWidth, newHeight );
-		this->windowWidth = this->screen->base_w;
-		this->windowHeight = this->screen->base_h;
 		GPU_UnsetVirtualResolution( this->screen );
-#else
-		this->windowWidth = newWidth;
-		this->windowHeight = newHeight;
-#endif
+		
+		// if not fixed size, update window size,
+		if ( !fixedWindowResolution ) {
+			this->windowWidth = this->screen->base_w;
+			this->windowHeight = this->screen->base_h;
+		}
+		
+		// update backscreen, or its scale
 		UpdateBackscreen();
 		
 		if ( app.sceneStack.size() ) app.sceneStack.back()->_camTransformDirty = true;
@@ -204,40 +205,48 @@ void Application::SendResizedEvents() {
 
 void Application::UpdateBackscreen() {
 	
-	// if already have a back screen
-	if ( this->backScreen ) {
-		// clean up
-		GPU_FreeTarget( this->backScreen->target );
-		GPU_FreeImage( this->backScreen );
+	// actual size
+	int ww = this->windowWidth / this->windowScalingFactor,
+		hh = this->windowHeight / this->windowScalingFactor;
+	
+	// if resize / recreate is needed
+	if ( !this->backScreen || this->backScreen->base_w != ww || this->backScreen->base_h != hh ) {
+		
+		// if already have a back screen
+		if ( this->backScreen ) {
+			// clean up
+			GPU_FreeTarget( this->backScreen->target );
+			GPU_FreeImage( this->backScreen );
+		}
+		
+		// clear blend target
+		if ( this->blendTarget ) {
+			GPU_FreeTarget( this->blendTarget );
+			GPU_FreeImage( this->blendTarget->image );
+			this->blendTarget = NULL;
+		}
+		
+		// create backscreen
+		this->backScreen = GPU_CreateImage( ww, hh, GPU_FORMAT_RGB );
+		this->backScreenSrcRect = { 0, 0, (float) this->backScreen->base_w, (float) this->backScreen->base_h };
+		GPU_UnsetImageVirtualResolution( this->backScreen );
+		GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
+		GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
+		GPU_LoadTarget( this->backScreen );
+		GPU_SetShapeBlending( true );
+		GPU_SetBlendMode( this->backScreen, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+		GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+		if ( !GPU_AddDepthBuffer( this->backScreen->target ) ){
+			printf( "Warning: depth buffer is not supported.\n" );
+		}
+		GPU_SetDepthTest( this->backScreen->target, true );
+		GPU_SetDepthWrite( this->backScreen->target, true );
+		GPU_SetDepthFunction( this->backScreen->target, GPU_ComparisonEnum::GPU_LEQUAL );
+		this->backScreen->target->camera.z_near = -1024;
+		this->backScreen->target->camera.z_far = 1024;
 	}
 	
-	// clear blend target
-	if ( this->blendTarget ) {
-		GPU_FreeTarget( this->blendTarget );
-		GPU_FreeImage( this->blendTarget->image );
-		this->blendTarget = NULL;
-	}
-	
-	// create backscreen
-	this->backScreen = GPU_CreateImage( this->windowWidth / this->windowScalingFactor, this->windowHeight / this->windowScalingFactor, GPU_FORMAT_RGB );
-	this->backScreenSrcRect = { 0, 0, (float) this->backScreen->base_w, (float) this->backScreen->base_h };
-	GPU_UnsetImageVirtualResolution( this->backScreen );
-	GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
-	GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
-	GPU_LoadTarget( this->backScreen );
-	GPU_SetShapeBlending( true );
-	GPU_SetBlendMode( this->backScreen, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
-	GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
-	if ( !GPU_AddDepthBuffer( this->backScreen->target ) ){
-		printf( "Warning: depth buffer is not supported.\n" );
-	}
-	GPU_SetDepthTest( this->backScreen->target, true );
-	GPU_SetDepthWrite( this->backScreen->target, true );
-	GPU_SetDepthFunction( this->backScreen->target, GPU_ComparisonEnum::GPU_LEQUAL );
-	this->backScreen->target->camera.z_near = -1024;
-	this->backScreen->target->camera.z_far = 1024;
-	
-	// set up sizes to center small screen inside large
+	// update sizes to center small screen inside large
 	float hscale = (float) this->screen->base_w / (float) this->windowWidth;
 	float vscale = (float) this->screen->base_h / (float) this->windowHeight;
 	float minScale = min( hscale, vscale );
@@ -251,7 +260,7 @@ void Application::UpdateBackscreen() {
 	// scale for mouse position calculation
 	this->backscreenScale = min( (float) this->backScreen->base_w / (float) this->backScreenDstRect.w,
 								(float) this->backScreen->base_h / (float) this->backScreenDstRect.h );
-	
+
 }
 
 
@@ -382,9 +391,17 @@ void Application::InitClass() {
 	("windowResizable",
 	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.windowResizable; }),
 	 static_cast<ScriptBoolCallback>([](void* self, bool v){
-		SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), ((SDL_bool) (app.windowResizable = v)) );
+		app.windowResizable = v;
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
+		SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) app.windowResizable );
+#endif
 		return v;
 	}));
+	
+	script.AddProperty<Application>
+	("fixedWindowResolution",
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ return app.fixedWindowResolution; }),
+	 static_cast<ScriptBoolCallback>([](void* self, bool v){ app.fixedWindowResolution = v; return v; }));
 	
 	script.AddProperty<Application>
 	("windowWidth", static_cast<ScriptIntCallback>([](void* self, int v ) { return app.windowWidth / app.windowScalingFactor; }) );
@@ -421,20 +438,11 @@ void Application::InitClass() {
 	script.AddProperty<Application>
 	("clipboard",
 	 static_cast<ScriptStringCallback>([](void* self, string v){
-#ifdef __MACOSX__
-		app.clipboard = ExecCommand( "pbpaste" );
-#endif
-		return app.clipboard;
+		if ( SDL_HasClipboardText() ) return string( SDL_GetClipboardText() );
+		return string("");
 	}),
-	 static_cast<ScriptStringCallback>([](void* self, string v){
-		app.clipboard = v;
-#ifdef __MACOSX__
-		string s = regex_replace( app.clipboard, regex("\\\""), "\\\"" );
-		s = string("echo \"") + s + "\" | pbcopy";
-		ExecCommand( s.c_str() );
-#endif
-		return app.clipboard;
-	}), PROP_NOSTORE | PROP_ENUMERABLE );
+	 static_cast<ScriptStringCallback>([](void* self, string v){ SDL_SetClipboardText( v.c_str() ); return v; }),
+	 PROP_NOSTORE | PROP_ENUMERABLE );
 	
 	// functions
 	
@@ -536,9 +544,12 @@ void Application::InitClass() {
 			return false;
 		}
 		app.windowScalingFactor = max( 0.1f, min( 8.0f, sc ) );
-		w *= app.windowScalingFactor;
-		h *= app.windowScalingFactor;
-		app.WindowResized( max( 320, min( 4096, w ) ), max( 320, min( 4096, h ) ) );
+		w = max( 128, min( 4096, (int) floor( w * app.windowScalingFactor ) ) );
+		h = max( 128, min( 4096, (int) floor( h * app.windowScalingFactor ) ) );
+		// force update sizes
+		app.windowWidth = w;
+		app.windowHeight = h;
+		app.WindowResized( w, h );
 		app.UpdateBackscreen();
 		return true;
 	}) );

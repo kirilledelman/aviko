@@ -7,7 +7,6 @@ CC=g++ -std=c++1y -O3 -Wno-invalid-offsetof -DORANGE_PI -g \
 LIBS=-Wl,-Bstatic \
 	-lSDL2_gpu \
 	-Wl,-Bdynamic \
-	-L/usr/lib/arm-linux-gnueabihf \
 	-lSDL2_image -lSDL2_ttf -lSDL2_mixer -lmozjs-24 \
 	-lSDL2 \
 	-lEGL -lGLESv2

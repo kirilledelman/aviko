@@ -186,7 +186,13 @@ void Input::InitClass() {
 	script.AddProperty<Input>
 	( "captureMouse",
 	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ return ((Input*) inp)->captureMouse; }),
-	 static_cast<ScriptBoolCallback>([](void* inp, bool val){ SDL_CaptureMouse( (SDL_bool) val ); return ((Input*) inp)->captureMouse = val; }));
+	 static_cast<ScriptBoolCallback>([](void* inp, bool val){
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
+		// only on desktop
+		SDL_CaptureMouse( (SDL_bool) val );
+#endif
+		return ((Input*) inp)->captureMouse = val;
+	}));
 	
 	script.AddProperty<Input>
 	( "showCursor",
@@ -410,7 +416,9 @@ void Input::InitClass() {
 
 	// set defaults
 	SDL_ShowCursor( this->showCursor );
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
 	SDL_CaptureMouse( (SDL_bool) this->captureMouse );
+#endif
 }
 
 void Input::TraceProtectedObjects( vector<void**> &protectedObjects ) {

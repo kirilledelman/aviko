@@ -61,7 +61,10 @@ public:
 	/// upscaling
 	float windowScalingFactor = 2;
 	
+	//
 	bool windowResizable = true;
+	
+	bool fixedWindowResolution = true;
 	
 	/// computed in UpdateBackscreen
 	float backscreenScale = 0.5;
@@ -97,12 +100,7 @@ public:
 
 	// used to consume stdin input
 	struct termios _savedTerminal;
-	
-// clipboard
-
-	// used only on Pi, as there's no system clipboard
-	string clipboard;
-	
+		
 // resource managers
 	
 	/// full path to executable + resource directory
