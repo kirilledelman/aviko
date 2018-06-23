@@ -650,17 +650,24 @@ void Application::InitClass() {
 	script.DefineGlobalFunction
 	( "listDirectory",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
-		string filename;
+		string filename, startPath = "";
 		ArgValueVector *extensions = NULL;
 		if ( !sa.ReadArguments( 1, TypeString, &filename ) ) {
-			script.ReportError( "usage: listDirectory( String filename, [ Array allowedFileExtensions ] )" );
+			script.ReportError( "usage: listDirectory( String filename, [ Array allowedFileExtensions, [ String startPath ] ] )" );
 			return false;
 		}
 		if ( sa.args.size() >= 2 && sa.args[ 1 ].type == TypeArray ) extensions = sa.args[ 1 ].value.arrayValue;
+		if ( sa.args.size() == 3 && sa.args[ 2 ].type == TypeString ) startPath = *sa.args[ 2 ].value.stringValue;
 		ArgValueVector ret;
 
-		// base path
-		string path = ResolvePath( filename.c_str(), NULL, NULL );
+		
+		// start path
+		if ( filename.length() && ( filename[ 0 ] == '/' || filename[ 0 ] == '.' ) ) startPath = "";
+		else if ( startPath.length() && startPath[ startPath.length() - 1 ] != '/' ) startPath.append( "/" );
+		
+		// list
+		string curPath = startPath + filename;
+		string path = ResolvePath( curPath.c_str(), NULL, NULL );
 		string filter;
 		struct stat buf;
 		

@@ -882,13 +882,13 @@ UI.base = UI.base || {
 
 			// (String) if set, will show tooltip on mouseOver
 			'tooltip': {
-				get: function (){ return ui.tooltip; },
+				get: function (){ return ui.tooltip ? ui.tooltip : ""; },
 				set: function( v ){
 					ui.tooltip = v;
 					if ( v ) {
-						go.on( 'mouseOver', UI.base._showTooltip );
+						ui.on( 'mouseOver', UI.base._showTooltip );
 					} else {
-						go.off( 'mouseOver', UI.base._showTooltip );
+						ui.off( 'mouseOver', UI.base._showTooltip );
 					}
 				}
 			},
@@ -935,6 +935,20 @@ UI.base = UI.base || {
 
 		// map them to gameObject
 		this.mapProperties( go, mappedProps );
+		// inspectable ui
+		UI.base.addInspectables( go, 'UI',
+			[ 'layoutType', 'layoutAlignX', 'layoutAlignY', 'selfAlign', 'reversed',
+				'spacingX', 'spacingY', 'fixedPosition', 'fitChildren', 'wrapEnabled', 'wrapAfter', 'forceWrap',
+				'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight', 'flex',
+				'anchorLeft', 'anchorTop', 'anchorRight', 'anchorBottom', 'left', 'top', 'right', 'bottom',
+				'padLeft', 'padTop', 'padRight', 'padBottom', 'marginLeft', 'marginTop', 'marginRight', 'marginBottom',
+				'tooltip' ], {
+				'layoutType': { enum: UI.base._enumUILayout },
+				'layoutAlignX': { enum: UI.base._enumUILayoutAlign }, 'layoutAlignY': { enum: UI.base._enumUILayoutAlign },
+				'selfAlign': { enum: UI.base._enumUILayoutAlign },
+				'baseStyle': false,
+			} );
+
 
 		// Shared API functions
 
@@ -952,6 +966,10 @@ UI.base = UI.base || {
 
 	},
 
+	// helper for properties
+	_enumUILayout: [ { text: "None", value: Layout.None }, { text: "Horizontal", value: Layout.Horizontal }, { text: "Vertical", value: Layout.Vertical }, { text: "Anchors", value: Layout.Anchors }, ],
+	_enumUILayoutAlign: [ { text: "Default", value: LayoutAlign.Default }, { text: "Start", value: LayoutAlign.Start }, { text: "Center", value: LayoutAlign.Center }, { text: "End", value: LayoutAlign.End }, { text: "Stretch", value: LayoutAlign.Stretch }, ],
+
 	// adds group with properties to __propertyListConfig ( used by ui components to add component-specific properties )
 	// go - object
 	// groupName - group to add (or replace if group w same name exists in GameObject.prototype.__propertyListConfig)
@@ -963,6 +981,9 @@ UI.base = UI.base || {
 		go.__propertyListConfig.groups.push( { name: groupName, properties: props, pos: pos } );
 		for ( var p in props ) {
 			go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
+		}
+		for ( var p in propsExtended ) {
+			go.__propertyListConfig.properties[ p ] = propsExtended[ p ];
 		}
 	},
 
@@ -1097,12 +1118,21 @@ UI.base = UI.base || {
 	},
 
 	// textfield callback for autocompleting file path
+	// textfield.autocompleteParam in form 'startdirectory;extension1,extension2...'
 	autocompleteFilePath: function ( textfield ) {
 
 		// list files matching text in box
 		var tft = textfield.text;
-		var files = listDirectory( tft,
-           ( typeof( textfield.autocompleteParam ) === 'string' ) ? textfield.autocompleteParam.split(',') : null );
+		var exts = [];
+		var startPath = '';
+		if ( typeof( textfield.autocompleteParam ) === 'string' ) {
+			var parts = textfield.autocompleteParam.split( ';' );
+			if ( parts.length > 1 ) {
+				startPath = parts[ 0 ];
+				exts = parts[ 1 ].split( ',' );
+			} else exts = parts[ 0 ].split( ',' );
+		}
+		var files = listDirectory( tft, exts, startPath );
 		var suggestions = [];
 		var lastSlash = tft.lastIndexOf( '/' );
 		var tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
@@ -1206,10 +1236,10 @@ UI.base = UI.base || {
 
 	_showTooltip: function () {
 		var show = function() {
-			if ( this.ui && this.ui.tooltip ) {
+			if ( this.tooltip ) {
 				var t = new GameObject( './tooltip', {
-					target: this,
-					text: this.ui.tooltip,
+					target: this.gameObject,
+					text: this.tooltip,
 					preferredDirection: 'up',
 				} );
 			}

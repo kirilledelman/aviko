@@ -1284,7 +1284,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			// check if current line width will exceed max line width
 			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine /* && !autoResize */ ) {
 				// start new line
-				RenderTextLine* prevLine = currentLine;
+				RenderTextLine* prevLine = &lines.back();
 				lines.emplace_back();
 				currentLine = &lines.back();
 				currentLine->firstCharacterPos = (int) characterPos;

@@ -46,7 +46,9 @@ include( './ui' );
 				} else {
 					shp.color = v;
 					go.render = shp;
+					background = shp.color;
 				}
+				go.requestLayout();
 			}
 		},
 
@@ -86,6 +88,24 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+		UI.base.addInspectables( go, 'Panel',
+		[ 'background', 'outlineColor', 'lineThickness', 'filled', 'cornerRadius', 'sliceLeft', 'sliceTop', 'sliceRight', 'sliceBottom' ],
+		{
+			'outlineColor': { inline: true, hidden: isTexture,  },
+			'background': {
+				inline: true,
+				validate: function( v ){ var isNum = parseInt( v, 16 ); if( isNaN( isNum ) ) return v; return isNum; },
+				reloadOnChange: true,
+			},
+		    'cornerRadius': { inline: true, hidden: isTexture,  },
+			'lineThickness': { inline: true, hidden: isTexture,  },
+			'filled': { inline: true, hidden: isTexture,  },
+			'sliceTop': { inline: true, hidden: isShape,  },
+			'sliceRight': { inline: true, hidden: isShape,  },
+			'sliceBottom': { inline: true, hidden: isShape,  },
+			'sliceLeft': { inline: true, hidden: isShape,  },
+		}, 1 );
+
 
 	// create components
 
@@ -117,6 +137,9 @@ include( './ui' );
 		bg.resize( w, h );
 		go.fire( 'layout', w, h );
 	}
+
+	function isTexture(){ return go.render == bg || !go.render; }
+	function isShape(){ return go.render == shp || !go.render || go.render.texture == ''; }
 
 	// apply defaults
 	go.baseStyle = UI.base.mergeStyle( {}, UI.style.panel );

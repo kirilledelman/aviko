@@ -1,7 +1,13 @@
-resizingWindowKeepsResolution or something
+UI components
+make sure they're serializable
+numeric textfield doesn't up/down w joystick
+addInspectables
+getProperties doesn't search ScriptObject prototypes
+file overwrite doesnt work?
+save non-native functions
+Make sure all focusable components listen for Tab and Shift+Tab keys
+Scrollbar .minusButton, .plusButton - add disabling, and paging handler funcs
 
-
-Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
 
 Body
 	Add global collision listener to scene?
@@ -10,20 +16,11 @@ Body
 modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
 Blend modes blendTarget is off by half texture size
-Add offsetX, offsetY for scrolling effect?
+Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
-UI components
-make sure they're serializable
-addInspectables
-can turn into 12pt size now
-Make sure all focusable components listen for Tab and Shift+Tab keys
-make sure setting .script to a different ui resets the object
-Scrollbar
-.minusButton, .plusButton - add disabling, and paging handler funcs
+Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
 
-getProperties doesn't search ScriptObject prototypes
-file overwrite doesnt work?
-save non-native functions
+
 
 Inspector
 Ctrl+ wheel - zoom

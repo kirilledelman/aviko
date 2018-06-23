@@ -49,7 +49,12 @@ include( './ui' );
 
 		// (Array) in form of [ { text:"Label text", value:(*), icon:"optional icon", disabled:(Boolean) } ...]
 		'items': { get: function (){ return items; }, set: function( v ){
-				items = v;
+				// check items
+				items = [];
+				for ( var i in v ) {
+					if ( typeof ( v[ i ] ) === 'string' ) items.push( { text: v[ i ], value: v[ i ] } );
+					else items.push( v[ i ] );
+				}
 				go.value = value;
 				go.selectedIndex = selectedIndex;
 				go.updateSelectedItem();

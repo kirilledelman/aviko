@@ -28,19 +28,6 @@ include( './ui' );
 	// API properties
 	var mappedProps = {
 
-		// (Color) or (Number) or null - solid background for this control
-		'background': {
-			get: function (){ return go.render ? go.render.color : null; },
-			set: function ( v ){
-				if ( v === null ) {
-					go.render = null;
-				} else {
-					if ( !go.render ) go.render = new RenderShape( Shape.Rectangle );
-					go.render.color = v;
-				}
-			}
-		},
-
 		// (String) texture path
 		'texture': { get: function (){ return rs.texture; }, set: function( v ){ rs.texture = v; go.updateParams(); }  },
 
@@ -71,14 +58,23 @@ include( './ui' );
 		// (Color) | (Number) .addColor property of current render component
 		'addColor': { get: function (){ return rs.addColor; }, set: function( v ){ rs.addColor = v; } },
 
+		// (Color) | (Number) .color property of current render component
+		'color': { get: function (){ return rs.color; }, set: function( v ){ rs.color = v; } },
+
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, 'Button',
+		[ 'mode', 'texture', 'rotation', 'flipX', 'flipY', 'color', 'addColor' ],
+		{ 'texture': { autocomplete: 'file', autocompleteParam: 'textures;png,jpg,jpeg' },
+		  'mode': { enum: [ 'icon', 'fit', 'fill', 'stretch' ] },
+		  'color': { inline: true },
+		  'addColor': { inline: true }, }, 1 );
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Image";
+	go.name = "Image";
 
 	sc = go.addChild();
 	sc.name = "Image.Container";
@@ -97,17 +93,16 @@ include( './ui' );
 	ui.layout = function( w, h ) {
 
 		// background
-		if ( go.render ) go.render.resize( w, h );
 
 		// center container
 		sc.setTransform( w * 0.5, h * 0.5 );
 		if ( !(rs.texture || rs.image ) ) return;
 
 		// mode
-		if ( mode == 'icon' ){
-			// do nothing
-		} else if ( mode == 'fit' ) {
-			if ( go.parent && go.parent.ui ) {
+		var _scale = 1;
+		var _w = rs.originalWidth, _h = rs.originalHeight;
+		if ( mode == 'fit' ) {
+			/*if ( go.parent && go.parent.ui ) {
 				// parent is vertical list, fit-x
 				if ( go.parent.ui.layoutType == Layout.Vertical ) {
 					ui.minHeight = h = w * ( rs.width / rs.height );
@@ -115,17 +110,18 @@ include( './ui' );
 				} else if ( go.parent.ui.layoutType == Layout.Horizontal ) {
 					ui.minWidth = w = h / ( rs.width / rs.height );
 				}
-			}
-			sc.scale = Math.min( w / rs.width, h / rs.height );
+			}*/
+			_scale = Math.min( w / rs.originalWidth, h / rs.originalHeight );
 		} else if ( mode == 'stretch' ) {
-			rs.resize( w, h );
+			_w = w; _h = h;
 		} else if ( mode == 'fill' ) {
-			sc.scale = Math.max( w / rs.width, h / rs.height );
+			_scale = Math.max( w / rs.originalWidth, h / rs.originalHeight );
 		}
-		// image size
-		if ( go.render && (ri.width != w || ri.height != h) ) {
-			go.render.resize( w, h );
-		}
+		sc.scale = _scale;
+		rs.resize( _w, _h );
+
+		if ( go.render ) go.render.resize( w, h );
+
 		// refire
 		go.fire( 'layout', w, h );
 	}
@@ -134,8 +130,8 @@ include( './ui' );
 	go.updateParams = function () {
 		if ( mode == 'icon' && (rs.texture || rs.image) ){
 			// min size is set to icon size
-			ui.minWidth = rs.width;
-			ui.minHeight = rs.height;
+			ui.minWidth = rs.originalWidth;
+			ui.minHeight = rs.originalHeight;
 		}
 		// fill mode uses Image to crop
 		if ( mode == 'fill' ) {
@@ -146,7 +142,8 @@ include( './ui' );
 			}
 		} else if ( ri ) {
 			// clear render image (cropping)
-			go.render = ri = null;
+			ri = null;
+			go.render = null;
 		}
 		ui.requestLayout( 'image/updateParams' );
 	}

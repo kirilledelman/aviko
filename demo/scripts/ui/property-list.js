@@ -55,6 +55,7 @@ include( './ui' );
 	var pad = [ 0, 0, 0, 0 ];
 	var spacingX = 0, spacingY = 0;
 	var customInspector, inspector;
+	var cachedFields = {};
 	go.serializeMask = [ 'ui', 'target', 'children' ];
 
 	// API properties
@@ -86,6 +87,7 @@ include( './ui' );
 		//          actions: (Array) - context menu actions when right-clicking on property. Format same as .actions property, but no buttons
 		//          reloadOnChange: (Array), (String) - reload this/these properties on change, or (Boolean) true to reload all, or string "refresh" to refresh entire object
 		//          liveUpdate: (Boolean) for numeric and string field force update as you type if true, or after pressing Enter if false
+		//          validate: (Function) function called when field changes with new value as param, return (modified) value to accept, undefined to reject
 		//
 		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
 		//          properties: (Object) - apply properties to sub-property-list
@@ -402,7 +404,7 @@ include( './ui' );
 
 			case 'number':
 				if ( typeof( pdef.liveUpdate ) === 'undefined' ) pdef.liveUpdate = true;
-				field = cont.addChild( './textfield', {
+				field = cont.addChild( getFieldOfType( fieldType, './textfield', {
 					name: pname,
 					target: curTarget,
 					change: pdef.liveUpdate === false ? undefined : go.fieldChanged,
@@ -415,13 +417,13 @@ include( './ui' );
 					step: ( pdef && pdef.step !== undefined ) ? pdef.step : 1,
 					value: fieldValue,
 					style: go.baseStyle.values.any
-				}, insertChildIndex );
+				} ), insertChildIndex );
 				field.style = go.baseStyle.values.number;
 				break;
 
 			case 'string':
 				if ( typeof( pdef.liveUpdate ) === 'undefined' ) pdef.liveUpdate = false;
-				field = cont.addChild( './textfield', {
+				field = cont.addChild( getFieldOfType( fieldType, './textfield', {
 					name: pname,
 					target: curTarget,
 					change: pdef.liveUpdate === false ? undefined : go.fieldChanged,
@@ -431,14 +433,14 @@ include( './ui' );
 					autoGrow: true,
 					newLinesRequireShift: true,
 					style: go.baseStyle.values.any
-				}, insertChildIndex );
+				} ), insertChildIndex );
 				field.style = go.baseStyle.values.string;
 				// supported autocomplete
 				if ( pdef.autocomplete ) {
 					switch( pdef.autocomplete ){
 						case 'file':
 						field.autocomplete = UI.base.autocompleteFilePath;
-						field.autocompleteParam = pdef.autocompleteParam; // 'png,jpg'
+						field.autocompleteParam = pdef.autocompleteParam; // 'textures;png,jpg'
 						break;
 					}
 				}
@@ -447,7 +449,7 @@ include( './ui' );
 			// dropdown:
 
 			case 'enum':
-				field = cont.addChild( './select', {
+				field = cont.addChild( getFieldOfType( 'enum', './select', {
 					name: pname,
 					target: curTarget,
 					change: go.fieldChanged,
@@ -455,14 +457,14 @@ include( './ui' );
 					value: fieldValue,
 					items: pdef.enum,
 					style: go.baseStyle.values.any
-				}, insertChildIndex );
+				} ), insertChildIndex );
 				field.style = go.baseStyle.values.enum;
 				break;
 
 			// check box:
 
 			case 'boolean':
-				field = cont.addChild( './checkbox', {
+				field = cont.addChild( getFieldOfType( 'bool', './checkbox', {
 					name: pname,
 					target: curTarget,
 					change: go.fieldChanged,
@@ -470,13 +472,13 @@ include( './ui' );
 					text: fieldValue ? "True" : "False",
 					minWidth: valueWidth,
 					style: go.baseStyle.values.any
-				}, insertChildIndex );
+				} ), insertChildIndex );
 				field.style = go.baseStyle.values.boolean;
 				break;
 
 			case 'function':
 				// if function is native, display as read-only
-				field = cont.addChild( './button', {
+				field = cont.addChild( getFieldOfType( 'button', './button', {
 					name: pname,
 					target: curTarget,
 					fieldValue: fieldValue,
@@ -486,7 +488,7 @@ include( './ui' );
 					disabled: fieldValue.toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ), //!!fieldValue.isNative()
 					style: go.baseStyle.values.any,
 					click: editFunctionBody,
-				}, insertChildIndex );
+				} ), insertChildIndex );
 				field.style = go.baseStyle.values.func;
 				break;
 
@@ -505,7 +507,7 @@ include( './ui' );
 						dropdownItems = dropdownItems.concat( pdef.actions );
 					}
 					// show dropdown
-					field = cont.addChild( './select', {
+					field = cont.addChild( getFieldOfType( 'enum', './select', {
 						name: pname,
 						target: curTarget,
 						change: function ( v, sel ) { if ( sel.action ) sel.action.call( go ); },
@@ -513,7 +515,7 @@ include( './ui' );
 						value: fieldValue,
 						items: dropdownItems,
 						style: go.baseStyle.values.any
-					}, insertChildIndex );
+					} ), insertChildIndex );
 					field.style = go.baseStyle.values.enum;
 
 				} else {
@@ -522,7 +524,7 @@ include( './ui' );
 					var inline = !!pdef.inline;
 
 					// create field button
-					field = cont.addChild( './button', {
+					field = cont.addChild( getFieldOfType( 'button', './button', {
 						target: curTarget,
 						name: pname,
 						fieldValue: fieldValue,
@@ -532,7 +534,7 @@ include( './ui' );
 						disabled: (disabled || ( pdef && pdef.disabled )),
 						style: go.baseStyle.values.any,
 						toggleState: !!pdef.expanded
-					}, insertChildIndex );
+					} ), insertChildIndex );
 					field.style = go.baseStyle.values.object;
 					if ( inline ) {
 						field.click = togglePropList;
@@ -890,7 +892,7 @@ include( './ui' );
 			if ( ( _showAll === true && pdef !== false ) || // if displaying all properties and prop isn't excluded, or
 				( _showAll !== true && pdef !== undefined && pdef !== false ) ) { // showing select properties, and prop is included
 				// property not in any groups
-				if ( mappedProps[ p ] === undefined ) {
+				if ( mappedProps[ p ] === undefined && p.substr( 0, 1 ) != '_' ) {
 					// put in default group
 					regroup[ ' ' ].push( p );
 				}
@@ -1033,6 +1035,12 @@ include( './ui' );
 	}
 
 	go.fieldChanged = function ( val ) {
+
+		// validate can modify value
+		if ( typeof( this.pdef.validate ) == 'function' ) {
+			val = this.pdef.validate( val );
+			if ( val === undefined ) return;
+		}
 
 		// if field is boolean
 		if ( this.type === 'boolean' ) {
@@ -1300,7 +1308,7 @@ include( './ui' );
 			focusGroup: 'browsePath',
 			text: go.__browseFileName || "",
 			autocomplete: UI.base.autocompleteFilePath,
-			autocompleteParam: [ 'json' ],
+			autocompleteParam: 'json',
 			change: function() { this.debounce( 'validate', validate, 1 ); }
 		} );
 		var status = win.addChild( './text', {
@@ -1645,6 +1653,28 @@ include( './ui' );
 		}
 	}
 
+	// returns reused or new field with script=type
+	function getFieldOfType ( pool, script, initObj ) {
+		var fld;
+		if ( cachedFields[ pool ] && cachedFields[ pool ].length ) {
+			var fld = cachedFields[ pool ].pop();
+			delete initObj[ 'style' ];
+			for ( var p in initObj ) { fld[ p ] = initObj[ p ]; }
+		} else {
+			fld = new GameObject( script, initObj );
+		}
+		fld.pool = pool;
+		fld.removed = returnFieldToCached;
+		return fld;
+	}
+
+	// set as .removed to fields
+	function returnFieldToCached() {
+		var pool = this.pool;
+		if ( typeof( cachedFields[ pool ] ) === 'undefined' ) cachedFields[ pool ] = [ this ];
+		else cachedFields[ pool ].push( this );
+	}
+
 	// automatically clear target when removing from scene
 	go.removed = function () {
 		go.target = null;
@@ -1740,7 +1770,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'__propertyListConfig': false,
 	},
 	groups: [
-		{ name: "GameObject", properties: [ 'active', 'name', 'script', 'serializeable', 'serializeMask', 'eventMask' ] },
+		{ name: "GameObject", properties: [ 'active', 'name', 'script' ] },
 		{ name: "Hierarchy", properties: [ 'scene', 'parent', 'children' ] },
 		{ name: "Transform", properties: [ 'x', 'y', 'z', 'angle', 'scaleX', 'scaleY', 'skewX', 'skewY' ] },
 		{ name: "Display", properties: [ 'render', 'opacity', 'ignoreCamera', 'renderAfterChildren', ] },
@@ -1892,6 +1922,8 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		active: { tooltip: "Render component is enabled." },
 
 		texture: { // todo - autosuggest texture path
+			autocomplete: UI.base.autocompleteFilePath,
+			autocompleteParam: 'textures;png,jpg,jpeg',
 			tooltip: "Path to texture or texture frame."
 		},
 

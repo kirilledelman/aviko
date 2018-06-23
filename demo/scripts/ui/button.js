@@ -4,11 +4,12 @@
 
 	Usage:
 
-		var btn = App.scene.addChild( 'ui/button' );
-		btn.text = "Click me";
-		btn.click = function () {
-			log( "Clicked:", this.text );
-		}
+		var btn = App.scene.addChild( 'ui/button', {
+			text: "Click me!",
+			click: function () {
+				log( "Clicked:", this.text );
+			}
+		} );
 
 	look at mappedProps in source code below for additional properties,
 	also has shared layout properties from ui/ui.js
@@ -68,7 +69,7 @@ include( './ui' );
 		// (GameObject) instance of 'ui/text.js' used as label
 		'label': { get: function (){ return label; } },
 
-		// (GameObject) instance of 'ui/image.js' used as icon
+		// (GameObject) object used as icon
 		'image': { get: function (){ return image ? image : makeImage(); } },
 
 		// (Boolean) disabled
@@ -83,7 +84,10 @@ include( './ui' );
 		},
 
 		// (Boolean) whether control is focusable when it's disabled
-		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){ disabledCanFocus = f; } },
+		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){
+			disabledCanFocus = f;
+			ui.focusable = disabledCanFocus || !disabled;
+		} },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function ( cb ){ cancelToBlur = cb; } },
@@ -165,12 +169,14 @@ include( './ui' );
 	});
 
 	// label
-	label = new GameObject( 'ui/text', {
+	label = go.addChild( './text', {
 		name: "Label",
 		wrap: false,
 		active: false,
+		autoSize: true,
 		serializeable: false,
 	}, 1 );
+	go.addChild( label );
 
 	// UI
 	ui.autoMoveFocus = true;
@@ -204,12 +210,12 @@ include( './ui' );
 		// same as click or enter
 		if ( name == 'accept' && !disabled ) {
 
-			// simulated click
-			ui.fire( 'click', 1, 0, 0, go.x, go.y );
-
 			// animate down / up
 			go.state = 'down';
 			go.debounce( 'up', function() { go.state = 'auto'; }, 0.1 );
+
+			// simulated click
+			ui.fire( 'click', 1, 0, 0, go.x, go.y );
 
 		// same as escape
 		} else if ( name == 'cancel' ) {
@@ -231,7 +237,7 @@ include( './ui' );
 		go.fire( 'click', btn, x, y, wx, wy );
 	}
 
-	// mouse down/up state
+	// mouse down
 	ui.mouseDown = function ( btn, x, y, wx, wy ) {
 		if ( disabled ) return;
 		stopAllEvents();
@@ -239,7 +245,7 @@ include( './ui' );
 		go.fire( 'mouseDown', btn, x, y, wx, wy );
 	}
 
-	// up
+	// up/outside
 	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
 		go.state = 'auto';
 		if ( disabled ) return;
@@ -280,11 +286,6 @@ include( './ui' );
 				render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
 			}), 0 );
 		return image;
-	}
-
-	// add children late, to allow serializing buttons with extra children
-	go.awake = function () {
-		go.addChild( label );
 	}
 
 	// apply defaults

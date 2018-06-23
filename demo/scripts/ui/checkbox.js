@@ -79,14 +79,17 @@ include( './ui' );
 				ui.disabled = disabled = v;
 				ui.focusable = !v || disabledCanFocus;
 				if ( v && ui.focused ) ui.blur();
-				go.state = 'disabled';
 				label.opacity = v ? 0.6 : 1;
+				go.state = 'auto';
 				go.requestLayout( 'disabled' );
 			}, enumerable: true, configurable: true
 		},
 
 		// (Boolean) whether control is focusable when it's disabled
-		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){ disabledCanFocus = f; } },
+		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){
+			disabledCanFocus = f;
+			ui.focusable = disabledCanFocus || !disabled;
+		} },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
 		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function( cb ){ cancelToBlur = cb; }, enumerable: true, configurable: true },
@@ -97,11 +100,14 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, 'Checkbox',
+		[ 'text', 'checked', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'group', 'style' ],
+		null, 1 );
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Checkbox";
+	go.name = "Checkbox";
 
 	// check box
 	checkbox = go.addChild( './button', {

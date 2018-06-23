@@ -42,8 +42,7 @@ new (function (){
 		name: "Buttons",
 		backgroundColor: new Color( 'F0F0F066' ),
 		layoutType: Layout.Vertical,
-		layoutAlignX: Layout.Stretch,
-		layoutAlignY: Layout.Stretch,
+		layoutAlignX: LayoutAlign.Stretch,
 		wrapEnabled: true,
 		spacing: 8,
 		flex: 1,
@@ -128,10 +127,7 @@ new (function (){
 		}
 	} );
 
-
-
 	// focus on first button
 	buttons.getChild( 0 ).focus(); //*/
-	sceneForward( include( 'sprites' ) );
 	return scene;
 })();
