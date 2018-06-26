@@ -935,7 +935,8 @@ UI.base = UI.base || {
 
 		// map them to gameObject
 		this.mapProperties( go, mappedProps );
-		// inspectable ui
+
+		// ui common properties
 		UI.base.addInspectables( go, 'UI',
 			[ 'layoutType', 'layoutAlignX', 'layoutAlignY', 'selfAlign', 'reversed',
 				'spacingX', 'spacingY', 'fixedPosition', 'fitChildren', 'wrapEnabled', 'wrapAfter', 'forceWrap',
@@ -947,6 +948,19 @@ UI.base = UI.base || {
 				'layoutAlignX': { enum: UI.base._enumUILayoutAlign }, 'layoutAlignY': { enum: UI.base._enumUILayoutAlign },
 				'selfAlign': { enum: UI.base._enumUILayoutAlign },
 				'baseStyle': false,
+				'background': {
+					inline: true,
+					validate: function( v ){ var isNum = parseInt( v, 16 ); if( isNaN( isNum ) ) return v; return isNum; },
+					reloadOnChange: [ 'cornerRadius', 'outlineColor', 'lineThickness', 'filled', 'sliceTop', 'sliceRight', 'sliceBottom', 'sliceLeft', ],
+				},
+				'outlineColor': { inline: true, hidden: UI.base._isBackgroundNotShape, },
+			    'cornerRadius': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+				'lineThickness': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+				'filled': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+				'sliceTop': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+				'sliceRight': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+				'sliceBottom': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+				'sliceLeft': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
 			} );
 
 
@@ -977,13 +991,29 @@ UI.base = UI.base || {
 	// propsExtended: (optional) object with property definitions to override
 	// pos: (optional) position where this group should be inserted
 	addInspectables: function ( go, groupName, props, propsExtended, pos ) {
+		// add config if none
 		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
-		go.__propertyListConfig.groups.push( { name: groupName, properties: props, pos: pos } );
+		// find group with same name
+		var group = null;
+		for ( var i = 0; i < go.__propertyListConfig.groups.length; i++ ) {
+			if ( go.__propertyListConfig.groups[ i ].name == groupName ) { group = go.__propertyListConfig.groups[ i ]; break; }
+		}
+		// add group or append props
+		if ( !group ) go.__propertyListConfig.groups.push( group = { name: groupName, properties: props, pos: pos } );
+		else {
+			group.pos = pos;
+			for ( var i = 0, np = props.length; i < np; i++ ) if ( group.properties.indexOf( props[ i ] ) < 0 ) props.push( props[ i ] );
+		}
+		// write property defs
 		for ( var p in props ) {
-			go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
+			if ( !go.__propertyListConfig.properties[ props[ p ] ] ) {
+				go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
+			}
 		}
 		for ( var p in propsExtended ) {
-			go.__propertyListConfig.properties[ p ] = propsExtended[ p ];
+			if ( go.__propertyListConfig.properties[ p ] === undefined ) {
+				go.__propertyListConfig.properties[ p ] = propsExtended[ p ];
+			}
 		}
 	},
 
@@ -1032,7 +1062,9 @@ UI.base = UI.base || {
 			var prop = mappedProps[ i ];
 			prop.configurable = true;
 			if ( typeof( prop.enumerable ) === 'undefined' ) prop.enumerable = true;
-			go.__propertyListConfig.properties[ i ] = false; // hide from inspector
+			if ( go.__propertyListConfig.properties[ i ] === undefined ) {
+				go.__propertyListConfig.properties[ i ] = false; // hide from inspector by default
+			}
 			if ( ( prop.serialized === false || prop.set === undefined ) && go !== global ) {
 				if ( go.serializeMask.constructor === Array ) go.serializeMask.push( i );
 				else go.serializeMask[ i ] = true;

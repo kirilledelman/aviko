@@ -1088,11 +1088,8 @@ public:
  -------------------------------------------------------------------- */
 
 	
-	/// returns init object
+	/// returns init object, // force option skips serializeable check for top level object only
 	ArgValue MakeInitObject( ArgValue& val, bool force=false );
-	
-	/// populates property names
-	// void GetPropertyNames( void* obj, unordered_set<string>& ret );
 	
 	/// populates properties of object. Params includeIntKeys - include numeric keys of array-like object, useSerializeMask - exclude props in serializeMask, includeFunctions - include non-native functions as source
 	void GetProperties( void* obj, ArgValueVector* ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions );

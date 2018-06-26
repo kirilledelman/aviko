@@ -159,7 +159,6 @@ new (function( params ){
 		formatting: true,
 		marginBottom: 4,
 		alwaysShowSelection: true,
-		newLinesResetFormatting: true,
 		focusGroup: 'inspector',
 		states: {
 			off: { background: 0xFFFFFF },
@@ -192,7 +191,7 @@ new (function( params ){
 				input.caretPosition = input.text.positionLength();
 			// accept
 			} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
-				log ( "> " + input.text ); //.replace( /\^/g, '^^' )
+				log ( "> " + input.text );
 				history.push( input.text );
 				var r = eval( input.text );
 				input.text = "";
@@ -237,7 +236,7 @@ new (function( params ){
 
 	function onLog( s ) {
 		// if ( !window.active ) return;
-		logBuffer += (logBuffer.length ? "\n" : "") + s;
+		logBuffer += (logBuffer.length ? "\n^c^n" : "") + s;
 		output.text = logBuffer;
 		output.async( output.scrollToBottom, 0.1 );
 	}
@@ -489,16 +488,16 @@ new (function( params ){
 		// right click
 		} else if ( btn == 3 ) {
 			var items = [
-				{ text: "Copy", action: function () { UI.copiedValue = this.node; } },
+				{ text: "Copy", action: function () { UI.copiedValue = { type: 'object', value: this.node }; } },
 			];
 			// gameobject in copiedValue
-			if ( UI.copiedValue && typeof( UI.copiedValue ) === 'object' && UI.copiedValue.constructor === GameObject && UI.copiedValue != this.parent.node ) {
+			if ( UI.copiedValue && UI.copiedValue.type === 'object' && UI.copiedValue.value.constructor === GameObject && UI.copiedValue.value != this.parent.node ) {
 				// if not already a child of this node
-				if ( UI.copiedValue.parent != this.node )
-					items.push( { text: "Paste child", action: function () { this.node.addChild( UI.copiedValue ); } } );
+				if ( UI.copiedValue.value.parent != this.node )
+					items.push( { text: "Paste child", action: function () { this.node.addChild( UI.copiedValue.value ); } } );
 				// can paste copy
 				items.push( { text: "Paste clone", action: function () {
-					var cp = clone( UI.copiedValue );
+					var cp = clone( UI.copiedValue.value );
 					if ( cp ) this.node.addChild( cp );
 				} } );
 			}

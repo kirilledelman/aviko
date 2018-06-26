@@ -1,7 +1,12 @@
+
+Add .cloneMask - when serializing to init object, don't recurse into object
+				- when unserializing, just set property
+* Inspector - duplicating resizer w .target prop also duplicates target
+
 UI components
 make sure they're serializable
 numeric textfield doesn't up/down w joystick
-addInspectables
+addInspectables to all
 getProperties doesn't search ScriptObject prototypes
 file overwrite doesnt work?
 save non-native functions
@@ -20,6 +25,8 @@ Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
 Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
 
+GameObject
+	moveChild( child, newIndex ) or moveChild( child, newParent ) -
 
 
 Inspector
@@ -30,7 +37,6 @@ Ctrl+ wheel - zoom
 
 RenderText
 	some fonts draw off texture
-	newLinesResetFormatting - resets formatting on line wrap
 	texture based fonts!
 
 Image

@@ -76,7 +76,6 @@
 					( language ? "^B^3RUSSIAN^c^b ^9ENGLISH^c" : "^9RUSSIAN^c ^B^3ENGLISH^c^b" ) +
 					"\n\nAny other button to start";
 
-				App.fullScreen = !App.fullScreen;
 			// any other button
 			} else {
 

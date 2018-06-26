@@ -615,16 +615,6 @@ void RenderTextBehavior::InitClass() {
 	}) );
 	
 	script.AddProperty<RenderTextBehavior>
-	( "newLinesResetFormatting",
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){ return ((RenderTextBehavior*) b)->newLinesResetFormatting; }),
-	 static_cast<ScriptBoolCallback>([](void *b, bool val ){
-		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
-		rs->newLinesResetFormatting = val;
-		rs->_dirty = true;
-		return val;
-	}) );
-	
-	script.AddProperty<RenderTextBehavior>
 	( "revealStart", //
 	 static_cast<ScriptIntCallback>([](void *b, int val ){ return ((RenderTextBehavior*) b)->revealStart; }),
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
@@ -1209,14 +1199,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 				currentLine = &lines.back();
 				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;
-				
-				// reset formatting flag
-				if ( newLinesResetFormatting ) {
-					currentColor = this->textColor->rgba;
-					currentBold = this->bold;
-					currentItalic = this->italic;
-				}
-				
+								
 			// character is special sequence
 			} else if ( character == '^' && this->formatting ){
 				
@@ -1289,12 +1272,6 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 				currentLine = &lines.back();
 				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;
-				// rset formatting flag
-				if ( newLinesResetFormatting ) {
-					currentColor = this->textColor->rgba;
-					currentBold = this->bold;
-					currentItalic = this->italic;
-				}
 					
 				// word wrap - take back characters and put them into new line
 				if ( prevLine->characters.size() > 2 && !prevLine->characters.back().isWhiteSpace ) {

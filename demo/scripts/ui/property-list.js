@@ -554,7 +554,7 @@ include( './ui' );
 				field = cont.addChild( './textfield', {
 					name: pname,
 					minWidth: valueWidth,
-					value: String(fieldValue),
+					value: '(' + String(fieldValue) + ')',
 					style: go.baseStyle.values.any,
 					disabled: true,
 				}, insertChildIndex );
@@ -1232,8 +1232,11 @@ include( './ui' );
 							UI.copiedValue = { value: field.value || field.fieldValue, type: field.type };
 						}
 					} );
-					if ( UI.copiedValue && UI.copiedValue.type == field.type && !readOnly && !field.disabled ) {
-						var pasteName = go.nameObject( UI.copiedValue );
+					// if can paste
+					if ( UI.copiedValue &&
+						(UI.copiedValue.type == field.type || ( UI.copiedValue.type == 'object' && field.type == 'null' ) ) &&
+						!readOnly && !field.disabled ) {
+						var pasteName = go.nameObject( UI.copiedValue.value );
 						items.push( {
 							text: "Paste (" + pasteName + ")", action: function () {
 								field.target[ field.name ] = UI.copiedValue.value;
@@ -1660,6 +1663,7 @@ include( './ui' );
 			var fld = cachedFields[ pool ].pop();
 			delete initObj[ 'style' ];
 			for ( var p in initObj ) { fld[ p ] = initObj[ p ]; }
+			fld.active = true;
 		} else {
 			fld = new GameObject( script, initObj );
 		}
@@ -1768,6 +1772,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'worldX': false, 'worldY': false, 'worldScale': false, 'worldScaleX': false, 'worldScaleY': false,
 		'worldAngle': false, 'scale': false, 'numChildren': false,
 		'__propertyListConfig': false,
+
 	},
 	groups: [
 		{ name: "GameObject", properties: [ 'active', 'name', 'script' ] },
@@ -1778,6 +1783,8 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		{ name: "UI", properties: [ 'ui' ] },
 	]
 }
+UI.base._isBackgroundNotShape = function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderShape ) ); }
+UI.base._isBackgroundNotTexture = function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderSprite ) ); }
 
 Vector.__propertyListConfig = Vector.__propertyListConfig ||
 {

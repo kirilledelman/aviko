@@ -363,9 +363,6 @@ include( './ui' );
 		// (Boolean) enable display ^code formatting (while not editing)
 		'formatting': { get: function (){ return formatting; }, set: function( v ){ formatting = v; rt.formatting = ( formatting && !ui.focused ); }  },
 
-		// (Boolean) if using ^code formatting, each new line will auto-reset color, bold, etc.
-		'newLinesResetFormatting': { get: function (){ return rt.newLinesResetFormatting; }, set: function( p ){ rt.newLinesResetFormatting = p; }  },
-
 		// (Number) or (Color) text color
 		'color': { get: function (){ return rt.textColor; }, set: function( v ){ rt.textColor = v; }  },
 
@@ -1145,6 +1142,10 @@ include( './ui' );
 					var ss = txt.positionToIndex( rt.selectionStart );
 					var se = txt.positionToIndex( rt.selectionEnd );
 					var copiedText = txt.substr( ss, se - ss );
+					if ( rt.formatting ) {
+						// strip formatting
+						copiedText = copiedText.replace( /(\^\^)/g, '^' ).replace( /(\^[biBI0-9c])/g, '' );
+					}
 					App.clipboard = copiedText;
 					if ( key == Key.X ) ui.keyPress( -1, 1 );
 					go.fire( 'copy', copiedText );

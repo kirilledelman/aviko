@@ -14,11 +14,6 @@ ArgValue ScriptHost::MakeInitObject( ArgValue& val, bool force ) {
 	return _MakeInitObject( val, alreadySerialized, force );
 };
 
-/// populates property names
-//void ScriptHost::GetPropertyNames( void* obj, unordered_set<string>& ret ) {
-//	this->_GetPropertyNames( obj, ret );
-//}
-
 void ScriptHost::GetProperties( void* obj, ArgValueVector* ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions ) {
 	// forward to private version which returns ClassDef
 	unordered_set<string> set;
@@ -137,108 +132,6 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 	
 };
 
-// places enumerable properties of given object, including all non-readonly props defined for scriptable class. Returns ClassDef, if found.
-//ScriptHost::ClassDef* ScriptHost::_GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef ) {
-//	// add object's own properties first
-//	JSObject* iterator = JS_NewPropertyIterator( this->js, (JSObject*) obj );
-//	jsval propVal;
-//	jsid propId;
-//	ArgValue serializeMaskVal;
-//	// first, see if there's serializeMask prop
-//	if ( JS_GetProperty( this->js, (JSObject*) obj, "serializeMask", &propVal ) ) {
-//		serializeMaskVal = propVal;
-//	}
-//	while( JS_NextProperty( this->js, iterator, &propId ) && propId != JSID_VOID ) {
-//		// convert each property to string
-//		if ( JS_IdToValue( this->js, propId, &propVal ) ) {
-//			JSString* str = JS_ValueToString( this->js, propVal );
-//			char *buf = JS_EncodeString( this->js, str );
-//			unsigned attrs = 0;
-//			JSBool found = false;
-//			// check if it's in serializeMask
-//			if ( serializeMaskVal.type != TypeUndefined ) {
-//				bool masked = false;
-//				if ( serializeMaskVal.type == TypeArray ) {
-//					for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
-//						ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
-//						if ( check.type == TypeString && check.value.stringValue->compare( buf ) == 0 ) {
-//							masked = true;
-//							break;
-//						}
-//					}
-//				} else if ( serializeMaskVal.type == TypeObject ) {
-//					ArgValue check = this->GetProperty( buf, serializeMaskVal.value.objectValue );
-//					masked = check.toBool();
-//				}
-//				// found prop in serializeMask
-//				if ( masked ) {
-//					// skip
-//					JS_free( this->js, buf );
-//					continue;
-//				}
-//			}
-//			// if property isn't read-only
-//			if ( JS_GetPropertyAttributes( this->js, (JSObject*) obj, buf, &attrs, &found) && found && !( attrs & JSPROP_READONLY ) ) {
-//				// add it to end of list
-//				ret.emplace( buf );
-//			}
-//			JS_free( this->js, buf );
-//		}
-//	}
-//	
-//	// if class def wasn't passed in
-//	if ( !cdef ) {
-//		// grab object's own class def
-//		JSClass* clp = JS_GetClass( (JSObject*)obj );
-//		cdef = CDEF( string(clp->name) );
-//	}
-//	
-//	// if class def is found
-//	if ( cdef ) {
-//		// add properties listed in class def
-//		GetterSetterMapIterator iter = cdef->getterSetter.begin(), iterEnd = cdef->getterSetter.end();
-//		while( iter != iterEnd ) {
-//			GetterSetter& gs = iter->second;
-//			// if property is serialized
-//			if ( gs.flags & PROP_SERIALIZED & ~PROP_READONLY) {
-//				// check if it's in serializeMask
-//				if ( serializeMaskVal.type != TypeUndefined ) {
-//					bool masked = false;
-//					if ( serializeMaskVal.type == TypeArray ) {
-//						for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
-//							ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
-//							if ( check.type == TypeString && check.value.stringValue->compare( iter->first ) == 0 ) {
-//								masked = true;
-//								break;
-//							}
-//						}
-//					} else if ( serializeMaskVal.type == TypeObject ) {
-//						ArgValue check = this->GetProperty( iter->first.c_str(), serializeMaskVal.value.objectValue );
-//						masked = check.toBool();
-//					}
-//					// found prop in serializeMask
-//					if ( masked ) {
-//						// skip
-//						iter++;
-//						continue;
-//					}
-//				}
-//				ret.emplace( iter->first.c_str() );
-//			}
-//			iter++;
-//		}
-//		
-//		// if there's parent class, add that too and return result
-//		if ( cdef->parent ) {
-//			this->_GetPropertyNames( obj, ret, cdef->parent );
-//			return cdef;
-//		}
-//		
-//	}
-//	
-//	return cdef;
-//}
-
 /// helper for _GetProperties
 bool _isPropertyInMask( ArgValue& property, ArgValue& serializeMaskVal ) {
 	if ( serializeMaskVal.type == TypeArray ) {
@@ -260,6 +153,7 @@ bool _isPropertyInMask( ArgValue& property, ArgValue& serializeMaskVal ) {
 	}
 	return false;
 }
+
 
 ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unordered_set<string>& ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions, ClassDef* cdef ) {
 	//JSAutoRequest req( this->js );
@@ -666,7 +560,6 @@ void ScriptHost::_AddToAlreadyInitialized( void *obj, void* initObj, unordered_m
 	}
 }
 
-//
 void ScriptHost::CopyProperties( void* src, void* dest ) {
 	
 	string stubName, className;

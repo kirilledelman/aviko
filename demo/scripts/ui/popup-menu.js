@@ -44,7 +44,7 @@ include( './ui' );
 	var preferredDirection = 'down';
 	var noFocus = false;
 	var updateItemsDebouncer = '';
-	go.serializeMask = [ 'ui', 'render' ];
+	go.serializeMask = [ 'ui', 'render', 'children' ];
 
 	// API properties
 	var mappedProps = {
@@ -98,7 +98,7 @@ include( './ui' );
 	UI.base.mapProperties( go, mappedProps );
 
 	// set name
-	if ( !go.name ) go.name = "Popup menu";
+	go.name = "Popup menu";
 
 	// create components
 	container = go.addChild( './scrollable', {
@@ -123,8 +123,6 @@ include( './ui' );
 		container.removeAllChildren();
 		container.opacity = 0;
 		go.cancelDebouncer( updateItemsDebouncer );
-
-		// log( "^BItem:\n", stringify( go.baseStyle.item, true ) );
 
 		// add items
 		selectedItem = null;

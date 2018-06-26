@@ -110,6 +110,9 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, 'Resizer',
+	[ 'target', 'minSize', 'maxSize', 'collapsible', 'disabled', 'background', 'outlineColor', 'lineThickness', 'filled', 'cornerRadius', 'sliceLeft', 'sliceTop', 'sliceRight', 'sliceBottom' ],
+	null, 1 );
 
 	// create components
 
@@ -132,7 +135,7 @@ include( './ui' );
 		mode = false;
 		if ( target && target.parent && target.parent.ui ) p = target.parent.ui;
 		else if ( go.parent && go.parent.ui ) p = go.parent.ui;
-		if ( !p || !target.ui ) return;
+		if ( !p || !target || !target.ui ) return;
 
 		if ( p.layoutType == Layout.Horizontal ) {
 			minSize = minSize ? minSize : target.ui.minWidth;

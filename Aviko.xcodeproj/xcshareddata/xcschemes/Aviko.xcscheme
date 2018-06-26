@@ -66,6 +66,10 @@
             argument = "/Users/kirilledelman/Dropbox/Projects/nikogame/demo"
             isEnabled = "YES">
          </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Users/kirilledelman/Dropbox/Projects/nikogame/word-fish"
+            isEnabled = "NO">
+         </CommandLineArgument>
       </CommandLineArguments>
       <AdditionalOptions>
       </AdditionalOptions>
