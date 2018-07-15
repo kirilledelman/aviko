@@ -1436,7 +1436,7 @@ ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 	}
 	// remove remaining
 	if ( in->size() < this->children.size() ) {
-		for ( int j = (int) this->children.size() - 1; j >= nc; j-- ){
+		for ( int j = (int) this->children.size() - 1; j > nc; j-- ){ // >= ?
 			this->children[ j ]->SetParent( NULL );
 		}
 	}

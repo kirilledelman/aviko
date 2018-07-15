@@ -88,6 +88,8 @@ include( './ui' );
 		//          reloadOnChange: (Array), (String) - reload this/these properties on change, or (Boolean) true to reload all, or string "refresh" to refresh entire object
 		//          liveUpdate: (Boolean) for numeric and string field force update as you type if true, or after pressing Enter if false
 		//          validate: (Function) function called when field changes with new value as param, return (modified) value to accept, undefined to reject
+		//          autocomplete: (String) autocomplete type for text box. 'file' is supported
+		//          autocompleteParam: (String) autocomplete parameter - e.g. 'textures;png,jpg'
 		//
 		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
 		//          properties: (Object) - apply properties to sub-property-list
@@ -531,7 +533,7 @@ include( './ui' );
 						text: go.nameObject( fieldValue ),
 						wrapEnabled: false,
 						minWidth: valueWidth,
-						disabled: (disabled || ( pdef && pdef.disabled )),
+						disabled: (disabled || ( pdef && pdef.readOnly )),
 						style: go.baseStyle.values.any,
 						toggleState: !!pdef.expanded
 					} ), insertChildIndex );
@@ -569,7 +571,7 @@ include( './ui' );
 			field.focusGroup = ui.focusGroup;
 			field.fieldLabel = label;
 			if ( fieldType != 'object' && readOnly ) field.disabled = true;
-			if ( disabled || pdef.disabled ) field.disabled = true;
+			if ( disabled || pdef.readOnly ) field.disabled = true;
 			if ( pdef.tooltip ) label.tooltip = field.tooltip = pdef.tooltip;
 			if ( typeof( pdef.style ) === 'object' ) {
 				UI.base.applyProperties( field, pdef.style );
@@ -722,8 +724,10 @@ include( './ui' );
 			backButton.image.angle = 90;
 			backButton.image.ui.offsetY = -2;
 			backButton.image.ui.offsetX = 8;
+			backButton.label.wrap = true;
 		} else {
 			backButton.icon = "";
+			backButton.label.wrap = false;
 		}
 
 		// remove extra buttons from header
@@ -812,7 +816,7 @@ include( './ui' );
                         "Enter a path to a ^B.json^b file to serialize object currently in ^B$0^b global variable.",
                         false,
 						function ( path ) {
-							if ( save( target, path ) ) {
+							if ( save( target, path, true ) ) {
 								log( "Saved ^B$0^b to ^I" + path + "^i" );
 								return true;
 							} else {
@@ -1606,7 +1610,7 @@ include( './ui' );
 				case 'Function':
 					if ( !pval.match( /^function(\s+[a-zA-Z0-9_$]+)?\s*\([a-zA-Z0-9_$,\s]*\)\s*\{([^]*)\}$/ ) ) err = "Bad function syntax";
 					else if ( final === 'final' ) {
-						value = eval( "var _temp_=" + pval + ";_temp_;" ); // to allow nameless functions
+						value = eval( "(" + pval + ");" ); // to allow nameless functions
 					}
 					break;
 				case 'Number':
@@ -1731,7 +1735,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 	],
 	properties: {
 		'name': { tooltip: "Object name. It does not have to be unique." },
-		'script': { reloadOnChange: 'refresh', tooltip: "Path to .js file defining this GameObject's functionality." },
+		'script': { reloadOnChange: 'refresh', tooltip: "Path to .js file defining this GameObject's functionality.", autocomplete: 'file', autocompleteParam: 'scripts;js' },
 		'x': { step: 1, tooltip: "Horizontal position relative to parent." },
 		'y': { step: 1, tooltip: "Vertical position relative to parent." },
 		'z': { step: 1, tooltip: "Depth offset relative to parent." },

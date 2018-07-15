@@ -1,18 +1,6 @@
+Blend modes blendTarget is off by half texture size
 
-Add .cloneMask - when serializing to init object, don't recurse into object
-				- when unserializing, just set property
-* Inspector - duplicating resizer w .target prop also duplicates target
-
-UI components
-make sure they're serializable
-numeric textfield doesn't up/down w joystick
-addInspectables to all
-getProperties doesn't search ScriptObject prototypes
-file overwrite doesnt work?
-save non-native functions
-Make sure all focusable components listen for Tab and Shift+Tab keys
-Scrollbar .minusButton, .plusButton - add disabling, and paging handler funcs
-
+Demo - inspector - highlight on exit button seems to make it red!
 
 Body
 	Add global collision listener to scene?
@@ -20,7 +8,6 @@ Body
 
 modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
-Blend modes blendTarget is off by half texture size
 Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
 Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
@@ -36,7 +23,7 @@ Ctrl+ wheel - zoom
 
 
 RenderText
-	some fonts draw off texture
+	some fonts draw off texture?
 	texture based fonts!
 
 Image

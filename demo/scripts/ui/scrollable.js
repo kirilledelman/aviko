@@ -28,11 +28,11 @@ include( './ui' );
 	// internal props
 	var ui, spr, img, container = go.addChild();
 	container.ui = new UI();
-	go.serializeMask = [ 'ui', 'render' ];
-	var scrollbars = false;
+	var scrollbars = '';
 	var scrollbarsFocusable = true;
 	var constructing = true;
 	var vsb = null, hsb = null;
+	go.serializeMask = [ 'ui', 'render', 'children', 'updateScrollbars', 'addChild', 'removeChild', 'getChild', 'removeAllChildren' ];
 
 	// API properties
 	var mappedProps = {
@@ -185,7 +185,10 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
-
+	UI.base.addInspectables( go, 'Scrollable',
+		[ 'scrollbars', 'scrollbarsFocusable', 'scrollWidth', 'scrollHeight', 'containerChildren' ],
+        { 'addChild': false, 'removeChild': false, 'getChild': false, 'removeAllChildren': false }, 1 );
+	
 	// remapped functions - forward calls to container
 	go.addChild = function() { return container.addChild.apply( container, arguments ); }
 	go.removeChild = function() { return container.removeChild.apply( container, arguments ); }
@@ -195,7 +198,7 @@ include( './ui' );
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Scrollable";
+	go.name = "Scrollable";
 
 	// UI
 	ui = new UI();
@@ -204,7 +207,7 @@ include( './ui' );
 	go.ui = ui;
 
 	// container
-	container.name = 'Scrollable.Container';
+	container.name = 'Container';
 	container.ui.focusable = false;
 	container.ui.fixedPosition = true;
 

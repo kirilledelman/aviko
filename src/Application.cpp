@@ -954,7 +954,7 @@ void Application::InitClass() {
 		}
 	}) );
 	
-	// global toInit serializer
+	// when serializing, serializeMask stops property from being serialized, (also properties starting w __, or objects w .serializeable === false)
 	script.DefineGlobalFunction
 	( "serialize",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
@@ -984,7 +984,7 @@ void Application::InitClass() {
 		return true;
 	}) );
 
-	// global toInit serializer
+	// when cloning, serializeMask stops property from being cloned, cloneMask makes property copied verbatim (not cloned recursively)
 	script.DefineGlobalFunction
 	( "clone",
 	 static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
@@ -995,9 +995,9 @@ void Application::InitClass() {
 			return false;
 		}
 		ArgValue ret( initObj );
-		ret = script.MakeInitObject( ret, true );
+		ret = script.MakeInitObject( ret, true, true );
 		void *def = ret.value.objectValue;
-		ret.value.objectValue = script.InitObject( def );
+		ret.value.objectValue = script.InitObject( def, true );
 		if ( overrides ) script.CopyProperties( overrides, ret.value.objectValue );
 		sa.ReturnValue( ret );
 		return true;

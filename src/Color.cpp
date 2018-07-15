@@ -1,5 +1,6 @@
 #include "Color.hpp"
 #include "Tween.hpp"
+#include "Application.hpp"
 
 
 /* MARK:	-				Init / destroy
@@ -48,6 +49,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->rgba.r = min( 255, max( 0, (int) (val * 255.0f) ));
 		clr->r = val;
+		clr->Notify();
 		return val;
 	} ));
 	
@@ -58,6 +60,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->rgba.g = min( 255, max( 0, (int) (val * 255.0f) ));
 		clr->g = val;
+		clr->Notify();
 		return val;
 	} ));
 
@@ -68,6 +71,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->rgba.b = min( 255, max( 0, (int) (val * 255.0f) ));
 		clr->b = val;
+		clr->Notify();
 		return val;
 	} ));
 
@@ -78,6 +82,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->rgba.a = min( 255, max( 0, (int) (val * 255.0f) ));
 		clr->a = val;
+		clr->Notify();
 		return val;
 	} ));
 	
@@ -92,6 +97,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->UpdateHSV();
 		clr->SetHSV( val, clr->s, clr->v );
+		clr->Notify();
 		return val;
 	}), PROP_ENUMERABLE );
 	
@@ -106,6 +112,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->UpdateHSV();
 		clr->SetHSV( clr->h, val, clr->v );
+		clr->Notify();
 		return val;
 	}), PROP_ENUMERABLE );
 	
@@ -120,6 +127,7 @@ void Color::InitClass() {
 		Color* clr = (Color*) self;
 		clr->UpdateHSV();
 		clr->SetHSV( clr->h, clr->s, val );
+		clr->Notify();
 		return val;
 	}), PROP_ENUMERABLE );
 
@@ -129,6 +137,7 @@ void Color::InitClass() {
 	 static_cast<ScriptStringCallback>([]( void* self, string val ) {
 		Color* clr = (Color*) self;
 		clr->SetHex( val.c_str() );
+		clr->Notify();
 		return val;
 	} ), PROP_ENUMERABLE );
 	
@@ -147,7 +156,7 @@ void Color::InitClass() {
 			 script.ReportError( error );
 			 return false;
 		 }
-		
+		 self->Notify();
 		 return true;
 	 }));
 	
@@ -166,6 +175,7 @@ void Color::InitClass() {
 		
 		// apply
 		self->SetHSV( h, s, v );
+		self->Notify();
 		return true;
 	}));
 	
@@ -636,4 +646,30 @@ void Color::SetFloats( float red, float green, float blue, float alpha ) {
 	this->_hsvDirty = true;
 	
 }
+
+
+/* MARK:	-				Notification
+ -------------------------------------------------------------------- */
+
+
+void Color::Notify() {
+	
+	if ( callback ) callback( this );
+	
+	/*Event e( EVENT_CHANGE );
+	ArgValueVector* args = app.AddLateEvent( this, EVENT_CHANGE );
+	this->CallEvent( e );*/
+	
+}
+
+
+
+
+
+
+
+
+
+
+
 

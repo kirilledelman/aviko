@@ -971,6 +971,14 @@ public:
 		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
 	}
 	
+	/// sets property on script object (string version)
+	void SetProperty( const char *propName, const char* value, void* obj ) {
+		//JSAutoRequest req( this->js );
+		JSString* str = JS_NewStringCopyZ( this->js, value );
+		jsval val = STRING_TO_JSVAL( str );
+		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
+	}
+	
 	/// prevent adding more properties
 	void FreezeObject( void *obj ) {
 		
@@ -1089,7 +1097,7 @@ public:
 
 	
 	/// returns init object, // force option skips serializeable check for top level object only
-	ArgValue MakeInitObject( ArgValue& val, bool force=false );
+	ArgValue MakeInitObject( ArgValue& val, bool force=false, bool forCloning=false );
 	
 	/// populates properties of object. Params includeIntKeys - include numeric keys of array-like object, useSerializeMask - exclude props in serializeMask, includeFunctions - include non-native functions as source
 	void GetProperties( void* obj, ArgValueVector* ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions );
@@ -1097,7 +1105,7 @@ public:
 	private:
 	
 	// recursively construct init object
-	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force=false );
+	ArgValue _MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force=false, bool forCloning=false );
 	
 	// places enumerable properties of given object, including all non-readonly props defined for scriptable class into given set. Returns ClassDef, if found.
 	// ClassDef* _GetPropertyNames( void* obj, unordered_set<string>& ret, ClassDef* cdef=NULL );
@@ -1116,13 +1124,13 @@ public:
 	public:
 	
 	/// unserialize obj using initObject
-	void* InitObject( void* initObj );
+	void* InitObject( void* initObj, bool forCloning=false );
 	
 	private:
 	void* _InitObject( void* obj, void* initObj,
 					  unordered_map<string, void*> *alreadyInitialized,
 					  unordered_map<string, vector<_StubRef>> *stubs,
-					  vector<ScriptableClass*> *awakeList );
+					  vector<ScriptableClass*> *awakeList, bool forCloning=false );
 	
 	bool _IsInitObject( void *obj, string& className );
 	

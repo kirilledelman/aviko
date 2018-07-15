@@ -13,21 +13,27 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	
 	// add defaults
 	RenderBehavior::AddDefaults();
-		
+	
+	colorUpdated = static_cast<ColorCallback>([this](Color* c){ this->_dirty = true; });
+	
 	// create background object
 	Color* color = new Color( NULL );
 	color->SetInts( 255, 255, 255, 0 );
+	color->callback = colorUpdated;
 	script.SetProperty( "backgroundColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// create text color object
 	color = new Color( NULL );
+	color->callback = colorUpdated;
 	script.SetProperty( "textColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
 	// create text selection color objects
 	color = new Color( NULL );
+	color->callback = colorUpdated;
 	color->SetInt( 0x0070B0, false );
 	script.SetProperty( "selectionColor", ArgValue( color->scriptObject ), this->scriptObject );
 	color = new Color( NULL );
+	color->callback = colorUpdated;
 	color->SetInt( 0xFFFFFF, false );
 	script.SetProperty( "selectionTextColor", ArgValue( color->scriptObject ), this->scriptObject );
 	
@@ -35,6 +41,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	int defaultColors[ 10 ] = { 0x0, 0x3333FF, 0xFF3333, 0xFF33FF, 0x33FF33, 0x33FFFF, 0xFFFF33, 0xFFFFFF, 0xAAAAAA, 0x666666 };
 	for ( int i = 0; i < 10; i++ ) {
 		colors[ i ] = new Color( NULL );
+		color->callback = colorUpdated;
 		colors[ i ]->SetInt( defaultColors[ i ], false );
 		static char clrProp[6];
 		sprintf( clrProp, "color%d", i ) ;
@@ -43,6 +50,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	
 	// create effect color object
 	color = new Color( NULL );
+	color->callback = colorUpdated;
 	color->SetInts( 0, 0, 0, 255 );
 	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
 
@@ -63,6 +71,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 			return;
 		}
 	}
+	
 	// default
 	SetFont( app.defaultFontName.c_str(), this->fontSize, false, false );
 	
@@ -611,6 +620,7 @@ void RenderTextBehavior::InitClass() {
 		rs->antialias = val;
 		rs->ClearGlyphs();
 		rs->_dirty = true;
+		rs->Repaint();
 		return val;
 	}) );
 	

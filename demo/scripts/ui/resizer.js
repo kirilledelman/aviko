@@ -33,6 +33,7 @@ include( './ui' );
 	var reversedOffset = false;
 	var dragX, dragY, dragging = false, startSize = 0;
 	go.serializeMask = [ 'ui', 'render' ];
+	go.cloneMask = [ 'target' ];
 
 	// API properties
 	var mappedProps = {

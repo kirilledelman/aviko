@@ -978,6 +978,9 @@ UI.base = UI.base || {
 		// called from "focusChanged" to scroll this component into view
 		go.scrollIntoView = UI.base._scrollIntoView;
 
+		// don't serialize these
+		go.serializeMask.push( 'resize', 'focus', 'blur', 'scrollIntoView', 'baseStyle' );
+		
 	},
 
 	// helper for properties

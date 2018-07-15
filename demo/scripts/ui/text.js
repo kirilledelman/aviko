@@ -138,11 +138,26 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, "Text",
+    [ 'text', 'size', 'font', 'boldFont', 'italicFont', 'boldItalicFont',
+	    'align', 'bold', 'italic', 'wrap', 'formatting',
+	    'color', 'backgroundColor', 'outlineColor', 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY',
+	    'antialias', 'characterSpacing', 'lineSpacing' ],
+    {
+        'size': { min: 1, max: 128, step: 1, integer: true },
+	    'font': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'boldFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'italicFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'boldItalicFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'align': { enum: [ { text: "Left", value: TextAlign.Left }, { text: "Center", value: TextAlign.Center }, { text: "Right", value: TextAlign.Right },  ] },
+	    'outlineRadius': { min: 0, max: 16, integer: true },
+	    'color': { inline: true }, 'backgroundColor': { inline: true }, 'outlineColor': { inline: true },
+    }, 1 );
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Text";
+	go.name = "Text";
 
 	// text container
 	tc = go.addChild();
@@ -177,7 +192,7 @@ include( './ui' );
 			}
 		}
 		ui.minHeight = rt.height + (ui.padTop + ui.padBottom);
-		rt.width = ui.width - (ui.padLeft + ui.padRight);
+		rt.width = Math.max( ui.width - (ui.padLeft + ui.padRight), ui.minWidth );
 		rt.autoSize = autoResize;
 	}
 

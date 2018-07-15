@@ -24,7 +24,7 @@ new (function( params ){
 		'$0': {
 			get: function (){ return propertyList.target; },
 			set: function ( t ) {
-				sceneExplorer.async( function (){ this.selectNode( t ); } );
+				sceneExplorer.async( function (){ this.selectNode( t ); }, 0.5 );
 				if ( t != propertyList.target ) {
 					propertyList.target = t;
 					// target
@@ -79,16 +79,14 @@ new (function( params ){
 
 		// select node in tree
 		selectNode: function ( node ) {
-			// clear previous
+			// clear selection
 			var row = this.getChild( 0 );
-			if ( !row || this.currentNode == node ) return;
-			if ( this.currentNode ) {
-				var prow = row.findRowForNode( this.currentNode );
-				if ( prow ) {
-					prow.button.label.color = 0x0;
-					prow.button.render.active = false;
-				}
-			}
+			if ( !row ) return;
+			row.traverse( function( prow ) {
+				prow.button.label.color = 0x0;
+				prow.button.render.active = false;
+			} );
+			this.currentNode = null;
 
 			// make sure it's gameobject
 			if ( !node || !(node.constructor == GameObject || node.constructor == Scene ) ) return;
@@ -463,6 +461,16 @@ new (function( params ){
 				}
 			}
 			return null;
+		}
+		
+		// call fe( row ) on each row/subrow
+		go.traverse = function ( fe ) {
+			fe( go );
+			if ( go.container ) {
+				for ( var i = 0, nc = go.container.numChildren; i < nc; i++ ) {
+					go.container.getChild( i ).traverse( fe );
+				}
+			}
 		}
 
 		// listeners

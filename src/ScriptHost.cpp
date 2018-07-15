@@ -6,12 +6,33 @@
 /* MARK:	-				Serialization
  -------------------------------------------------------------------- */
 
+/// helper
+bool _isPropertyInMask( ArgValue& property, ArgValue& serializeMaskVal ) {
+	if ( serializeMaskVal.type == TypeArray ) {
+		for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
+			ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
+			if ( ( property.type == TypeString && check.type == TypeString && check.value.stringValue->compare( property.value.stringValue->c_str() ) == 0 ) ||
+				( property.type == TypeInt && check.type == TypeInt && check.value.intValue == property.value.intValue ) ) {
+				return true;
+			}
+		}
+	} else if ( serializeMaskVal.type == TypeObject ) {
+		if ( property.type == TypeInt ) {
+			ArgValue check = script.GetElement( (uint32_t) property.value.intValue, serializeMaskVal.value.objectValue );
+			if ( check.type != TypeUndefined ) return check.toBool();
+		} else {
+			ArgValue check = script.GetProperty( property.value.stringValue->c_str(), serializeMaskVal.value.objectValue );
+			return check.toBool();
+		}
+	}
+	return false;
+}
 
 /// returns init object
-ArgValue ScriptHost::MakeInitObject( ArgValue& val, bool force ) {
+ArgValue ScriptHost::MakeInitObject( ArgValue& val, bool force, bool forCloning ) {
 	// this will track of all objects already added
 	unordered_map<unsigned long, JSObject*> alreadySerialized;
-	return _MakeInitObject( val, alreadySerialized, force );
+	return _MakeInitObject( val, alreadySerialized, force, forCloning );
 };
 
 void ScriptHost::GetProperties( void* obj, ArgValueVector* ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions ) {
@@ -24,13 +45,13 @@ void ScriptHost::GetProperties( void* obj, ArgValueVector* ret, bool useSerializ
 }
 
 // recursively construct init object
-ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force ) {
+ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force, bool forCloning ) {
 	
 	// if value is an array
 	if ( val.type == TypeArray ) {
 		// replace each value with processed value
 		for ( size_t i = 0, ne = val.value.arrayValue->size(); i < ne; i++ ) {
-			(*val.value.arrayValue)[ i ] = _MakeInitObject( (*val.value.arrayValue)[ i ], alreadySerialized );
+			(*val.value.arrayValue)[ i ] = _MakeInitObject( (*val.value.arrayValue)[ i ], alreadySerialized, false, forCloning );
 		}
 		// return it
 		return val;
@@ -66,6 +87,10 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		unordered_set<string> properties;
 		ClassDef* cdef = this->_GetProperties( obj, NULL, properties, true, false, true, NULL );
 		
+		// clone mask
+		ArgValue cloneMaskVal;
+		if ( forCloning ) cloneMaskVal = this->GetProperty( "cloneMask", obj );
+		
 		// if ScriptableObject
 		if ( cdef ) {
 			// bail if reference to singleton class
@@ -86,7 +111,7 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		if ( cdef ) {
 			className = cdef->className.c_str();
 		// built-in object
-		} else if ( ( clp = JS_GetClass( obj ) ) && strcmp( clp->name, "Object" ) != 0 ) {
+		} else if ( ( clp = JS_GetClass( obj ) ) /* && strcmp( clp->name, "Object" ) != 0 */ ) {
 			className = clp->name;
 			
 			// TODO - if need to save built in objects like "Date", or "RegExp", can add props here to re-initialize them upon load
@@ -108,16 +133,49 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		
 		// add all values
 		unordered_set<string>::iterator p = properties.begin(), end = properties.end();
-		ArgValue prop;
+		ArgValue prop, propVal("");
 		while ( p != end ) {
 			// skip properties starting with __
 			if ( p->size() >= 2 && (*p)[ 0 ] == '_' && (*p)[ 1 ] == '_' ) {
 				p++; continue;
 			}
 			prop = this->GetProperty( p->c_str(), obj );
-			// skip functions
-			if ( prop.type != TypeFunction ) {
-				SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized ), init );
+			
+			// if cloning and property is in clone mask
+			if ( forCloning ) {
+				(*propVal.value.stringValue) = p->c_str();
+				if ( _isPropertyInMask( propVal, cloneMaskVal ) ) {
+					// just copy it
+					SetProperty( p->c_str(), prop, init );
+					p++;
+					continue;
+				}
+			}
+			
+			// function?
+			if ( prop.type == TypeFunction ) {
+				JSString* func = JS_DecompileFunction( this->js, (JSFunction*) prop.value.objectValue, 0 );
+				const char* funcBody = JS_EncodeStringToUTF8( this->js, func );
+				char* pos = strchr( funcBody, '{' );
+				bool isNative = ( pos && *(pos + 1) == 10 && *(pos + 2) == 32 && *(pos + 3) == 32 && *(pos + 4) == 32 && *(pos + 5) == 32 &&
+								 *(pos + 6) == '[' && *(pos + 7) == 'n' && *(pos + 8) == 'a' && *(pos + 9) == 't' && *(pos + 10) == 'i'  );
+				
+				// ignore native functions
+				if ( !isNative ) {
+					// cloning?
+					if ( forCloning ) {
+						SetProperty( p->c_str(), prop.value.objectValue, init );
+					} else {
+						// make () prop
+						string fp = *p;
+						fp.append( "()" );
+						SetProperty( fp.c_str(), funcBody, init );
+					}
+				}
+				// release func body
+				JS_free( this->js, (void*) funcBody );
+			} else {
+				SetProperty( p->c_str(), _MakeInitObject( prop, alreadySerialized, false, forCloning ), init );
 			}
 			p++;
 		}
@@ -132,29 +190,6 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 	
 };
 
-/// helper for _GetProperties
-bool _isPropertyInMask( ArgValue& property, ArgValue& serializeMaskVal ) {
-	if ( serializeMaskVal.type == TypeArray ) {
-		for ( size_t i = 0, n = serializeMaskVal.value.arrayValue->size(); i < n; i++ ) {
-			ArgValue& check = (*serializeMaskVal.value.arrayValue)[ i ];
-			if ( ( property.type == TypeString && check.type == TypeString && check.value.stringValue->compare( property.value.stringValue->c_str() ) == 0 ) ||
-				( property.type == TypeInt && check.type == TypeInt && check.value.intValue == property.value.intValue ) ) {
-				return true;
-			}
-		}
-	} else if ( serializeMaskVal.type == TypeObject ) {
-		if ( property.type == TypeInt ) {
-			ArgValue check = script.GetElement( (uint32_t) property.value.intValue, serializeMaskVal.value.objectValue );
-			if ( check.type != TypeUndefined ) return check.toBool();
-		} else {
-			ArgValue check = script.GetProperty( property.value.stringValue->c_str(), serializeMaskVal.value.objectValue );
-			return check.toBool();
-		}
-	}
-	return false;
-}
-
-
 ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unordered_set<string>& ret, bool useSerializeMask, bool includeReadOnly, bool includeFunctions, ClassDef* cdef ) {
 	//JSAutoRequest req( this->js );
 	
@@ -164,58 +199,62 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 	if ( useSerializeMask ) serializeMaskVal = this->GetProperty( "serializeMask", obj );
 	
 	// if class def wasn't passed in
-	JSClass* clp = JS_GetClass( (JSObject*)obj );
+	JSClass* clp = JS_GetClass( (JSObject*) obj );
+	bool recursed = ( cdef != NULL );
 	if ( !cdef ) cdef = CDEF( string(clp->name) );
 	
-	/// call getOwnPropertyNames
-	ScriptArguments args;
-	args.AddObjectArgument( obj );
-	ArgValue ownProperties = this->CallClassFunction( "Object", "getOwnPropertyNames", args );
+	// only add prototype properties if not recursed via a cdef
+	if ( !recursed ) {
 	
-	// for each property
-	for ( size_t i = 0,
-		 np = (ownProperties.type == TypeArray ? ownProperties.value.arrayValue->size() : 0);
-		 i < np; i++ ) {
-		// get property (int or string)
-		ArgValue &property = (*ownProperties.value.arrayValue)[ i ];
-		if ( !includeReadOnly && property.type == TypeString ) {
-			unsigned attrs = 0;
-			JSBool found = false;
-			// skip if property is read-only
-			if ( !JS_GetPropertyAttributes( this->js, (JSObject*) obj, property.value.stringValue->c_str(), &attrs, &found ) ||
-				!found || ( attrs & JSPROP_READONLY ) ) {
-				continue;
+		/// call getOwnPropertyNames
+		ScriptArguments args;
+		args.AddObjectArgument( obj );
+		ArgValue ownProperties = this->CallClassFunction( "Object", "getOwnPropertyNames", args );
+		
+		// for each property
+		for ( size_t i = 0,
+			 np = (ownProperties.type == TypeArray ? ownProperties.value.arrayValue->size() : 0);
+			 i < np; i++ ) {
+			// get property (int or string)
+			ArgValue &property = (*ownProperties.value.arrayValue)[ i ];
+			if ( !includeReadOnly && property.type == TypeString ) {
+				unsigned attrs = 0;
+				JSBool found = false;
+				// skip if property is read-only
+				if ( !JS_GetPropertyAttributes( this->js, (JSObject*) obj, property.value.stringValue->c_str(), &attrs, &found ) ||
+					!found || ( attrs & JSPROP_READONLY ) ) {
+					continue;
+				}
 			}
+			
+			// functions
+			if ( !includeFunctions ) {
+				ArgValue val = (property.type == TypeString ?
+								this->GetProperty( property.value.stringValue->c_str(), thisObj ) :
+								script.GetElement( (uint32_t) property.value.intValue, thisObj ) );
+				if ( val.type == TypeFunction ) { continue; }
+			}
+			
+			// check if it's in serializeMask
+			bool masked = useSerializeMask && _isPropertyInMask( property, serializeMaskVal );
+			
+			// not in serializeMask
+			if ( !masked ) {
+				// add
+				ret.emplace( property.value.stringValue->c_str() );
+			}
+			
 		}
 		
-		// functions
-		if ( !includeFunctions ) {
-			ArgValue val = (property.type == TypeString ?
-							this->GetProperty( property.value.stringValue->c_str(), thisObj ) :
-							script.GetElement( (uint32_t) property.value.intValue, thisObj ) );
-			if ( val.type == TypeFunction ) continue;
+		// add props from prototype
+		JSObject* proto = JS_IsArrayObject( this->js, (JSObject*) obj ) ?
+			JS_GetArrayPrototype( this->js, (JSObject*) obj ) :
+			JS_GetObjectPrototype( this->js, (JSObject*) obj );
+		if ( proto != obj && proto ) {
+			this->_GetProperties( proto, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, NULL );
 		}
 		
-		// check if it's in serializeMask
-		bool masked = useSerializeMask && _isPropertyInMask( property, serializeMaskVal );
-		
-		// not in serializeMask
-		if ( !masked ) {
-			// add
-			ret.emplace( property.value.stringValue->c_str() );
-			continue;
-		}
-		
-		// clean up
-		// if ( property.type == TypeString ) delete property.value.stringValue;
 	}
-	
-	// add props from prototype
-	JSObject* proto = JS_IsArrayObject( this->js, (JSObject*) obj ) ?
-		JS_GetArrayPrototype( this->js, (JSObject*) obj ) :
-		JS_GetObjectPrototype( this->js, (JSObject*) obj );
-	if ( proto != obj && proto ) this->_GetProperties( proto, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, NULL );
-	
 	// if class def is found
 	if ( cdef ) {
 		// add properties listed in class def
@@ -236,19 +275,30 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 			iter++;
 		}
 		
+		// functions
+		if ( includeFunctions ) {
+			FuncMap::iterator fi = cdef->funcs.begin(), fend = cdef->funcs.end();
+			while ( fi != fend ) {
+				ArgValue property( fi->first.c_str() );
+				bool masked = useSerializeMask && _isPropertyInMask( property, serializeMaskVal );
+				if ( !masked ) {
+					ret.emplace( property.value.stringValue->c_str() );
+				}
+				fi++;
+			}
+		}
+		
 		// if there's parent class, add that too and return result
 		if ( cdef->parent ) {
 			this->_GetProperties( obj, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, cdef->parent );
-			return cdef;
 		}
 		
 	}
-	
 	return cdef;
 }
 
 /// unserialize obj using initObject
-void* ScriptHost::InitObject( void* initObj ) {
+void* ScriptHost::InitObject( void* initObj, bool forCloning ) {
 	//JSAutoRequest r( this->js );
 	app.isUnserializing = true;
 	
@@ -257,7 +307,7 @@ void* ScriptHost::InitObject( void* initObj ) {
 	unordered_map<string, vector<_StubRef>> stubs;
 	// this is a list of all objects who will receive 'awake' event after init is complete
 	vector<ScriptableClass*> awakeList;
-	void* obj = _InitObject( NULL, initObj, &map, &stubs, &awakeList );
+	void* obj = _InitObject( NULL, initObj, &map, &stubs, &awakeList, forCloning );
 	
 	// process stubs
 	unordered_map<string, vector<_StubRef>>::iterator it = stubs.begin();
@@ -301,13 +351,22 @@ void* ScriptHost::InitObject( void* initObj ) {
 void* ScriptHost::_InitObject( void* obj, void* initObj,
 				  unordered_map<string, void*> *alreadyInitialized,
 				  unordered_map<string, vector<_StubRef>> *stubs,
-				  vector<ScriptableClass*> *awakeList ){
+				  vector<ScriptableClass*> *awakeList, bool forCloning ){
 	
 	string stubName, className;
 	
+	// if initObj is ScriptableClass or not an init object just return it
+	JSClass* initObjClass = JS_GetClass( (JSObject*) initObj );
+	bool isArray = JS_IsArrayObject( this->js, (JSObject*) initObj );
+	bool isInit = _IsInitObject( initObj, className ) || isArray;
+	if ( ( initObjClass->flags & JSCLASS_HAS_PRIVATE && JS_GetPrivate( (JSObject*) initObj ) != NULL ) ||
+		( forCloning && !isInit ) ) return initObj;
+	
 	// if obj is null, this function was called from init(), and obj needs to be created first as initObj[__class__]
 	if ( !obj ) {
-		if ( _IsInitObject( initObj, className ) ) {
+		if ( isArray ) {
+			obj = JS_NewArrayObject( this->js, 0, NULL );
+		} else if ( isInit ) {
 			obj = NewObject( className.c_str() );
 		} else {
 			obj = NewObject();
@@ -323,7 +382,6 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 	_AddToAlreadyInitialized( obj, initObj, alreadyInitialized );
 	
 	// check if object is array or regular object
-	bool isArray = JS_IsArrayObject( this->js, (JSObject*) obj );
 	uint32_t length = 0;
 	JSObject* iterator = NULL;
 	
@@ -363,12 +421,13 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 	jsid propId;
 	jsval propVal;
 	uint32_t propIndex = 0;
-	char *propName = NULL;
+	string propName;
 	struct _SetVal {
 		string propName;
 		int index = -1;
 		jsval value;
 		_SetVal( const char *prop, int i, jsval& val ) : propName(prop), index(i), value(val) {};
+		_SetVal( string prop, int i, jsval& val ) : propName(prop), index(i), value(val) {};
 	};
 	list<_SetVal> setValues;
 	list<_SetVal> setLateValues;
@@ -381,6 +440,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 			
 			// check end condition
 			if ( propIndex + 1 > length ) break;
+			propName = "";
 			
 		// object
 		} else {
@@ -393,18 +453,20 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 			
 			// convert property name to string
 			JSString* str = JS_ValueToString( this->js, propVal );
-			propName = JS_EncodeString( this->js, str );
-			size_t propLen = strlen( propName );
+			const char *p = JS_EncodeString( this->js, str );
+			propName = p;
+			JS_free( this->js, (void*) p );
+			size_t propLen = propName.length();
 			propIndex = 0;
 			// skip __special_properties__
 			if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
 		}
 		
 		// get value
-		ArgValue val = isArray ? GetElement( propIndex, initObj ) : GetProperty( propName, initObj );
+		ArgValue val = isArray ? GetElement( propIndex, initObj ) : GetProperty( propName.c_str(), initObj );
 		
 		// skip functions
-		if ( val.type == TypeFunction ) continue;
+		// if ( val.type == TypeFunction ) continue;
 		
 		// check for early property
 		bool isEarlyProp = false;
@@ -430,7 +492,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 				
 				// add to stubs list
 				vector<_StubRef> &stubList = (*stubs)[ stubName ];
-				if ( propName ) {
+				if ( propName.size() ) {
 					stubList.emplace_back( (JSObject*) obj, string( propName ), -1 );
 				} else {
 					stubList.emplace_back( (JSObject*) obj, string(""), propIndex );
@@ -442,28 +504,38 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 			} else if ( _IsInitObject( val.value.objectValue, className ) ) {
 				
 				JSObject* newObject = (JSObject*) NewObject( className.c_str() );
-				if ( newObject ) _InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, awakeList );
+				if ( newObject ) _InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, awakeList, forCloning );
 				propVal.setObjectOrNull( newObject );
 				
 			// regular object
 			} else {
 				
-				// construct a blank object
-				JSObject* newObject = JS_NewObject( this->js, NULL, NULL, NULL);
-				// populate it, recursively
-				_InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, awakeList );
-				// will set this new object
-				propVal.setObjectOrNull( newObject );
+				// cloning?
+				if ( forCloning ) {
+					
+					// use value as is
+					propVal.setObjectOrNull( (JSObject*) val.value.objectValue );
+					
+				// clone it
+				} else {
+					
+					// construct a blank object
+					JSObject* newObject = JS_NewObject( this->js, NULL, NULL, NULL);
+					// populate it, recursively
+					_InitObject( newObject, val.value.objectValue, alreadyInitialized, stubs, awakeList, forCloning );
+					// will set this new object
+					propVal.setObjectOrNull( newObject );
+				}
 				
 			}
 			
-			// value is an array
+		// value is an array
 		} else if ( val.type == TypeArray ) {
 			
 			// create new array object
 			JSObject* newObject = JS_NewArrayObject( this->js, 0, &propVal );
 			// populate it, recursively
-			_InitObject( newObject, val.arrayObject, alreadyInitialized, stubs, awakeList );
+			_InitObject( newObject, val.arrayObject, alreadyInitialized, stubs, awakeList, forCloning );
 			uint32_t len = 0;
 			JS_GetArrayLength( this->js, newObject, &len );
 			// will set this new object
@@ -475,6 +547,18 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 		}
 		
 		// propVal contains our value
+		
+		// if property name ends with ()
+		if ( !isArray && val.type == TypeString && propName.find( "()" ) == propName.length() - 2 ) {
+			// eval function
+			string funcBody = "(";
+			funcBody.append( *val.value.stringValue );
+			funcBody.append( ");" );
+			if ( JS_EvaluateScript( this->js, this->global_object, funcBody.c_str(), (unsigned) funcBody.length(), "", 0, &propVal ) ) {
+				// strip ()
+				propName = propName.substr( 0, propName.length() - 2 );
+			}
+		}
 		
 		// array
 		if ( isArray ) {
@@ -493,12 +577,9 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 		} else if ( isLateProp ){
 			setLateValues.emplace_front( propName, -1, propVal );
 		// normal
-		} else if( propName ){
+		} else if( propName.length() && strcmp( propName.c_str(), "__class__" ) != 0 ) {
 			setValues.emplace_back( propName, -1, propVal );
 		}
-		
-		// release propName
-		if ( !isArray && propName ) JS_free( this->js, propName );
 		
 	}
 	
@@ -510,6 +591,7 @@ void* ScriptHost::_InitObject( void* obj, void* initObj,
 			JS_SetElement( this->js, (JSObject*) obj, it->index, &it->value );
 		// normal prop
 		} else if ( it->propName.length() ){
+			// printf( "setting %s\n", it->propName.c_str() );
 			JS_SetProperty( this->js, (JSObject*)obj, it->propName.c_str(), &it->value );
 		}
 		it++;
@@ -587,7 +669,6 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 	// read properties
 	while( true ) {
 
-			
 		// check end condition
 		if ( !JS_NextProperty( this->js, iterator, &propId ) || propId == JSID_VOID ) break;
 		

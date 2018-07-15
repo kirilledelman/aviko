@@ -34,7 +34,7 @@ include( './ui' );
 	// internal props
 	var ui = new UI();
 	var button;
-	var value = undefined;
+	var value = '';
 	var selectedIndex = -1;
 	var items = [];
 	var arrowImage;
@@ -42,7 +42,7 @@ include( './ui' );
 	var constructing = true;
 	var maxVisibleItems = 10;
 	var autoAddValue = false;
-	go.serializeMask = [ 'ui', 'render', 'children' ];
+	go.serializeMask = [ 'ui', 'render', 'children', 'itemCheck', 'item', 'menu' ];
 
 	// API properties
 	var mappedProps = {
@@ -57,7 +57,7 @@ include( './ui' );
 				}
 				go.value = value;
 				go.selectedIndex = selectedIndex;
-				go.updateSelectedItem();
+				updateSelectedItem();
 			}  },
 
 		// (*) 'value' property of selected item
@@ -74,7 +74,10 @@ include( './ui' );
 				if ( selectedIndex == -1 && autoAddValue && items.length ) {
 					items.push( { text: v.toString(), value: v } );
 					go.selectedIndex = items.length - 1;
-				} else go.updateSelectedItem();
+				} else {
+					go.selectedIndex = selectedIndex; // for inspector to show change
+					updateSelectedItem();
+				}
 			}  },
 
 		// (Number) 0 based index of item selected in menu
@@ -82,9 +85,9 @@ include( './ui' );
 			get: function (){ return selectedIndex; },
 			set: function( v ){
 				if ( isNaN( v ) ) return;
-				selectedIndex = Math.max( -1, Math.min( Math.floor( v ), items.length ) );
-				value = selectedIndex > 0 ? items[ selectedIndex ] : value;
-				go.updateSelectedItem();
+				selectedIndex = Math.max( -1, Math.min( Math.floor( v ), items.length - 1 ) );
+				value = selectedIndex > 0 ? items[ selectedIndex ].value : value;
+				updateSelectedItem();
 			}
 		},
 
@@ -100,15 +103,15 @@ include( './ui' );
 		// (GameObject) instance of 'ui/image.js' used for dropdown icon
 		'arrowImage': { get: function (){ return arrowImage; } },
 
-		// (String) or null - texture on icon
-		'arrowIcon': {
+		// (String) or null - texture on drop down arrow icon
+		/*'arrowIcon': {
 			get: function (){ return arrowImage.texture; },
 			set: function( v ){
 				arrowImage.image.texture = v;
 				arrowImage.active = !!v;
 			}
-		},
-
+		},*/
+		
 		// (Boolean) input disabled
 		'disabled': { get: function (){ return button.disabled; }, set: function( v ){ ui.disabled = button.disabled = v; }  },
 
@@ -151,14 +154,21 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
-
+	UI.base.addInspectables( go, 'Select',
+		[ 'items', 'value', 'selectedIndex', 'disabled', 'disabledCanFocus', 'cancelToBlur' ],
+        {
+        	'items': { inline: true },
+            'value': { readOnly: true },
+            'selectedIndex': { min: 0, reloadOnChange: 'value' }
+        }, 1 );
+	
 	// API functions
 
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Select";
+	go.name = "Select";
 
 	// main button
 	button = new GameObject( './button', {
@@ -184,12 +194,11 @@ include( './ui' );
 	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
 	ui.layoutType = Layout.Vertical;
 	ui.layoutAlignX = LayoutAlign.Stretch;
-	//ui.layoutAlignY = LayoutAlign.Stretch;
 	ui.focusable = false;
 	go.ui = ui;
 
 	// updates icon and text to display currently selected item
-	go.updateSelectedItem = function () {
+	function updateSelectedItem() {
 		// something selected
 		if ( selectedIndex >= 0 ) {
 			var item = items[ selectedIndex ];
@@ -205,7 +214,7 @@ include( './ui' );
 	// opens dropdown on click
 	button.click = function ( btn ) {
 		if ( btn != 1 ) return;
-		go.showDropdown( true );
+		showDropdown( true );
 	}
 
 	// refire focus event on gameObject
@@ -213,7 +222,7 @@ include( './ui' );
 		go.fire( 'focusChanged', newFocus );
 	}
 
-	go.showDropdown = function( show ) {
+	function showDropdown( show ) {
 		// hide previously shown dropdown
 		if ( dropdown ) {
 			dropdown.parent = null;
@@ -234,7 +243,7 @@ include( './ui' );
 				focusGroup: 'dropdown',
 				height: button.height,
 				minWidth: button.width,
-				update: go.updateDropdownPosition,
+				update: updateDropdownPosition,
 				x: gp.x, y: gp.y + button.height,
 				opacity: 0,
 				scrollbars: false,
@@ -243,7 +252,7 @@ include( './ui' );
 				fixedPosition: true,
 			} );
 			// add items
-			var item, selectedItem;
+			var item = null, selectedItem = null;
 			for ( var i = 0; i < items.length; i++ ) {
 				item = new GameObject( './button', {
 					value: items[ i ].value,
@@ -254,14 +263,14 @@ include( './ui' );
 					minWidth: button.width,
 					disabled: !!items[ i ].disabled,
 					focusGroup: 'dropdown',
-					click: go.itemSelected,
-					mouseOver: go.itemSetFocus,
-					navigation: go.itemNavigation,
+					click: itemSelected,
+					mouseOver: itemSetFocus,
+					navigation: itemNavigation,
 					style: go.baseStyle.item,
 				} );
 				if ( !i || i == selectedIndex ) selectedItem = item;
-				if ( i == selectedIndex && go.itemCheck != undefined ) {
-					item.addChild( './image', go.itemCheck );
+				if ( i == selectedIndex && go.baseStyle.itemCheck !== undefined ) {
+					item.addChild( './image', go.baseStyle.itemCheckStyle );
 				}
 				item.state = 'off';
 				dropdown.addChild( item );
@@ -279,11 +288,11 @@ include( './ui' );
 					dropdown.scrollbars = 'auto';
 				}
 			}, 0.15 );
-			Input.mouseDown = go.mouseDownOutside;
+			Input.mouseDown = mouseDownOutside;
 		}
 	}
 
-	go.updateDropdownPosition = function () {
+	function updateDropdownPosition() {
 		var gp = button.localToGlobal( 0, 0, true );
 		var itemHeight = dropdown.getChild( 0 ).height;
 		var desiredHeight = Math.min( dropdown.scrollHeight, itemHeight * maxVisibleItems );
@@ -306,17 +315,17 @@ include( './ui' );
 
 	}
 
-	go.itemNavigation = function ( name, value ) {
+	function itemNavigation( name, value ) {
 		if ( name == 'cancel' ) {
-			go.showDropdown( false );
+			showDropdown( false );
 			button.focus();
 			stopAllEvents();
 		}
 	}
 
-	go.itemSelected = function () {
+	function itemSelected() {
 		stopAllEvents();
-		go.showDropdown( false );
+		showDropdown( false );
 		if ( go.value !== this.value ) {
 			go.value = this.value;
 			go.fire( 'change', go.value, this.item );
@@ -324,12 +333,12 @@ include( './ui' );
 		button.focus();
 	}
 
-	go.itemSetFocus = function () {
+	function itemSetFocus() {
 		if ( !this.disabled ) this.focus();
 	}
 
 	// click outside to close
-	go.mouseDownOutside = function ( btn, x, y ) {
+	function mouseDownOutside( btn, x, y ) {
 		// add scrollbar width, if visible
 		var ww = dropdown.width;
 		if ( dropdown.verticalScrollbar && dropdown.verticalScrollbar.active ) {
@@ -338,7 +347,7 @@ include( './ui' );
 		// close if outside
 		if ( x < dropdown.x || x > dropdown.x + ww ||
 			y < dropdown.y || y > dropdown.y + dropdown.height ) {
-			go.showDropdown( false );
+			showDropdown( false );
 			stopAllEvents();
 		}
 	}

@@ -62,9 +62,10 @@ include( './ui' );
 
 	};
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, "Tooltip", [ 'text' ], { }, 1 );
 
 	// set name
-	if ( !go.name ) go.name = "Tooltip";
+	go.name = "Tooltip";
 
 	// create components
 	panel = go.addChild( './panel', {

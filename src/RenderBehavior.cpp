@@ -203,7 +203,7 @@ size_t RenderBehavior::SelectTexturedShader(
 		shaderIndex |= SHADER_BLEND;
 		this->_UpdateBlendTarget( targ, blendTarg );
 	}
-	if ( this->outlineRadius != 0 ) shaderIndex |= SHADER_OUTLINE;
+	if ( this->outlineRadius != 0 || this->outlineOffsetX != 0 || this->outlineOffsetY != 0 ) shaderIndex |= SHADER_OUTLINE;
 	
 	ShaderVariant &variant = shaders[ shaderIndex ];
 	if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );

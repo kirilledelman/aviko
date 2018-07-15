@@ -4,6 +4,9 @@
 #include "common.h"
 #include "ScriptableClass.hpp"
 
+class Color;
+typedef function<void (Color*)> ColorCallback;
+
 /// class for specifying color in script
 class Color : public ScriptableClass {
 public:
@@ -49,6 +52,10 @@ public:
 	
 	/// updates .h.s.v properties from SDL_rgba
 	void UpdateHSV();
+	
+	/// set to callback func to call on change
+	ColorCallback callback = NULL;
+	void Notify();
 	
 	// scripting
 	

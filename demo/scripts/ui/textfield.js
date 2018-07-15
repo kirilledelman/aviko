@@ -67,7 +67,7 @@ include( './ui' );
 			rt.caretPosition = rt.selectionStart = rt.selectionEnd = 0;
 			if ( pt != t && !constructing ) go.fire( 'change', go.value );
 			if ( ps0 != ps1 ) go.fire( 'selectionChanged' );
-		}  },
+		} },
 
 		// (String) or (Number) depending on if .numeric is set
 		'value': {
@@ -147,7 +147,6 @@ include( './ui' );
 					rt.showCaret = ui.dragSelect = false;
 				    rt.formatting = formatting;
 				    rt.scrollLeft = 0;
-					// go.async( cancelAutocomplete, 0.25 );
 					cancelAutocomplete();
 					if ( numeric ) go.value = go.value;
 					go.fire( rt.text == resetText ? 'cancel' : 'accept', rt.text );
@@ -401,7 +400,30 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
-
+	UI.base.addInspectables( go, "TextField",
+    [ 'text', 'value', 'numeric', 'integer', 'min', 'max', 'step', 'autoGrow', 'multiLine',
+	  'acceptToEdit', 'cancelToBlur', 'blurOnClickOutside', 'alwaysShowSelection', 'canScrollUnfocused',
+	  'newLinesRequireShift' ],
+    {
+    	'text': { reloadOnChange: 'value' },
+	    'value': { reloadOnChange: 'text' },
+    }, 1 );
+	UI.base.addInspectables( go, "Text",
+    [   'size', 'font', 'boldFont', 'italicFont', 'boldItalicFont',
+		'align', 'bold', 'italic', 'wrap', 'formatting',
+		'color', 'backgroundColor', 'outlineColor', 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY',
+		'antialias', 'characterSpacing', 'lineSpacing' ],
+    {
+        'size': { min: 1, max: 128, step: 1, integer: true },
+	    'font': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'boldFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'italicFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'boldItalicFont': { autocomplete: 'file', autocompleteParam: 'fonts;ttf', liveUpdate: false },
+	    'align': { enum: [ { text: "Left", value: TextAlign.Left }, { text: "Center", value: TextAlign.Center }, { text: "Right", value: TextAlign.Right },  ] },
+	    'outlineRadius': { min: 0, max: 16, integer: true },
+	    'color': { inline: true }, 'backgroundColor': { inline: true }, 'outlineColor': { inline: true },
+    }, 2 );
+	
 	// API functions
 
 	// set input focus to the control. forceEdit param = true, will begin editing even if acceptToEdit = true
@@ -409,13 +431,14 @@ include( './ui' );
 
 	// remove input focus from control
 	go[ 'blur' ] = function () { ui.blur(); }
-
+	
+	// scroll to bottom of text
 	go[ 'scrollToBottom' ] = function () { rt.scrollLeft = 0; rt.scrollTop = (rt.scrollHeight > rt.height ? (rt.scrollHeight - rt.height) : 0); }
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Textfield";
+	go.name = "Textfield";
 
 	// background
 	bg = new RenderSprite();
@@ -495,6 +518,10 @@ include( './ui' );
 				// blur, or stop editing
 				if ( cancelToBlur ) ui.blur();
 				else go.editing = false;
+			} else if ( name == 'vertical' ) {
+				ui.keyDown( value < 0 ? Key.Up : Key.Down );
+			} else if ( name == 'horizontal' ) {
+				ui.keyDown( value < 0 ? Key.Right : Key.Left );
 			}
 
 		// reading
@@ -749,6 +776,7 @@ include( './ui' );
 			} else if ( autocompleteReplaceStart == rt.caretPosition ) {
 				// select part that differs
 				rt.selectionEnd = ( rt.selectionStart = rt.caretPosition ) + sugg.length;
+				go.scrollCaretToView();
 			}
 
 			go.fire( 'change', rt.text );
@@ -1099,6 +1127,7 @@ include( './ui' );
 					go.value += ( key == Key.Up ? step : -step ) * ( shift ? 10 : 1 );
 					rt.selectionStart = 0; rt.caretPosition = rt.selectionEnd = rt.text.positionLength(); // select all
 					go.fire( 'change', go.value );
+					stopAllEvents();
 					return;
 				}
 

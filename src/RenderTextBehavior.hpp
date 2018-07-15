@@ -71,6 +71,9 @@ public:
 	GPU_Image* surface = NULL;
 	GPU_Rect surfaceRect = { 0 };
 	
+	/// update notification
+	ColorCallback colorUpdated;
+	
 	/// font size
 	unsigned fontSize = 16;
 	

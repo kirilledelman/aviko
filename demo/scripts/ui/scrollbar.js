@@ -40,6 +40,7 @@ include( './ui' );
 	var constructing = true;
 	var grabX = 0, grabY = 0;
 	go.serializeMask = [ 'ui', 'render', 'children' ];
+	go.cloneMask = [ 'plusButton', 'minusButton' ];
 
 	// API properties
 	var mappedProps = {
@@ -101,14 +102,21 @@ include( './ui' );
 			 ui.disabled = disabled = v;
 			 ui.focusable = !v;
 			 if ( v && ui.focused ) ui.blur();
-			 go.state = 'disabled';
+			 go.state = 'auto';
 		 }  },
 
 		// (ui/button) button serving as >> or 'pageUp' button
-		'plusButton': { get: function (){ return plusButton; }, set: function( b ){ plusButton = b; go.dispatchLate( 'layout' ); }  },
+		'plusButton': { get: function (){ return plusButton; }, set: function( b ){
+			if ( plusButton && plusButton.click == pageScroll ) plusButton.click = null;
+			if ( b ) b.click = pageScroll;
+			plusButton = b; go.dispatchLate( 'layout' );
+		}  },
 
 		// (ui/button) button serving as << or 'pageDown' button
-		'minusButton': { get: function (){ return minusButton; }, set: function( b ){ minusButton = b; go.dispatchLate( 'layout' ); }  },
+		'minusButton': { get: function (){ return minusButton; }, set: function( b ){
+			if ( minusButton && minusButton.click == pageScroll ) minusButton.click = null;
+			if ( b ) b.click = pageScroll;
+			minusButton = b; go.dispatchLate( 'layout' ); }  },
 
 		// (GameObject) - reference to scroll handle
 		'handle': { get: function (){ return handle; } },
@@ -168,11 +176,15 @@ include( './ui' );
 	};
 	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
 	UI.base.mapProperties( go, mappedProps );
+	UI.base.addInspectables( go, 'Scrollbar',
+		[ 'orientation', 'position', 'totalSize', 'handleSize', 'discrete', 'acceptToCycle', 'cancelToBlur',
+			'disabled', 'plusButton', 'minusButton' ],
+        { orientation: { enum: [ 'vertical', 'horizontal' ] } }, 1 );
 
 	// create components
 
 	// set name
-	if ( !go.name ) go.name = "Scrollbar";
+	go.name = "Scrollbar";
 
 	// background
 	bg = new RenderSprite();
@@ -183,7 +195,7 @@ include( './ui' );
 
 	// handle
 	handle = go.addChild( './button', {
-		name: "Scrollbar.Handle",
+		name: "Handle",
 		disabled: true,
 		focusable: false,
 		layoutType: Layout.Anchors,
@@ -412,6 +424,16 @@ include( './ui' );
 
 		if ( code == Key.Tab ) ui.moveFocus( shift ? -1 : 1 );
 
+	}
+	
+	// page up / page down buttons handlers
+	function pageScroll() {
+		if ( this == plusButton ) {
+			go.position += handleSize * dir;
+		} else {
+			go.position -= handleSize * dir;
+		}
+		go.fire( 'scroll', go.position );
 	}
 
 	// apply defaults
