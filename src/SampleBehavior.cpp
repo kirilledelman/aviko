@@ -18,7 +18,6 @@ SampleBehavior::SampleBehavior() {
 	
 	// register event functions
 	AddEventCallback( EVENT_UPDATE, (BehaviorEventCallback) &SampleBehavior::Update );
-	AddEventCallback( EVENT_LATEUPDATE, (BehaviorEventCallback) &SampleBehavior::LateUpdate );
 	AddEventCallback( EVENT_ADDED, (BehaviorEventCallback) &SampleBehavior::Added );
 	AddEventCallback( EVENT_REMOVED, (BehaviorEventCallback) &SampleBehavior::Removed );
 	AddEventCallback( EVENT_ADDEDTOSCENE, (BehaviorEventCallback) &SampleBehavior::AddedToScene );
@@ -56,8 +55,6 @@ void SampleBehavior::InitClass() {
 
 // update
 void SampleBehavior::Update( SampleBehavior* behavior, void* param, Event* e ) {}
-
-void SampleBehavior::LateUpdate( SampleBehavior* behavior, void* go, Event* e ){}
 
 void SampleBehavior::Added( SampleBehavior* behavior, GameObject* newParent, Event* e ){}
 

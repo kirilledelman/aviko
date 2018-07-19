@@ -297,7 +297,7 @@ void Input::InitClass() {
 		int numKeys;
 		SDL_GetKeyboardState( &numKeys );
 		if ( index < numKeys ) {
-			sa.ReturnString( string( SDL_GetKeyName( SDL_SCANCODE_TO_KEYCODE( index ) ) ) );
+			sa.ReturnString( SDL_GetKeyName( SDL_SCANCODE_TO_KEYCODE( index ) ) );
 		} else {
 			sa.ReturnUndefined();
 		}

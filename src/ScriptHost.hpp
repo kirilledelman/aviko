@@ -303,6 +303,9 @@ private:
 		
 		// find class
 		JSClass* jc = JS_GetClass( obj );
+		if ( !( jc->flags & JSCLASS_HAS_PRIVATE )) return false;
+		void* self =  JS_GetPrivate( obj );
+		if ( !self ) return false;
 		ClassDef *cdef = CDEF( string( jc->name ) );
 		
 		// if found, and [id] is string
@@ -312,11 +315,11 @@ private:
 			string propName(idString);
 			JS_free( cx, idString );
 			
-			return script.PropGetterSetter( cx, 1, JS_GetPrivate( obj ), cdef, propName, vp );
+			return script.PropGetterSetter( cx, 1, self, cdef, propName, vp );
 		// id is integer
 		} else if( JSID_IS_INT( id ) ) {
 			string numProp("#");
-			return script.PropGetterSetter( cx, 1, JS_GetPrivate( obj ), cdef, numProp, vp, JSID_TO_INT( id ) );
+			return script.PropGetterSetter( cx, 1, self, cdef, numProp, vp, JSID_TO_INT( id ) );
 		}
 		
 		return true;
@@ -324,14 +327,12 @@ private:
 	
 	/// generic getter
 	static bool PropGetter (JSContext *cx, HandleObject obj, HandleId id, MutableHandleValue vp ) {
-		// scoped request
-		//JSAutoRequest req( cx );
-		//JSAutoCompartment( cx, obj );
 		
 		// find class
-		void* self = JS_GetPrivate( obj );
-		if ( !self ) return false;
 		JSClass* jc = JS_GetClass( obj );
+		if ( !( jc->flags & JSCLASS_HAS_PRIVATE )) return false;
+		void* self =  JS_GetPrivate( obj );
+		if ( !self ) return false;
 		ClassDef *cdef = CDEF( string( jc->name ) );
 		
 		// if found, and [id] is string

@@ -681,7 +681,10 @@ void ScriptHost::CopyProperties( void* src, void* dest ) {
 		size_t propLen = strlen( propName );
 		propIndex = 0;
 		// skip __special_properties__
-		if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) continue;
+		if ( propLen >= 4 && propName[ 0 ] == '_' && propName[ 1 ] == '_' && propName[ propLen - 1 ] == '_' && propName[ propLen - 2 ] == '_' ) {
+			JS_free( this->js, propName );
+			continue;
+		}
 		
 		// get value
 		JS_GetProperty( this->js, (JSObject*) src, propName, &propVal );
@@ -750,22 +753,31 @@ bool ScriptHost::Log( JSContext *cx, unsigned argc, Value *vp ) {
 	string combinedString;
 	for ( int i = 0; i < argc; i++ ) {
 		jsval val = args.get( i );
-		RootedString str( cx, JS_ValueToString( cx, val ) );
-		if ( val.isObject() && JS_ObjectIsCallable(cx, JSVAL_TO_OBJECT( val ) ) ) {
-			static char cbuf[ 256 ];
-			sprintf( cbuf, "[Function %p]%s", JSVAL_TO_OBJECT( val ), (i == argc - 1 ? "" : " ") );
-			combinedString.append( cbuf );
+		// convert to string
+		JSString* sp = JS_ValueToString( cx, val );
+		if ( !sp ) {
+			// failed to convert
+			if ( val.isObject() ) combinedString.append( "[Object]" );
+			else combinedString.append( "[?]" );
 		} else {
-			char* buf = JS_EncodeString( cx, str );
-			bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
-			if ( isArray ) {
-				combinedString.append( "[" );
-				combinedString.append( buf );
-				combinedString.append( "]" );
+			// converted - print
+			RootedString str( cx, sp );
+			if ( val.isObject() && JS_ObjectIsCallable(cx, JSVAL_TO_OBJECT( val ) ) ) {
+				static char cbuf[ 256 ];
+				sprintf( cbuf, "[Function %p]%s", JSVAL_TO_OBJECT( val ), (i == argc - 1 ? "" : " ") );
+				combinedString.append( cbuf );
 			} else {
-				combinedString.append( buf );
+				char* buf = JS_EncodeString( cx, str );
+				bool isArray = val.isObject() ? JS_IsArrayObject( script.js, val.toObjectOrNull() ) : false;
+				if ( isArray ) {
+					combinedString.append( "[" );
+					combinedString.append( buf );
+					combinedString.append( "]" );
+				} else {
+					combinedString.append( buf );
+				}
+				JS_free( cx, buf );
 			}
-			JS_free( cx, buf );
 		}
 		if (i < argc) combinedString.append( " " );
 	}

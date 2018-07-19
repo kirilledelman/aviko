@@ -520,8 +520,6 @@ include( './ui' );
 				else go.editing = false;
 			} else if ( name == 'vertical' ) {
 				ui.keyDown( value < 0 ? Key.Up : Key.Down );
-			} else if ( name == 'horizontal' ) {
-				ui.keyDown( value < 0 ? Key.Right : Key.Left );
 			}
 
 		// reading

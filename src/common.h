@@ -81,7 +81,6 @@ extern int RobotoRegular_size;
 
 // GameObject events
 #define EVENT_UPDATE "update"
-#define EVENT_LATEUPDATE "lateUpdate"
 #define EVENT_ADDED "added"
 #define EVENT_REMOVED "removed"
 #define EVENT_CHILDADDED "childAdded"

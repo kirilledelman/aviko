@@ -2297,7 +2297,10 @@ void GameObject::Render( Event& event ) {
 		GameObject* obj = this->children[ i ];
 		// recurse if render behavior didn't ask to skip it
 		if ( obj->active() && obj != event.skipObject && obj != event.skipObject2 ) obj->Render( event );
-	}	
+	}
+	
+	// clear skip
+	event.skipObject = event.skipObject2 = NULL;
 	
 	// render after children?
 	if ( doRender && this->renderAfterChildren ) {

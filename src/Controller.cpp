@@ -139,12 +139,14 @@ void Controller::InitClass() {
 		ArgValueVector::iterator it = keys.begin(), end = keys.end();
 		while( it != end ) {
 			// expect array
-			ArgValue vec = script.GetProperty( it->value.stringValue->c_str(), in );
+			const char *skey = it->value.stringValue->c_str();
+			if ( skey[ 0 ] != '_' || skey[ 1 ] < '0' || skey[ 1 ] > '9' ) { it++; continue; }
+			ArgValue vec = script.GetProperty( skey, in );
 			if ( vec.type != TypeArray ) continue;
 			
 			// convert string "_key" -> int
 			int key = -1;
-			key = SDL_atoi( (*it).value.stringValue->substr( 1 ).c_str() );
+			key = SDL_atoi( skey + 1 );
 			
 			// each binding in array
 			for ( size_t i = 0, nb = vec.value.arrayValue->size(); i < nb; i++ ) {

@@ -1,12 +1,12 @@
-Blend modes blendTarget is off by half texture size
-
-Demo - inspector - highlight on exit button seems to make it red!
+In text field, when Cmd+Up/Down, set cursor to end
+text field - left/right cursor don't work anymore
+evaluating GameObject.prototype crash
 
 Body
+	add method - "makeDefaultShape" creating shape from sprite, or shape
 	Add global collision listener to scene?
 	SyncObjectToBody - NaN
 
-modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 
 Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
@@ -17,24 +17,18 @@ GameObject
 
 
 Inspector
+modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 Ctrl+ wheel - zoom
 	+ left - pan
 
-
-
 RenderText
-	some fonts draw off texture?
 	texture based fonts!
 
 Image
-	child autoDraw is drawn normally when Image height = 0, should be hidden
 	add drawing methods for shapes, sprites
 
-Body
-	add method - "makeDefaultShape" creating shape from sprite, or shape
-
 Propertylist
-	.script, .texture - file lookup field
+	.texture - file lookup field
 
 
 Move render code for sprite to separate static method
@@ -79,6 +73,9 @@ Image
 Nice to have
 
 =============================================
+
+ScriptHost
+	SetProperty( "propname", int|float|void* etc... ) - easy
 
 GameObject
 	transplantTo( newParent ) - transplant, keep relative transform

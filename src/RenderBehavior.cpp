@@ -145,6 +145,7 @@ void RenderBehavior::UpdateTexturePad() {
 /* MARK:	-				Shader methods
  -------------------------------------------------------------------- */
 
+
 void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTarg ) {
 	
 	if ( targ && targ->image && blendTarg ) {
@@ -156,6 +157,7 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 				GPU_UnsetImageVirtualResolution( img );
 				GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
 				GPU_SetSnapMode( img, GPU_SNAP_NONE );
+				GPU_SetAnchor( img, 0, 0 );
 				GPU_LoadTarget( img );
 				if ( img->target ) {
 					*blendTarg = img->target;

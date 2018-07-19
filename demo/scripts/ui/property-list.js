@@ -1932,9 +1932,8 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 
 		active: { tooltip: "Render component is enabled." },
 
-		texture: { // todo - autosuggest texture path
-			autocomplete: UI.base.autocompleteFilePath,
-			autocompleteParam: 'textures;png,jpg,jpeg',
+		texture: {
+			autocomplete: UI.base.autocompleteTexturePath,
 			tooltip: "Path to texture or texture frame."
 		},
 

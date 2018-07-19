@@ -112,7 +112,7 @@ public:
 	string soundsDirectory = "/sounds/";
 	string fontsDirectory = "/fonts/";
 	string scriptsDirectory = "/scripts/";
-	string defaultFontName = "Roboto-Regular";
+	string defaultFontName = "default";
 	
 	/// stores loaded textures
 	ResourceManager<ImageResource> textureManager;

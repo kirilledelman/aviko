@@ -32,10 +32,6 @@ UI.style = UI.style || {
 
 	// text label - ui/text.js
 	text: {
-		font: 'Roboto-Regular',
-		boldFont: 'Roboto-Black',
-		italicFont: 'Roboto-Italic',
-		boldItalicFont: 'Roboto-BlackItalic',
 		size: 14,
 		textAlign: TextAlign.Left,
 		color: 0xFFFFFF,
@@ -44,10 +40,6 @@ UI.style = UI.style || {
 
 	// text input field - ui/textfield.js
 	textfield: {
-		font: 'Roboto-Regular',
-		boldFont: 'Roboto-Black',
-		italicFont: 'Roboto-Italic',
-		boldItalicFont: 'Roboto-BlackItalic',
 		bold: true,
 		size: 14,
 		color: 0x0,
@@ -1155,7 +1147,7 @@ UI.base = UI.base || {
 	// textfield callback for autocompleting file path
 	// textfield.autocompleteParam in form 'startdirectory;extension1,extension2...'
 	autocompleteFilePath: function ( textfield ) {
-
+		
 		// list files matching text in box
 		var tft = textfield.text;
 		var exts = [];
@@ -1186,6 +1178,51 @@ UI.base = UI.base || {
 
 	},
 
+	// textfield callback for autocompleting texture path, with optional ":frameName" at end
+	autocompleteTexturePath: function ( textfield ) {
+
+		// TODO
+		var tft = textfield.text;
+		
+		// if contains ":"
+		var colonPos = tft.lastIndexOf( ':' );
+		if ( colonPos == -1 ) {
+			// set default autocompleteParam
+			if ( typeof( textfield.autocompleteParam ) === 'undefined' ) {
+				textfield.autocompleteParam = 'textures;png,jpg,jpeg';
+			}
+			///  return UI.base.auto
+		}
+		
+		// list files matching text in box
+		var exts = [];
+		var startPath = '';
+		if ( typeof( textfield.autocompleteParam ) === 'string' ) {
+			var parts = textfield.autocompleteParam.split( ';' );
+			if ( parts.length > 1 ) {
+				startPath = parts[ 0 ];
+				exts = parts[ 1 ].split( ',' );
+			} else exts = parts[ 0 ].split( ',' );
+		}
+		var files = listDirectory( tft, exts, startPath );
+		var suggestions = [];
+		var lastSlash = tft.lastIndexOf( '/' );
+		var tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
+		for ( var i = 0; i < files.length; i++ ){
+			var f = files[ i ];
+			suggestions.push( {
+				text: "^B" + f.substr( 0, tail.length ) + "^b" + f.substr( tail.length ),
+				value: f.substr( tail.length ) } );
+		}
+
+		// return result
+		return {
+			replaceStart: textfield.caretPosition,
+			suggestions: suggestions
+		};
+
+	},
+	
 	// focus rectangle layout callback
 	_layoutFocusRect: function ( w, h ) {
 		var fr = this.focusRectObject;

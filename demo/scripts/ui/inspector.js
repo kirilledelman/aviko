@@ -78,10 +78,10 @@ new (function( params ){
 		},
 
 		// select node in tree
-		selectNode: function ( node ) {
+		selectNode: function selectNode ( node ) {
 			// clear selection
 			var row = this.getChild( 0 );
-			if ( !row ) return;
+			if ( !row || node == this.currentNode ) return;
 			row.traverse( function( prow ) {
 				prow.button.label.color = 0x0;
 				prow.button.render.active = false;
@@ -538,13 +538,8 @@ new (function( params ){
 	// creates an effect that highlights go's location
 	function highlightGameObject( go ) {
 		if ( !go || go.constructor != GameObject || !go.parent ) return;
-		if ( UI.highlight ) {
-			// wait for previous to finish
-			async( function(){ highlightGameObject( go ) }, 1 );
-			return;
-		}
 		// attach highlight to scene
-		var highlight = UI.highlight = new GameObject( {
+		var highlight = new GameObject( {
 			x: go.worldX, y: go.worldY,
 			angle: go.worldAngle,
 			scaleX: go.worldScaleX, scaleY: go.worldScaleY } );
@@ -569,24 +564,15 @@ new (function( params ){
 		bounds.scaleY = ( bounds.render.height + 40 ) / bounds.render.height;
 		bounds.scaleTo( 1, 0.5, Ease.Out );
 
-		// flash bounds color
-		var brc = bounds.render.color;
-		var clr = new Tween( brc, [ 'r', 'g', 'b' ], [ brc.r, brc.g, brc.b ], [ 1, 1, 1 ], 0.2 );
-		clr.count = 7;
-		clr.finished = function () { if ( this.count-- ) this.reverse(); }
-
 		// flash render
 		if ( go.render ) {
-			var rac = go.render.addColor;
-			var rfc = new Tween( rac, [ 'r', 'g', 'b', 'a' ], [ rac.r, rac.g, rac.b, rac.a ], [ 1, -0.5, -0.5, 1 ], 0.2 );
-			rfc.count = 7;
-			rfc.finished = function () {
-				if ( this.count-- ) { this.reverse(); }
-			}
+			var ac = go.render.addColor.hex;
+			go.render.addColor = 'FF000000';
+			go.render.addColor.hexTo( ac, 1 );
 		}
 
 		// remove after 2 sec
-		highlight.async( function () { highlight.parent = null; UI.highlight = null; }, 2 );
+		highlight.async( function () { highlight.parent = null; }, 2 );
 
 		// show
 		App.scene.addChild( highlight, -1 );

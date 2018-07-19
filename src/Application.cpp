@@ -232,6 +232,7 @@ void Application::UpdateBackscreen() {
 		GPU_UnsetImageVirtualResolution( this->backScreen );
 		GPU_SetImageFilter( this->backScreen, GPU_FILTER_NEAREST );
 		GPU_SetSnapMode( this->backScreen, GPU_SNAP_NONE );
+		GPU_SetAnchor( this->backScreen, 0, 0 );
 		GPU_LoadTarget( this->backScreen );
 		GPU_SetShapeBlending( true );
 		GPU_SetBlendMode( this->backScreen, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
@@ -889,7 +890,7 @@ void Application::InitClass() {
 		event->stopped = true;
 		
 		// return stopped event name
-		sa.ReturnString( string( event->name ) );
+		sa.ReturnString( event->name );
 		return true;
 	}) );
 	
@@ -911,7 +912,7 @@ void Application::InitClass() {
 	( "currentEventName",
 	 static_cast<ScriptFunctionCallback>([]( void*, ScriptArguments& sa ) {
 		
-		if ( Event::eventStack.size() ) sa.ReturnString( string( Event::eventStack.back()->name ) );
+		if ( Event::eventStack.size() ) sa.ReturnString( Event::eventStack.back()->name );
 		else sa.ReturnNull();
 		
 		return true;
@@ -1102,9 +1103,51 @@ void Application::InitClass() {
 		return true;
 	}) );
 	
+	// dump stack
+	script.DefineGlobalFunction
+	( "stackTrace",
+	 static_cast<ScriptFunctionCallback>([](void* o, ScriptArguments& sa ){
+		const char* error = "usage: stackTrace( Boolean asObject )";
+		bool asObj = false;
+		if ( !sa.ReadArguments( 0, TypeBool, &asObj ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		StackDescription* desc = JS::DescribeStack( script.js, 128 );
+		ArgValueVector ret;
+		string sret;
+		for ( unsigned i = 0; i < desc->nframes; i++ ) {
+			FrameDescription* frame = &desc->frames[ i ];
+			string scriptFileName = JS_GetScriptFilename( script.js, frame->script );
+			scriptFileName.erase( scriptFileName.begin(), scriptFileName.begin() + app.currentDirectory.size() );
+			if ( asObj ) {
+				void* obj = script.NewObject();
+				script.SetProperty( "function", ArgValue( (void*) frame->fun ), obj );
+				script.SetProperty( "line", ArgValue( (int) frame->lineno ), obj );
+				script.SetProperty( "script", scriptFileName.c_str(), obj );
+				ret.emplace_back( obj );
+			} else {
+				ArgValue funcName = script.GetProperty( "name", frame->fun );
+				sret.append( funcName.value.stringValue->length() ? funcName.value.stringValue->c_str() : "anonymous" );
+				sret.append( "() @ " );
+				sret.append( scriptFileName.c_str() );
+				sret.append( ":" );
+				static char buf[ 8 ];
+				sprintf( buf, "%u", frame->lineno );
+				sret.append( buf );
+				if ( i < desc->nframes - 1 ) sret.append( "\n" );
+			}
+		}
+		JS::FreeStackDescription( script.js, desc );
+		// done
+		if ( asObj ) sa.ReturnArray( ret );
+		else sa.ReturnString( sret );
+		return true;
+	}));
+	
 	// intern all strings
 	const char* interns[] = {
-		EVENT_SCENECHANGED, EVENT_UPDATE, EVENT_LATEUPDATE, EVENT_ADDED,
+		EVENT_SCENECHANGED, EVENT_UPDATE, EVENT_ADDED,
 		EVENT_REMOVED, EVENT_ADDEDTOSCENE, EVENT_REMOVEDFROMSCENE,
 		EVENT_CHILDADDED, EVENT_CHILDREMOVED, EVENT_ACTIVECHANGED,
 		EVENT_ATTACHED, EVENT_DETACHED, EVENT_RENDER, EVENT_KEYDOWN, EVENT_KEYUP,
@@ -1342,16 +1385,6 @@ void Application::GameLoop() {
 		
 		// capture console input (RPi workaround)
 		if ( poll( &pollStruct, 1, 0 ) == 1 ) read( STDIN_FILENO, &pollChar, 1 );
-		
-		// continue
-		if ( scene ) {
-		
-			// late update
-			event.name = EVENT_LATEUPDATE;
-			scene->DispatchEvent( event, true );
-			event.skipObject = NULL;
-			event.stopped = false; // reused
-		}
 		
 		// perform asyncs & debounce calls
 		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );

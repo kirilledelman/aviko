@@ -469,7 +469,6 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		
 		// get image
 		image = behavior->imageInstance->GetImage();
-		if ( !image ) return;
 		
 		// if autodraw and this is a direct child of this behavior's gameObject
 		if ( behavior->imageInstance->autoDraw && behavior->imageInstance->autoDraw->parent == behavior->gameObject ){
@@ -482,6 +481,9 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 			event->skipObject2->DirtyTransform();
 		}
 		
+		// no draw
+		if ( !image ) return;
+		
 		// size
 		shaderW = srcRect.w = image->base_w;
 		shaderH = srcRect.h = image->base_h;
@@ -490,10 +492,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		sy = behavior->height / srcRect.h;
 		sx = behavior->width / srcRect.w;
 		
-	}
-	
-	// bail if nothing to draw
-	if ( !image ) return;
+	} else return;
 	
 	// blend mode and color
 	if ( behavior->blendMode == BlendMode::Cut ) {

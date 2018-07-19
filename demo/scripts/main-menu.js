@@ -126,7 +126,17 @@ new (function (){
 			quit();
 		}
 	} );
-
+	
+	
+	// test
+var p = {
+	get p(){ return this._p; },
+	set p( v ) { this._p = v; },
+	__proto__: GameObject.prototype
+};
+var ego = new GameObject(); ego.__proto__ = p;
+	
+	
 	// focus on first button
 	buttons.getChild( 0 ).focus(); //*/
 	return scene;

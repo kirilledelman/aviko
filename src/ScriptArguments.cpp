@@ -52,7 +52,7 @@ void ScriptArguments::ReturnBool( bool val ) { this->callArgs->rval().setBoolean
 void ScriptArguments::ReturnInt( int val ) { this->callArgs->rval().setInt32( val ); }
 void ScriptArguments::ReturnFloat( float val ) { this->callArgs->rval().setDouble( val ); }
 void ScriptArguments::ReturnDouble( double val ) { this->callArgs->rval().setDouble( val ); }
-void ScriptArguments::ReturnString( string val ) { RootedString rs( script.js, JS_NewStringCopyZ( script.js, val.c_str() ) ); this->callArgs->rval().setString( rs ); }
+void ScriptArguments::ReturnString( string& val ) { RootedString rs( script.js, JS_NewStringCopyZ( script.js, val.c_str() ) ); this->callArgs->rval().setString( rs ); }
 void ScriptArguments::ReturnString( const char* val ) { RootedString rs( script.js, JS_NewStringCopyZ( script.js, val ) ); this->callArgs->rval().setString( rs ); }
 void ScriptArguments::ReturnObject( void* val ) { this->callArgs->rval().setObjectOrNull( (JSObject*) val ); }
 void ScriptArguments::ReturnValue( ArgValue val ) { this->callArgs->rval().set( val.toValue() ); }

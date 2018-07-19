@@ -126,7 +126,7 @@ public:
 	void ReturnInt( int val );
 	void ReturnFloat( float val );
 	void ReturnDouble( double val );
-	void ReturnString( string val );
+	void ReturnString( string& val );
 	void ReturnString( const char* val );
 	void ReturnObject( void* val );
 	void ReturnValue( ArgValue val );
