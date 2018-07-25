@@ -33,6 +33,12 @@ ArgValue ScriptFunctionObject::Invoke( ScriptArguments &args ){
 	jsval* params = args.GetFunctionArguments( &argc );
 	JS_CallFunction( script.js, zis, (JSFunction*) this->funcObject, argc, params, &rval );
 	
+	// 
+	if ( JS_IsExceptionPending( script.js ) ) {
+		JS_GetPendingException( script.js, &rval );
+		JS_ReportPendingException( script.js );
+	}
+	
 	// done
 	this->executing = false;
 	

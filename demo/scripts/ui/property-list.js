@@ -1787,8 +1787,6 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		{ name: "UI", properties: [ 'ui' ] },
 	]
 }
-UI.base._isBackgroundNotShape = function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderShape ) ); }
-UI.base._isBackgroundNotTexture = function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderSprite ) ); }
 
 Vector.__propertyListConfig = Vector.__propertyListConfig ||
 {

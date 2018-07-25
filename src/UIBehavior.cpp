@@ -1759,7 +1759,7 @@ void UIBehavior::GetAnchoredPosition( UIBehavior* parentUI, float& x, float& y, 
 /// debounces multiple layout requests
 void UIBehavior::RequestLayout( ArgValue trigger ) {
 	
-	if ( !this->gameObject ) return;
+	if ( !this->gameObject || !this->_active ) return;
 	
 	// dispatch down
 	GameObject* top = NULL;
@@ -1788,7 +1788,7 @@ void UIBehavior::RequestLayout( ArgValue trigger ) {
 		}
 		
 	}
-	//printf( "[%s %p] Requested layout. Trigger = %s. Top = [%s %p]\n", gameObject->name.c_str(), gameObject, trigger.toString().c_str(), top ? top->name.c_str() : "null", top );
+	// printf( "[%s %p] Requested layout. Trigger = %s, w,h:(%f,%f). Top = [%s %p]\n", gameObject->name.c_str(), gameObject, trigger.toString().c_str(), layoutWidth, layoutHeight, top ? top->name.c_str() : "null", top );
 	if ( top ) {
 		ArgValueVector* params = app.AddLateEvent( top, EVENT_LAYOUT, true, false, true );
 		if ( trigger.type != TypeUndefined ) {

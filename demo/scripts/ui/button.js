@@ -29,269 +29,256 @@
 include( './ui' );
 (function(go) {
 
-	// internal props
-	var ui = new UI(), bg, shp, background = false;
-	var label, image;
-	var disabled = false, disabledCanFocus = true;
-	var cancelToBlur = false;
-	var constructing = true;
-	go.serializeMask = [ 'ui', 'render' ];
-
 	// API properties
-	var mappedProps = {
+	UI.base.buttonPrototype = UI.base.buttonPrototype || {
 
+		__proto__: UI.base.componentPrototype,
+		
 		// (String) text on button
-		'text': {
-			get: function (){ return label.text; },
-			set: function( v ){
-				label.text = v;
-				label.active = !!v;
-				ui.requestLayout( 'text' );
-			} 
+		get text(){ return this.__label.text; },
+		set text( v ){
+			this.__label.text = v;
+			this.__label.active = !!v;
+			this.ui.requestLayout( 'text' );
 		},
 
 		// (String) or null - texture on icon
-		'icon': {
-			get: function (){ return image ? image.render.texture : ''; },
-			set: function( v ){
-				if ( v ) {
-					if ( !image ) makeImage();
-					image.render.texture = v;
-					image.ui.minWidth = image.render.originalWidth;
-					image.ui.minHeight = image.render.originalHeight;
-					image.active = true;
-				} else if ( image ) {
-					image.active = false;
-				}
+		get icon(){ return this.__image ? this.__image.render.texture : ''; },
+		set icon( v ){
+			if ( v ) {
+				if ( !this.__image ) this.__makeImage();
+				this.__image.render.texture = v;
+				this.__image.ui.minWidth = this.__image.render.originalWidth;
+				this.__image.ui.minHeight = this.__image.render.originalHeight;
+				this.__image.active = true;
+			} else if ( this.__image ) {
+				this.__image.active = false;
 			}
 		},
 
 		// (GameObject) instance of 'ui/text.js' used as label
-		'label': { get: function (){ return label; } },
+		get label(){ return this.__label; },
 
 		// (GameObject) object used as icon
-		'image': { get: function (){ return image ? image : makeImage(); } },
+		get image(){ return this.__image ? this.__image : this.__makeImage(); },
 
 		// (Boolean) disabled
-		'disabled': {
-			get: function (){ return disabled; },
-		    set: function ( v ){
-				 ui.disabled = disabled = v;
-				 ui.focusable = !v || disabledCanFocus;
-				 if ( v && ui.focused ) ui.blur();
-				 go.state = 'auto';
-		    }
-		},
+		get disabled(){ return this.__disabled; },
+	    set disabled( v ){
+			 this.ui.disabled = this.__disabled = v;
+			 this.ui.focusable = !v || this.__disabledCanFocus;
+			 if ( v && this.ui.focused ) this.ui.blur();
+			 this.state = 'auto';
+	    },
 
 		// (Boolean) whether control is focusable when it's disabled
-		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){
-			disabledCanFocus = f;
-			ui.focusable = disabledCanFocus || !disabled;
-		} },
+		get disabledCanFocus(){ return this.__disabledCanFocus; },
+		set disabledCanFocus( f ){
+			this.__disabledCanFocus = f;
+			this.ui.focusable = this.__disabledCanFocus || !this.__disabled;
+		},
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function ( cb ){ cancelToBlur = cb; } },
+		get cancelToBlur(){ return this.__cancelToBlur; }, set cancelToBlur( cb ){ this.__cancelToBlur = cb; },
 
 		// (String) or (Color) or (Number) or (Boolean) - texture or solid color to display for background
-		'background': {
-			get: function (){ return background; },
-			set: function( b ){
-				background = b;
-				if ( b === null || b === false ) {
-					go.render = null;
-				} else if ( typeof( b ) == 'string' ) {
-					bg.texture = b;
-					bg.resize( ui.width, ui.height );
-					go.render = bg;
-				} else {
-					shp.color = b;
-					go.render = shp;
-				}
+		get background(){ return this.__background; },
+		set background( b ){
+			this.__background = b;
+			if ( b === null || b === false ) {
+				this.render = null;
+			} else if ( typeof( b ) == 'string' ) {
+				this.__bg.texture = b;
+				this.__bg.resize( this.ui.width, this.ui.height );
+				this.render = this.__bg;
+			} else {
+				this.__shp.color = b;
+				this.render = this.__shp;
 			}
 		},
 
 		// (Number) corner roundness when background is solid color
-		'cornerRadius': {
-			get: function (){ return shp.radius; },
-			set: function( b ){
-				shp.radius = b;
-				shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
-			} 
+		get cornerRadius(){ return this.__shp.radius; },
+		set cornerRadius( b ){
+			this.__shp.radius = b;
+			this.__shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle;
 		},
 
 		// (Number) outline thickness when background is solid color
-		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function( b ){
-			shp.lineThickness = b;
-		} },
+		get lineThickness(){ return this.__shp.lineThickness; }, set lineThickness( b ){ this.__shp.lineThickness = b; },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function( c ){
-			shp.outlineColor = (c === false ? '00000000' : c );
-		} },
+		get outlineColor(){ return this.__shp.outlineColor; }, set outlineColor( c ){ this.__shp.outlineColor = (c === false ? '00000000' : c ); },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
+		get filled(){ return this.__shp.filled; }, set filled( v ){ this.__shp.filled = v; },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; } },
+		get slice(){ return this.__bg.slice; }, set slice( v ){ this.__bg.slice = v; },
 
 		// (Number) texture slice top
-		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false },
+		get sliceTop(){ return this.__bg.sliceTop; }, set sliceTop( v ){ this.__bg.sliceTop = v; },
 
 		// (Number) texture slice right
-		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
+		get sliceRight(){ return this.__bg.sliceRight; }, set sliceRight( v ){ this.__bg.sliceRight = v; },
 
 		// (Number) texture slice bottom
-		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
+		get sliceBottom(){ return this.__bg.sliceBottom; }, set sliceBottom( v ){ this.__bg.sliceBottom = v; },
 
 		// (Number) texture slice left
-		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
+		get sliceLeft(){ return this.__bg.sliceLeft; }, set sliceLeft( v ){ this.__bg.sliceLeft = v; },
+		
+		__layout: function( w, h, r ) {
+			var go = this.gameObject;
+			go.__shp.resize( w, h );
+			go.__bg.resize( w, h );
+			go.__label.ui.maxWidth = w - ( this.padLeft + this.padRight )
+				- ( go.__image ? ( this.spacingX + go.__image.ui.width + go.__image.ui.marginLeft + go.__image.ui.marginRight ) : 0 );
+		},
+	
+		__focusChanged: function ( newFocus, oldFocus ) {
+			var go = this.gameObject;
+			var inst = go.__;
+		    if ( newFocus == this ) go.scrollIntoView();
+		    go.state = 'auto';
+			go.fire( 'focusChanged', newFocus );
+		},
+	
+		__navigation: function ( name, value ) {
+			var go = this.gameObject;
+			stopAllEvents();
+	
+			// same as click or enter
+			if ( name == 'accept' && !go.__disabled ) {
+	
+				// animate down / up
+				go.state = 'down';
+				go.debounce( 'up', function() { this.state = 'auto'; }, 0.1 );
+	
+				// simulated click
+				this.fire( 'click', 1, 0, 0, go.x, go.y );
+	
+			// same as escape
+			} else if ( name == 'cancel' ) {
+	
+				if ( cancelToBlur ) this.blur();
+	
+			}
+	
+			// rethrow
+			go.fire( 'navigation', name, value );
+	
+		},
+	
+		__click: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			if ( this.focusable ) this.focus();
+			stopAllEvents();
+			if ( go.__disabled ) return;
+			go.fire( 'click', btn, x, y, wx, wy );
+		},
+	
+		__mouseDown: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			if ( go.__disabled ) return;
+			stopAllEvents();
+			go.state = 'down';
+			go.fire( 'mouseDown', btn, x, y, wx, wy );
+		},
+	
+		__mouseUp: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			go.state = 'auto';
+			if ( go.__disabled ) return;
+			go.fire( currentEventName(), btn, x, y, wx, wy );
+		},
+	
+		__keyDown: function ( code, shift ) {
+			// handle default keys (regardless of controller config)
+		    switch ( code ) {
+			    case Key.Tab:
+				    this.moveFocus( shift ? -1 : 1 );
+				    break;
+			    case Key.Enter:
+				    this.navigation( 'accept', 1 );
+				    break;
+			    case Key.Escape:
+				    this.navigation( 'cancel', 1 );
+				    break;
+			    default:
+			    	return;
+		    }
+		    stopEvent();
+		},
+	
+		__mouseOverOut: function ( x, y, wx, wy ) {
+			var go = this.gameObject;
+			stopAllEvents();
+			go.state = 'auto';
+			go.fire( currentEventName(), x, y, wx, wy );
+		},
+	
+		__makeImage: function (){
+			this.__image = this.addChild(
+				new GameObject({
+					ui: new UI(),
+					render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
+				}), 0 );
+			return this.__image;
+		}
 
 	};
-	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
-	UI.base.addInspectables( go, 'Button',
-		[ 'text', 'icon', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'style' ],
-		{ 'icon': { autocomplete: 'file', autocompleteParam: 'png,jpg' } }, 1 );
-
-	// set name
+	
+	// initialize
 	go.name = "Button";
-
-	// sprite background
-	bg = new RenderSprite( background );
-	go.render = bg;
-
-	// solid color background
-	shp = new RenderShape( Shape.Rectangle, {
-		radius: 0,
-		filled: true,
-		centered: false
-	});
-
-	// label
-	label = go.addChild( './text', {
+	go.ui = new UI( {
+		autoMoveFocus: true,
+		layoutType: Layout.Horizontal,
+		layoutAlignX: LayoutAlign.Center,
+		layoutAlignY: LayoutAlign.Center,
+		fitChildren: true,
+		focusable: true,
+		layout: UI.base.buttonPrototype.__layout,
+		navigation: UI.base.buttonPrototype.__navigation,
+		focusChanged: UI.base.buttonPrototype.__focusChanged,
+		mouseDown: UI.base.buttonPrototype.__mouseDown,
+		click: UI.base.buttonPrototype.__click,
+		mouseUp: UI.base.buttonPrototype.__mouseUp,
+		mouseUpOutside: UI.base.buttonPrototype.__mouseUp,
+		mouseOver: UI.base.buttonPrototype.__mouseOverOut,
+		mouseOut: UI.base.buttonPrototype.__mouseOverOut,
+		keyDown: UI.base.buttonPrototype.__keyDown,
+    } );
+	go.__bg = go.render = new RenderSprite();
+	go.__shp = new RenderShape( Shape.Rectangle, {
+			radius: 0,
+			filled: true,
+			centered: false
+		});
+	go.__background = false;
+	go.__label = go.addChild( './text', {
 		name: "Label",
 		wrap: false,
 		active: false,
 		autoSize: true,
 		serializeable: false,
 	}, 1 );
-	go.addChild( label );
-
-	// UI
-	ui.autoMoveFocus = true;
-	ui.layoutType = Layout.Horizontal;
-	ui.layoutAlignX = LayoutAlign.Center;
-	ui.layoutAlignY = LayoutAlign.Center;
-	ui.fitChildren = true;
-	ui.focusable = true;
-	go.ui = ui;
-
-	// lay out components
-	ui.layout = function( w, h, r ) {
-		shp.resize( w, h );
-		bg.resize( w, h );
-		label.ui.maxWidth = w - ( ui.padLeft + ui.padRight )
-			- ( image ? ( ui.spacingX + image.ui.width + image.ui.marginLeft + image.ui.marginRight ) : 0 );
-	}
-
-	// focus changed
-	ui.focusChanged = function ( newFocus, oldFocus ) {
-	    if ( newFocus == ui ) go.scrollIntoView();
-	    go.state = 'auto';
-		go.fire( 'focusChanged', newFocus );
-	}
-
-	// navigation event
-	ui.navigation = function ( name, value ) {
-
-		stopAllEvents();
-
-		// same as click or enter
-		if ( name == 'accept' && !disabled ) {
-
-			// animate down / up
-			go.state = 'down';
-			go.debounce( 'up', function() { go.state = 'auto'; }, 0.1 );
-
-			// simulated click
-			ui.fire( 'click', 1, 0, 0, go.x, go.y );
-
-		// same as escape
-		} else if ( name == 'cancel' ) {
-
-			if ( cancelToBlur ) ui.blur();
-
-		}
-
-		// rethrow
-		go.fire( 'navigation', name, value );
-
-	}
-
-	// click - forward to gameObject
-	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( ui.focusable ) ui.focus();
-		stopAllEvents();
-		if ( disabled ) return;
-		go.fire( 'click', btn, x, y, wx, wy );
-	}
-
-	// mouse down
-	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		if ( disabled ) return;
-		stopAllEvents();
-		go.state = 'down';
-		go.fire( 'mouseDown', btn, x, y, wx, wy );
-	}
-
-	// up/outside
-	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		go.state = 'auto';
-		if ( disabled ) return;
-		go.fire( currentEventName(), btn, x, y, wx, wy );
-	}
-
-	// keyboard focus
-	ui.keyDown = function ( code, shift ) {
-		// handle default keys (regardless of controller config)
-	    switch ( code ) {
-		    case Key.Tab:
-			    ui.moveFocus( shift ? -1 : 1 );
-			    stopEvent();
-			    break;
-		    case Key.Enter:
-			    ui.navigation( 'accept', 1 );
-			    stopEvent();
-			    break;
-		    case Key.Escape:
-			    ui.navigation( 'cancel', 1 );
-			    stopEvent();
-			    break;
-	    }
-	}
-
-	// rollover / rollout
-	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
-		stopAllEvents();
-		go.state = 'auto';
-		go.fire( currentEventName(), x, y, wx, wy );
-	}
-
-	// helper for adding an icon when needed
-	function makeImage(){
-		image = go.addChild(
-			new GameObject({
-				ui: new UI(),
-				render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
-			}), 0 );
-		return image;
-	}
-
+	go.__image = null;
+	go.__disabled = false;
+	go.__disabledCanFocus = true;
+	go.__cancelToBlur = false;
+	go.__proto__ = UI.base.buttonPrototype;
+	go.init();
+	go.serializeMask.push( 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
+	
+	// add property-list inspectable info
+	UI.base.addInspectables( go, 'Button',
+		[ 'text', 'icon', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'style' ],
+		{ 'icon': { autocomplete: 'texture' } }, 1 );
+	
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.button );
-	UI.base.applyProperties( go, go.baseStyle );
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.button );
+	UI.base.applyProperties( go, go.__baseStyle );
 	go.state = 'auto';
-	constructing = false;
-
+	
 })(this);

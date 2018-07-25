@@ -455,7 +455,7 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
 		// reload all font variants
-		rs->fontSize = val;
+		rs->fontSize = max( 1, val );
 		if ( rs->fontResource && rs->fontResource->size != val ) rs->SetFont( rs->fontName.c_str(), val, false, false );
 		if ( rs->fontBoldResource && rs->fontBoldResource->size != val ) rs->SetFont( rs->fontBoldName.c_str(), val, true, false );
 		if ( rs->fontItalicResource && rs->fontItalicResource->size != val ) rs->SetFont( rs->fontItalicName.c_str(), val, false, true );

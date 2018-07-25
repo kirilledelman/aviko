@@ -21,96 +21,171 @@
 
 include( './ui' );
 (function(go) {
-
-	// internal props
-	var ui = new UI();
-	var checkbox;
-	var label;
-	var disabled = false, disabledCanFocus = true;
-	var checked = undefined;
-	var cancelToBlur = false;
-	var group = null;
-	var constructing = true;
-	go.serializeMask = [ 'ui', 'render', 'children' ];
-
+	
 	// API properties
-	var mappedProps = {
+	UI.base.checkboxPrototype = UI.base.checkboxPrototype || {
+	
+	 	__proto__: UI.base.componentPrototype,
 
 		// (Boolean) space between icon and label
-		'checked': {
-			get: function (){ return checked; },
-			set: function( v ){
-				if ( checked != v ) {
-					if ( group ) {
-						if ( v ) {
-							// uncheck other
-							for ( var i = 0; i < group.length; i++ ) {
-								if ( group[ i ] == go ) continue;
-								group[ i ].checked = false;
-							}
+		get checked(){ return this.__checked; },
+		set checked( v ){
+			if ( this.__checked != v ) {
+				if ( this.__group ) {
+					if ( v ) {
+						// uncheck other
+						for ( var i = 0; i < this.__group.length; i++ ) {
+							if ( this.__group[ i ] == this ) continue;
+							this.__group[ i ].checked = false;
 						}
 					}
-					checked = v;
-					if ( !constructing ) go.fire( 'change', checked );
-					if ( checkbox.image ) checkbox.image.opacity = checked ? 1 : 0;
 				}
-			}, enumerable: true, configurable: true
+				this.__checked = v;
+				if ( this.__checkbox.image ) this.__checkbox.image.opacity = v ? 1 : 0;
+				this.fire( 'change', this.__checked );
+			}
 		},
 
 		// (String) text on button
-		'text': {
-			get: function (){ return label.text; },
-			set: function( v ){
-				label.text = v;
-				label.active = !!v;
-			}, enumerable: true, configurable: true
+		get text(){ return this.__label.text; },
+		set text( v ){
+			this.__label.text = v;
+			this.__label.active = !!v;
 		},
 
 		// (GameObject) instance of 'ui/text.js' used as label
-		'label': { get: function (){ return label; }, enumerable: true, configurable: true },
+		get label(){ return this.__label; },
 
 		// (GameObject) instance of 'ui/button.js' used as checkbox body
-		'checkbox': { get: function (){ return checkbox; }, enumerable: true, configurable: true },
+		get checkbox(){ return this.__checkbox; },
 
 		// (Boolean) input disabled
-		'disabled': {
-			get: function (){ return disabled; },
-			set: function( v ){
-				ui.disabled = disabled = v;
-				ui.focusable = !v || disabledCanFocus;
-				if ( v && ui.focused ) ui.blur();
-				label.opacity = v ? 0.6 : 1;
-				go.state = 'auto';
-				go.requestLayout( 'disabled' );
-			}, enumerable: true, configurable: true
+		get disabled(){ return this.__disabled; },
+		set disabled( v ){
+			this.ui.disabled = this.__disabled = v;
+			this.ui.focusable = !v || this.__disabledCanFocus;
+			if ( v && this.ui.focused ) this.ui.blur();
+			this.__label.opacity = v ? 0.6 : 1;
+			this.state = 'auto';
+			this.requestLayout( 'disabled' );
 		},
 
 		// (Boolean) whether control is focusable when it's disabled
-		'disabledCanFocus': { get: function (){ return disabledCanFocus; }, set: function ( f ){
-			disabledCanFocus = f;
-			ui.focusable = disabledCanFocus || !disabled;
-		} },
+		get disabledCanFocus (){ return this.__disabledCanFocus; },
+		set disabledCanFocus( f ){
+				this.__disabledCanFocus = f;
+				this.ui.focusable = this.__disabledCanFocus || !this.__disabled;
+		},
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		'cancelToBlur': { get: function (){ return cancelToBlur; }, set: function( cb ){ cancelToBlur = cb; }, enumerable: true, configurable: true },
+		get cancelToBlur(){ return this.__cancelToBlur; },
+		set cancelToBlur( cb ){ this.__cancelToBlur = cb; },
 
 		// (Array) or null - makes checkbox act as a radio button in a group. Array must be all the checkboxes in a group. One will always be selected
-		'group': { get: function (){ return group; }, set: function( v ){ group = v; }, enumerable: true, configurable: true },
+		get group(){ return this.__group; },
+		set group( v ){ this.__group = v; },
 
+		__focusChanged: function ( newFocus ) {
+			var go = this.gameObject;
+			// focused
+		    if ( newFocus == this ) {
+			    go.scrollIntoView();
+		    }
+		    go.state = 'auto';
+			go.fire( 'focusChanged', newFocus );
+		},
+	
+		__navigation: function ( name, value ) {
+	
+			var go = this.gameObject;
+			stopAllEvents();
+	
+			// enter = click
+			if ( name == 'accept' ) {
+	
+				// simulated click
+				this.fire( 'click', 1, 0, 0, go.x, go.y );
+	
+				// animate down / up
+				go.state = 'down';
+				go.async( function() { go.state = 'auto'; }, 0.1 );
+	
+			// escape = blur
+			} else if ( name == 'cancel' ) {
+	
+				if ( go.__cancelToBlur ) ui.blur();
+	
+			// directional - move focus
+			} else {
+				var dx = 0, dy = 0;
+				if ( name == 'horizontal' ) dx = value;
+				else dy = value;
+				ui.moveFocus( dx, dy );
+			}
+	
+		},
+	
+		__click: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			if ( go.__disabled || btn != 1 ) return;
+			if ( go.__group && go.__checked ) return; // can't uncheck in a group
+			this.focus();
+			go.fire( 'click', btn, x, y, wx, wy );
+			go.checked = !go.__checked;
+		},
+	
+		__mouseDown: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			if ( go.__disabled || btn != 1 ) return;
+			go.state = 'down';
+			// redispatch on gameObject
+			go.fire( 'mouseDown', btn, x, y, wx, wy );
+		},
+	
+		__mouseUp: function ( btn, x, y, wx, wy ) {
+			var go = this.gameObject;
+			if ( go.__disabled || btn != 1 ) return;
+			go.fire( currentEventName(), btn, x, y, wx, wy );
+			go.state = 'auto';
+		},
+	
+		__keyDown: function ( code, shift ) {
+			// handle tab key
+		    switch ( code ) {
+			    case Key.Tab:
+				    this.moveFocus( shift ? -1 : 1 );
+				    stopEvent();
+				    break;
+		    }
+		},
+	
+		__mouseOverOut: function ( x, y, wx, wy ) {
+			this.gameObject.state = 'auto';
+			this.gameObject.fire( currentEventName(), x, y, wx, wy );
+		}
+		
 	};
-	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
-	UI.base.addInspectables( go, 'Checkbox',
-		[ 'text', 'checked', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'group', 'style' ],
-		null, 1 );
 
-	// create components
-
-	// set name
+	// init
 	go.name = "Checkbox";
-
-	// check box
-	checkbox = go.addChild( './button', {
+	go.ui = new UI( {
+		autoMoveFocus: true,
+		layoutType: Layout.Horizontal,
+		layoutAlignX: LayoutAlign.Start,
+		layoutAlignY: LayoutAlign.Center,
+		fitChildren: true,
+		wrapEnabled: false,
+		focusable: true,
+		focusChanged: UI.base.checkboxPrototype.__focusChanged,
+		navigation: UI.base.checkboxPrototype.__navigation,
+		click: UI.base.checkboxPrototype.__click,
+		mouseDown: UI.base.checkboxPrototype.__mouseDown,
+		mouseUp: UI.base.checkboxPrototype.__mouseUp,
+		mouseUpOutside: UI.base.checkboxPrototype.__mouseUp,
+		keyDown: UI.base.checkboxPrototype.__keyDown,
+		mouseOver: UI.base.checkboxPrototype.__mouseOverOut,
+    });
+	go.__checkbox = go.addChild( './button', {
 		name: "Checkbox",
 		slice: 0,
 		pad: 0,
@@ -121,117 +196,36 @@ include( './ui' );
 		disabled: true,
 		disabledCanFocus: false,
 		fitChildren: false,
+		serializeable: false,
 		eventMask: [ 'mouseDown', 'click', 'navigation', 'mouseUp' ]
 	});
-	checkbox.image.pad = checkbox.image.margin = 0;
-	checkbox.label.active = false;
-	checkbox.image.opacity = 0;
-	checkbox.image.mode = 'icon';
-	checkbox.label.active = false;
-
-	// label
-	label = go.addChild( './text', {
+	go.__checkbox.image.pad = go.__checkbox.image.margin = 0;
+	go.__checkbox.image.opacity = 0;
+	go.__checkbox.image.mode = 'icon';
+	go.__checkbox.label.active = false;
+	go.__label = go.addChild( './text', {
 		name: "Label",
 		wrap: true,
 		flex: 1,
-		active: false
+		active: false,
+		serializeable: false,
 	});
+	go.__disabled = false;
+	go.__disabledCanFocus = true;
+	go.__checked = undefined;
+	go.__cancelToBlur = false;
+	go.__group = null;
+	go.__proto__ = UI.base.checkboxPrototype;
+	go.init();
 
-	// UI
-	ui.autoMoveFocus = true;
-	ui.layoutType = Layout.Horizontal;
-	ui.layoutAlignX = LayoutAlign.Start;
-	ui.layoutAlignY = LayoutAlign.Center;
-	ui.fitChildren = true;
-	ui.wrapEnabled = false;
-	ui.focusable = true;
-	go.ui = ui;
-
-	// focus changed
-	ui.focusChanged = function ( newFocus ) {
-		// focused
-	    if ( newFocus == ui ) {
-		    go.scrollIntoView();
-	    }
-	    go.state = 'auto';
-		go.fire( 'focusChanged', newFocus );
-	}
-
-	// navigation event
-	ui.navigation = function ( name, value ) {
-
-		stopAllEvents();
-
-		// enter = click
-		if ( name == 'accept' ) {
-
-			// simulated click
-			ui.fire( 'click', 1, 0, 0, go.x, go.y );
-
-			// animate down / up
-			go.state = 'down';
-			go.async( function() { go.state = 'auto'; }, 0.1 );
-
-		// escape = blur
-		} else if ( name == 'cancel' ) {
-
-			if ( cancelToBlur ) ui.blur();
-
-		// directional - move focus
-		} else {
-			var dx = 0, dy = 0;
-			if ( name == 'horizontal' ) dx = value;
-			else dy = value;
-			ui.moveFocus( dx, dy );
-		}
-
-	}
-
-	// click - dispatch on gameObject
-	ui.click = function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
-		if ( group && checked ) return; // can't uncheck in a group
-		ui.focus();
-		go.fire( 'click', btn, x, y, wx, wy );
-		go.checked = !checked;
-	}
-
-	// mouse down/up state
-	ui.mouseDown = function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
-		go.state = 'down';
-		// redispatch on gameObject
-		go.fire( 'mouseDown', btn, x, y, wx, wy );
-	}
-
-	// up
-	ui.mouseUp = ui.mouseUpOutside = function ( btn, x, y, wx, wy ) {
-		if ( disabled || btn != 1 ) return;
-		go.fire( currentEventName(), btn, x, y, wx, wy );
-		go.state = 'auto';
-	}
-
-	// keyboard
-	ui.keyDown = function ( code, shift ) {
-		// handle tab key
-	    switch ( code ) {
-		    case Key.Tab:
-			    ui.moveFocus( shift ? -1 : 1 );
-			    stopEvent();
-			    break;
-	    }
-	}
-
-	// rollover / rollout
-	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
-		go.state = 'auto';
-		go.fire( currentEventName(), x, y, wx, wy );
-	}
+	// add property-list inspectable info
+	UI.base.addInspectables( go, 'Checkbox',
+	[ 'text', 'checked', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'group', 'style' ],
+	null, 1 );
 
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.checkbox );
-	UI.base.applyProperties( go, go.baseStyle );
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.checkbox );
+	UI.base.applyProperties( go, go.__baseStyle );
 	go.state = 'auto';
-	constructing = false;
 
 })(this);

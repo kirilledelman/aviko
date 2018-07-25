@@ -686,15 +686,349 @@ UI.style = UI.style || {
 
 };
 
-
 /*
 
 Shared functionality between Aviko ui components
 
 */
-
 UI.base = UI.base || {
+	
+	componentPrototype: {
 
+		__proto__: GameObject.prototype,
+		
+		// (Number) current width of the control
+		get width(){ return this.ui.width; }, set width( w ){ this.ui.width = w; },
+
+		// (Number) current height of the control
+		get height(){ return this.ui.height; }, set height( h ){ this.ui.height = h; },
+
+		// (Boolean) allows keyboard / navigation focus
+		get focusable(){ return this.ui.focusable; }, set focusable( v ){ this.ui.focusable = v; },
+
+		// (Boolean) is field currently focused
+		get focused(){ return this.ui.focused; },
+
+		// (UI) or (GameObject) or null - object to focus to the left of this control
+		get focusLeft(){ return this.ui.focusLeft; }, set focusLeft( f ) { this.ui.focusLeft = f; },
+
+		// (UI) or (GameObject) or null - object to focus to the left of this control
+		get focusRight(){ return this.ui.focusRight; }, set focusRight( f ){ this.ui.focusRight = f; },
+	
+		// (UI) or (GameObject) or null - object to focus to the left of this control
+		get focusUp(){ return this.ui.focusUp; }, set focusUp( f ){ this.ui.focusUp = f; },
+
+		// (UI) or (GameObject) or null - object to focus to the left of this control
+		get focusDown(){ return this.ui.focusDown; }, set focusDown( f ){ this.ui.focusDown = f; },
+
+		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
+		get focusGroup(){ return this.ui.focusGroup; }, set focusGroup( f ){ this.ui.focusGroup = f; },
+
+		// (Boolean) - enables/disables focus rectangle (getter returns Render component)
+		get focusRect(){ return this.ui.focusRect; },
+		set focusRect( fr ){
+			if ( fr ) {
+				this.ui.on( 'layout', UI.base._layoutFocusRect );
+				this.ui.on( 'focusChanged', UI.base._focusChangedRect );
+			} else {
+				this.ui.off( 'layout', UI.base._layoutFocusRect );
+				this.ui.off( 'focusChanged', UI.base._focusChangedRect );
+				if ( this.ui.focusRectPanel ) {
+					this.ui.focusRectPanel = this.ui.focusRectPanel.parent = null;
+				}
+			}
+			this.ui.focusRect = fr;
+		},
+
+		// (Boolean) blocks mouse events from reaching objects higher in in hierarchy tree
+		get blocking(){ return this.ui.blocking; }, set blocking( v ){ this.ui.blocking = v; },
+
+		// (Boolean) mouse events are disabled
+		get mouseDisabled(){ return this.ui.mouseDisabled; }, set mouseDisabled( v ){ this.ui.mouseDisabled = v; },
+
+		// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
+		get layoutType(){ return this.ui.layoutType; }, set layoutType( v ){ this.ui.layoutType = v; },
+
+		// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on X axis
+		get layoutAlignX(){ return this.ui.layoutAlignX; }, set layoutAlignX( v ){ this.ui.layoutAlignX = v; },
+
+		// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on Y axis
+		get layoutAlignY(){ return this.ui.layoutAlignY; }, set layoutAlignY( v ){ this.ui.layoutAlignY = v; },
+
+		// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
+		get fitChildren(){ return this.ui.fitChildren; }, set fitChildren( v ){ this.ui.fitChildren = v; },
+
+		// (Boolean) for Horizontal and Vertical layouts, allow wrap of children into rows
+		get wrapEnabled(){ this.ui.wrapEnabled; }, set wrapEnabled( v ){ this.ui.wrapEnabled = v; },
+
+		// (Integer) for Horizontal and Vertical layouts, auto wrap after this many items per row
+		get wrapAfter(){ return this.ui.wrapAfter; }, set wrapAfter( v ){ this.ui.wrapAfter = v; },
+
+		// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
+		get forceWrap(){ return this.ui.forceWrap; }, set forceWrap( v ){ this.ui.forceWrap = v; },
+
+		// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
+		get selfAlign(){ return this.ui.selfAlign; }, set selfAlign( v ){ this.ui.selfAlign = v; },
+
+		// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
+		get flex(){ return this.ui.flex; }, set flex( v ){ this.ui.flex = v; },
+
+		// (Boolean) if true, parent will ignore this element while performing layout
+		get fixedPosition(){ return this.ui.fixedPosition; }, set fixedPosition( v ){ this.ui.fixedPosition = v; },
+
+		// (Boolean) reverse child layout order
+		get reversed(){ return this.ui.reversed; }, set reversed( v ){ this.ui.reversed = v; },
+
+		// (Number) minimum width allowed by layout
+		get minWidth(){ return this.ui.minWidth; }, set minWidth( v ){ this.ui.minWidth = v; },
+
+		// (Number) minimum height allowed by layout
+		get minHeight(){ return this.ui.minHeight; }, set minHeight( v ){ this.ui.minHeight = v; },
+
+		// (Number) maximum width allowed by layout
+		get maxWidth(){ return this.ui.maxWidth; }, set maxWidth( v ){ this.ui.maxWidth = v; },
+
+		// (Number) maximum height allowed by layout
+		get maxHeight(){ return this.ui.maxHeight; }, set maxHeight( v ){ this.ui.maxHeight = v; },
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		get anchorLeft(){ return this.ui.anchorLeft; }, set anchorLeft( v ){ this.ui.anchorLeft = v; },
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		get anchorRight(){ return this.ui.anchorRight; }, set anchorRight( v ){ this.ui.anchorRight = v; },
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		get anchorTop(){ return this.ui.anchorTop; }, set anchorTop( v ){ this.ui.anchorTop = v; },
+
+		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
+		get anchorBottom(){ return this.ui.anchorBottom; }, set anchorBottom( v ){ this.ui.anchorBottom = v; },
+
+		// (Number) offset from anchorLeft
+		get left(){ return this.ui.left; }, set left( v ){ this.ui.left = v; },
+
+		// (Number) offset from anchorLeft
+		get right(){ return this.ui.right; }, set right( v ){ this.ui.right = v; },
+
+		// (Number) offset from anchorLeft
+		get top(){ return this.ui.top; }, set top( v ){ this.ui.top = v; },
+
+		// (Number) offset from anchorLeft
+		get bottom(){ return this.ui.bottom; }, set bottom( v ){ this.ui.bottom = v; },
+
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
+		get margin(){ return this.ui.margin; }, set margin( v ){ this.ui.margin = v; },
+
+		// (Number) outer margin top
+		get marginTop(){ return this.ui.marginTop; }, set marginTop( v ){ this.ui.marginTop = v; },
+
+		// (Number) outer margin right
+		get marginRight(){ return this.ui.marginRight; }, set marginRight( v ){ this.ui.marginRight = v; },
+
+		// (Number) outer margin bottom
+		get marginBottom(){ return this.ui.marginBottom; }, set marginBottom( v ){ this.ui.marginBottom = v; },
+
+		// (Number) outer margin left
+		get marginLeft(){ return this.ui.marginLeft; }, set marginLeft( v ){ this.ui.marginLeft = v; },
+
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
+		get pad(){ return this.ui.pad; }, set pad( v ){ this.ui.pad = v; },
+
+		// (Number) inner padding top
+		get padTop(){ return this.ui.padTop; }, set padTop( v ){ this.ui.padTop = v; },
+
+		// (Number) inner padding right
+		get padRight(){ return this.ui.padRight; }, set padRight( v ){ this.ui.padRight = v; },
+
+		// (Number) inner padding bottom
+		get padBottom(){ return this.ui.padBottom; }, set padBottom( v ){ this.ui.padBottom = v; },
+
+		// (Number) inner padding left
+		get padLeft (){ return this.ui.padLeft; }, set padLeft( v ){ this.ui.padLeft = v; },
+
+		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
+		get spacing(){ return this.ui.spacing; }, set spacing( v ){ this.ui.spacing = v; },
+
+		// (Number) spacing between children when layoutType is Vertical
+		get spacingX(){ return this.ui.spacingX; }, set spacingX( v ){ this.ui.spacingX = v; },
+
+		// (Number) spacing between children when layoutType is Horizontal
+		get spacingY(){ return this.ui.spacingY; }, set spacingY( v ){ this.ui.spacingY = v; },
+
+		// (Number) relative X offset from object's layout position
+		get offsetX(){ return this.ui.offsetX; }, set offsetX( v ){ this.ui.offsetX = v; },
+
+		// (Number) relative Y offset from object's layout position
+		get offsetY(){ return this.ui.offsetY; }, set offsetY( v ){ this.ui.offsetY = v; },
+
+		// (Color) | (Number) .color property of current render component
+		get color(){ return this.render ? this.render.color : null; }, set color( v ){ if ( this.render ) this.render.color = v; },
+
+		// (Color) | (Number) .addColor property of current render component
+		get addColor(){ return this.render ? this.render.addColor : null; }, set addColor( v ){ if ( this.render ) this.render.addColor = v; },
+
+		// (String) if set, will show tooltip on mouseOver
+		get tooltip(){ return this.ui.tooltip ? this.ui.tooltip : ""; },
+		set tooltip( v ){
+			this.ui.tooltip = v;
+			if ( v ) {
+				this.ui.on( 'mouseOver', UI.base._showTooltip );
+			} else {
+				this.ui.off( 'mouseOver', UI.base._showTooltip );
+			}
+		},
+
+		// (Object) used to override style (collection of properties) other than default after creating / during init
+		get style(){ return this.__baseStyle; },
+		set style( v ){
+			// merge into current baseStyle
+			UI.base.mergeStyle( this.__baseStyle, v ) ;
+			UI.base.applyProperties( this, v );
+			this.state = 'auto'; // reset state
+		},
+
+		// (String) used to change state of control (e.g. 'focus', 'off', 'disabled' etc).
+		// Applies properties from corresponding object in .states property
+		get state(){ return this.__state ? this.__state : 'off'; },
+		set state( v ){
+			this.__state = v;
+			if ( !this.__states ) return;
+			if ( v == 'auto' ) {
+				// apply states in order
+				UI.base.applyProperties( this, this.__states[ v = 'off' ] );
+				if ( this.ui.focused && this.__states[ 'focus' ] ) { UI.base.applyProperties( this, this.__states[ v = 'focus' ] ); }
+				if ( this.ui.disabled ) {
+					v = 'disabled';
+					if ( this.__states[ 'disabled' ] ) { UI.base.applyProperties( this, this.__states[ v ] ); }
+				} else {
+					if ( this.ui.down && this.__states[ 'down' ] ) { UI.base.applyProperties( this, this.__states[ v = 'down' ] ); }
+					else if ( this.ui.over && this.__states[ 'over' ] ) { UI.base.applyProperties( this, this.__states[ v = 'over' ] ); }
+				}
+			} else {
+				UI.base.applyProperties( this, this.__states[ v ] );
+			}
+		},
+
+		// (Object) definitions for each state
+		get states(){ return this.__states; }, set states( v ){ this.__states = v ? clone( v ) : v; },
+
+		resize: function ( w, h ) { this.ui.resize( w, h ); },
+	
+		blur: function () { this.ui.blur(); },
+	
+		focus: function () { if ( this.ui.focusable ) this.ui.focus(); },
+	
+		scrollIntoView: function ( expandAmount ) {
+			var lpx = 0, lpy = 0, lw, lh;
+			if ( typeof( this.width ) == 'undefined' && this.ui ){
+				lw = this.ui.width; lh = this.ui.height;
+			} else {
+				lw = this.width; lh = this.height;
+			}
+			// params are used by input to scroll caret into view
+			if ( arguments.length != 0 ) {
+				lpx = arguments[ 0 ]; lpy = arguments[ 1 ];
+				lw = arguments[ 2 ]; lh = arguments[ 3 ];
+			}
+			// find nearest scrollable
+			var p = this.parent;
+			var c = this;
+			var scrollable = null;
+			while( p ) {
+				if ( p.ui && p.render && p.render && p.render.image && p.render.image.autoDraw == c ){
+					scrollable = p;
+					break;
+				}
+				c = p;
+				p = p.parent;
+			}
+			if ( !scrollable || scrollable[ 'scrollTop' ] === undefined || scrollable[ 'scrollLeft' ] === undefined ) return;
+	
+			// convert coordinate to scrollable's system
+			var sx = scrollable.scrollLeft, sy = scrollable.scrollTop;
+			var sw = scrollable.width, sh = scrollable.height;
+			var gp = this.localToGlobal( lpx, lpy );
+			var lp = scrollable.globalToLocal( gp.x, gp.y );
+			var t = lp.y + scrollable.scrollTop,
+				b = t + lh;
+			var l = lp.x + scrollable.scrollLeft,
+				r = l + lw;
+	
+			// expand b-h and l-r a bit
+			var m = Math.min( lw, lh ) * ( expandAmount ? expandAmount : 0 );
+			if ( lh + m * 2 < sh ) { t -= m; b += m; }
+			if ( lw + m * 2 < sw ) { l -= m; r += m; }
+	
+			// make sure it's in view
+			if ( b > sy + sh && b - t < sh ) { // bottom
+				scrollable.scrollTop = b - sh;
+			} else if ( t < sy ) { // top
+				scrollable.scrollTop = t;
+			}
+			if ( r > sx + sw && r - l < sw ) { // right
+				scrollable.scrollLeft = r - sw;
+			} else if ( l < sx ) { // left
+				scrollable.scrollLeft = l;
+			}
+		},
+		
+		// call this to initialize __propertyListConfig and serializeMask / cloneMask
+		init: function () {
+		
+			this.serializeMask = [
+				'states', 'state', 'ui', 'render', 'body',
+				'marginTop', 'marginLeft', 'marginBottom', 'marginRight', 'spacing',
+				'padTop', 'padLeft', 'padBottom', 'padRight',
+				'focus', 'blur', 'resize', 'scrollIntoView' ];
+			
+			this.__propertyListConfig = {
+				groups: [ { name: 'UI',
+					properties: [ 'layoutType', 'layoutAlignX', 'layoutAlignY', 'selfAlign', 'reversed',
+					'spacingX', 'spacingY', 'fixedPosition', 'fitChildren', 'wrapEnabled', 'wrapAfter', 'forceWrap',
+					'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight', 'flex',
+					'anchorLeft', 'anchorTop', 'anchorRight', 'anchorBottom', 'left', 'top', 'right', 'bottom',
+					'padLeft', 'padTop', 'padRight', 'padBottom', 'marginLeft', 'marginTop', 'marginRight', 'marginBottom',
+					'tooltip' ] } ],
+				properties: {
+					'layoutType': { enum: UI.base._enumUILayout },
+					'layoutAlignX': { enum: UI.base._enumUILayoutAlign },
+					'layoutAlignY': { enum: UI.base._enumUILayoutAlign },
+					'selfAlign': { enum: UI.base._enumUILayoutAlign },
+					'background': {
+						inline: true,
+						validate: function( v ){ var isNum = parseInt( v, 16 ); if( isNaN( isNum ) ) return v; return isNum; },
+						reloadOnChange: [ 'cornerRadius', 'outlineColor', 'lineThickness', 'filled', 'sliceTop', 'sliceRight', 'sliceBottom', 'sliceLeft', ],
+					},
+					'outlineColor': { inline: true, hidden: UI.base._isBackgroundNotShape, },
+				    'cornerRadius': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+					'lineThickness': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+					'filled': { inline: true, hidden: UI.base._isBackgroundNotShape,  },
+					'sliceTop': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+					'sliceRight': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+					'sliceBottom': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+					'sliceLeft': { inline: true, hidden: UI.base._isBackgroundNotTexture,  },
+				}
+			};
+			
+			// log( this, "constructor()" );
+		},
+		
+	},
+	
+	_enumUILayout: [ { text: "None", value: Layout.None }, { text: "Horizontal", value: Layout.Horizontal }, { text: "Vertical", value: Layout.Vertical }, { text: "Anchors", value: Layout.Anchors }, ],
+	_enumUILayoutAlign: [ { text: "Default", value: LayoutAlign.Default }, { text: "Start", value: LayoutAlign.Start }, { text: "Center", value: LayoutAlign.Center }, { text: "End", value: LayoutAlign.End }, { text: "Stretch", value: LayoutAlign.Stretch }, ],
+	_isBackgroundNotShape: function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderShape ) ); },
+	_isBackgroundNotTexture: function(go){ return (go.background === false || ( go.render && go.render.constructor != RenderSprite ) ); },
+	
+	/* initializeUIComponent: function ( go, mappedProps ) {
+	
+		// add default UI component property accessors
+		go.__proto__ = UI.base.componentPrototype;
+		
+		// map properties
+		if ( mappedProps ) this.mapProperties( go, mappedProps );
+		
+	},*/
+	
 	// layout-specific properties shared between UI components
 	addSharedProperties: function( go, ui ) {
 
@@ -887,10 +1221,10 @@ UI.base = UI.base || {
 
 			// (Object) used to override style (collection of properties) other than default after creating / during init
 			'style': {
-				get: function (){ return go.baseStyle; },
+				get: function (){ return go.__baseStyle; },
 				set: function ( v ){
 					// merge into current baseStyle
-					UI.base.mergeStyle( go.baseStyle, v ) ;
+					UI.base.mergeStyle( go.__baseStyle, v ) ;
 					UI.base.applyProperties( go, v );
 					go.state = 'auto'; // reset state
 				},
@@ -939,7 +1273,6 @@ UI.base = UI.base || {
 				'layoutType': { enum: UI.base._enumUILayout },
 				'layoutAlignX': { enum: UI.base._enumUILayoutAlign }, 'layoutAlignY': { enum: UI.base._enumUILayoutAlign },
 				'selfAlign': { enum: UI.base._enumUILayoutAlign },
-				'baseStyle': false,
 				'background': {
 					inline: true,
 					validate: function( v ){ var isNum = parseInt( v, 16 ); if( isNaN( isNum ) ) return v; return isNum; },
@@ -971,14 +1304,10 @@ UI.base = UI.base || {
 		go.scrollIntoView = UI.base._scrollIntoView;
 
 		// don't serialize these
-		go.serializeMask.push( 'resize', 'focus', 'blur', 'scrollIntoView', 'baseStyle' );
+		go.serializeMask.push( 'resize', 'focus', 'blur', 'scrollIntoView' );
 		
 	},
-
-	// helper for properties
-	_enumUILayout: [ { text: "None", value: Layout.None }, { text: "Horizontal", value: Layout.Horizontal }, { text: "Vertical", value: Layout.Vertical }, { text: "Anchors", value: Layout.Anchors }, ],
-	_enumUILayoutAlign: [ { text: "Default", value: LayoutAlign.Default }, { text: "Start", value: LayoutAlign.Start }, { text: "Center", value: LayoutAlign.Center }, { text: "End", value: LayoutAlign.End }, { text: "Stretch", value: LayoutAlign.Stretch }, ],
-
+		
 	// adds group with properties to __propertyListConfig ( used by ui components to add component-specific properties )
 	// go - object
 	// groupName - group to add (or replace if group w same name exists in GameObject.prototype.__propertyListConfig)
@@ -987,26 +1316,26 @@ UI.base = UI.base || {
 	// pos: (optional) position where this group should be inserted
 	addInspectables: function ( go, groupName, props, propsExtended, pos ) {
 		// add config if none
-		if ( go.__propertyListConfig === undefined ) go.__propertyListConfig = { properties: {}, groups: [] };
+		if ( typeof( go.__propertyListConfig ) === 'undefined' ) go.__propertyListConfig = { properties: {}, groups: [] };
 		// find group with same name
 		var group = null;
-		for ( var i = 0; i < go.__propertyListConfig.groups.length; i++ ) {
-			if ( go.__propertyListConfig.groups[ i ].name == groupName ) { group = go.__propertyListConfig.groups[ i ]; break; }
+		for ( var i = 0, ng = go.__propertyListConfig.groups.length; i < ng; i++ ) {
+			if ( go.__propertyListConfig.groups[ i ].name === groupName ) { group = go.__propertyListConfig.groups[ i ]; break; }
 		}
 		// add group or append props
-		if ( !group ) go.__propertyListConfig.groups.push( group = { name: groupName, properties: props, pos: pos } );
+		if ( group === null ) go.__propertyListConfig.groups.push( group = { name: groupName, properties: props, pos: pos } );
 		else {
 			group.pos = pos;
 			for ( var i = 0, np = props.length; i < np; i++ ) if ( group.properties.indexOf( props[ i ] ) < 0 ) props.push( props[ i ] );
 		}
 		// write property defs
 		for ( var p in props ) {
-			if ( !go.__propertyListConfig.properties[ props[ p ] ] ) {
+			if ( typeof( go.__propertyListConfig.properties[ props[ p ] ] ) === 'undefined' ) {
 				go.__propertyListConfig.properties[ props[ p ] ] = ( propsExtended ? propsExtended[ props[ p ] ] : true ) || true;
 			}
 		}
 		for ( var p in propsExtended ) {
-			if ( go.__propertyListConfig.properties[ p ] === undefined ) {
+			if ( typeof( go.__propertyListConfig.properties[ p ] ) === 'undefined' ) {
 				go.__propertyListConfig.properties[ p ] = propsExtended[ p ];
 			}
 		}
@@ -1248,6 +1577,8 @@ UI.base = UI.base || {
 		}
 	},
 
+	_resize: function ( w, h ) { this.ui.resize( w, h ); },
+	
 	_blur: function () { this.ui.blur(); },
 
 	_focus: function () { if ( this.ui.focusable ) this.ui.focus(); },

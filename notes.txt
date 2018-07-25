@@ -1,6 +1,11 @@
+any objects set to properties of prototype are shared
+
 In text field, when Cmd+Up/Down, set cursor to end
-text field - left/right cursor don't work anymore
-evaluating GameObject.prototype crash
+
+
+/// replacing properties:
+\t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s?)set: function\s?([\s\S]+?)\s+},\n
+\t\tget $1$2,$3set $1$4,\n
 
 Body
 	add method - "makeDefaultShape" creating shape from sprite, or shape

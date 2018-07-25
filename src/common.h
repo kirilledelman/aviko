@@ -72,7 +72,7 @@ string base64_decode( string const& s );
 string GetScriptNameAndLine();
 string ExecCommand( const char* cmd );
 
-// built in resources
+// built in resources - added using http://www.fourmilab.ch/xd/
 extern unsigned char RobotoRegular[];
 extern int RobotoRegular_size;
 

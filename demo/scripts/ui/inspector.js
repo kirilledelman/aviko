@@ -186,7 +186,7 @@ new (function( params ){
 					historyPos = ( historyPos + 1 ) % history.length;
 				} else return;
 				input.text = history[ historyPos ];
-				input.caretPosition = input.text.positionLength();
+				input.async( function(){ this.caretPosition = this.text.positionLength() }, 0.1 );
 			// accept
 			} else if ( code == Key.Enter && !( shift || meta || ctrl || alt ) && input.text.length ) {
 				log ( "> " + input.text );

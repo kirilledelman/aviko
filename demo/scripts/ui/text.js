@@ -17,127 +17,173 @@
 
 include( './ui' );
 (function(go) {
-
-	// inner props
-	var ui = new UI(), tc, rt;
-	var constructing = true;
-	var autoResize = false;
-	go.serializeMask = [ 'ui', 'render' ];
-
+	
 	// API properties
-	var mappedProps = {
+	UI.base.textPrototype = UI.base.textPrototype || {
+
+		__proto__: UI.base.componentPrototype,
 
 		// (String) text
-		'text': { get: function (){ return rt.text; }, set: function( t ){ rt.text = t; ui.requestLayout();} },
+		get text(){ return this.__rt.text; }, set text( t ){ this.__rt.text = t; this.ui.requestLayout(); },
 
 		// (string) font name
-		'font': { get: function (){ return rt.font; }, set: function( f ){ rt.font = f; ui.requestLayout( 'font' ); }  },
+		get font(){ return this.__rt.font; }, set font( f ){ this.__rt.font = f; this.ui.requestLayout( 'font' ); },
 
 		// (string) optional bold font name (improves rendering)
-		'boldFont': { get: function (){ return rt.boldFont; }, set: function( f ){ rt.boldFont = f; ui.requestLayout( 'boldFont' ); }  },
+		get boldFont(){ return this.__rt.boldFont; }, set boldFont( f ){ this.__rt.boldFont = f; this.ui.requestLayout( 'boldFont' ); },
 
 		// (string) optional italic font name (improves rendering)
-		'italicFont': { get: function (){ return rt.italicFont; }, set: function( f ){ rt.italicFont = f; ui.requestLayout( 'italicFont' ); }  },
+		get italicFont(){ return this.__rt.italicFont; }, set italicFont( f ){ this.__rt.italicFont = f; this.ui.requestLayout( 'italicFont' ); },
 
 		// (string) optional bold+italic font name (improves rendering)
-		'boldItalicFont': { get: function (){ return rt.boldItalicFont; }, set: function( f ){ rt.boldItalicFont = f; ui.requestLayout( 'boldItalicFont' ); }  },
+		get boldItalicFont(){ return this.__rt.boldItalicFont; }, set boldItalicFont( f ){ this.__rt.boldItalicFont = f; this.ui.requestLayout( 'boldItalicFont' ); },
 
 		// (Number) font size
-		'size': { get: function (){ return rt.size; }, set: function( s ){ rt.size = s; ui.requestLayout( 'size' ); }  },
+		get size(){ return this.__rt.size; }, set size( s ){ this.__rt.size = s; this.ui.requestLayout( 'size' ); },
 
 		// (Boolean) should text be antialiased
-		'antialias': { get: function (){ return rt.antialias; }, set: function( a ){ rt.antialias = a; }  },
+		get antialias(){ return this.__rt.antialias; }, set antialias( a ){ this.__rt.antialias = a; },
 
 		// (Number) - Align.Left | Align.Center | Align.Right - text alignment
-		'align': { get: function (){ return rt.align; }, set: function( w ){ rt.align = w; }  },
+		get align(){ return this.__rt.align; }, set align( w ){ this.__rt.align = w; },
 
 		// (Number) extra spacing between characters
-		'characterSpacing': { get: function (){ return rt.characterSpacing; }, set: function( v ){ rt.characterSpacing = v; ui.requestLayout( 'characterSpacing' ); }  },
+		get characterSpacing(){ return this.__rt.characterSpacing; }, set characterSpacing( v ){ this.__rt.characterSpacing = v; this.ui.requestLayout( 'characterSpacing' ); },
 
 		// (Number) multiLine line spacing
-		'lineSpacing': { get: function (){ return rt.lineSpacing; }, set: function( v ){ rt.lineSpacing = v; ui.requestLayout( 'lineSpacing' ); }  },
+		get lineSpacing(){ return this.__rt.lineSpacing; }, set lineSpacing( v ){ this.__rt.lineSpacing = v; this.ui.requestLayout( 'lineSpacing' ); },
 
 		// (Number) returns line height - font size + line spacing
-		'lineHeight': { get: function (){ return rt.lineHeight; } },
+		get lineHeight(){ return this.__rt.lineHeight; },
 
 		// (Boolean) font bold
-		'bold': { get: function (){ return rt.bold; }, set: function( v ){ rt.bold = v; ui.requestLayout( 'bold' ); }  },
+		get bold(){ return this.__rt.bold; }, set bold( v ){ this.__rt.bold = v; this.ui.requestLayout( 'bold' ); },
 
 		// (Boolean) font italic
-		'italic': { get: function (){ return rt.italic; }, set: function( v ){ rt.italic = v; ui.requestLayout( 'italic' ); }  },
+		get italic(){ return this.__rt.italic; }, set italic( v ){ this.__rt.italic = v; this.ui.requestLayout( 'italic' ); },
 
 		// (Boolean) automatically wrap text
-		'wrap': { get: function (){ return rt.wrap; }, set: function( v ){ rt.wrap = v; if ( v ) rt.multiLine = true; ui.requestLayout( 'wrap' ); }  },
+		get wrap(){ return this.__rt.wrap; }, set wrap( v ){ this.__rt.wrap = v; if ( v ) this.__rt.multiLine = true; this.ui.requestLayout( 'wrap' ); },
 
 		// (Boolean) make text size to fit text up to maxWidth
-		'autoSize': { get: function (){ return autoResize; }, set: function( v ){ rt.autoSize = autoResize = v; ui.requestLayout( 'autoSize' ); }  },
+		get autoSize(){ return this.__autoResize; }, set autoSize( v ){ this.__rt.autoSize = this.__autoResize = v; this.ui.requestLayout( 'autoSize' ); },
 
 		// (Boolean) enable display ^code formatting (while not editing)
-		'formatting': { get: function (){ return rt.formatting; }, set: function( v ){ rt.formatting = v; ui.requestLayout( 'formatting' ); }  },
+		get formatting(){ return this.__rt.formatting; }, set formatting( v ){ this.__rt.formatting = v; this.ui.requestLayout( 'formatting' ); },
 
 		// (Number) or (Color) text color
-		'color': { get: function (){ return rt.textColor; }, set: function( v ){ rt.textColor = v; }  },
+		get color(){ return this.__rt.textColor; }, set color( v ){ this.__rt.textColor = v; },
 
 		// (Number) or (Color) ^0 color
-		'color0': { get: function (){ return rt.color0; }, set: function( v ){ rt.color0 = v; }  },
+		get color0(){ return this.__rt.color0; }, set color0( v ){ this.__rt.color0 = v; },
 
 		// (Number) or (Color) ^1 color
-		'color1': { get: function (){ return rt.color1; }, set: function( v ){ rt.color1 = v; }  },
+		get color1(){ return this.__rt.color1; }, set color1( v ){ this.__rt.color1 = v; },
 
 		// (Number) or (Color) ^2 color
-		'color2': { get: function (){ return rt.color2; }, set: function( v ){ rt.color2 = v; }  },
+		get color2(){ return this.__rt.color2; }, set color2( v ){ this.__rt.color2 = v; },
 
 		// (Number) or (Color) ^3 color
-		'color3': { get: function (){ return rt.color3; }, set: function( v ){ rt.color3 = v; }  },
+		get color3(){ return this.__rt.color3; }, set color3( v ){ this.__rt.color3 = v; },
 
 		// (Number) or (Color) ^4 color
-		'color4': { get: function (){ return rt.color4; }, set: function( v ){ rt.color4 = v; }  },
+		get color4(){ return this.__rt.color4; }, set color4( v ){ this.__rt.color4 = v; },
 
 		// (Number) or (Color) ^5 color
-		'color5': { get: function (){ return rt.color5; }, set: function( v ){ rt.color5 = v; }  },
+		get color5(){ return this.__rt.color5; }, set color5( v ){ this.__rt.color5 = v; },
 
 		// (Number) or (Color) ^6 color
-		'color6': { get: function (){ return rt.color6; }, set: function( v ){ rt.color6 = v; }  },
+		get color6(){ return this.__rt.color6; }, set color6( v ){ this.__rt.color6 = v; },
 
 		// (Number) or (Color) ^7 color
-		'color7': { get: function (){ return rt.color7; }, set: function( v ){ rt.color7 = v; }  },
+		get color7(){ return this.__rt.color7; }, set color7( v ){ this.__rt.color7 = v; },
 
 		// (Number) or (Color) ^8 color
-		'color8': { get: function (){ return rt.color8; }, set: function( v ){ rt.color8 = v; }  },
+		get color8(){ return this.__rt.color8; }, set color8( v ){ this.__rt.color8 = v; },
 
 		// (Number) or (Color) ^9 color
-		'color9': { get: function (){ return rt.color9; }, set: function( v ){ rt.color9 = v; }  },
+		get color9(){ return this.__rt.color9; }, set color9( v ){ this.__rt.color9 = v; },
 
 		// (Color) | (Number) .addColor property of current render component
-		'addColor': { get: function (){ return rt.addColor; }, set: function( v ){ rt.addColor = v; } },
+		get addColor(){ return this.__rt.addColor; }, set addColor( v ){ this.__rt.addColor = v; },
 
 		// (Number) or (Color) background color
-		'backgroundColor': { get: function (){ return rt.backgroundColor; }, set: function( v ){ rt.backgroundColor = v; }  },
+		get backgroundColor(){ return this.__rt.backgroundColor; }, set backgroundColor( v ){ this.__rt.backgroundColor = v; },
 
 		// (Integer) characters to skip rendering from beginning of string
-		'revealStart': { get: function (){ return rt.revealStart; }, set: function( s ){ rt.revealStart = s; }  },
+		get revealStart(){ return this.__rt.revealStart; }, set revealStart( s ){ this.__rt.revealStart = s; },
 
 		// (Integer) characters to skip rendering from beginning of string
-		'revealEnd': { get: function (){ return rt.revealEnd; }, set: function( s ){ rt.revealEnd = s; }  },
+		get revealEnd(){ return this.__rt.revealEnd; }, set revealEnd( s ){ this.__rt.revealEnd = s; },
 
 		// (Number) or (Color) pixel shader outline color
-		'outlineColor': { get: function (){ return rt.outlineColor; }, set: function( v ){ rt.outlineColor = v; }  },
+		get outlineColor(){ return this.__rt.outlineColor; }, set outlineColor( v ){ this.__rt.outlineColor = v; },
 
 		// (Number) thickness of pixel shader outline
-		'outlineRadius': { get: function (){ return rt.outlineRadius; }, set: function( v ){ rt.outlineRadius = v; }  },
+		get outlineRadius(){ return this.__rt.outlineRadius; }, set outlineRadius( v ){ this.__rt.outlineRadius = v; },
 
 		// (Number) X offset of pixel shader outline
-		'outlineOffsetX': { get: function (){ return rt.outlineOffsetX; }, set: function( v ){ rt.outlineOffsetX = v; }  },
+		get outlineOffsetX(){ return this.__rt.outlineOffsetX; }, set outlineOffsetX( v ){ this.__rt.outlineOffsetX = v; },
 
 		// (Number) X offset of pixel shader outline
-		'outlineOffsetY': { get: function (){ return rt.outlineOffsetY; }, set: function( v ){ rt.outlineOffsetY = v; }  },
+		get outlineOffsetY(){ return this.__rt.outlineOffsetY; }, set outlineOffsetY( v ){ this.__rt.outlineOffsetY = v; },
 
 		// (RenderText) returns reference to RenderText object
-		'renderText': { get: function (){ return rt; } },
+		get renderText(){ return this.__rt; },
+		
+		__updateSize: function() {
+			if ( this.__autoResize ) {
+				this.__rt.width = ( this.ui.maxWidth ? this.ui.maxWidth : 99999 ) - (this.ui.padLeft + this.ui.padRight);
+				this.__rt.measure();
+				this.ui.minWidth = this.__rt.width + this.ui.padLeft + this.ui.padRight;
+			} else {
+				this.__rt.autoSize = true;
+				if ( this.__rt.wrap ) {
+					this.__rt.width = this.ui.width - (this.ui.padLeft + this.ui.padRight);
+					this.__rt.measure();
+					this.ui.minWidth = this.__rt.size * 2 + (this.ui.padLeft + this.ui.padRight);
+				} else {
+					this.__rt.measure();
+					this.ui.minWidth = this.__rt.width + this.ui.padLeft + this.ui.padRight;
+				}
+			}
+			this.ui.minHeight = this.__rt.height + (this.ui.padTop + this.ui.padBottom);
+			this.__rt.width = Math.max( this.ui.width - (this.ui.padLeft + this.ui.padRight), this.ui.minWidth );
+			this.__rt.autoSize = this.__autoResize;
+		},
+	
+		__layout: function ( w, h ) {
+			this.gameObject.__tc.setTransform( this.padLeft, this.padTop );
+			this.gameObject.__updateSize();
+		},
+	
+		__mouseOverOut: function ( x, y, wx, wy ) {
+			this.gameObject.fire( currentEventName(), x, y, wx, wy );
+		}
 
 	};
-	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
+	
+	// initialize
+	go.name = "Text";
+	go.ui = new UI( {
+		layoutType: Layout.None,
+		minWidth: 10,
+		minHeight: 10,
+		focusable: false,
+		layout: UI.base.textPrototype.__layout,
+		mouseOver: UI.base.textPrototype.__mouseOverOut,
+		mouseOut: UI.base.textPrototype.__mouseOverOut,
+	} );
+	go.__tc = go.addChild( { serializeable: false }),
+	go.__rt = go.__tc.render = new RenderText( {
+		autoSize: false,
+		multiLine: true,
+		wrap: false,
+	} );
+	go.__proto__ = UI.base.textPrototype;
+	go.init();
+
+	// add property-list inspectable info
 	UI.base.addInspectables( go, "Text",
     [ 'text', 'size', 'font', 'boldFont', 'italicFont', 'boldItalicFont',
 	    'align', 'bold', 'italic', 'wrap', 'formatting',
@@ -154,63 +200,9 @@ include( './ui' );
 	    'color': { inline: true }, 'backgroundColor': { inline: true }, 'outlineColor': { inline: true },
     }, 1 );
 
-	// create components
-
-	// set name
-	go.name = "Text";
-
-	// text container
-	tc = go.addChild();
-	rt = new RenderText();
-	rt.autoSize = false;
-	rt.multiLine = true;
-	rt.wrap = false;
-	tc.render = rt;
-	tc.serializeable = false;
-
-	// UI
-	ui.layoutType = Layout.None;
-	ui.minWidth = 10; ui.minHeight = 10;
-	ui.focusable = false;
-	go.ui = ui;
-
-	// immediate
-	go.updateSize = function() {
-		if ( autoResize ) {
-			rt.width = ( ui.maxWidth ? ui.maxWidth : 99999 ) - (ui.padLeft + ui.padRight);
-			rt.measure();
-			ui.minWidth = rt.width + ui.padLeft + ui.padRight;
-		} else {
-			rt.autoSize = true;
-			if ( rt.wrap ) {
-				rt.width = ui.width - (ui.padLeft + ui.padRight);
-				rt.measure();
-				ui.minWidth = rt.size * 2 + (ui.padLeft + ui.padRight);
-			} else {
-				rt.measure();
-				ui.minWidth = rt.width + ui.padLeft + ui.padRight;
-			}
-		}
-		ui.minHeight = rt.height + (ui.padTop + ui.padBottom);
-		rt.width = Math.max( ui.width - (ui.padLeft + ui.padRight), ui.minWidth );
-		rt.autoSize = autoResize;
-	}
-
-	// layout components
-	ui.layout = function ( w, h ) {
-		tc.setTransform( ui.padLeft, ui.padTop );
-		go.updateSize();
-	}
-
-	// rollover / rollout forward
-	ui.mouseOver = ui.mouseOut = function ( x, y, wx, wy ) {
-		go.fire( currentEventName(), x, y, wx, wy );
-	}
-
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.text );
-	UI.base.applyProperties( go, go.baseStyle );
-	go.updateSize();
-	constructing = false;
-
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.text );
+	UI.base.applyProperties( go, go.__baseStyle );
+	go.__updateSize();
+	
 })(this);
