@@ -221,7 +221,7 @@ include( './ui' );
 				var tx = target.worldX;
 				var ty = target.worldY;
 				x = ( tx + tw + container.width >= App.windowWidth ) ? ( tx - container.width ) : ( tx + tw );
-				if ( preferredDirection == 'up' ) {
+				if ( this.__preferredDirection == 'up' ) {
 					y = ( ty - container.height < 0 ) ? ty : ( ty - container.height );
 				} else {
 					y = ( ty + container.height >= App.windowHeight ) ? ( ty - container.height ) : ty;
@@ -232,10 +232,11 @@ include( './ui' );
 			} else  {
 				if ( x + container.width > App.windowWidth ) x = App.windowWidth - container.width;
 				else if ( x < 0 ) x = 0;
-				if ( preferredDirection == 'up' ) {
-					container.y = -container.height;
+				if ( this.__preferredDirection == 'up' ) {
 					if ( y > App.windowHeight ) y = App.windowHeight;
-					else if ( y - container.height < 0 ) y = y - container.height;
+					else if ( y - container.height < 0 ) {
+						container.y = container.getChild( 0 ).height;
+					} else container.y = -container.height;
 				} else {
 					container.y = 0;
 					if ( y + container.height > App.windowHeight ) y = App.windowHeight - container.height;

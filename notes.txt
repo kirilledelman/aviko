@@ -1,7 +1,3 @@
-any objects set to properties of prototype are shared
-
-In text field, when Cmd+Up/Down, set cursor to end
-
 
 /// replacing properties:
 \t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s?)set: function\s?([\s\S]+?)\s+},\n

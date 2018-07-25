@@ -639,7 +639,7 @@ include( './ui' );
 						preferredDirection: 'up',
 						noFocus: true,
 						selected: function( item ) {
-							instautocompleteCheck( true );
+							this.__autocompleteCheck( true );
 						}.bind( this ),
 					} );
 					this.__popup.style = this.__baseStyle.popupMenu;
