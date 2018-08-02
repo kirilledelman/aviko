@@ -1,6 +1,6 @@
 
 /// replacing properties:
-\t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s?)set: function\s?([\s\S]+?)\s+},\n
+\t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s+)set: function\s?([\s\S]+?)\s+},\n
 \t\tget $1$2,$3set $1$4,\n
 
 Body
