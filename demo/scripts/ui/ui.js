@@ -982,7 +982,9 @@ UI.base = UI.base || {
 			
 			this.__propertyListConfig = {
 				groups: [ { name: 'UI',
-					properties: [ 'layoutType', 'layoutAlignX', 'layoutAlignY', 'selfAlign', 'reversed',
+					properties: [
+					'focusGroup',
+					'layoutType', 'layoutAlignX', 'layoutAlignY', 'selfAlign', 'reversed',
 					'spacingX', 'spacingY', 'fixedPosition', 'fitChildren', 'wrapEnabled', 'wrapAfter', 'forceWrap',
 					'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight', 'flex',
 					'anchorLeft', 'anchorTop', 'anchorRight', 'anchorBottom', 'left', 'top', 'right', 'bottom',

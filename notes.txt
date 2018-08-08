@@ -1,3 +1,12 @@
+Inspector
+getProperties doesn't return prototype stuff (focusGroup etc)
+modify autocomplete filename to check for :frame - add getTextureFrames( tex )
+Ctrl+ wheel - zoom
++ left - pan
+
+Checkbox focus down/up doesn't work - ovrlap?
+Popu menu doesnt scroll w mouse wheel
+
 
 /// replacing properties:
 \t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s+)set: function\s?([\s\S]+?)\s+},\n
@@ -17,19 +26,12 @@ GameObject
 	moveChild( child, newIndex ) or moveChild( child, newParent ) -
 
 
-Inspector
-modify autocomplete filename to check for :frame - add getTextureFrames( tex )
-Ctrl+ wheel - zoom
-	+ left - pan
-
 RenderText
 	texture based fonts!
 
 Image
 	add drawing methods for shapes, sprites
 
-Propertylist
-	.texture - file lookup field
 
 
 Move render code for sprite to separate static method

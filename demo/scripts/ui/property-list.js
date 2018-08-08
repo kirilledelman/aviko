@@ -479,7 +479,7 @@ include( './ui' );
 				field.ownPropertyList = this;
 				field.type = fieldType;
 				field.pdef = pdef;
-				field.focusGroup = ui.focusGroup;
+				field.focusGroup = this.ui.focusGroup;
 				field.fieldLabel = label;
 				if ( fieldType != 'object' && readOnly ) field.disabled = true;
 				if ( disabled || pdef.readOnly ) field.disabled = true;

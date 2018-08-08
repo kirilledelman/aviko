@@ -31,331 +31,308 @@
 include( './ui' );
 (function(go) {
 
-	// internal props
-	var ui = new UI();
-	var button;
-	var value = '';
-	var selectedIndex = -1;
-	var items = [];
-	var arrowImage;
-	var dropdown;
-	var constructing = true;
-	var maxVisibleItems = 10;
-	var autoAddValue = false;
-	go.serializeMask = [ 'ui', 'render', 'children', 'itemCheck', 'item', 'menu' ];
-
 	// API properties
-	var mappedProps = {
+	UI.base.selectPrototype = UI.base.selectPrototype || {
+
+		__proto__: UI.base.componentPrototype,
 
 		// (Array) in form of [ { text:"Label text", value:(*), icon:"optional icon", disabled:(Boolean) } ...]
-		'items': { get: function (){ return items; }, set: function( v ){
-				// check items
-				items = [];
-				for ( var i in v ) {
-					if ( typeof ( v[ i ] ) === 'string' ) items.push( { text: v[ i ], value: v[ i ] } );
-					else items.push( v[ i ] );
-				}
-				go.value = value;
-				go.selectedIndex = selectedIndex;
-				updateSelectedItem();
-			}  },
-
-		// (*) 'value' property of selected item
-		'value': { get: function (){ return value; }, set: function( v ){
-				value = v;
-				// find matching value in items
-				selectedIndex = -1;
-				for ( var i in items ) {
-					if ( items[ i ].value === v ) {
-						selectedIndex = i;
-					}
-				}
-				// item not found
-				if ( selectedIndex == -1 && autoAddValue && items.length ) {
-					items.push( { text: v.toString(), value: v } );
-					go.selectedIndex = items.length - 1;
-				} else {
-					go.selectedIndex = selectedIndex; // for inspector to show change
-					updateSelectedItem();
-				}
-			}  },
-
-		// (Number) 0 based index of item selected in menu
-		'selectedIndex': {
-			get: function (){ return selectedIndex; },
-			set: function( v ){
-				if ( isNaN( v ) ) return;
-				selectedIndex = Math.max( -1, Math.min( Math.floor( v ), items.length - 1 ) );
-				value = selectedIndex > 0 ? items[ selectedIndex ].value : value;
-				updateSelectedItem();
+		get items(){ return this.__items; },
+		set items( v ){
+			// check items
+			this.__items = [];
+			for ( var i in v ) {
+				if ( typeof ( v[ i ] ) === 'string' ) this.__items.push( { text: v[ i ], value: v[ i ] } );
+				else this.__items.push( v[ i ] );
 			}
+			this.value = this.__value;
+			this.selectedIndex = this.__selectedIndex;
+			this.__updateSelectedItem();
 		},
 
 		// (*) 'value' property of selected item
-		'maxVisibleItems': { get: function (){ return maxVisibleItems; }, set: function( v ){ maxVisibleItems = v; }  },
+		get value(){ return this.__value; },
+		set value( v ){
+			this.__value = v;
+			// find matching value in items
+			this.__selectedIndex = -1;
+			for ( var i in this.__items ) {
+				if ( this.__items[ i ].value === v ) {
+					this.__selectedIndex = i;
+				}
+			}
+			// item not found
+			if ( this.__selectedIndex == -1 && this.__autoAddValue && this.__items.length ) {
+				this.__items.push( { text: v.toString(), value: v } );
+				this.selectedIndex = this.__items.length - 1;
+			} else {
+				this.selectedIndex = this.__selectedIndex; // for inspector to show change
+				this.__updateSelectedItem();
+			}
+		},
+
+		// (Number) 0 based index of item selected in menu
+		get selectedIndex(){ return this.__selectedIndex; },
+		set selectedIndex( v ){
+			if ( isNaN( v ) ) return;
+			this.__selectedIndex = Math.max( -1, Math.min( Math.floor( v ), this.__items.length - 1 ) );
+			this.__value = this.__selectedIndex > 0 ? this.__items[ this.__selectedIndex ].value : this.__value;
+			this.__updateSelectedItem();
+		},
+
+		// (*) 'value' property of selected item
+		get maxVisibleItems(){ return this.__maxVisibleItems; }, set maxVisibleItems( v ){ this.__maxVisibleItems = v; },
 
 		// (Boolean) when setting .value to value that doesn't exist in items, automatically append this value to items
-		'autoAddValue': { get: function (){ return autoAddValue; }, set: function( v ){ autoAddValue = v; }  },
+		get autoAddValue(){ return this.__autoAddValue; }, set autoAddValue( v ){ this.__autoAddValue = v; },
 
 		// (GameObject) instance of 'ui/button.js' used as main area
-		'button': { get: function (){ return button; } },
+		get button (){ return this.__button; },
 
 		// (GameObject) instance of 'ui/image.js' used for dropdown icon
-		'arrowImage': { get: function (){ return arrowImage; } },
-
-		// (String) or null - texture on drop down arrow icon
-		/*'arrowIcon': {
-			get: function (){ return arrowImage.texture; },
-			set: function( v ){
-				arrowImage.image.texture = v;
-				arrowImage.active = !!v;
-			}
-		},*/
+		get arrowImage (){ return this.__arrowImage; },
 		
 		// (Boolean) input disabled
-		'disabled': { get: function (){ return button.disabled; }, set: function( v ){ ui.disabled = button.disabled = v; }  },
+		get disabled(){ return this.__button.disabled; }, set disabled( v ){ this.ui.disabled = this.__button.disabled = v; },
 
 		// (Boolean) whether control is focusable when it's disabled
-		'disabledCanFocus': { get: function (){ return button.disabledCanFocus; }, set: function ( f ){ button.disabledCanFocus = f; } },
+		get disabledCanFocus(){ return this.__button.disabledCanFocus; }, set disabledCanFocus( f ){ this.__button.disabledCanFocus = f; },
 
 		// (Boolean) pressing Escape (or 'cancel' controller button) will blur the control
-		'cancelToBlur': { get: function (){ return button.cancelToBlur; }, set: function( cb ){ button.cancelToBlur = cb; }  },
+		get cancelToBlur(){ return this.__button.cancelToBlur; }, set cancelToBlur( cb ){ this.__button.cancelToBlur = cb; },
 
 		// (String) - when moving focus with Tab or arrows/controller, will only consider control with same focusGroup
-		'focusGroup': { get: function (){ return button.ui.focusGroup; }, set: function( f ){ button.ui.focusGroup = f; }  },
+		get focusGroup(){ return this.__button.ui.focusGroup; }, set focusGroup( f ){ this.__button.ui.focusGroup = f; },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
-		'pad': { get: function (){ return button.ui.pad; }, set: function( v ){ button.ui.pad = v; }  },
+		get pad(){ return this.__button.ui.pad; }, set pad( v ){ this.__button.ui.pad = v; },
 
 		// (Number) inner padding top
-		'padTop': { get: function (){ return button.ui.padTop; }, set: function( v ){ button.ui.padTop = v; }, serialized: false  },
+		get padTop(){ return this.__button.ui.padTop; }, set padTop( v ){ this.__button.ui.padTop = v; },
 
 		// (Number) inner padding right
-		'padRight': { get: function (){ return button.ui.padRight; }, set: function( v ){ button.ui.padRight = v; }, serialized: false },
+		get padRight(){ return this.__button.ui.padRight; }, set padRight( v ){ this.__button.ui.padRight = v; },
 
 		// (Number) inner padding bottom
-		'padBottom': { get: function (){ return button.ui.padBottom; }, set: function( v ){ button.ui.padBottom = v; }, serialized: false },
+		get padBottom(){ return this.__button.ui.padBottom; }, set padBottom( v ){ this.__button.ui.padBottom = v; },
 
 		// (Number) inner padding left
-		'padLeft': { get: function (){ return button.ui.padLeft; }, set: function( v ){ button.ui.padLeft = v; }, serialized: false },
+		get padLeft(){ return this.__button.ui.padLeft; }, set padLeft( v ){ this.__button.ui.padLeft = v; },
 
 		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
-		'spacing': { get: function (){ return button.ui.spacing; }, set: function( v ){ button.ui.spacing = v; }, serialized: false },
+		get spacing(){ return this.__button.ui.spacing; }, set spacing( v ){ this.__button.ui.spacing = v; },
 
 		// (Number) spacing between children when layoutType is Vertical
-		'spacingX': { get: function (){ return button.ui.spacingX; }, set: function( v ){ button.ui.spacingX = v; } },
+		get spacingX(){ return this.__button.ui.spacingX; }, set spacingX( v ){ this.__button.ui.spacingX = v; },
 
 		// (Number) spacing between children when layoutType is Horizontal
-		'spacingY': { get: function (){ return button.ui.spacingY; }, set: function( v ){ button.ui.spacingY = v; } },
+		get spacingY(){ return this.__button.ui.spacingY; }, set spacingY( v ){ this.__button.ui.spacingY = v; },
 
 		// (String) tooltip displayed on mouseOver
-		'tooltip': { get: function () { return button.tooltip; }, set: function( v ) { button.tooltip = v; } },
+		get tooltip() { return this.__button.tooltip; }, set tooltip( v ) { this.__button.tooltip = v; },
 
-	};
-	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
-	UI.base.addInspectables( go, 'Select',
-		[ 'items', 'value', 'selectedIndex', 'disabled', 'disabledCanFocus', 'cancelToBlur' ],
-        {
-        	'items': { inline: true },
-            'value': { readOnly: true },
-            'selectedIndex': { min: 0, reloadOnChange: 'value' }
-        }, 1 );
+		// updates icon and text to display currently selected item
+		__updateSelectedItem: function () {
+			// something selected
+			if ( this.__selectedIndex >= 0 ) {
+				var item = this.__items[ this.__selectedIndex ];
+				this.__button.text = item.text;
+				this.__button.icon = item.icon;
+			// invalid, show empty
+			} else {
+				this.__button.text = " ";
+				this.__button.icon = null;
+			}
+		},
 	
-	// API functions
-
-
-	// create components
-
-	// set name
+		// opens dropdown on click
+		__buttonClick: function ( btn ) {
+			if ( btn != 1 ) return;
+			this.__showDropdown( true );
+		},
+	
+		// refire focus event on gameObject
+		__buttonFocusChanged: function ( newFocus ) {
+			this.fire( 'focusChanged', newFocus );
+		},
+	
+		__showDropdown: function ( show ) {
+			// hide previously shown dropdown
+			if ( this.__dropdown ) {
+				this.__dropdown.parent = null;
+				this.__dropdown = null;
+				Input.mouseDown = null;
+			}
+			// show
+			if ( show ) {
+				this.scrollIntoView();
+				var items = this.__items;
+				if ( !items || !items.length ) return;
+				var gp = this.__button.localToGlobal( 0, 0, true );
+				// scrollable container
+				this.__dropdown = new GameObject( './scrollable', {
+					layoutType: Layout.Vertical,
+					layoutAlignX: LayoutAlign.Stretch,
+					layoutAlignY: LayoutAlign.Start,
+					wrapEnabled: false,
+					focusGroup: 'dropdown',
+					height: this.__button.height,
+					minWidth: this.__button.width,
+					update: this.__updateDropdownPosition.bind( this ),
+					x: gp.x, y: gp.y + this.__button.height,
+					opacity: 0,
+					scrollbars: false,
+					style: this.__baseStyle.menu,
+					ignoreCamera: true,
+					fixedPosition: true,
+				} );
+				// add items
+				var item = null, selectedItem = null;
+				for ( var i = 0; i < items.length; i++ ) {
+					item = new GameObject( './button', {
+						value: items[ i ].value,
+						icon: items[ i ].icon,
+						text: items[ i ].text,
+						name: items[ i ].text,
+						item: items[ i ],
+						minWidth: this.__button.width,
+						disabled: !!items[ i ].disabled,
+						focusGroup: 'dropdown',
+						select: this,
+						click: this.__itemSelected,
+						mouseOver: this.__itemSetFocus,
+						navigation: this.__itemNavigation,
+						style: this.__baseStyle.item,
+					} );
+					if ( !i || i == this.__selectedIndex ) selectedItem = item;
+					if ( i == this.__selectedIndex && this.__baseStyle.itemCheck !== undefined ) {
+						item.addChild( './image', this.__baseStyle.itemCheckStyle );
+					}
+					item.state = 'off';
+					this.__dropdown.addChild( item );
+				}
+				// link top/bottom
+				this.__dropdown.getChild( 0 ).focusUp = item;
+				item.focusDown = this.__dropdown.getChild( 0 );
+				// add to scene, positioning will occur on update
+				App.overlay.addChild( this.__dropdown );
+				this.__dropdown.fadeTo( 1, 0.15 );
+				this.__dropdown.async( function() {
+					selectedItem.focus();
+					selectedItem.scrollIntoView();
+					this.scrollbars = 'auto';
+				}, 0.15 );
+				Input.mouseDown = this.__mouseDownOutside.bind( this );
+			}
+		},
+	
+		__updateDropdownPosition: function () {
+			var gp = this.__button.localToGlobal( 0, 0, true );
+			var itemHeight = this.__dropdown.getChild( 0 ).height;
+			var desiredHeight = Math.min( this.__dropdown.scrollHeight, itemHeight * this.__maxVisibleItems );
+			var buttonBottom = gp.y + this.__button.height;
+			var availSpaceBelow = ( App.windowHeight - buttonBottom );
+			var availSpaceAbove = ( gp.y );
+	
+			// fits below button
+			if ( desiredHeight < availSpaceBelow || availSpaceBelow > availSpaceAbove ) {
+				desiredHeight = Math.min( availSpaceBelow, desiredHeight );
+				this.__dropdown.setTransform( gp.x, buttonBottom );
+			} else {
+				desiredHeight = Math.min( availSpaceAbove, desiredHeight );
+				this.__dropdown.setTransform( gp.x, gp.y - desiredHeight );
+			}
+	
+			// size
+			this.__dropdown.width = Math.max( this.__dropdown.scrollWidth, this.__button.width );
+			this.__dropdown.height = desiredHeight;
+	
+		},
+	
+		__itemNavigation: function ( name, value ) {
+			if ( name == 'cancel' ) {
+				this.select.__showDropdown( false );
+				this.select.__button.focus();
+				stopAllEvents();
+			}
+		},
+	
+		__itemSelected: function () {
+			stopAllEvents();
+			this.select.__showDropdown( false );
+			if ( this.select.value !== this.value ) {
+				this.select.value = this.value;
+				this.select.fire( 'change', this.select.value, this.item );
+			}
+			this.select.__button.focus();
+		},
+	
+		__itemSetFocus: function () {
+			if ( !this.disabled ) this.focus();
+		},
+	
+		// click outside to close
+		__mouseDownOutside: function ( btn, x, y ) {
+			// add scrollbar width, if visible
+			var ww = this.__dropdown.width;
+			if ( this.__dropdown.verticalScrollbar && this.__dropdown.verticalScrollbar.active ) {
+				ww += this.__dropdown.verticalScrollbar.width;
+			}
+			// close if outside
+			if ( x < this.__dropdown.x || x > this.__dropdown.x + ww ||
+				y < this.__dropdown.y || y > this.__dropdown.y + this.__dropdown.height ) {
+				this.__showDropdown( false );
+				stopAllEvents();
+			}
+		}
+		
+	};
+	
+	// internal props
 	go.name = "Select";
+	go.ui = new UI( {
+		autoMoveFocus: false,
+		layoutType: Layout.Vertical,
+		layoutAlignX: LayoutAlign.Stretch,
+		focusable: false,
 
-	// main button
-	button = new GameObject( './button', {
+    } );
+	go.__button = go.addChild( './button', {
 		text: "   ",
 		layoutAlignX: LayoutAlign.Stretch,
 		layoutAlignY: LayoutAlign.Center,
 		wrapEnabled: false,
-		flex: 1
+		flex: 1,
+		click: UI.base.selectPrototype.__buttonClick.bind( go ),
+		focusChanged: UI.base.selectPrototype.__buttonFocusChanged.bind( go ),
 	} );
-	go.addChild( button );
-
-	// add dropdown arrow
-	arrowImage = new GameObject( './image', {
+	go.__arrowImage = new GameObject( './image', {
 		selfAlign: LayoutAlign.Center,
 		mode: 'icon',
 	} );
-	button.label.flex = 1;
-	button.label.parent.addChild( arrowImage );
+	go.__button.label.flex = 1;
+	go.__button.label.parent.addChild( go.__arrowImage );
+	go.__value = '';
+	go.__selectedIndex = -1;
+	go.__items = [];
+	go.__dropdown = null;
+	go.__maxVisibleItems = 10;
+	go.__autoAddValue = false;
+	go.__proto__ = UI.base.selectPrototype;
+	go.init();
+	go.serializeMask.push( 'children', 'itemCheck', 'item', 'menu' );
 
-	// UI
-	ui.autoMoveFocus = false;
-	ui.width = ui.minWidth = ui.padLeft + ui.padRight;
-	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
-	ui.layoutType = Layout.Vertical;
-	ui.layoutAlignX = LayoutAlign.Stretch;
-	ui.focusable = false;
-	go.ui = ui;
-
-	// updates icon and text to display currently selected item
-	function updateSelectedItem() {
-		// something selected
-		if ( selectedIndex >= 0 ) {
-			var item = items[ selectedIndex ];
-			button.text = item.text;
-			button.icon = item.icon;
-		// invalid, show empty
-		} else {
-			button.text = " ";
-			button.icon = null;
-		}
-	};
-
-	// opens dropdown on click
-	button.click = function ( btn ) {
-		if ( btn != 1 ) return;
-		showDropdown( true );
-	}
-
-	// refire focus event on gameObject
-	button.focusChanged = function ( newFocus ) {
-		go.fire( 'focusChanged', newFocus );
-	}
-
-	function showDropdown( show ) {
-		// hide previously shown dropdown
-		if ( dropdown ) {
-			dropdown.parent = null;
-			dropdown = null;
-			Input.mouseDown = null;
-		}
-		// show
-		if ( show ) {
-			go.scrollIntoView();
-			if ( !items || !items.length ) return;
-			var gp = button.localToGlobal( 0, 0, true );
-			// scrollable container
-			dropdown = new GameObject( './scrollable', {
-				layoutType: Layout.Vertical,
-				layoutAlignX: LayoutAlign.Stretch,
-				layoutAlignY: LayoutAlign.Start,
-				wrapEnabled: false,
-				focusGroup: 'dropdown',
-				height: button.height,
-				minWidth: button.width,
-				update: updateDropdownPosition,
-				x: gp.x, y: gp.y + button.height,
-				opacity: 0,
-				scrollbars: false,
-				style: go.baseStyle.menu,
-				ignoreCamera: true,
-				fixedPosition: true,
-			} );
-			// add items
-			var item = null, selectedItem = null;
-			for ( var i = 0; i < items.length; i++ ) {
-				item = new GameObject( './button', {
-					value: items[ i ].value,
-					icon: items[ i ].icon,
-					text: items[ i ].text,
-					name: items[ i ].text,
-					item: items[ i ],
-					minWidth: button.width,
-					disabled: !!items[ i ].disabled,
-					focusGroup: 'dropdown',
-					click: itemSelected,
-					mouseOver: itemSetFocus,
-					navigation: itemNavigation,
-					style: go.baseStyle.item,
-				} );
-				if ( !i || i == selectedIndex ) selectedItem = item;
-				if ( i == selectedIndex && go.baseStyle.itemCheck !== undefined ) {
-					item.addChild( './image', go.baseStyle.itemCheckStyle );
-				}
-				item.state = 'off';
-				dropdown.addChild( item );
-			}
-			// link top/bottom
-			dropdown.getChild( 0 ).focusUp = item;
-			item.focusDown = dropdown.getChild( 0 );
-			// add to scene, positioning will occur on update
-			App.overlay.addChild( dropdown );
-			dropdown.fadeTo( 1, 0.15 );
-			dropdown.async( function() {
-				if ( dropdown ) {
-					selectedItem.focus();
-					selectedItem.scrollIntoView();
-					dropdown.scrollbars = 'auto';
-				}
-			}, 0.15 );
-			Input.mouseDown = mouseDownOutside;
-		}
-	}
-
-	function updateDropdownPosition() {
-		var gp = button.localToGlobal( 0, 0, true );
-		var itemHeight = dropdown.getChild( 0 ).height;
-		var desiredHeight = Math.min( dropdown.scrollHeight, itemHeight * maxVisibleItems );
-		var buttonBottom = gp.y + button.height;
-		var availSpaceBelow = ( App.windowHeight - buttonBottom );
-		var availSpaceAbove = ( gp.y );
-
-		// fits below button
-		if ( desiredHeight < availSpaceBelow || availSpaceBelow > availSpaceAbove ) {
-			desiredHeight = Math.min( availSpaceBelow, desiredHeight );
-			dropdown.setTransform( gp.x, buttonBottom );
-		} else {
-			desiredHeight = Math.min( availSpaceAbove, desiredHeight );
-			dropdown.setTransform( gp.x, gp.y - desiredHeight );
-		}
-
-		// size
-		dropdown.width = Math.max( dropdown.scrollWidth, button.width );
-		dropdown.height = desiredHeight;
-
-	}
-
-	function itemNavigation( name, value ) {
-		if ( name == 'cancel' ) {
-			showDropdown( false );
-			button.focus();
-			stopAllEvents();
-		}
-	}
-
-	function itemSelected() {
-		stopAllEvents();
-		showDropdown( false );
-		if ( go.value !== this.value ) {
-			go.value = this.value;
-			go.fire( 'change', go.value, this.item );
-		}
-		button.focus();
-	}
-
-	function itemSetFocus() {
-		if ( !this.disabled ) this.focus();
-	}
-
-	// click outside to close
-	function mouseDownOutside( btn, x, y ) {
-		// add scrollbar width, if visible
-		var ww = dropdown.width;
-		if ( dropdown.verticalScrollbar && dropdown.verticalScrollbar.active ) {
-			ww += dropdown.verticalScrollbar.width;
-		}
-		// close if outside
-		if ( x < dropdown.x || x > dropdown.x + ww ||
-			y < dropdown.y || y > dropdown.y + dropdown.height ) {
-			showDropdown( false );
-			stopAllEvents();
-		}
-	}
-
+	// add property-list inspectable info
+	UI.base.addInspectables( go, 'Select',
+		[ 'items', 'value', 'selectedIndex', 'disabled', 'disabledCanFocus', 'cancelToBlur' ],
+        {   'items': { inline: true },
+            'value': { readOnly: true },
+            'selectedIndex': { min: 0, reloadOnChange: 'value' }
+        }, 1 );
+	
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.select );
-	UI.base.applyProperties( go, go.baseStyle );
-	button.state = 'auto';
-	constructing = false;
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.select );
+	UI.base.applyProperties( go, go.__baseStyle );
+	go.__button.state = 'auto';
 
 })(this);
