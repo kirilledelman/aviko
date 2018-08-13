@@ -1692,7 +1692,7 @@ App.__propertyListConfig = App.__propertyListConfig ||
 {
 	showAll: false,
 	properties: {
-		'scene': { nullable: true, actions: [ { text:"new Scene", action: function() { this.pushToTarget( this.target.scene = new Scene(), 'scene' ); } } ]},
+		'scene': { nullable: true, actions: [ { text:"new Scene", action: function() { this.__pushToTarget( this.target.scene = new Scene(), 'scene' ); } } ]},
 	},
 	groups: [
 		{ name: "Scene", properties: [ 'scene' ] }
@@ -1716,7 +1716,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 {
 	showAll: true,
 	actions: [
-		{ text: "Add child", action: function() { this.pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } },
+		{ text: "Add child", action: function() { this.__pushToTarget( this.target.addChild(), this.target.numChildren - 1 ); } },
 	],
 	properties: {
 		'name': { tooltip: "Object name. It does not have to be unique." },
@@ -1745,18 +1745,18 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'renderAfterChildren': { tooltip: "Draw this object ^B*after*^b its children, not before." },
 		'render': { nullable: true, tooltip: "Instance of ^BRender____^b class, defining how this object is rendered.",
 			actions: [
-			{ text:"new RenderSprite", action: function() { this.pushToTarget( this.target.render = new RenderSprite(), 'render' ); } },
-			{ text:"new RenderShape", action: function() { this.pushToTarget( this.target.render = new RenderShape(), 'render' ); } },
-			{ text:"new RenderText", action: function() { this.pushToTarget( this.target.render = new RenderText(), 'render' ); } },
+			{ text:"new RenderSprite", action: function() { this.__pushToTarget( this.target.render = new RenderSprite(), 'render' ); } },
+			{ text:"new RenderShape", action: function() { this.__pushToTarget( this.target.render = new RenderShape(), 'render' ); } },
+			{ text:"new RenderText", action: function() { this.__pushToTarget( this.target.render = new RenderText(), 'render' ); } },
 		] },
 		'opacity': { min: 0, max: 1, step: 0.1, tooltip: "Object's own opacity. Affects children.", },
 		'body': { nullable: true, tooltip: "Instance of ^BBody^b class, allowing object to participate in physics simulation and collision detection.",
 			actions: [
-			{ text:"new Body", action: function() { this.pushToTarget( this.target.body = new Body(), 'body' ); } }
+			{ text:"new Body", action: function() { this.__pushToTarget( this.target.body = new Body(), 'body' ); } }
 		]},
 		'ui': { nullable: true, tooltip: "Instance of ^BUI^b class allowing object to participate in layout, and receive user interface events.",
 			actions: [
-			{ text:"new UI", action: function() { this.pushToTarget( this.target.ui = new UI(), 'ui' ); } }
+			{ text:"new UI", action: function() { this.__pushToTarget( this.target.ui = new UI(), 'ui' ); } }
 		] },
 		'worldX': false, 'worldY': false, 'worldScale': false, 'worldScaleX': false, 'worldScaleY': false,
 		'worldAngle': false, 'scale': false, 'numChildren': false,
@@ -1926,7 +1926,7 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		originalHeight: { disabled: true, tooltip: "Texture original height." },
 
 		image: { nullable: true, tooltip: "Set to an instance of ^BImage^b class to render a dynamic texture.",
-			actions: [ { text:"new Image", action: function() { this.pushToTarget( this.target.image = new Image(), 'image' ); } }
+			actions: [ { text:"new Image", action: function() { this.__pushToTarget( this.target.image = new Image(), 'image' ); } }
 		] },
 
 		pivotX: { step: 0.1, tooltip: "Sprite rotational pivot X." },

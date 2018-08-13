@@ -24,248 +24,230 @@
 include( './ui' );
 (function(go) {
 
-	// internal props
-	var ui = new UI(), bg, shp, background = false;
-	var header, titleText, closeButton;
-	var draggable = true, resizable = true;
-	var dragOffsetX, dragOffsetY, dragging = false;
-	var constructing = true;
-	var modalBackground;
-	go.serializeMask = [ 'ui', 'render' ];
-
 	// API properties
-	var mappedProps = {
+	UI.base.windowPrototype = UI.base.windowPrototype || {
+
+		__proto__: UI.base.componentPrototype,
 
 		// (ui/panel) reference to window header
-		'header': { get: function (){ return header; } },
+		get header(){ return this.__header; },
 
 		// (ui/text) reference to window title
-		'titleText': { get: function (){ return titleText; } },
+		get titleText(){ return this.__titleText; },
 
 		// (ui/button) reference to window close button
-		'closeButton': { get: function (){ return closeButton; } },
+		get closeButton(){ return this.__closeButton; },
 
 		// (String) window title
-		'title': { get: function (){ return titleText.text; }, set: function( t ){ titleText.text = t; } },
+		get title(){ return this.__titleText.text; }, set title( t ){ this.__titleText.text = t; },
 
 		// (Boolean) window can be dragged
-		'draggable': { get: function (){ return draggable; }, set: function( d ){ draggable = d; } },
+		get draggable(){ return this.__draggable; }, set draggable( d ){ this.__draggable = d; },
 
 		// (Boolean) window can be resized
-		'resizable': { get: function (){ return resizable; }, set: function( r ){ resizable = r; } },
+		get resizable(){ return this.__resizable; }, set resizable( r ){ this.__resizable = r; },
 
 		// (Boolean) window blocks UI events outside its bounds
-		'modal': {
-			get: function (){ return !!modalBackground; },
-			set: function( m ){
-				if ( m && !modalBackground ) {
-					modalBackground = new GameObject( './panel', {
+		get modal(){ return !!this.__modalBackground; },
+			set modal( m ){
+				if ( m && !this.__modalBackground ) {
+					this.__modalBackground = new GameObject( './panel', {
 						width: App.windowWidth,
 						height: App.windowHeight,
-						style: go.baseStyle.modalBackground,
+						style: this.__baseStyle.modalBackground,
 						blocking: true,
 					} );
-					if ( go.parent ) {
-						go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
+					if ( this.parent ) {
+						this.parent.addChild( this.__modalBackground, this.parent.children.indexOf( this ) );
 					}
-					draggable = resizable = false;
-				} else if ( modalBackground && !m ) {
-					modalBackground.parent = null;
-					modalBackground = null;
+					this.__draggable = this.__resizable = false;
+				} else if ( this.__modalBackground && !m ) {
+					this.__modalBackground.parent = null;
+					this.__modalBackground = null;
 				}
-			}
-		},
+			},
 
 		// (String) or (Color) or (Number) or (Image) or (null|false) - set background to sprite, or solid color, or nothing
-		'background': {
-			get: function (){ return background; },
-			set: function( v ){
-				background = v;
-				if ( v === false || v === null || v === undefined ){
-					go.render = null;
-				} else if ( typeof( v ) == 'string' ) {
-					bg.image = null;
-					bg.texture = v;
-					go.render = bg;
-				} else if ( typeof( v ) == 'object' && v.constructor == Image ){
-					bg.image = v;
-					bg.texture = null;
-					go.render = bg;
-				} else {
-					shp.color = v;
-					go.render = shp;
-				}
+		get background(){ return this.__background; },
+		set background( v ){
+			this.__background = v;
+			if ( v === false || v === null || v === undefined ){
+				this.render = null;
+			} else if ( typeof( v ) == 'string' ) {
+				this.__bg.image = null;
+				this.__bg.texture = v;
+				this.render = this.__bg;
+			} else if ( typeof( v ) == 'object' && v.constructor == Image ){
+				this.__bg.image = v;
+				this.__bg.texture = null;
+				this.render = this.__bg;
+			} else {
+				this.__shp.color = v;
+				this.render = this.__shp;
 			}
 		},
 
 		// (Number) corner roundness when background is solid color
-		'cornerRadius': { get: function (){ return shp.radius; }, set: function( b ){ shp.radius = b; shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle; } },
+		get cornerRadius(){ return this.__shp.radius; }, set cornerRadius( b ){ this.__shp.radius = b; this.__shp.shape = b > 0 ? Shape.RoundedRectangle : Shape.Rectangle; },
 
 		// (Number) outline thickness when background is solid color
-		'lineThickness': { get: function (){ return shp.lineThickness; }, set: function( b ){ shp.lineThickness = b; } },
+		get lineThickness(){ return this.__shp.lineThickness; }, set lineThickness( b ){ this.__shp.lineThickness = b; },
 
 		// (String) or (Color) or (Number) or (Boolean) - color of shape outline when background is solid
-		'outlineColor': { get: function (){ return shp.outlineColor; }, set: function( c ){ shp.outlineColor = (c === false ? '00000000' : c ); } },
+		get outlineColor(){ return this.__shp.outlineColor; }, set outlineColor( c ){ this.__shp.outlineColor = (c === false ? '00000000' : c ); },
 
 		// (Boolean) when background is solid color, controls whether it's a filled rectangle or an outline
-		'filled': { get: function (){ return shp.filled; }, set: function( v ){ shp.filled = v; }  },
+		get filled(){ return this.__shp.filled; }, set filled( v ){ this.__shp.filled = v; },
 
 		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - background texture slice
-		'slice': { get: function (){ return bg.slice; }, set: function( v ){ bg.slice = v; }  },
+		get slice(){ return this.__bg.slice; }, set slice( v ){ this.__bg.slice = v; },
 
 		// (Number) texture slice top
-		'sliceTop': { get: function (){ return bg.sliceTop; }, set: function( v ){ bg.sliceTop = v; }, serialized: false  },
+		get sliceTop(){ return this.__bg.sliceTop; }, set sliceTop( v ){ this.__bg.sliceTop = v; },
 
 		// (Number) texture slice right
-		'sliceRight': { get: function (){ return bg.sliceRight; }, set: function( v ){ bg.sliceRight = v; }, serialized: false },
+		get sliceRight(){ return this.__bg.sliceRight; }, set sliceRight( v ){ this.__bg.sliceRight = v; },
 
 		// (Number) texture slice bottom
-		'sliceBottom': { get: function (){ return bg.sliceBottom; }, set: function( v ){ bg.sliceBottom = v; }, serialized: false },
+		get sliceBottom(){ return this.__bg.sliceBottom; }, set sliceBottom( v ){ this.__bg.sliceBottom = v; },
 
 		// (Number) texture slice left
-		'sliceLeft': { get: function (){ return bg.sliceLeft; }, set: function( v ){ bg.sliceLeft = v; }, serialized: false },
+		get sliceLeft(){ return this.__bg.sliceLeft; }, set sliceLeft( v ){ this.__bg.sliceLeft = v; },
 
+		// close window
+		close: function () {
+			if ( this.__modalBackground ) {
+				this.parent = null;
+			} else {
+				this.active = false;
+			}
+			this.fire( 'closed' );
+		},
+		
+		__layout: function( w, h ) {
+			var go = this.gameObject;
+			go.__shp.resize( w, h );
+			go.__bg.resize( w, h );
+			// resize title
+			go.__header.width = w ;
+			this.padTop = go.__header.height + go.__header.marginBottom;
+			// modal is centered
+			if ( go.__modalBackground ) {
+				go.__modalBackground.resize( App.windowWidth, App.windowHeight );
+				go.setTransform( ( App.windowWidth - w ) * 0.5, ( App.windowHeight - h ) * 0.5 );
+			}
+			go.fire( 'layout', w, h );
+		},
+	
+		// dragging window
+		__dragCallback: function ( x, y ) {
+			var go = this.gameObject;
+			if ( go.__dragging == 'window' ) {
+				go.setTransform( x - go.__dragOffsetX, y - go.__dragOffsetY );
+			} else if ( go.__dragging == 'width' ) {
+				this.width = Math.max( this.minWidth, x - go.x );
+			} else if ( go.__dragging == 'height' ) {
+				this.height = Math.max( this.minHeight, y - go.y );
+			} else if ( go.__dragging == 'widthheight' ) {
+				this.width = Math.max( this.minWidth, x - go.x );
+				this.height = Math.max( this.minHeight, y - go.y );
+			}
+			stopAllEvents();
+		},
+	
+		__mouseUpCallback: function ( btn, x, y ) {
+			var go = this.gameObject;
+			if ( go.__dragging ) {
+				Input.mouseMove = null;
+				Input.mouseUp = null;
+				go.eventMask.length = 0;
+				go.opacity = 1;
+				go.__dragging = false;
+			}
+			stopAllEvents();
+		},
+	
+		__mouseDown: function ( btn, x, y ) {
+			var go = this.gameObject;
+			if ( go.__dragging ) return;
+			go.__dragOffsetX = x; go.__dragOffsetY = y;
+			stopAllEvents();
+			if ( go.__draggable && y < go.__header.height ) {
+				go.__dragging = 'window';
+			} else if ( go.__resizable ) {
+				if ( x >= this.width - this.padRight ) {
+					go.__dragging = 'width';
+				}
+				if ( y >= this.height - this.padBottom ) {
+					go.__dragging = ( go.__dragging ? go.__dragging : '' ) + 'height';
+				}
+				if ( !go.__dragging ) return;
+			} else return;
+			go.eventMask = [ 'mouseUp', 'mouseMove' ];
+			Input.mouseMove = go.__dragCallback.bind( this );
+			Input.mouseUp = go.__mouseUpCallback.bind( this );
+			go.opacity = 0.7;
+		},
+	
+		// add modal background under window if present
+		added: function () {
+			cancelDebouncer( 'showTooltip' );
+			if ( go.__modalBackground ) {
+				go.parent.addChild( go.__modalBackground, this.parent.children.indexOf( this ) );
+			}
+		},
+	
+		// remove modal background if present
+		removed: function () {
+			if ( go.__modalBackground ) go.__modalBackground.parent = null;
+		},
+		
 	};
-	UI.base.addSharedProperties( go, ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
-
-	// api
-
-	go[ 'close' ] = function () {
-		if ( modalBackground ) {
-			go.parent = null;
-		} else {
-			go.active = false;
-		}
-		go.fire( 'closed' );
-	}
-
-	// create components
-
-	// set name
-	if ( !go.name ) go.name = "Window";
-
-	// sprite bg
-	bg = new RenderSprite( background );
-	go.render = bg;
-
-	// solid color background
-	shp = new RenderShape( Shape.Rectangle, {
+	
+	// init
+	go.name = "Window";
+	go.ui = new UI( {
+		autoMoveFocus: false,
+		layoutType: Layout.Vertical,
+		fitChildren: false,
+		focusable: false,
+		blocking: true,
+		layout: UI.base.windowPrototype.__layout,
+		mouseDown: UI.base.windowPrototype.__mouseDown
+    } );
+	go.__background = false;
+	go.__modalBackground = null;
+	go.__draggable = true;
+	go.__resizable = true;
+	go.__dragOffsetX = 0;
+	go.__dragOffsetY = 0;
+	go.__dragging = false;
+	go.__bg = go.render = new RenderSprite();
+	go.__shp = new RenderShape( Shape.Rectangle, {
 		radius: 0,
 		filled: true,
 		centered: false
 	});
-
-	// header
-	header = go.addChild( './panel', {
+	go.__header = go.addChild( './panel', {
 		fixedPosition: true,
 		x: 0, y: 0,
 		layoutType: Layout.Horizontal,
 		layoutAlignY: LayoutAlign.Center,
 		fitChildren: false,
 	});
-
-	// title
-	titleText = header.addChild( './text', {
+	go.__titleText = go.__header.addChild( './text', {
 		flex: 1
 	} );
-
-	// close button
-	closeButton = header.addChild( './button', {
-		click: go[ 'close' ],
+	go.__closeButton = go.__header.addChild( './button', {
+		click: UI.base.windowPrototype.close,
 		focusGroup: 'window'
 	} );
-
-
-	// UI
-	ui.autoMoveFocus = false;
-	ui.width = ui.minWidth = ui.padLeft + ui.padRight;
-	ui.height = ui.minHeight = ui.padTop + ui.padBottom;
-	ui.layoutType = Layout.Vertical;
-	ui.fitChildren = false;
-	ui.focusable = false;
-	ui.blocking = true;
-	go.ui = ui;
-
-	// lay out components
-	ui.layout = function( w, h ) {
-		shp.resize( w, h );
-		bg.resize( w, h );
-		// resize title
-		header.width = w ;
-		ui.padTop = header.height + header.marginBottom;
-		// modal is centered
-		if ( modalBackground ) {
-			modalBackground.resize( App.windowWidth, App.windowHeight );
-			go.setTransform( ( App.windowWidth - w ) * 0.5, ( App.windowHeight - h ) * 0.5 );
-		}
-		go.fire( 'layout', w, h );
-	}
-
-	// dragging window
-	var dragCallback = function ( x, y ) {
-		if ( dragging == 'window' ) {
-			go.setTransform( x - dragOffsetX, y - dragOffsetY );
-		} else if ( dragging == 'width' ) {
-			this.width = Math.max( this.minWidth, x - go.x );
-		} else if ( dragging == 'height' ) {
-			this.height = Math.max( this.minHeight, y - go.y );
-		} else if ( dragging == 'widthheight' ) {
-			this.width = Math.max( this.minWidth, x - go.x );
-			this.height = Math.max( this.minHeight, y - go.y );
-		}
-		stopAllEvents();
-	}.bind( ui );
-
-	var mouseUpCallback = function ( btn, x, y ) {
-		if ( dragging ) {
-			Input.mouseMove = null;
-			Input.mouseUp = null;
-			go.eventMask.length = 0;
-			go.opacity = 1;
-			dragging = false;
-		}
-		stopAllEvents();
-	}.bind( ui );
-
-	// start/stop drag
-	ui.mouseDown = function ( btn, x, y ) {
-		if ( dragging ) return;
-		dragOffsetX = x; dragOffsetY = y;
-		stopAllEvents();
-		if ( draggable && y < header.height ) {
-			dragging = 'window';
-		} else if ( resizable ) {
-			if ( x >= this.width - this.padRight ) {
-				dragging = 'width';
-			}
-			if ( y >= this.height - this.padBottom ) {
-				dragging = ( dragging ? dragging : '' ) + 'height';
-			}
-			if ( !dragging ) return;
-		} else return;
-		go.eventMask = [ 'mouseUp', 'mouseMove' ];
-		Input.mouseMove = dragCallback;
-		Input.mouseUp = mouseUpCallback;
-		go.opacity = 0.7;
-	}
-
-	// add modal background under window if present
-	go.added = function () {
-		cancelDebouncer( 'showTooltip' );
-		if ( modalBackground ) {
-			go.parent.addChild( modalBackground, go.parent.children.indexOf( go ) );
-		}
-	}
-
-	// remove modal background if present
-	go.removed = function () {
-		if ( modalBackground ) modalBackground.parent = null;
-	}
+	go.__proto__ = UI.base.windowPrototype;
+	go.init();
+	go.serializeMask.push( 'added', 'removed', 'close' );
 
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.window );
-	UI.base.applyProperties( go, go.baseStyle );
-	constructing = false;
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.window );
+	UI.base.applyProperties( go, go.__baseStyle );
 
 })(this);
