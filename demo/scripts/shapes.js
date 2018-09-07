@@ -65,7 +65,7 @@ new (function (){
 		"The shape itself is determined by the value of ^B.shape^b property, set to one of constant values in ^BShapes^b enumeration:\n" +
 		"^BArc, Circle, Ellipse, Line, Polygon, Rectangle, RoundedRectangle, Sector, Triangle, Chain.^b\n\n" +
 		"The shape parameters are shared between different shape types, and can be changed on the fly.\n\n" +
-		"Some shapes can be solid (filled), and have an additional colored outline.",
+		"Closed shapes can be solid (filled), and have an additional colored outline.",
 
 	} );
 

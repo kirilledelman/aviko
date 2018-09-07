@@ -239,7 +239,7 @@ include( './ui' );
 		flex: 1
 	} );
 	go.__closeButton = go.__header.addChild( './button', {
-		click: UI.base.windowPrototype.close,
+		click: UI.base.windowPrototype.close.bind( go ),
 		focusGroup: 'window'
 	} );
 	go.__proto__ = UI.base.windowPrototype;

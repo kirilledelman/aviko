@@ -200,7 +200,7 @@ include( './ui' );
 					scrollable.marginRight =  vsb.width + vsb.marginLeft;
 				} else scrollable.marginRight = 0;
 				scrollable.scrollWidth = w - scrollable.marginRight;
-				scrollable.resize( scrollable.scrollWidth, h );
+				scrollable.resize( scrollable.scrollWidth, h - ( go.__header.active ? go.__header.height : 0 ) );
 				scrollable.spacingX = go.__spacingX;
 				scrollable.spacingY = go.__spacingY;
 				scrollable.pad = go.__pad;
@@ -483,7 +483,7 @@ include( './ui' );
 				field.fieldLabel = label;
 				if ( fieldType != 'object' && readOnly ) field.disabled = true;
 				if ( disabled || pdef.readOnly ) field.disabled = true;
-				if ( pdef.tooltip ) label.tooltip = field.tooltip = pdef.tooltip;
+				label.tooltip = field.tooltip = ( pdef.tooltip ? pdef.tooltip : null );
 				if ( typeof( pdef.style ) === 'object' ) {
 					UI.base.applyProperties( field, pdef.style );
 				}
@@ -1614,6 +1614,7 @@ include( './ui' );
 	go.name = "PropertyList";
 	go.ui = new UI( {
 		focusable: false,
+		layoutType: Layout.Vertical,
 		layout: UI.base.propListPrototype.__layout,
 		click: UI.base.propListPrototype.__click,
 	} );

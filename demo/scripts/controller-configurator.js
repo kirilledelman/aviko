@@ -226,7 +226,7 @@
 			color: 0x006699,
 			wrap: true,
 			multiLine: true,
-			autoResize: false,
+			autoSize: false,
 			text: "New Controller Detected",
 		} ),
 		ui: new UI( { marginTop: sy, minHeight: largeFontSize, layout: layoutText } )
@@ -234,7 +234,7 @@
 	subtitle = container.addChild( {
 		render: new RenderText ( {
 			align: TextAlign.Center,
-			autoResize: false,
+			autoSize: false,
 			bold: true,
 			size: largeFontSize,
 			color: 0x003366,
@@ -248,7 +248,7 @@
 	prompt = container.addChild( {
 		render: new RenderText( {
 			align: TextAlign.Center,
-			autoResize: false,
+			autoSize: false,
 			size: mediumFontSize,
 			color: 0x0,
 			wrap: true,
@@ -261,7 +261,7 @@
 		render: new RenderText( {
 			bold: true,
 			align: TextAlign.Center,
-			autoResize: false,
+			autoSize: false,
 			size: mediumFontSize,
 			color: 0xD03399,
 			wrap: true,
@@ -273,7 +273,7 @@
 	error = container.addChild( {
 		render: new RenderText( {
 			align: TextAlign.Center,
-			autoResize: false,
+			autoSize: false,
 			size: smallFontSize,
 			color: 0x901010,
 			pad: sy,
@@ -286,7 +286,7 @@
 	instruction = container.addChild( {
 		render: new RenderText( {
 			align: TextAlign.Center,
-			autoResize: false,
+			autoSize: false,
 			size: smallFontSize,
 			color: 0x666666,
 			wrap: true,

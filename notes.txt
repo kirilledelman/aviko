@@ -1,16 +1,14 @@
+Property list - modal background doesn't disappear.
+
 Inspector
-getProperties doesn't return prototype stuff (focusGroup etc)
-modify autocomplete filename to check for :frame - add getTextureFrames( tex )
-Ctrl+ wheel - zoom
-+ left - pan
+	getProperties doesn't return prototype stuff (focusGroup etc)
+	modify autocomplete filename to check for :frame - add getTextureFrames( tex )
+	Ctrl + wheel - zoom; LMB - pan
 
-Checkbox focus down/up doesn't work - ovrlap?
-Popu menu doesnt scroll w mouse wheel
+Checkbox focus down/up doesn't work - inconsistent.
+Popup menu doesnt scroll w mouse wheel
 
-
-/// replacing properties:
-\t\t'(\w+)\': \{\s+get: function\s?([\s\S]+?),(\s+)set: function\s?([\s\S]+?)\s+},\n
-\t\tget $1$2,$3set $1$4,\n
+In scrollable container, dispatch mousemove after scroll, to counter stale rolloff.
 
 Body
 	add method - "makeDefaultShape" creating shape from sprite, or shape

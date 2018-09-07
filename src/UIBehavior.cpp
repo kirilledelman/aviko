@@ -1006,13 +1006,17 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 	
 	// for each UI in scene
 	vector<UIBehavior*> uiElements;
-	this->scene->GetBehaviors( true, uiElements );
-	app.overlay->GetBehaviors( true, uiElements );
+	if ( this->gameObject->IsDescendantOf( app.overlay ) ){
+		app.overlay->GetBehaviors( true, uiElements );
+	} else {
+		this->scene->GetBehaviors( true, uiElements );
+	}
 	if ( !uiElements.size() || ( uiElements.size() == 1 && uiElements[ 0 ] == this ) ) return NULL;
 	
 	// try until find a candidate or margin of search is too big
 	float maxMargin = fmin( maxX - minX, maxY - minY );
 	float extraMargin = fmin( maxX - minX, maxY - minY ) * 0.5;
+	printf( "(%f,%f %f,%f)\n", minX, minY, maxX, maxY );
 	while ( !candidates.size() && extraMargin < maxMargin ) {
 		for ( size_t i = 0, nc = uiElements.size(); i < nc; i++ ) {
 			other = uiElements[ i ];
@@ -1027,9 +1031,12 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 				case 0: // up
 					otherMinX -= extraMargin;
 					otherMaxX += extraMargin;
+					printf( "considering (%f,%f %f,%f) '%s'\n", otherMinX, otherMinY, otherMaxX, otherMaxY, other->gameObject->name.c_str() );
 					if ( otherMaxY > minY || // below
-						otherMaxX < minX || otherMinX > maxX ) // no overlap
+						otherMaxX < minX || otherMinX > maxX ) { // no overlap
+						printf( "skipped because %f > %f || %f < %f || %f > %f\n", otherMaxY,minY ,otherMaxX,minX,otherMinX,maxX );
 						continue;
+					}
 					break;
 				case 2: // down
 					otherMinX -= extraMargin;
@@ -1096,7 +1103,8 @@ UIBehavior* UIBehavior::FindFocusable( float x, float y ) {
 		}
 		it++;
 	}
-		
+	printf( "picked '%s'\n", other ? other->gameObject->name.c_str() : "NOHTING");
+	
 	return other;
 	
 }

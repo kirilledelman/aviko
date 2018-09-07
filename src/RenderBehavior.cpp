@@ -495,8 +495,8 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		features +=
 		"vec4 smp = outlineSample( coord * texSize - outlineOffsetRadius.xy );\n\
 		src.rgb = mix( outlineColor.rgb, src.rgb * color.rgb, src.a ) + addColor.rgb;\n\
-		if ( outlineOffsetRadius.z > 0.0 ) src.a = max( smp.a * outlineColor.a, src.a ) * color.a;\n\
-		else src.a = max( smp.a * outlineColor.a, src.a ) * ( 1.0 - src.a ) * color.a;";
+		if ( outlineOffsetRadius.z >= 0.0 ) src.a = max( smp.a * outlineColor.a, src.a ) * color.a;\n\
+		else src.a = max( smp.a * outlineColor.a, 0.0 ) * ( 1.0 - src.a ) * color.a;";
 	}
 	
 	// blending with background modes

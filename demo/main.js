@@ -54,9 +54,7 @@ App.fixedWindowResolution = false;
 	}
 } );
 
-
 */
-
 // inspector - hold right mouse button down to activate
 var inspector = include( 'ui/inspector' );
 

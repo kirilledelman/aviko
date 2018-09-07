@@ -25,296 +25,270 @@
 include( './ui' );
 (function(go) {
 
-	// internal props
-	var ui, spr, img, container = go.addChild();
-	container.ui = new UI();
-	var scrollbars = '';
-	var scrollbarsFocusable = true;
-	var constructing = true;
-	var vsb = null, hsb = null;
-	go.serializeMask = [ 'ui', 'render', 'children', 'updateScrollbars', 'addChild', 'removeChild', 'getChild', 'removeAllChildren' ];
-
 	// API properties
-	var mappedProps = {
+	UI.base.scrollablePrototype = UI.base.scrollablePrototype || {
+
+		__proto__: UI.base.componentPrototype,
 
 		// (String) 'auto' or (Boolean) - whether scrollbars are shown automatically, always visible, or never
-		'scrollbars': { get: function (){ return scrollbars; }, set: function( s ){
-			if ( s != scrollbars ) {
-				scrollbars = s;
-				go.fireLate( 'updateScrollbars' );
-				go.requestLayout();
-			}
-		}  },
-
-		// (Boolean) whether scrollbars can receive focus
-		'scrollbarsFocusable': { get: function (){ return scrollbarsFocusable; }, set: function( v ){
-			scrollbarsFocusable = v;
-			if ( vsb ) vsb.focusable = scrollbarsFocusable;
-			if ( hsb ) hsb.focusable = scrollbarsFocusable;
-		}  },
-
-
-		// (Number) current width of the control
-		'width': { get: function (){ return ui.width; }, set: function( w ){
-			ui.width = w;
-		}  },
-
-		// (Number) current height of the control
-		'height': { get: function (){ return ui.height; }, set: function( h ){
-			ui.height = h;
-		}  },
-
-		// (Number) width of the scrollable container area
-		'scrollWidth': { get: function (){ return container.ui.width; }, set: function( w ){
-			if ( container.ui.width != w ) {
-				container.ui.width = w;
-				go.fireLate( 'updateScrollbars' );
-			}
-		}  },
-
-		// (Number) height of the scrollable container area
-		'scrollHeight': { get: function (){ return container.ui.height; }, set: function( h ){
-			if ( container.ui.height != h ) {
-				container.ui.height = h;
-				go.fireLate( 'updateScrollbars' );
-			}
-		}  },
-
-		// (Number) current y scroll position
-		'scrollTop': { get: function (){ return -container.y; }, set: function( t ){
-			var py = container.y;
-			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), -t ) );
-			if ( py != container.y ) {
-				go.fireLate( 'scroll' );
-				go.fireLate( 'updateScrollbars' );
-			}
-		}  },
-
-		// (Number) current x scroll position
-		'scrollLeft': { get: function (){ return -container.x; }, set: function( l ){
-			var px = container.x;
-			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), -l ) );
-			if ( px != container.x ) {
-				go.fireLate( 'scroll' );
-				go.fireLate( 'updateScrollbars' );
-			}
-		}  },
-
-		// (ui/scrollbar.js) - returns vertical scrollbar instance
-		'verticalScrollbar': { get: function (){ return vsb; } },
-
-		// (ui/scrollbar.js) - returns horizontal scrollbar instance
-		'horizontalScrollbar': { get: function(){ return hsb; } },
-
-		// (GameObject) the actual container to which all children are added
-		'container': { get: function (){ return container; } },
-
-		// (Array) - set child objects at once (for serialization)
-		'containerChildren': {
-			get: function (){ return container.children; },
-			set: function( v ){
-				container.children = v; // overridden
+		get scrollbars(){ return this.__scrollbars; },
+		set scrollbars( s ){
+			if ( s != this.__scrollbars ) {
+				this.__scrollbars = s;
+				this.async( this.__updateScrollbars );
+				this.requestLayout();
 			}
 		},
 
-		// map back to this ui (not container)
+		// (Boolean) whether scrollbars can receive focus
+		get scrollbarsFocusable(){ return this.__scrollbarsFocusable; },
+		set scrollbarsFocusable( v ){
+			this.__scrollbarsFocusable = v;
+			if ( this.__vsb ) this.__vsb.focusable = v;
+			if ( this.__hsb ) this.__hsb.focusable = v;
+		},
+		
+		// (Number) width of the scrollable container area
+		get scrollWidth(){ return this.__container.ui.width; },
+		set scrollWidth( w ){
+			if ( this.__container.ui.width != w ) {
+				this.__container.ui.width = w;
+				this.async( this.__updateScrollbars );
+			}
+		},
 
-		// (Boolean) for Horizontal and Vertical layouts, force parent to wrap to new row after this element
-		'forceWrap': { get: function (){ return ui.forceWrap; }, set: function( v ){ ui.forceWrap = v; }  },
+		// (Number) height of the scrollable container area
+		get scrollHeight(){ return this.__container.ui.height; },
+		set scrollHeight( h ){
+			if ( this.__container.ui.height != h ) {
+				this.__container.ui.height = h;
+				this.async( this.__updateScrollbars );
+			}
+		},
 
-		// (LayoutAlign.Default, LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) overrides parent container's layoutAlignX/Y for this object
-		'selfAlign': { get: function (){ return ui.selfAlign; }, set: function( v ){ ui.selfAlign = v; }  },
+		// (Number) current y scroll position
+		get scrollTop(){ return -this.__container.y; },
+		set scrollTop( t ){
+			var py = this.__container.y;
+			this.__container.y = Math.min( 0, Math.max( -(this.__container.ui.height - this.ui.height), -t ) );
+			if ( py != this.__container.y ) {
+				this.fireLate( 'scroll' );
+				this.async( this.__updateScrollbars );
+			}
+		},
 
-		// (Number) stretch this element to fill empty space in vertical and horizontal layouts, 0 = no stretch, otherwise proportion rel. to other flex elems
-		'flex': { get: function (){ return ui.flex; }, set: function( v ){ ui.flex = v; }  },
+		// (Number) current x scroll position
+		get scrollLeft(){ return -this.__container.x; },
+		set scrollLeft( l ){
+			var px = this.__container.x;
+			this.__container.x = Math.min( 0, Math.max( -(this.__container.ui.width - this.ui.width), -l ) );
+			if ( px != this.__container.x ) {
+				this.fireLate( 'scroll' );
+				this.async( this.__updateScrollbars );
+			}
+		},
 
-		// (Boolean) if true, parent will ignore this element while performing layout
-		'fixedPosition': { get: function (){ return ui.fixedPosition; }, set: function( v ){ ui.fixedPosition = v; }  },
+		// (ui/scrollbar.js) - returns vertical scrollbar instance
+		get verticalScrollbar (){ return this.__vsb; },
 
-		// (Number) minimum width allowed by layout
-		'minWidth': { get: function (){ return ui.minWidth; }, set: function( v ){ ui.minWidth = v; }  },
+		// (ui/scrollbar.js) - returns horizontal scrollbar instance
+		get horizontalScrollbar(){ return this.__hsb; },
 
-		// (Number) minimum height allowed by layout
-		'minHeight': { get: function (){ return ui.minHeight; }, set: function( v ){ ui.minHeight = v; }  },
+		// (GameObject) the actual container to which all children are added
+		get container(){ return this.__container; },
 
-		// (Number) maximum width allowed by layout
-		'maxWidth': { get: function (){ return ui.maxWidth; }, set: function( v ){ ui.maxWidth = v; }  },
+		// (Array) - set child objects at once (for serialization)
+		get containerChildren (){ return this.__container.children; }, set containerChildren( v ){ this.__container.children = v; },
 
-		// (Number) maximum height allowed by layout
-		'maxHeight': { get: function (){ return ui.maxHeight; }, set: function( v ){ ui.maxHeight = v; }  },
+		// map to container, not ui
 
-		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		'anchorLeft': { get: function (){ return ui.anchorLeft; }, set: function( v ){ ui.anchorLeft = v; }  },
+		// (Layout.None, Layout.Anchors, Layout.Vertical, Layout.Horizontal, Layout.Grid) - how to lay out children
+		get layoutType(){ return this.__container.ui.layoutType; }, set layoutType( v ){ this.__container.ui.layoutType = v; },
 
-		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		'anchorRight': { get: function (){ return ui.anchorRight; }, set: function( v ){ ui.anchorRight = v; }  },
+		// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on X axis
+		get layoutAlignX(){ return this.__container.ui.layoutAlignX; }, set layoutAlignX( v ){ this.__container.ui.layoutAlignX = v; },
 
-		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		'anchorTop': { get: function (){ return ui.anchorTop; }, set: function( v ){ ui.anchorTop = v; }  },
+		// (LayoutAlign.Start, LayoutAlign.Center, LayoutAlign.End, LayoutAlign.Stretch) for Horizontal and Vertical layout types determines how to align children on Y axis
+		get layoutAlignY(){ return this.__container.ui.layoutAlignY; }, set layoutAlignY( v ){ this.ui.layoutAlignY = v; },
 
-		// (Number) 0 to 1, or -1 - anchor point to parent's same side (0) opposite side (1), or "auto"(-1)
-		'anchorBottom': { get: function (){ return ui.anchorBottom; }, set: function( v ){ ui.anchorBottom = v; }  },
+		// (Boolean) for Horizontal, Vertical, and Grid layout types, adjust own height and width to fit all children
+		get fitChildren(){ return this.__container.ui.fitChildren; }, set fitChildren( v ){ this.__container.ui.fitChildren = v; },
 
-		// (Number) offset from anchorLeft
-		'left': { get: function (){ return ui.left; }, set: function( v ){ ui.left = v; }  },
+		// (Boolean) for Horizontal and Vertical layouts, allow wrap of children into rows
+		get wrapEnabled(){ this.__container.ui.wrapEnabled; }, set wrapEnabled( v ){ this.__container.ui.wrapEnabled = v; },
+		
+		// (Integer) for Horizontal and Vertical layouts, auto wrap after this many items per row
+		get wrapAfter(){ return this.__container.ui.wrapAfter; }, set wrapAfter( v ){ this.__container.ui.wrapAfter = v; },
+		
+		// (Boolean) reverse child layout order
+		get reversed(){ return this.__container.ui.reversed; }, set reversed( v ){ this.__container.ui.reversed = v; },
+		
+		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - inner padding
+		get pad(){ return this.__container.ui.pad; }, set pad( v ){ this.__container.ui.pad = v; },
 
-		// (Number) offset from anchorLeft
-		'right': { get: function (){ return ui.right; }, set: function( v ){ ui.right = v; }  },
+		// (Number) inner padding top
+		get padTop(){ return this.__container.ui.padTop; }, set padTop( v ){ this.__container.ui.padTop = v; },
 
-		// (Number) offset from anchorLeft
-		'top': { get: function (){ return ui.top; }, set: function( v ){ ui.top = v; }  },
+		// (Number) inner padding right
+		get padRight(){ return this.__container.ui.padRight; }, set padRight( v ){ this.__container.ui.padRight = v; },
 
-		// (Number) offset from anchorLeft
-		'bottom': { get: function (){ return ui.bottom; }, set: function( v ){ ui.bottom = v; }  },
+		// (Number) inner padding bottom
+		get padBottom(){ return this.__container.ui.padBottom; }, set padBottom( v ){ this.__container.ui.padBottom = v; },
 
-		// (Number) or (Array[4] of Number [ top, right, bottom, left ] ) - outer margin
-		'margin': { get: function (){ return ui.margin; }, set: function( v ){ ui.margin = v; }  },
+		// (Number) inner padding left
+		get padLeft (){ return this.__container.ui.padLeft; }, set padLeft( v ){ this.__container.ui.padLeft = v; },
 
-		// (Number) outer margin top
-		'marginTop': { get: function (){ return ui.marginTop; }, set: function( v ){ ui.marginTop = v; }, serialized: false },
+		// (Number) spacing between children when layoutType is Grid, Horizontal or Vertical
+		get spacing(){ return this.__container.ui.spacing; }, set spacing( v ){ this.__container.ui.spacing = v; },
 
-		// (Number) outer margin right
-		'marginRight': { get: function (){ return ui.marginRight; }, set: function( v ){ ui.marginRight = v; }, serialized: false },
+		// (Number) spacing between children when layoutType is Vertical
+		get spacingX(){ return this.__container.ui.spacingX; }, set spacingX( v ){ this.__container.ui.spacingX = v; },
 
-		// (Number) outer margin bottom
-		'marginBottom': { get: function (){ return ui.marginBottom; }, set: function( v ){ ui.marginBottom = v; }, serialized: false },
-
-		// (Number) outer margin left
-		'marginLeft': { get: function (){ return ui.marginLeft; }, set: function( v ){ ui.marginLeft = v; }, serialized: false },
-
-	};
-	UI.base.addSharedProperties( go, container.ui ); // add common UI properties (ui.js)
-	UI.base.mapProperties( go, mappedProps );
-	UI.base.addInspectables( go, 'Scrollable',
-		[ 'scrollbars', 'scrollbarsFocusable', 'scrollWidth', 'scrollHeight', 'containerChildren' ],
-        { 'addChild': false, 'removeChild': false, 'getChild': false, 'removeAllChildren': false }, 1 );
+		// (Number) spacing between children when layoutType is Horizontal
+		get spacingY(){ return this.__container.ui.spacingY; }, set spacingY( v ){ this.__container.ui.spacingY = v; },
+		
+		addChild: function() { return this.__container.addChild.apply( this.__container, arguments ); },
+		removeChild: function() { return this.__container.removeChild.apply( this.__container, arguments ); },
+		getChild: function() { return this.__container.getChild.apply( this.__container, arguments ); },
+		removeAllChildren: function() { return this.__container.removeAllChildren.apply( this.__container, arguments ); },
+		
+		__updateScrollbars: function () {
+			if ( !this.__scrollbars ) {
+				// detach
+				if ( this.__vsb ) this.__vsb.parent = null;
+				if ( this.__hsb ) this.__hsb.parent = null;
+				this.__vsb = this.__hsb = null;
+			} else {
+				// vertical
+				if ( !this.__vsb ) {
+					// position to the right
+					this.__vsb = new GameObject( './scrollbar', {
+						orientation: 'vertical',
+						focusGroup: this.__container.ui.focusGroup,
+						parent: this,
+						anchorTop: 0,
+						anchorBottom: 0,
+						anchorRight: 0,
+						anchorLeft: -1,
+						scroll: function ( ny ) { this.scrollTop = ny; }.bind( this ),
+						focusable: this.__scrollbarsFocusable,
+					});
+					this.__vsb.focusUp = this.__vsb.focusDown = this.__vsb;
+					this.__vsb.right = -this.__vsb.width;
+				}
+				// horizontal
+				if ( !this.__hsb ) {
+					// position to the bottom
+					this.__hsb = new GameObject( './scrollbar', {
+						orientation: 'horizontal',
+						focusGroup: container.ui.focusGroup,
+						parent: this,
+						anchorLeft: 0,
+						anchorBottom: 0,
+						anchorRight: 0,
+						anchorTop: -1,
+						scroll: function ( nx ) { this.scrollLeft = nx; }.bind( this ),
+						focusable: this.__scrollbarsFocusable
+					});
+					this.__hsb.focusLeft = this.__hsb.focusRight = this.__hsb;
+					this.__bottom = -this.__hsb.height;
+				}
+			}
 	
-	// remapped functions - forward calls to container
-	go.addChild = function() { return container.addChild.apply( container, arguments ); }
-	go.removeChild = function() { return container.removeChild.apply( container, arguments ); }
-	go.getChild = function() { return container.getChild.apply( container, arguments ); }
-	go.removeAllChildren = function() { return container.removeAllChildren.apply( container, arguments ); }
+			// update vertical scrollbars params
+			if ( this.__vsb ) {
+				this.__vsb.totalSize = Math.floor( this.__container.ui.height );
+				this.__vsb.handleSize = Math.floor( this.ui.height );
+				this.__container.y = Math.min( 0, Math.max( -(this.__container.ui.height - this.ui.height), this.__container.y ) );
+				this.__vsb.position = Math.floor( -this.__container.y );
+				// hide / show
+				var ac = (this.__scrollbars == 'auto' ? (this.__container.ui.height > this.ui.height) : this.__scrollbars);
+				if ( ac != this.__vsb.active ) {
+					this.__vsb.active = ac;
+					if ( ac && this.parent ) this.parent.requestLayout( 'scrollable/verticalScrollbar' );
+				}
+			}
+			// update horizontal scrollbars params
+			if ( this.__hsb ) {
+				this.__hsb.totalSize = Math.floor( this.__container.ui.width );
+				this.__hsb.handleSize = Math.floor( this.ui.width );
+				this.__container.x = Math.min( 0, Math.max( -(this.__container.ui.width - this.ui.width), this.__container.x ) );
+				this.__hsb.position = Math.floor( -this.__container.x );
+				// hide / show
+				var ac = (this.__scrollbars == 'auto' ? (this.__container.ui.width > this.ui.width) : this.__scrollbars);
+				if ( ac != this.__hsb.active ) {
+					this.__hsb.active = ac;
+					if ( ac && this.parent ) this.parent.requestLayout( 'scrollable/horizontalScrollbar');
+				}
+			}
+		},
+	
+		__layout: function( w, h ) {
+			var go = this.gameObject;
+			var sizeChanged = ( w != go.__spr.width || h != go.__spr.height );
+			go.__spr.resize( w, h );
+			if ( sizeChanged ) go.__updateScrollbars();
+			go.fire( 'layout', w, h );
+		},
+	
+		__containerLayout: function() {
+			this.scrollable.debounce( 'updateScrollbars', this.scrollable.__updateScrollbars );
+		},
+	
+		// scrolling
+		__mouseWheel: function ( wy, wx ) {
+			// scroll
+			var go = this.gameObject;
+			var st = go.scrollTop, sl = go.scrollLeft;
+			go.scrollTop = Math.max( 0, Math.min( go.scrollTop - wy, go.scrollHeight - go.height ));
+			go.scrollLeft = Math.max( 0, Math.min( go.scrollLeft + wx, go.scrollWidth - go.width ));
+	
+			// stop event if scrolled
+			if ( sl != go.scrollLeft || st != go.scrollTop ) stopEvent();
+		}
+		
+	};
 
 	// create components
 
 	// set name
 	go.name = "Scrollable";
+	go.ui = new UI( {
+		layoutType: Layout.Anchors,
+		focusable: false,
+		layout: UI.base.scrollablePrototype.__layout,
+		mouseWheel: UI.base.scrollablePrototype.__mouseWheel,
+		
+    });
+	go.__container = go.addChild( {
+		name: 'Container',
+		ui: new UI({
+			focusable: false,
+			fixedPosition: true,
+			scrollable: go,
+			layout: UI.base.scrollablePrototype.__containerLayout,
+        }),
+    } );
+	go.__img = new Image();
+	go.__img.autoDraw = go.__container;
+	go.__spr = new RenderSprite( go.__img );
+	go.render = go.__spr;
+	go.__scrollbars = '';
+	go.__scrollbarsFocusable = true;
+	go.__vsb = null;
+	go.__hsb = null;
+	go.__proto__ = UI.base.scrollablePrototype;
+	go.init();
+	go.serializeMask.push( 'children', 'addChild', 'removeChild', 'getChild', 'removeAllChildren' );
 
-	// UI
-	ui = new UI();
-	ui.layoutType = Layout.Anchors;
-	ui.focusable = false;
-	go.ui = ui;
-
-	// container
-	container.name = 'Container';
-	container.ui.focusable = false;
-	container.ui.fixedPosition = true;
-
-	// image
-	img = new Image();
-	img.autoDraw = container;
-	spr = new RenderSprite( img );
-	go.render = spr;
-
-	// init / detach scrollbars
-	go.updateScrollbars = function () {
-		if ( !scrollbars ) {
-			// detach
-			if ( vsb ) vsb.parent = null;
-			if ( hsb ) hsb.parent = null;
-			vsb = hsb = null;
-		} else {
-			// vertical
-			if ( !vsb ) {
-				// position to the right
-				vsb = new GameObject( './scrollbar' );
-				vsb.orientation = 'vertical';
-				vsb.focusGroup = container.ui.focusGroup;
-				vsb.parent = go;
-				vsb.anchorTop = vsb.anchorBottom = vsb.anchorRight = 0;
-				vsb.anchorLeft = -1;
-				vsb.right = -vsb.width;
-				vsb.scroll = function ( ny ) { go.scrollTop = ny; }
-				vsb.focusUp = vsb.focusDown = vsb;
-				vsb.focusable = scrollbarsFocusable;
-			}
-			// horizontal
-			if ( !hsb ) {
-				// position to the right
-				hsb = new GameObject( './scrollbar' );
-				hsb.orientation = 'horizontal';
-				hsb.focusGroup = container.ui.focusGroup;
-				hsb.parent = go;
-				hsb.anchorLeft = hsb.anchorBottom = hsb.anchorRight = 0;
-				hsb.anchorTop = -1;
-				hsb.bottom = -hsb.height;
-				hsb.scroll = function ( nx ) { go.scrollLeft = nx; }
-				hsb.focusLeft = hsb.focusRight = hsb;
-				hsb.focusable = scrollbarsFocusable;
-			}
-		}
-
-		// update vertical scrollbars params
-		if ( vsb ) {
-			vsb.totalSize = Math.floor( container.ui.height );
-			vsb.handleSize = Math.floor( ui.height );
-			container.y = Math.min( 0, Math.max( -(container.ui.height - ui.height), container.y ) );
-			vsb.position = Math.floor( -container.y );
-			// hide / show
-			var ac = (scrollbars == 'auto' ? (container.ui.height > ui.height) : scrollbars);
-			if ( ac != vsb.active ) {
-				vsb.active = ac;
-				if ( ac && go.parent ) go.parent.requestLayout( 'scrollable/verticalScrollbar' );
-			}
-		}
-		// update horizontal scrollbars params
-		if ( hsb ) {
-			hsb.totalSize = Math.floor( container.ui.width );
-			hsb.handleSize = Math.floor( ui.width );
-			container.x = Math.min( 0, Math.max( -(container.ui.width - ui.width), container.x ) );
-			hsb.position = Math.floor( -container.x );
-			// hide / show
-			var ac = (scrollbars == 'auto' ? (container.ui.width > ui.width) : scrollbars);
-			if ( ac != hsb.active ) {
-				hsb.active = ac;
-				if ( ac && go.parent ) go.parent.requestLayout( 'scrollable/horizontalScrollbar');
-			}
-		}
-	}
-
-	// lay out components
-	ui.layout = function( w, h ) {
-		var sizeChanged = ( w != spr.width || h != spr.height );
-		spr.resize( w, h );
-		if ( sizeChanged ) go.updateScrollbars();
-
-		// refire
-		go.fire( 'layout', w, h );
-	}
-
-	// container resizing updates scrollbars
-	container.ui.layout = function() {
-
-		go.debounce( 'updateScrollbars', go.updateScrollbars );
-
-	}
-
-	// scrolling
-	ui.mouseWheel = function ( wy, wx ) {
-		// scroll
-		var st = go.scrollTop, sl = go.scrollLeft;
-		go.scrollTop = Math.max( 0, Math.min( go.scrollTop - wy, go.scrollHeight - go.height ));
-		go.scrollLeft = Math.max( 0, Math.min( go.scrollLeft + wx, go.scrollWidth - go.width ));
-
-		// stop event if scrolled
-		if ( sl != go.scrollLeft || st != go.scrollTop ) stopEvent();
-	}
-
+	// add property-list inspectable info
+	UI.base.addInspectables( go, 'Scrollable',
+		[ 'scrollbars', 'scrollbarsFocusable', 'scrollWidth', 'scrollHeight', 'containerChildren' ],
+        { 'addChild': false, 'removeChild': false, 'getChild': false, 'removeAllChildren': false }, 1 );
+	
 	// apply defaults
-	go.baseStyle = UI.base.mergeStyle( {}, UI.style.scrollable );
-	UI.base.applyProperties( go, go.baseStyle );
+	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.scrollable );
+	UI.base.applyProperties( go, go.__baseStyle );
 	go.state = 'auto';
-	constructing = false;
 
 })(this);
