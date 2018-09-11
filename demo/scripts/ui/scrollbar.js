@@ -449,7 +449,7 @@ include( './ui' );
 	go.__grabX = 0;
 	go.__grabY = 0;
 	go.__proto__ = UI.base.scrollbarPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'children', 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
 	go.cloneMask = [ 'plusButton', 'minusButton' ];
 

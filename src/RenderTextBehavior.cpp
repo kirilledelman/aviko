@@ -54,8 +54,9 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	color->SetInts( 0, 0, 0, 255 );
 	script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
 
-	// default font
-	script.SetProperty( "font", ArgValue( "default" ), this->scriptObject );
+	// default fonts
+	script.SetProperty( "font", ArgValue( "Roboto" ), this->scriptObject );
+	script.SetProperty( "boldFont", ArgValue( "RobotoBold" ), this->scriptObject );
 
 	// with arguments
 	if ( args ) {
@@ -1275,10 +1276,10 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			// check if need word wrap
 			
 			// check if current line width will exceed max line width
-			if ( currentLine->width + glyph->advance > this->width && this->wrap && this->multiLine /* && !autoResize */ ) {
+			if ( character != ' ' && currentLine->width + glyph->advance >= this->width && this->wrap && this->multiLine ) {
 				// start new line
-				RenderTextLine* prevLine = &lines.back();
 				lines.emplace_back();
+				RenderTextLine* prevLine = &lines.at( lines.size() - 2 );
 				currentLine = &lines.back();
 				currentLine->firstCharacterPos = (int) characterPos;
 				previousCharacter = NULL;

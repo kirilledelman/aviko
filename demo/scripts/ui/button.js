@@ -268,7 +268,7 @@ include( './ui' );
 	go.__disabledCanFocus = true;
 	go.__cancelToBlur = false;
 	go.__proto__ = UI.base.buttonPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
 	
 	// add property-list inspectable info

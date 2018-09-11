@@ -105,7 +105,7 @@ include( './ui' );
 		centered: false
 	});
 	go.__proto__ = UI.base.panelPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
 	
 	// add property-list inspectable info

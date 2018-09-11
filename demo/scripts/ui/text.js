@@ -181,7 +181,7 @@ include( './ui' );
 		wrap: false,
 	} );
 	go.__proto__ = UI.base.textPrototype;
-	go.init();
+	go.__init();
 
 	// add property-list inspectable info
 	UI.base.addInspectables( go, "Text",

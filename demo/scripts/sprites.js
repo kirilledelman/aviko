@@ -119,7 +119,7 @@ new (function (){
 	// rotate checkbox
 	spriteContainer.addChild( 'ui/checkbox', {
 		text: "^BSpin",
-		x: 230, y: 120, minWidth: 60,
+		x: 230, y: 120, minWidth: 65,
 		change: function () {
 			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
 			else sprite.update = function ( dt ) {
@@ -137,7 +137,7 @@ new (function (){
 		showBackButton: false,
 		showContextMenu: false,
 		showMoreButton: false,
-		target: sprite.render
+		target: sprite.render,
 	} );
 
 	// overrides

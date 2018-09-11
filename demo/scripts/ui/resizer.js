@@ -209,7 +209,7 @@ include( './ui' );
 	go.__dragging = false;
 	go.__startSize = 0;
 	go.__proto__ = UI.base.resizerPrototype;
-	go.init();
+	go.__init();
 	go.cloneMask = [ 'target' ];
 	go.serializeMask.push( 'sliceLeft', 'sliceRight', 'sliceBottom', 'sliceTop' );
 	

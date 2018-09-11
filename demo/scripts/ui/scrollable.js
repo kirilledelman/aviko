@@ -278,7 +278,7 @@ include( './ui' );
 	go.__vsb = null;
 	go.__hsb = null;
 	go.__proto__ = UI.base.scrollablePrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'children', 'addChild', 'removeChild', 'getChild', 'removeAllChildren' );
 
 	// add property-list inspectable info

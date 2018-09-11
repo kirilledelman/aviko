@@ -115,12 +115,6 @@ include( './ui' );
 	
 				if ( go.__cancelToBlur ) ui.blur();
 	
-			// directional - move focus
-			} else {
-				var dx = 0, dy = 0;
-				if ( name == 'horizontal' ) dx = value;
-				else dy = value;
-				ui.moveFocus( dx, dy );
 			}
 	
 		},
@@ -216,7 +210,7 @@ include( './ui' );
 	go.__cancelToBlur = false;
 	go.__group = null;
 	go.__proto__ = UI.base.checkboxPrototype;
-	go.init();
+	go.__init();
 
 	// add property-list inspectable info
 	UI.base.addInspectables( go, 'Checkbox',

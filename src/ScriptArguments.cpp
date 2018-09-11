@@ -433,6 +433,8 @@ string ArgValue::toString() {
 		string ret( r );
 		JS_free( script.js, (void*) r );
 		return ret;
+	} else if ( this->type == TypeFunction ) {
+		return "[Function]";
 	}
 	
 	return "";

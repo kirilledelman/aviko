@@ -26,11 +26,21 @@ FontResource::FontResource( const char* originalKey, string& path, string& ext )
 		return;
 	}
 	
-	// default font
-	if ( fontName.compare( "default" ) == 0 ) {
+	// default normal font
+	if ( fontName.compare( "Roboto" ) == 0 ) {
 		
 		// load built in
 		SDL_RWops* rwops = SDL_RWFromMem( RobotoRegular, RobotoRegular_size );
+		this->font = TTF_OpenFontRW( rwops, 1, this->size );
+		if ( !this->font ) {
+			printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );
+			this->error = ERROR_COMPILE;
+		}
+		
+	} else if ( fontName.compare( "RobotoBold" ) == 0 ) {
+		
+		// load built in
+		SDL_RWops* rwops = SDL_RWFromMem( RobotoBold, RobotoBold_size );
 		this->font = TTF_OpenFontRW( rwops, 1, this->size );
 		if ( !this->font ) {
 			printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );

@@ -73,8 +73,11 @@ string GetScriptNameAndLine();
 string ExecCommand( const char* cmd );
 
 // built in resources - added using http://www.fourmilab.ch/xd/
+// e.g. xd -dRobotoBold Roboto-Black.ttf RobotoBold.cpp
 extern unsigned char RobotoRegular[];
 extern int RobotoRegular_size;
+extern unsigned char RobotoBold[];
+extern int RobotoBold_size;
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

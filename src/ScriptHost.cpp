@@ -46,7 +46,6 @@ void ScriptHost::GetProperties( void* obj, ArgValueVector* ret, bool useSerializ
 
 // recursively construct init object
 ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,JSObject*> &alreadySerialized, bool force, bool forCloning ) {
-	
 	// if value is an array
 	if ( val.type == TypeArray ) {
 		// replace each value with processed value
@@ -63,7 +62,9 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		if ( !force ) {
 			// check .serialized property, skip if === false
 			ArgValue serialized = GetProperty( "serializeable", val.value.objectValue );
-			if ( serialized.type == TypeBool && serialized.value.boolValue == false ) return ArgValue();
+			if ( serialized.type == TypeBool && serialized.value.boolValue == false ) {
+				return ArgValue();
+			}
 		}
 		
 		// object
@@ -94,7 +95,9 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 		// if ScriptableObject
 		if ( cdef ) {
 			// bail if reference to singleton class
-			if ( cdef->singleton ) return ArgValue( (void*) NULL );
+			if ( cdef->singleton ) {
+				return ArgValue( (void*) NULL );
+			}
 		}
 		
 		// create blank object
@@ -196,7 +199,7 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 	// first, see if there's serializeMask prop
 	ArgValue serializeMaskVal;
 	thisObj = thisObj ? thisObj : obj;
-	if ( useSerializeMask ) serializeMaskVal = this->GetProperty( "serializeMask", obj );
+	if ( useSerializeMask ) serializeMaskVal = this->GetProperty( "serializeMask", thisObj );//obj );
 	
 	// if class def wasn't passed in
 	JSClass* clp = JS_GetClass( (JSObject*) obj );
@@ -247,11 +250,12 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 		}
 		
 		// add props from prototype
-		JSObject* proto = JS_IsArrayObject( this->js, (JSObject*) obj ) ?
+		ArgValue proto = script.GetProperty( "__proto__", obj );
+		/*JSObject* proto = JS_IsArrayObject( this->js, (JSObject*) obj ) ?
 			JS_GetArrayPrototype( this->js, (JSObject*) obj ) :
-			JS_GetObjectPrototype( this->js, (JSObject*) obj );
-		if ( proto != obj && proto ) {
-			this->_GetProperties( proto, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, NULL );
+			JS_GetObjectPrototype( this->js, (JSObject*) obj );*/
+		if ( proto.type == TypeObject && proto.value.objectValue && proto.value.objectValue != obj ) {
+			this->_GetProperties( proto.value.objectValue, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, NULL );
 		}
 		
 	}

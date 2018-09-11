@@ -319,7 +319,7 @@ include( './ui' );
 	go.__maxVisibleItems = 10;
 	go.__autoAddValue = false;
 	go.__proto__ = UI.base.selectPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'children', 'itemCheck', 'item', 'menu' );
 
 	// add property-list inspectable info

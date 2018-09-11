@@ -115,7 +115,7 @@ include( './ui' );
 	go.__sc = go.addChild( { name: "Image.Container", serializeable: false });
 	go.__rs = go.__sc.render = new RenderSprite( { pivot: 0.5 } );
 	go.__proto__ = UI.base.imagePrototype;
-	go.init();
+	go.__init();
 
 	// add property-list inspectable info
 	UI.base.addInspectables( go, 'Button',

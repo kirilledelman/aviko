@@ -228,6 +228,8 @@ new (function( params ){
 		window.minWidth = 20 + console.minWidth +
 			Number( sceneExplorer.active ) * sceneExplorer.minWidth +
 			Number( propertyList.active ) * propertyList.minWidth;
+		
+		input.maxHeight = Math.max( 40, h - 40 );
 	}
 
 	// callbacks

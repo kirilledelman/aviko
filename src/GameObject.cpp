@@ -1699,7 +1699,7 @@ void GameObject::SetWorldTransform( float x, float y, float angle, float scaleX,
 		this->_scale.Set( scaleX, scaleY );
 		this->body->SetBodyTransform( b2Vec2( x, y ) , angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		GPU_MatrixMultiply( this->_transform,
 						this->parent->InverseWorld(),
@@ -1717,7 +1717,7 @@ void GameObject::SetWorldPosition( float x, float y ) {
 	if ( this->HasBody() ) {
 		this->body->SetBodyPosition( b2Vec2( x, y ) );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// get world space coords first
 		b2Vec2 wpos, wscale; float wangle;
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
@@ -1738,7 +1738,7 @@ void GameObject::SetWorldPositionAndAngle( float x, float y, float angle ) {
 	if ( this->HasBody() ) {
 		this->body->SetBodyTransform( b2Vec2( x, y ), angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// get world space coords first
 		b2Vec2 wpos, wscale; float wangle;
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
@@ -1762,7 +1762,7 @@ void GameObject::SetWorldX( float x ) {
 		this->body->GetBodyTransform( wpos, wangle );
 		this->body->SetBodyPosition( b2Vec2( x, wpos.y ) );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1784,7 +1784,7 @@ void GameObject::SetWorldY( float y ) {
 		this->body->GetBodyTransform( wpos, wangle );
 		this->body->SetBodyPosition( b2Vec2( wpos.x, y ) );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1805,7 +1805,7 @@ void GameObject::SetWorldAngle( float angle ) {
 	if ( this->HasBody() ) {
 		this->body->SetBodyAngle( angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1826,7 +1826,7 @@ void GameObject::SetWorldScale( float sx, float sy ) {
 	if ( this->HasBody() ) {
 		this->_scale.Set( sx, sy );
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1847,7 +1847,7 @@ void GameObject::SetWorldScaleX( float sx ) {
 	if ( this->HasBody() ) {
 		this->_scale.x = sx;
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1868,7 +1868,7 @@ void GameObject::SetWorldScaleY( float sy ) {
 	if ( this->HasBody() ) {
 		this->_scale.y = sy;
 		this->body->SyncObjectToBody();
-	} else {
+	} else if ( this->parent ) {
 		// local transform = parent's inverse world * this world matrix
 		this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
 		GPU_MatrixMultiply( this->_transform,
@@ -1949,7 +1949,7 @@ float* GameObject::WorldTransform() {
 			// concat world transform
 			GPU_MatrixMultiply( this->_worldTransform, this->parent->WorldTransform(), this->_transform );
 			
-			// no parent
+		// no parent
 		} else {
 			
 			//local transform is world

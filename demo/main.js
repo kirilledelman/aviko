@@ -21,7 +21,7 @@ App.windowResizable = true;
 App.fixedWindowResolution = false;
 
 // auto-configure controller
-/*var configurator = include( 'controller-configurator', {
+var configurator = include( 'controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',
@@ -54,7 +54,6 @@ App.fixedWindowResolution = false;
 	}
 } );
 
-*/
 // inspector - hold right mouse button down to activate
 var inspector = include( 'ui/inspector' );
 
@@ -88,7 +87,6 @@ function sceneForward( sub ){
 	}, 0.25 );
 }
 
-
 // auto-show mouse as soon as it moves
 Input.showCursor = false;
 Input.on( 'mouseMove', function() { Input.showCursor = true; }, true );
@@ -118,6 +116,5 @@ function transitionScene( newScene, oldScene, dir ) {
 		gc();
 	}
 	// done
-	newScene.requestLayout();
 	return newScene;
 }

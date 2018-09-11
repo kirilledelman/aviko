@@ -127,7 +127,7 @@ include( './ui' );
 	go.__proto__ = UI.base.tooltipPrototype;
 	go.__hide = go.__hide.bind( go );
 	go.__panel.ui.mouseOut = go.__hide;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'update', 'removed' );
 
 	// add property-list inspectable info

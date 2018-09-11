@@ -1257,7 +1257,7 @@ include( './ui' );
 				text: "Cancel",
 				focusGroup: 'browsePath',
 				flex: 2,
-				click: win.close
+				click: win.close.bind( win )
 			} );
 			var btnOk = btns.addChild( './button', {
 				text: "Accept",
@@ -1406,7 +1406,7 @@ include( './ui' );
 				text: "Cancel",
 				focusGroup: 'addProperty',
 				flex: 2,
-				click: win.close
+				click: win.close.bind( win )
 			} );
 			var btnOk = btns.addChild( './button', {
 				text: "Accept",
@@ -1673,7 +1673,7 @@ include( './ui' );
 	go.__cachedFields = {};
 	go.__proto__ = UI.base.propListPrototype;
 	go.__watchCallback = go.__watchCallback.bind( go );
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'target', 'children', 'removed' );
 	
 	// apply defaults

@@ -1,11 +1,18 @@
-Property list - modal background doesn't disappear.
 
 Inspector
-	getProperties doesn't return prototype stuff (focusGroup etc)
 	modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 	Ctrl + wheel - zoom; LMB - pan
 
-Checkbox focus down/up doesn't work - inconsistent.
+Paste clone - functions don't get called? (checkbox "change" )
+
+
+Textfield
+	No mouse scrolling in multiline textbox
+	Typing when maxHeight is at max causes jerking (in modal window)
+	Mouse select/release outside doesn't stop selection (sticky) - doesn't autoscroll either.
+
+Prop list - "children" is disabled
+
 Popup menu doesnt scroll w mouse wheel
 
 In scrollable container, dispatch mousemove after scroll, to counter stale rolloff.
@@ -79,12 +86,12 @@ ScriptHost
 	SetProperty( "propname", int|float|void* etc... ) - easy
 
 GameObject
-	transplantTo( newParent ) - transplant, keep relative transform
 	$( 'childname,childname,childname' ) -> [] children
 	$( 'name/name/name' ) -> great-grandchild
 	$( 'child/childname,childname,childname' ) -> [] grandchildren
 	$( 'name/name/name' ) -> great-grandchild
 	$( '../sibling' ) -> sibling named
+	$( '\\sibling') ?
 	can extend later to filter by properties
 
 Image

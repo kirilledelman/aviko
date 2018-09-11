@@ -1273,7 +1273,7 @@ include( './ui' );
 	go.__allowed = null;
 	go.__pattern = null;
 	go.__proto__ = UI.base.textfieldPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'numLines', 'value', 'scrollTop', 'scrollLeft', 'focus', 'blur', 'scrollToBottom', 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
 
 	// add property-list inspectable info

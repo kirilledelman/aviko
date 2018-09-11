@@ -116,8 +116,11 @@ include( './ui' );
 
 		// close window
 		close: function () {
+			// if this is a modal window, remove it
 			if ( this.__modalBackground ) {
 				this.parent = null;
+				
+			// normal window - make inactive
 			} else {
 				this.active = false;
 			}
@@ -192,14 +195,14 @@ include( './ui' );
 		// add modal background under window if present
 		added: function () {
 			cancelDebouncer( 'showTooltip' );
-			if ( go.__modalBackground ) {
-				go.parent.addChild( go.__modalBackground, this.parent.children.indexOf( this ) );
+			if ( this.__modalBackground ) {
+				this.parent.addChild( this.__modalBackground, this.parent.children.indexOf( this ) );
 			}
 		},
 	
 		// remove modal background if present
 		removed: function () {
-			if ( go.__modalBackground ) go.__modalBackground.parent = null;
+			if ( this.__modalBackground ) this.__modalBackground.parent = null;
 		},
 		
 	};
@@ -243,7 +246,7 @@ include( './ui' );
 		focusGroup: 'window'
 	} );
 	go.__proto__ = UI.base.windowPrototype;
-	go.init();
+	go.__init();
 	go.serializeMask.push( 'added', 'removed', 'close' );
 
 	// apply defaults

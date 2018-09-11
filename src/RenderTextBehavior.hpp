@@ -123,8 +123,8 @@ public:
 	/// automatically assume text size
 	bool autoResize = true;
 	
-    /// set to false to stop drawing instead
-    bool wrap = false;
+    /// break lines at width
+    bool wrap = true;
 	
 	/// use ^codes
 	bool formatting = true;
