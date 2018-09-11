@@ -1962,10 +1962,10 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		stipple: { min: 0, max: 1, step: 0.1, tooltip: "Stippling trasparency effect amount." },
 		stippleAlpha: { tooltip: "Determines whether stippling is applied to alpha transparency." },
 
-		outlineColor: { inline: true, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Color of sprite outline." },
-		outlineOffsetX: { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Outline offset in X direction." },
-		outlineOffsetY: { step: 1, hidden: function( t ){ return (t.outlineRadius === 0); }, tooltip: "Outline offset in Y direction." },
-		outlineRadius: { min: -16, max: 16, step: 1, reloadOnChange: [ 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ], tooltip: "Sprite outline line thickness." },
+		outlineColor: { inline: true, hidden: function( t ){ return (t.outlineRadius === 0 && t.outlineOffsetX === 0 && t.outlineOffsetY === 0 ); }, tooltip: "Color of sprite outline." },
+		outlineOffsetX: { step: 1, reloadOnChange: 'outlineColor', tooltip: "Outline offset in X direction." },
+		outlineOffsetY: { step: 1, reloadOnChange: 'outlineColor', tooltip: "Outline offset in Y direction." },
+		outlineRadius: { min: -16, max: 16, step: 1, reloadOnChange: 'outlineColor', tooltip: "Sprite outline line thickness." },
 
 		blendMode: {
 			enum: [

@@ -222,7 +222,8 @@ include( './ui' );
 			this.__image = this.addChild(
 				new GameObject({
 					ui: new UI(),
-					render: new RenderSprite( { pivotX: 0, pivotY: 0 } )
+					render: new RenderSprite( { pivotX: 0, pivotY: 0 } ),
+					serializeable: false,
 				}), 0 );
 			return this.__image;
 		}

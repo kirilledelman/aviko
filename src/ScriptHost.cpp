@@ -243,22 +243,38 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 			
 			// not in serializeMask
 			if ( !masked ) {
-				// add
-				ret.emplace( property.value.stringValue->c_str() );
+				
+				// check with cdef
+				if ( cdef ) {
+					GetterSetterMapIterator iter = cdef->getterSetter.find( *property.value.stringValue );
+					if ( iter != cdef->getterSetter.end() ) {
+						GetterSetter& gs = iter->second;
+						bool serialized = gs.flags & PROP_SERIALIZED;
+						bool readOnly = gs.flags & PROP_READONLY;
+						if ( !masked && !(readOnly && !includeReadOnly) && !(useSerializeMask && !serialized) ) {
+							ret.emplace( property.value.stringValue->c_str() );
+						}
+					// not in class def
+					} else {
+						ret.emplace( property.value.stringValue->c_str() );
+					}
+					
+				// no cdef
+				} else {
+					ret.emplace( property.value.stringValue->c_str() );
+				}
 			}
 			
 		}
 		
 		// add props from prototype
 		ArgValue proto = script.GetProperty( "__proto__", obj );
-		/*JSObject* proto = JS_IsArrayObject( this->js, (JSObject*) obj ) ?
-			JS_GetArrayPrototype( this->js, (JSObject*) obj ) :
-			JS_GetObjectPrototype( this->js, (JSObject*) obj );*/
 		if ( proto.type == TypeObject && proto.value.objectValue && proto.value.objectValue != obj ) {
 			this->_GetProperties( proto.value.objectValue, thisObj, ret, useSerializeMask, includeReadOnly, includeFunctions, NULL );
 		}
 		
 	}
+	
 	// if class def is found
 	if ( cdef ) {
 		// add properties listed in class def
@@ -273,6 +289,9 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 				ArgValue property( iter->first.c_str() );
 				bool masked = useSerializeMask && _isPropertyInMask( property, serializeMaskVal );
 				if ( !masked && !(readOnly && !includeReadOnly) && !(useSerializeMask && !serialized) ) {
+					if ( property.value.stringValue->compare( "worldX" ) == 0 ) {
+						printf( "!!!2" );
+					}
 					ret.emplace( property.value.stringValue->c_str() );
 				}
 			}

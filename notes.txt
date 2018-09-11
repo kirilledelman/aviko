@@ -3,7 +3,7 @@ Inspector
 	modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 	Ctrl + wheel - zoom; LMB - pan
 
-Paste clone - functions don't get called? (checkbox "change" )
+Paste clone - functions don't get called? ( checkbox "change" )
 
 
 Textfield
