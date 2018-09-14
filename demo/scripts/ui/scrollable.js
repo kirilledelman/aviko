@@ -243,8 +243,13 @@ include( './ui' );
 			go.scrollTop = Math.max( 0, Math.min( go.scrollTop - wy, go.scrollHeight - go.height ));
 			go.scrollLeft = Math.max( 0, Math.min( go.scrollLeft + wx, go.scrollWidth - go.width ));
 	
-			// stop event if scrolled
-			if ( sl != go.scrollLeft || st != go.scrollTop ) stopEvent();
+			// if scrolled
+			if ( sl != go.scrollLeft || st != go.scrollTop ) {
+				// stop event
+				stopEvent();
+				// dispatch mousemove to counter mouseoff
+				go.fire( 'mousemove', Input.mouseX, Input.mouseY );
+			}
 		}
 		
 	};

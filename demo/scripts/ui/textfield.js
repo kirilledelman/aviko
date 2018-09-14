@@ -509,7 +509,7 @@ include( './ui' );
 			var canScroll = (go.__rt.scrollHeight > go.__rt.height || go.__rt.scrollWidth > go.__rt.width);
 	
 			// ignore if not focused
-			if ( !go.__canScroll || ( !go.__canScrollUnfocused && !this.focused ) ) return;
+			if ( !canScroll || ( !go.__canScrollUnfocused && !this.focused ) ) return;
 	
 			var st = go.__rt.scrollTop, sl = go.__rt.scrollLeft;
 	

@@ -121,6 +121,7 @@ new (function (){
 		text: "^BSpin",
 		x: 230, y: 120, minWidth: 65,
 		change: function () {
+			log( "checky check" );
 			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
 			else sprite.update = function ( dt ) {
 				sprite.angle += 10 * dt;
