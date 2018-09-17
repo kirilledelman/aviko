@@ -4,10 +4,13 @@
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/sprites.js" afterPath="$PROJECT_DIR$/demo/scripts/sprites.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/button.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/button.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/scrollable.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/scrollable.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Input.cpp" afterPath="$PROJECT_DIR$/src/Input.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.cpp" afterPath="$PROJECT_DIR$/src/ScriptHost.cpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -28,11 +31,43 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="scrollable.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="scrollable.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/ui/scrollable.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="622">
-              <caret line="250" column="64" lean-forward="false" selection-start-line="250" selection-start-column="64" selection-end-line="250" selection-end-column="64" />
+            <state relative-caret-position="314">
+              <caret line="250" column="42" lean-forward="false" selection-start-line="250" selection-start-column="42" selection-end-line="250" selection-end-column="42" />
+              <folding>
+                <element signature="n#!!doc" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="popup-menu.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/popup-menu.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="441">
+              <caret line="365" column="33" lean-forward="true" selection-start-line="365" selection-start-column="33" selection-end-line="365" selection-end-column="33" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="button.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/button.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1320">
+              <caret line="136" column="38" lean-forward="false" selection-start-line="136" selection-start-column="38" selection-end-line="136" selection-end-column="38" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="text.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1392">
+              <caret line="131" column="22" lean-forward="false" selection-start-line="131" selection-start-column="12" selection-end-line="131" selection-end-column="22" />
               <folding />
             </state>
           </provider>
@@ -41,18 +76,8 @@
       <file leaf-file-name="textfield.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="179">
-              <caret line="637" column="62" lean-forward="false" selection-start-line="637" selection-start-column="54" selection-end-line="637" selection-end-column="62" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="popup-menu.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/popup-menu.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1280">
-              <caret line="51" column="18" lean-forward="true" selection-start-line="51" selection-start-column="18" selection-end-line="51" selection-end-column="18" />
+            <state relative-caret-position="311">
+              <caret line="667" column="0" lean-forward="false" selection-start-line="667" selection-start-column="0" selection-end-line="667" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -69,15 +94,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>( hs</find>
-      <find>( !h</find>
-      <find>header</find>
-      <find>__header  =</find>
-      <find>__header</find>
-      <find>addchild( this.__h</find>
-      <find>.None</find>
-      <find>tooltip =</find>
-      <find>__autoResize</find>
       <find>autoresi</find>
       <find>scroll</find>
       <find>add prop</find>
@@ -99,6 +115,15 @@
       <find>children:</find>
       <find>'children':</find>
       <find>popup-me</find>
+      <find>'scroll'</find>
+      <find>popup-m</find>
+      <find>popupMenu</find>
+      <find>scrollHei</find>
+      <find>__mouseDownOutside</find>
+      <find>updatesi</find>
+      <find>__selectedItem</find>
+      <find>log</find>
+      <find>scrolled'</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -177,13 +202,13 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/text.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/tooltip.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/window.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
         <option value="$PROJECT_DIR$/src/StaticResources.cpp" />
         <option value="$PROJECT_DIR$/demo/test.json" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
         <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/scrollable.js" />
       </list>
     </option>
@@ -258,7 +283,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -327,7 +352,7 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -505,12 +530,16 @@
       <workItem from="1536693324025" duration="1451000" />
       <workItem from="1536759474660" duration="3000" />
       <workItem from="1536942295945" duration="274000" />
-      <workItem from="1536951766313" duration="1082000" />
+      <workItem from="1536951766313" duration="5761000" />
+      <workItem from="1537112183212" duration="183000" />
+      <workItem from="1537112396221" duration="1533000" />
+      <workItem from="1537129863529" duration="1899000" />
+      <workItem from="1537198729709" duration="3870000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="97482000" />
+    <option name="totallyTimeSpent" value="109646000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -522,11 +551,11 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="22" width="1440" height="831" extended-state="0" />
+    <frame x="0" y="22" width="1440" height="831" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23390558" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24678111" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -815,13 +844,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/select.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="382">
-          <caret line="321" column="13" lean-forward="false" selection-start-line="321" selection-start-column="13" selection-end-line="321" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/tooltip.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="363">
@@ -833,13 +855,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="255">
           <caret line="224" column="25" lean-forward="true" selection-start-line="224" selection-start-column="25" selection-end-line="224" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="174" column="35" lean-forward="true" selection-start-line="174" selection-start-column="35" selection-end-line="174" selection-end-column="35" />
         </state>
       </provider>
     </entry>
@@ -869,7 +884,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="171">
           <caret line="116" column="29" lean-forward="false" selection-start-line="116" selection-start-column="29" selection-end-line="116" selection-end-column="29" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -877,23 +891,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="687">
           <caret line="117" column="0" lean-forward="false" selection-start-line="117" selection-start-column="0" selection-end-line="117" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/button.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="687">
-          <caret line="193" column="10" lean-forward="false" selection-start-line="193" selection-start-column="10" selection-end-line="193" selection-end-column="10" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="687">
-          <caret line="1020" column="42" lean-forward="false" selection-start-line="1020" selection-start-column="35" selection-end-line="1020" selection-end-column="42" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -901,31 +898,62 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="155">
           <caret line="1731" column="54" lean-forward="false" selection-start-line="1731" selection-start-column="44" selection-end-line="1731" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="339" column="13" lean-forward="false" selection-start-line="339" selection-start-column="4" selection-end-line="339" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/select.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2016">
+          <caret line="321" column="13" lean-forward="false" selection-start-line="321" selection-start-column="13" selection-end-line="321" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/button.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1320">
+          <caret line="136" column="38" lean-forward="false" selection-start-line="136" selection-start-column="38" selection-end-line="136" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/scrollable.js">
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="622">
-          <caret line="250" column="64" lean-forward="false" selection-start-line="250" selection-start-column="64" selection-end-line="250" selection-end-column="64" />
+        <state relative-caret-position="1392">
+          <caret line="131" column="22" lean-forward="false" selection-start-line="131" selection-start-column="12" selection-end-line="131" selection-end-column="22" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="179">
-          <caret line="637" column="62" lean-forward="false" selection-start-line="637" selection-start-column="54" selection-end-line="637" selection-end-column="62" />
+        <state relative-caret-position="311">
+          <caret line="667" column="0" lean-forward="false" selection-start-line="667" selection-start-column="0" selection-end-line="667" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/popup-menu.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1280">
-          <caret line="51" column="18" lean-forward="true" selection-start-line="51" selection-start-column="18" selection-end-line="51" selection-end-column="18" />
+        <state relative-caret-position="441">
+          <caret line="365" column="33" lean-forward="true" selection-start-line="365" selection-start-column="33" selection-end-line="365" selection-end-column="33" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/scrollable.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="314">
+          <caret line="250" column="42" lean-forward="false" selection-start-line="250" selection-start-column="42" selection-end-line="250" selection-end-column="42" />
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

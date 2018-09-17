@@ -409,6 +409,17 @@ void Input::InitClass() {
 		}
 		return true;
 	}));
+	
+	// trigger mouse move event
+	script.DefineFunction<Input>
+	("dispatchMouseMove",
+	 static_cast<ScriptFunctionCallback>([](void* inp, ScriptArguments& sa ){
+		SDL_Event e;
+		e.type = SDL_MOUSEMOTION;
+		SDL_GetMouseState( &e.motion.x, &e.motion.y );
+		app.input.HandleEvent( e );
+		return true;
+	}));
 		
 	// spawn object
 	script.NewScriptObject<Input>( this );

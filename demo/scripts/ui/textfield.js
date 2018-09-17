@@ -661,13 +661,10 @@ include( './ui' );
 				} else {
 					for ( var i = 0; i < ni; i++ ) {
 						// items are different
-						if ( this.__popup.items[ i ].value != items[ i ].value ) {
+						if ( this.__popup.items[ i ].value != items[ i ].value || this.__popup.items[ i ].text != items[ i ].text ) {
 							this.__popup.selectedIndex = -1;
 							this.__popup.items = items;
 							break;
-						// item label only is different (submatch)
-						} else if ( this.__popup.items[ i ].text != items[ i ].text ) {
-							this.__popup.container.getChild( i ).text = items[ i ].text;
 						}
 					}
 				}

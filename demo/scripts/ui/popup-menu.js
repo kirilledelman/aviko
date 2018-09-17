@@ -46,34 +46,23 @@ include( './ui' );
 		get target(){ return this.__target; }, set target( v ){ this.__target = v; },
 
 		// (Array) in form of [ { text:"Label text", value:(*), icon:"optional icon", disabled:(Boolean) } ...]
-		get items(){ return this.__items; }, set items( v ){ this.__items = v; this.__updateItems(); },
+		get items(){ return this.__items; }, set items( v ){
+			// recycle all old ones
+			var ch = this.__container.container.children;
+			for ( var i = 0, nc = ch.length; i < nc; i++ ) this.__disposeItem( ch[ i ] );
+			this.__items = v;
+			this.debounce( 'updateItems', this.__updateItems );
+		},
 
 		// (Number) 0 based index of item focused / highlighted in menu, note that spacers count as items
 		get selectedIndex(){ return this.__selectedIndex; },
-		set selectedIndex( v ){
-			if ( isNaN( v ) ) return;
-			this.__selectedIndex = Math.max( -1, Math.min( Math.floor( v ), this.__items.length ) );
-			if ( this.__selectedIndex >= 0 && this.__container.container.numChildren >= this.__selectedIndex + 1 ) {
-				if ( this.__noFocus ) {
-					for ( var i = 0, nc = this.__container.container.numChildren; i < nc; i++ ){
-						var item = this.__container.getChild( i );
-						if ( item.item ) {
-							item.state = ( i == this.__selectedIndex ? 'over' : 'auto' );
-							if ( i == this.__selectedIndex ) item.scrollIntoView();
-						}
-					}
-				} else {
-					var si = this.__container.getChild( this.__selectedIndex );
-					if ( si && si.item ) si.focus();
-				}
-			}
-		},
+		set selectedIndex( v ){ this.__selectedIndex = v; this.debounce( 'updateItems', this.__updateItems ); },
 
 		// (Boolean) focus-less mode, where items' "over" state is used instead of "focus". Used in textfield autocomplete
 		get noFocus(){ return this.__noFocus; }, set noFocus( v ){ this.__noFocus = v; },
 
 		// (*) maximim number of visible items in menu before scrollbar is displayed
-		get maxVisibleItems(){ return this.__maxVisibleItems; }, set maxVisibleItems( v ){ this.__maxVisibleItems = v; this.__updateSize(); },
+		get maxVisibleItems(){ return this.__maxVisibleItems; }, set maxVisibleItems( v ){ this.__maxVisibleItems = v; this.debounce( 'updateItems', this.__updateItems ); },
 
 		// (ui/scrollable) scrollable container
 		get container (){ return this.__container; },
@@ -85,127 +74,205 @@ include( './ui' );
 		// Here because popup menu doesn't have own UI object + not calling addSharedProperties
 		get style(){ return this.__baseStyle; }, set style( v ){ UI.base.mergeStyle( this.__baseStyle, v ); UI.base.applyProperties( this, v ); },
 
-		__updateItems: function () {
-
-			// clean up
-			this.__container.removeAllChildren();
-			this.__container.opacity = 0;
-			this.cancelDebouncer( this.__updateItemsDebouncer );
-	
-			// add items
-			this.__selectedItem = null;
-			var curItem = 0, numItems = this.__items.length;
-			var progressiveAdd = (function () {
-	
-				// add maxVisibleItems
-				var maxItems = Math.min( numItems, curItem + this.__maxVisibleItems );
-				for ( var i = curItem; i < maxItems; i++ ) {
-					var button, text;
-					var item = this.__items[ i ];
-					var icon = null;
-					var disabled = false;
-					if ( item === null ) {
-						if ( i == this.__items.length - 1 || i == 0 ) continue;
-						this.__container.addChild( './panel', {
-							style: this.__baseStyle.separator
-						} );
-						continue;
-					}
-					if ( typeof ( item ) === 'string' ) {
-						text = item;
-					} else if ( typeof( item ) === 'object' ) {
-						text = item.text;
-						icon = item.icon;
-						disabled = item.disabled;
-					} else continue;
-					// make item
-					button = this.__container.addChild( './button', {
-						item: item,
-						icon: icon,
-						text: text,
-						name: text,
+		// makes a new row or a separator, or returns a cached one
+		__makeItem: function( item ) {
+			// dequeue
+			var row = null;
+			if ( item.text ) {
+				if ( this.__cachedRows.length ) {
+					row = this.__cachedRows.pop();
+					row.icon = item.icon,
+					row.text = item.text,
+					row.name = item.text,
+					row.index = item.index,
+					row.disabled = !!item.disabled;
+				} else {
+					row = new GameObject( './button', {
+						icon: item.icon,
+						text: item.text,
+						name: item.text,
 						popup: this,
-						index: i,
+						index: item.index,
 						focusable: !this.__noFocus,
-						disabled: disabled,
+						disabled: !!item.disabled,
 						focusGroup: 'popup',
 						click: this.__itemSelected,
 						mouseOver: this.__itemSetFocus,
 						navigation: this.__itemNavigation,
 						focusChanged: this.__itemFocusChanged,
 						style: this.__baseStyle.item,
+						left: 0,
+						bottom: -1,
+						right: 0,
+						top: 0,
 					} );
-					if ( i == this.__selectedIndex ) this.__selectedItem = button;
-					// if this is first button in 2nd+ batch
-					if ( i > 0 && i == curItem ) {
-						// unlink previous last item focusDown to this button
-						this.__container.getChild( curItem - 1 ).focusDown = null;
-					}
+					row.label.autoSize = true;
 				}
-	
-				// link top/bottom buttons
-				this.__container.getChild( 0 ).focusUp = button;
-				button.focusDown = this.__container.getChild( 0 );
-	
-				// update
-				curItem = maxItems;
-				if ( this.__selectedItem ) {
-					if ( this.__noFocus ) {
-						this.__selectedItem.state = 'over';
-					} else {
-						this.__selectedItem.focus();
-					}
-					this.__selectedItem.scrollIntoView();
-				}
-	
-				// finished?
-				if ( curItem >= this.__items.length ) {
-					// if nothing was added bail
-					if ( !this.__container.container.numChildren ) {
-						this.parent = null;
-						return;
-					}
-	
-					this.__container.scrollbars = 'auto';
-	
-				// add more next frame
+			} else {
+				if ( this.__cachedSeparators.length ) {
+					row = this.__cachedSeparators.pop();
 				} else {
-					this.__updateItemsDebouncer = 'updateItems' + curItem;
-					this.debounce( this.__updateItemsDebouncer, progressiveAdd, 0.1 );
+					row = new GameObject( './panel', {
+						style: this.__baseStyle.separator
+					} );
 				}
-	
-				// size
-				this.__updateSize();
-				this.__container.requestLayout();
-	
-				// fade in
-				if ( this.__container.opacity == 0 ) {
-					this.__container.on( 'layout', function () {
-						this.__container.fadeTo( 1, 0.25 );
-					}.bind( this ), true );
-				}
-	
-			}).bind( this );
+				
+			}
 			
-			// start
-			progressiveAdd();
+			item.row = row;
+			row.item = item;
+			return row;
+		},
+		
+		// puts row back into cached array
+		__disposeItem: function ( row ) {
+			// remove
+			row.parent = null;
+			if ( row.item.row == row ) row.item.row = null;
+			row.item = null;
+			if ( row.click )
+				this.__cachedRows.push( row );
+			else
+				this.__cachedSeparators.push( row );
+		},
+		
+		// updates items visible in window
+		__updateItems: function () {
+
+			// if item size is unknown
+			if ( !this.__itemHeight ) {
+				if ( !this.__items.length ) return;
+				// add item, wait for it to finish lay out
+				var t = this.__makeItem( this.__items[ 0 ] );
+				t.layout = function ( w, h ) {
+					if ( h ) {
+						this.__itemHeight = h - 2;
+						t.layout = null;
+						this.__updateItems();
+					}
+				}.bind( this );
+				this.__container.addChild( t );
+				return;
+			}
+			
+			// set height
+			this.__container.height = this.__container.minHeight = Math.min( this.__items.length, this.__maxVisibleItems ) * this.__itemHeight;
+			
+			// scan items until we find first one to display
+			this.__selectedItem = null;
+			var curItem = 0, numItems = this.__items.length;
+			var foundLast = false, foundFirst = false;
+			var curY = 0, scrollTop = this.__container.scrollTop, visibleHeight = this.__container.height;
+			var minY = scrollTop - this.__itemHeight, maxY = scrollTop + visibleHeight + this.__itemHeight;
+			var contWidth = this.__container.minWidth;
+			var lastFocusableItem = null;
+			
+			for ( var i = 0; i < numItems; i++ ) {
+				var item = this.__items[ i ];
+				var itemHeight = 1;
+				var isSeparator = false;
+				
+				// conform
+				if ( item === null ) {
+					this.__items[ i ] = item = {};
+				} else if ( typeof ( item ) === 'string' ) {
+					this.__items[ i ] = item = { text: item, value: item };
+				} else if ( typeof( item ) !== 'object' ) continue;
+				
+				// setup
+				isSeparator = ( typeof ( item.text ) === 'undefined' );
+				itemHeight = isSeparator ? 1 : this.__itemHeight;
+				item.index = i;
+				item.y = curY;
+				
+				// mark selected item
+				if ( this.__selectedIndex == i ) this.__selectedItem = item;
+				
+				// if item needs to be visible
+				if ( !foundLast &&
+					( curY >= minY && curY < maxY ) ||
+					( curY + itemHeight >= minY && curY + itemHeight < maxY ) ) {
+					
+					// first?
+					if ( foundFirst === false ) {
+						foundFirst = i;
+					}
+					
+					// add and position it
+					if ( !item.row ) {
+						item.row = this.__makeItem( item );
+						item.row.y = curY;
+						this.__container.addChild( item.row );
+					}
+					
+					// link up
+					if ( lastFocusableItem ) {
+						lastFocusableItem.row.focusDown = item.row;
+						item.row.focusUp = lastFocusableItem.row;
+					}
+					
+					// measure width
+					if ( item.row.label ) {
+						item.row.label.renderText.measure();
+						contWidth = Math.max( item.row.label.renderText.width + 16, contWidth );
+					}
+					
+					// if passed last item
+					foundLast = (curY + itemHeight >= maxY || i >= numItems - 1 );
+					if ( foundLast ) {
+						// size visible items to width
+						var j = i;
+						while ( j >= foundFirst ) {
+							item = this.__items[ j ];
+							if ( item.row ) item.row.width = contWidth;
+							j--;
+						}
+					}
+					
+					// row
+					if ( !isSeparator ) {
+						lastFocusableItem = item;
+						item.row.state = ( i == this.__selectedIndex ? 'over' : 'auto' );
+					}
+					
+				// item can be recycled
+				} else {
+					if ( item.row ) this.__disposeItem( item.row );
+				}
+				
+				// advance Y
+				curY += itemHeight;
+			}
+			
+			// height
+			this.__container.scrollHeight = curY;
+			this.__container.minWidth = contWidth;
+			
+			// highlight / scroll to selected item
+			if ( this.__selectedItem ) {
+				if ( this.__selectedItem.row ) {
+					if ( this.__noFocus ) {
+						this.__selectedItem.row.state = 'over';
+					} else {
+						this.__selectedItem.row.focus();
+					}
+					this.__selectedItem.row.scrollIntoView();
+				} else {
+					this.async( function(){
+						this.__container.scrollTop = this.__selectedItem.y;
+					}, 0.1 );
+				}
+			}
+			
+			// fade in
+			if ( this.__container.opacity == 0 ) {
+				this.__container.on( 'layout', function () {
+					this.__container.fadeTo( 1, 0.25 );
+				}.bind( this ), true );
+			}
 			Input.mouseDown = this.__mouseDownOutside;
 		},
 
-		// resizes container
-		__updateSize: function () {
-			this.debounce( 'updateSize', function() {
-				this.__container.width = this.__container.scrollWidth;
-				var totalHeight = 0, numItems = 0;
-				for ( var i = 0; i < this.__container.container.numChildren && numItems < this.__maxVisibleItems; i++ ) {
-					var btn = this.__container.getChild( i );
-					totalHeight += btn.height + this.__container.spacingY + btn.marginTop + btn.marginBottom;
-					if ( items[ i ] !== null ) numItems++;
-				}
-				this.__container.height = this.__container.minHeight = totalHeight;
-			} );
-		},
-	
 		// positions menu next to target
 		update: function () {
 			// place next to target
@@ -280,7 +347,13 @@ include( './ui' );
 		},
 	
 		__itemSetFocus: function () {
-			this.popup.selectedIndex = this.index;
+			if ( this.text && !this.disabled ) {
+				if ( this.popup.__noFocus ) {
+					this.popup.selectedIndex = this.index;
+				} else {
+					this.focus();
+				}
+			}
 		},
 	
 		__itemFocusChanged: function ( newFocus ) {
@@ -289,6 +362,10 @@ include( './ui' );
 			if ( newFocus == this.ui ) this.popup.fire( 'change', focusedItem );
 		},
 	
+		__scrolled: function () {
+			this.__updateItems();
+		},
+		
 		removed: function () {
 			// remove mousedown callback
 			if ( Input.mouseDown == this.__mouseDownOutside ) Input.mouseDown = null;
@@ -298,23 +375,9 @@ include( './ui' );
 	
 	// initialize
 	go.name = "Popup menu";
-	go.__container = go.addChild( './scrollable', {
-		layoutType: Layout.Vertical,
-		layoutAlignX: LayoutAlign.Stretch,
-		layoutAlignY: LayoutAlign.Start,
-		fitChildren: true,
-		wrapEnabled: false,
-		focusGroup: 'popup',
-		scrollbarsFocusable: false,
-		style: UI.style.popupMenu.menu,
-		ignoreCamera: true,
-		fixedPosition: true,
-		scrollbars: false,
-		layout: function () { go.__updateSize(); },
-		blocking: true,
-		mouseOver: function(){ cancelDebouncer( 'showTooltip' ); }
-	} );
 	go.__items = [];
+	go.__cachedRows = [];
+	go.__cachedSeparators = [];
 	go.__target = null;
 	go.__selectedIndex = -1;
 	go.__maxVisibleItems = 10;
@@ -323,6 +386,22 @@ include( './ui' );
 	go.__noFocus = false;
 	go.__updateItemsDebouncer = '';
 	go.__proto__ = UI.base.popupMenuPrototype;
+	go.__container = go.addChild( './scrollable', {
+		layoutType: Layout.None,
+		/*layoutAlignX: LayoutAlign.Stretch,
+		layoutAlignY: LayoutAlign.Start,
+		fitChildren: true,*/
+		wrapEnabled: false,
+		focusGroup: 'popup',
+		scrollbarsFocusable: false,
+		style: UI.style.popupMenu.menu,
+		ignoreCamera: true,
+		fixedPosition: true,
+		scrollbars: 'auto',
+		blocking: true,
+		scroll: go.__scrolled.bind( go ),
+		mouseOver: function(){ cancelDebouncer( 'showTooltip' ); }
+	} );
 	go.__mouseDownOutside = go.__mouseDownOutside.bind( go );
 	go.serializeMask = [ 'children', 'update', 'removed' ];
 	

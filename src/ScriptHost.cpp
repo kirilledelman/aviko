@@ -289,9 +289,6 @@ ScriptHost::ClassDef* ScriptHost::_GetProperties( void* obj, void* thisObj, unor
 				ArgValue property( iter->first.c_str() );
 				bool masked = useSerializeMask && _isPropertyInMask( property, serializeMaskVal );
 				if ( !masked && !(readOnly && !includeReadOnly) && !(useSerializeMask && !serialized) ) {
-					if ( property.value.stringValue->compare( "worldX" ) == 0 ) {
-						printf( "!!!2" );
-					}
 					ret.emplace( property.value.stringValue->c_str() );
 				}
 			}

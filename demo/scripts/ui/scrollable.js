@@ -248,7 +248,7 @@ include( './ui' );
 				// stop event
 				stopEvent();
 				// dispatch mousemove to counter mouseoff
-				go.fire( 'mousemove', Input.mouseX, Input.mouseY );
+				Input.dispatchMouseMove();
 			}
 		}
 		

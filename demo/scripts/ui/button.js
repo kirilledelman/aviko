@@ -134,6 +134,7 @@ include( './ui' );
 			go.__bg.resize( w, h );
 			go.__label.ui.maxWidth = w - ( this.padLeft + this.padRight )
 				- ( go.__image ? ( this.spacingX + go.__image.ui.width + go.__image.ui.marginLeft + go.__image.ui.marginRight ) : 0 );
+			go.fire( 'layout', w, h );
 		},
 	
 		__focusChanged: function ( newFocus, oldFocus ) {

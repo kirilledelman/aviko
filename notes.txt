@@ -5,7 +5,7 @@ Textfield
 
 Prop list - "children" is disabled
 
-In scrollable container, dispatch mousemove after scroll, to counter stale rolloff.
+Input - mouseout doesn't always trigger when moving mouse fast
 
 Inspector
 	modify autocomplete filename to check for :frame - add getTextureFrames( tex )
@@ -17,7 +17,7 @@ Body
 	Add global collision listener to scene?
 	SyncObjectToBody - NaN
 
-
+Outline, when increasing offset starts doubling up
 Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
 Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
