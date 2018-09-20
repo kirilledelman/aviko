@@ -159,7 +159,7 @@ ArgValue ScriptHost::_MakeInitObject( ArgValue val, unordered_map<unsigned long,
 			if ( prop.type == TypeFunction ) {
 				JSString* func = JS_DecompileFunction( this->js, (JSFunction*) prop.value.objectValue, 0 );
 				const char* funcBody = JS_EncodeStringToUTF8( this->js, func );
-				char* pos = strchr( funcBody, '{' );
+				const char* pos = strchr( funcBody, '{' );
 				bool isNative = ( pos && *(pos + 1) == 10 && *(pos + 2) == 32 && *(pos + 3) == 32 && *(pos + 4) == 32 && *(pos + 5) == 32 &&
 								 *(pos + 6) == '[' && *(pos + 7) == 'n' && *(pos + 8) == 'a' && *(pos + 9) == 't' && *(pos + 10) == 'i'  );
 				

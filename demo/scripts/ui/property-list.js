@@ -249,19 +249,21 @@ include( './ui' );
 			// embedded inspector created on demand
 			if ( !this.propList ) {
 				var myPos = this.parent.children.indexOf( this );
-				this.propList = new GameObject( './property-list', {
+				this.propList = top.__getFieldOfType( 'object', './property-list', {
 					name: this.name,
 					flex: 1,
 					readOnly: !!this.pdef.readOnly,
 					scrollable: false,
 					forceWrap: true,
-					active: !!this.pdef.expanded,
+					focusGroup: this.focusGroup,
+					active: !this.pdef.expanded, // toggle
 					style: top.__baseStyle.values.any,
 					fieldButton: this,
 					showBackButton: false,
 					showContextMenu: top.__showContextMenu,
 					showMoreButton: false,
 					topPropertyList: top.__topPropertyList ? top.__topPropertyList : top,
+					ownPropertyList: top,
 					type: 'object',
 					change: function () { this.fieldButton.text = top.__nameObject( this.target ); }
 				} );
@@ -272,9 +274,11 @@ include( './ui' );
 				if ( this.pdef.properties !== undefined ) this.propList.properties = this.pdef.properties;
 				if ( this.pdef.groups !== undefined ) this.propList.groups = this.pdef.groups;
 				this.propList.target = this.fieldValue;
+			} else {
+				this.propList.active = !this.propList.active;
 			}
 			// toggle display
-			this.toggleState = this.propList.active = !this.propList.active;
+			this.toggleState = this.pdef.expanded = this.propList.active;
 			this.image.angle = (this.propList.active ? 0 : -90);
 			this.image.ui.offsetY = (this.propList.active ? 0 : 9);
 		},
@@ -443,21 +447,22 @@ include( './ui' );
 							text: this.__nameObject( fieldValue ),
 							wrapEnabled: false,
 							minWidth: valueWidth,
-							disabled: (disabled || ( pdef && pdef.readOnly )),
 							style: this.__baseStyle.values.any,
-							toggleState: !!pdef.expanded
+							toggleState: !!pdef.expanded,
+							reversed: !inline,
 						} ), insertChildIndex );
 						field.style = this.__baseStyle.values.object;
+						
 						if ( inline ) {
 							field.click = this.__togglePropList;
 							field.image.angle = (field.toggleState ? 0 : -90);
 							field.image.ui.offsetY = (field.toggleState ? 0 : 9);
+							if ( pdef.expanded ) this.__togglePropList.call( field, 1 );
 						} else {
 							field.click = this.__pushToTargetClicked;
 							field.image.angle = -90;
 							field.image.ui.offsetY = 9;
 							field.label.flex = 1;
-							field.reversed = true;
 						}
 					}
 					break;
@@ -481,8 +486,7 @@ include( './ui' );
 				field.pdef = pdef;
 				field.focusGroup = this.ui.focusGroup;
 				field.fieldLabel = label;
-				if ( fieldType != 'object' && readOnly ) field.disabled = true;
-				if ( disabled || pdef.readOnly ) field.disabled = true;
+				if ( fieldType != 'object' && ( readOnly || disabled ) ) field.disabled = true;
 				label.tooltip = field.tooltip = ( pdef.tooltip ? pdef.tooltip : null );
 				if ( typeof( pdef.style ) === 'object' ) {
 					UI.base.applyProperties( field, pdef.style );
@@ -1061,11 +1065,12 @@ include( './ui' );
 		},
 	
 		__pushToTarget: function( newTarget, propName ) {
-			this.__targetStack.push( {
+			var obj = {
 				target: this.__target,
 				name: ((this.__target && this.__target.constructor) ? ( this.__target.constructor.name + "." ) : '' ) + propName,
 				scrollTop: this.container.scrollTop
-			} );
+			}
+			this.__targetStack.push( obj );
 			this.__target = newTarget;
 			this.fire( 'targetChanged', newTarget );
 			this.refresh();
@@ -1075,12 +1080,22 @@ include( './ui' );
 		// button callback to push into an object
 		__pushToTargetClicked: function ( btn ) {
 			if ( btn != 1 ) return; // ignore right click
-			var top = this.ownPropertyList;
-			if ( top.topPropertyList ) {
-				top.topPropertyList.__pushToTarget( this.target[ this.name ], this.name );
-			} else {
-				top.__pushToTarget( this.target[ this.name ], this.name );
+			
+			// get full path
+			var propName = this.name;
+			var top = this.ownPropertyList.__topPropertyList;
+			var r = this.ownPropertyList;
+			while ( r && r !== top ) {
+				if ( r.target.constructor == Array ) {
+					propName = r.name + '[' + propName + ']';
+				} else {
+					propName = r.name + '.' + propName;
+				}
+				r = r.ownPropertyList;
 			}
+			
+			// push to target
+			this.ownPropertyList.__topPropertyList.__pushToTarget( this.target[ this.name ], propName );
 		},
 		
 		// right click menu
@@ -1602,6 +1617,7 @@ include( './ui' );
 		__returnFieldToCached: function () {
 			var pool = this.pool;
 			var top = this.ownPropertyList;
+			delete this.propList;
 			if ( typeof( top.__cachedFields[ pool ] ) === 'undefined' ) top.__cachedFields[ pool ] = [ this ];
 			else top.__cachedFields[ pool ].push( this );
 		},
