@@ -617,7 +617,7 @@ include( './ui' );
 			
 			// accept selected item in popup
 			if ( accept ) {
-	
+				
 				if ( this.__popup && this.__popup.selectedIndex >= 0 )
 				suggestions = [ this.__popup.items[ this.__popup.selectedIndex ] ];
 	

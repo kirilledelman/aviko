@@ -1408,7 +1408,7 @@ ArgValueVector* GameObject::GetChildrenVector() {
 /// overwrites children, if array element is null, keeps existing child in that spot
 ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 	// go over passed array
-	size_t nc = in->size();
+	int nc = (int) in->size();
 	size_t curSize;
 	size_t i = 0;
 	for (; i < nc; i++ ){
@@ -1436,7 +1436,7 @@ ArgValueVector* GameObject::SetChildrenVector( ArgValueVector* in ) {
 	}
 	// remove remaining
 	if ( in->size() < this->children.size() ) {
-		for ( int j = (int) this->children.size() - 1; j > nc; j-- ){ // >= ?
+		for ( int j = (int) this->children.size() - 1; j >= nc; j-- ){ // >= ?
 			this->children[ j ]->SetParent( NULL );
 		}
 	}

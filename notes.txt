@@ -1,16 +1,8 @@
-Prop list
-	push into one of children, return back, no inline array proplist
-	"children" is not readonly
-
-GameObject
-	set children to [] keeps first child
 
 Textfield
 	Typing when maxHeight is at max causes jerking (in modal window)
 	Mouse select/release outside doesn't stop selection (sticky) - doesn't autoscroll either.
 
-
-Input - mouseout doesn't always trigger when moving mouse fast
 
 Inspector
 	modify autocomplete filename to check for :frame - add getTextureFrames( tex )

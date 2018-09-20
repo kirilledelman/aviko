@@ -214,7 +214,6 @@ include( './ui' );
 	
 		__mouseOverOut: function ( x, y, wx, wy ) {
 			var go = this.gameObject;
-			stopAllEvents();
 			go.state = 'auto';
 			go.fire( currentEventName(), x, y, wx, wy );
 		},

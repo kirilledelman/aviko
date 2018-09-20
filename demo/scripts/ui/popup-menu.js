@@ -96,7 +96,7 @@ include( './ui' );
 						focusable: !this.__noFocus,
 						disabled: !!item.disabled,
 						focusGroup: 'popup',
-						click: this.__itemSelected,
+						mouseDown: this.__itemSelected,
 						mouseOver: this.__itemSetFocus,
 						navigation: this.__itemNavigation,
 						focusChanged: this.__itemFocusChanged,
@@ -137,8 +137,11 @@ include( './ui' );
 		},
 		
 		// updates items visible in window
-		__updateItems: function () {
+		__updateItems: function ( noScroll ) {
 
+			// ignore if removed
+			if ( !this.parent ) return;
+			
 			// if item size is unknown
 			if ( !this.__itemHeight ) {
 				if ( !this.__items.length ) return;
@@ -227,6 +230,8 @@ include( './ui' );
 							if ( item.row ) item.row.width = contWidth;
 							j--;
 						}
+						// force layout event
+						this.__container.container.dispatch( 'layout', 'update' );
 					}
 					
 					// row
@@ -249,18 +254,20 @@ include( './ui' );
 			this.__container.minWidth = contWidth;
 			
 			// highlight / scroll to selected item
-			if ( this.__selectedItem ) {
-				if ( this.__selectedItem.row ) {
-					if ( this.__noFocus ) {
-						this.__selectedItem.row.state = 'over';
+			if ( !noScroll ) {
+				if ( this.__selectedItem ) {
+					if ( this.__selectedItem.row ) {
+						if ( this.__noFocus ) {
+							this.__selectedItem.row.state = 'over';
+						} else {
+							this.__selectedItem.row.focus();
+						}
+						this.__selectedItem.row.scrollIntoView();
 					} else {
-						this.__selectedItem.row.focus();
+						this.async( function () {
+							this.__container.scrollTop = this.__selectedItem.y;
+						}, 0.1 );
 					}
-					this.__selectedItem.row.scrollIntoView();
-				} else {
-					this.async( function(){
-						this.__container.scrollTop = this.__selectedItem.y;
-					}, 0.1 );
 				}
 			}
 			
@@ -342,6 +349,7 @@ include( './ui' );
 		__itemSelected: function () {
 			if ( this.disabled ) return;
 			stopAllEvents();
+			this.popup.selectedIndex = this.item.index;
 			this.popup.fire( 'selected', this.item );
 			this.popup.parent = null;
 		},
@@ -349,7 +357,7 @@ include( './ui' );
 		__itemSetFocus: function () {
 			if ( this.text && !this.disabled ) {
 				if ( this.popup.__noFocus ) {
-					this.popup.selectedIndex = this.index;
+					this.popup.selectedIndex = this.item.index;
 				} else {
 					this.focus();
 				}
@@ -363,7 +371,7 @@ include( './ui' );
 		},
 	
 		__scrolled: function () {
-			this.__updateItems();
+			this.__updateItems( true );
 		},
 		
 		removed: function () {
