@@ -387,7 +387,9 @@ include( './ui' );
 		__layout: function ( w, h ) {
 			var go = this.gameObject;
 			if ( go.__autoGrow ) {
-				this.minHeight = Math.min( this.maxHeight ? this.maxHeight : 999999, go.__rt.lineHeight * go.__rt.numLines + this.padTop + this.padBottom );
+				this.minHeight = Math.min(
+								   this.maxHeight ? this.maxHeight : App.windowHeight,
+				                   Math.max( 1, go.__rt.numLines ) * go.__rt.lineHeight + this.padTop + this.padBottom );
 			} else {
 				this.minHeight = go.__rt.lineHeight + this.padTop + this.padBottom;
 			}
@@ -396,6 +398,11 @@ include( './ui' );
 			go.__tc.setTransform( this.padLeft, this.padTop );
 			go.__rt.resize( w - ( this.padLeft + this.padRight ), Math.max( go.__rt.lineHeight, h - ( this.padTop + this.padBottom ) ) );
 			go.__scrollCaretToView();
+		},
+		
+		// auto resize text box vertically with text
+		__checkAutoGrow: function () {
+			if ( this.__autoGrow && this.__rt.multiLine ) this.requestLayout( 'autoGrow' );
 		},
 	
 		// focus changed
@@ -428,26 +435,26 @@ include( './ui' );
 		},
 	
 		// navigation event
-		__navigation: function ( name, value ) {
+		__navigation: function ( name, value, controller ) {
 			var go = this.gameObject;
 			stopAllEvents();
 	
 			// editing
 			if ( go.__editing ) {
 	
-				if ( name == 'accept' && !go.__rt.multiLine ) go.editing = false;
+				if ( name === 'accept' && !go.__rt.multiLine ) go.editing = false;
 				else if ( name == 'cancel' ) {
 					// blur, or stop editing
 					if ( go.__cancelToBlur ) this.blur();
 					else go.editing = false;
-				} else if ( name == 'vertical' ) {
+				} else if ( name === 'vertical' && controller.name != 'Keyboard' ) {
 					this.keyDown( value < 0 ? Key.Up : Key.Down );
 				}
 	
 			// reading
 			} else if ( go.__scrolling ) {
 	
-				if ( name == 'cancel' || name == 'accept' ) {
+				if ( name === 'cancel' || name === 'accept' ) {
 	
 					// turn off scrolling mode
 					go.scrolling = false;
@@ -455,12 +462,12 @@ include( './ui' );
 				} else {
 	
 					// scroll
-					if ( name == 'vertical' && go.__rt.scrollHeight > go.__rt.height ) {
+					if ( name === 'vertical' && go.__rt.scrollHeight > go.__rt.height ) {
 						go.__rt.scrollTop =
 						Math.max( 0, Math.min( go.__rt.scrollHeight - go.__rt.height, go.__rt.scrollTop + value * go.__rt.lineHeight ) );
 					}
 					// scroll horizontally
-					if ( name == 'horizontal' && go.__rt.scrollWidth > go.__rt.width ){
+					if ( name === 'horizontal' && go.__rt.scrollWidth > go.__rt.width ){
 						go.__rt.scrollLeft =
 						Math.max( 0, Math.min( go.__rt.scrollWidth - go.__rt.width, go.__rt.scrollLeft + value * go.__rt.lineHeight  ) );
 					}
@@ -471,20 +478,20 @@ include( './ui' );
 			} else {
 	
 				// enter = begin editing, or scrolling
-				if ( name == 'accept' ) {
+				if ( name === 'accept' ) {
 	
 					if ( go.__acceptToEdit && !go.__disabled ) go.editing = true;
 					else if ( go.__disabled && (go.__rt.scrollHeight > go.__rt.height || go.__rt.scrollWidth > go.__rt.width) ) go.scrolling = true;
 	
 				// escape = blur
-				} else if ( name == 'cancel' ) {
+				} else if ( name === 'cancel' ) {
 	
 					if ( go.__cancelToBlur ) this.blur();
 	
 				// directional - move focus
 				} else {
 					var dx = 0, dy = 0;
-					if ( name == 'horizontal' ) dx = value;
+					if ( name === 'horizontal' ) dx = value;
 					else dy = value;
 					this.moveFocus( dx, dy );
 				}
@@ -537,7 +544,7 @@ include( './ui' );
 			// find either next, or previous word boundary
 			var i = startIndex + direction;
 			if ( direction < 0 ) i--;
-			var rx = /[\s.@'"\/,\^=]/; // characters that function as "stops" or word boundary
+			var rx = /[\s.@'":\/,\^=]/; // characters that function as "stops" or word boundary
 			while( i > 0 && i < txt.length ) {
 				if ( txt.substr( i, 1 ).match( rx ) ) break;
 				i += direction;
@@ -1159,15 +1166,6 @@ include( './ui' );
 				if ( lp.x < 0 || lp.x > this.width || lp.y < 0 || lp.y > this.height ) {
 					this.blur();
 				}
-			}
-		},
-	
-		// auto resize text box vertically with text
-		__checkAutoGrow: function () {
-			if ( this.__autoGrow && this.__rt.multiLine ) {
-				var h = this.ui.height;
-				this.ui.height = this.ui.minHeight = this.__rt.lineHeight * this.__rt.numLines + this.ui.padTop + this.ui.padBottom;
-				if ( h != this.ui.height ) this.async( go.scrollIntoView );
 			}
 		},
 	

@@ -5,11 +5,14 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/button.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/button.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/ui.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/test.json" afterPath="$PROJECT_DIR$/demo/test.json" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Controller.cpp" afterPath="$PROJECT_DIR$/src/Controller.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -30,35 +33,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="property-list.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="383">
-              <caret line="257" column="48" lean-forward="false" selection-start-line="257" selection-start-column="48" selection-end-line="257" selection-end-column="48" />
-              <folding>
-                <element signature="e#21363#34897#0" expanded="false" />
-                <element signature="e#35402#36560#0" expanded="false" />
-                <element signature="e#36662#38714#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="popup-menu.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/popup-menu.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="537">
-              <caret line="233" column="24" lean-forward="false" selection-start-line="233" selection-start-column="24" selection-end-line="233" selection-end-column="24" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="textfield.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="textfield.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="257">
-              <caret line="641" column="0" lean-forward="false" selection-start-line="641" selection-start-column="0" selection-end-line="641" selection-end-column="0" />
+            <state relative-caret-position="900">
+              <caret line="493" column="32" lean-forward="false" selection-start-line="493" selection-start-column="32" selection-end-line="493" selection-end-column="32" />
               <folding />
             </state>
           </provider>
@@ -75,18 +54,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>popup-m</find>
-      <find>popupMenu</find>
-      <find>scrollHei</find>
-      <find>__mouseDownOutside</find>
-      <find>updatesi</find>
-      <find>__selectedItem</find>
-      <find>scrolled'</find>
-      <find>children&quot;</find>
-      <find>inline</find>
-      <find>!inline</find>
-      <find>'child</find>
-      <find>push</find>
       <find>ownPropertyList</find>
       <find>__topPropertyList</find>
       <find>topPropertyList</find>
@@ -105,6 +72,18 @@
       <find>__cancelAutocomplete</find>
       <find>'./bu</find>
       <find>log</find>
+      <find>rendersprite</find>
+      <find>disabled</find>
+      <find>filename</find>
+      <find>__makeF</find>
+      <find>autocomple</find>
+      <find>autocompl</find>
+      <find>stop</find>
+      <find>break</find>
+      <find>autogrow</find>
+      <find>__lay</find>
+      <find>autogro</find>
+      <find>naviga</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -173,7 +152,6 @@
         <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
         <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/checkbox.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/image.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/panel.js" />
@@ -187,10 +165,11 @@
         <option value="$PROJECT_DIR$/demo/test.json" />
         <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/scrollable.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
       </list>
     </option>
   </component>
@@ -264,7 +243,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -333,6 +311,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
@@ -517,12 +496,17 @@
       <workItem from="1537129863529" duration="1899000" />
       <workItem from="1537198729709" duration="5186000" />
       <workItem from="1537289855248" duration="5000" />
-      <workItem from="1537456588201" duration="6817000" />
+      <workItem from="1537456588201" duration="10795000" />
+      <workItem from="1537547577159" duration="8000" />
+      <workItem from="1537657960192" duration="10000" />
+      <workItem from="1537704601354" duration="5000" />
+      <workItem from="1537710358250" duration="56000" />
+      <workItem from="1537730783800" duration="2122000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="117784000" />
+    <option name="totallyTimeSpent" value="123963000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -538,7 +522,7 @@
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2539342" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27181688" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -877,13 +861,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="339" column="13" lean-forward="false" selection-start-line="339" selection-start-column="4" selection-end-line="339" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/select.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2016">
@@ -909,27 +886,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="331">
           <caret line="216" column="0" lean-forward="false" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="383">
-          <caret line="257" column="48" lean-forward="false" selection-start-line="257" selection-start-column="48" selection-end-line="257" selection-end-column="48" />
-          <folding>
-            <element signature="e#21363#34897#0" expanded="false" />
-            <element signature="e#35402#36560#0" expanded="false" />
-            <element signature="e#36662#38714#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="257">
-          <caret line="641" column="0" lean-forward="false" selection-start-line="641" selection-start-column="0" selection-end-line="641" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -937,6 +893,28 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="537">
           <caret line="233" column="24" lean-forward="false" selection-start-line="233" selection-start-column="24" selection-end-line="233" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="382">
+          <caret line="1245" column="32" lean-forward="true" selection-start-line="1245" selection-start-column="32" selection-end-line="1245" selection-end-column="32" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="191">
+          <caret line="348" column="39" lean-forward="true" selection-start-line="348" selection-start-column="39" selection-end-line="348" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="900">
+          <caret line="493" column="32" lean-forward="false" selection-start-line="493" selection-start-column="32" selection-end-line="493" selection-end-column="32" />
           <folding />
         </state>
       </provider>

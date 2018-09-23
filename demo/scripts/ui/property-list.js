@@ -358,6 +358,10 @@ include( './ui' );
 							field.autocomplete = UI.base.autocompleteFilePath;
 							field.autocompleteParam = pdef.autocompleteParam; // 'textures;png,jpg'
 							break;
+							case 'texture':
+							field.autocomplete = UI.base.autocompleteTexturePath;
+							field.autocompleteParam = (pdef.autocompleteParam || 'textures;png,jpg,jpeg');
+							break;
 						}
 					}
 					break;
@@ -486,7 +490,7 @@ include( './ui' );
 				field.pdef = pdef;
 				field.focusGroup = this.ui.focusGroup;
 				field.fieldLabel = label;
-				if ( fieldType != 'object' && ( readOnly || disabled ) ) field.disabled = true;
+				if ( fieldType != 'object' && ( pdef.readOnly || this.__readOnly || this.__disabled ) ) field.disabled = true;
 				label.tooltip = field.tooltip = ( pdef.tooltip ? pdef.tooltip : null );
 				if ( typeof( pdef.style ) === 'object' ) {
 					UI.base.applyProperties( field, pdef.style );
@@ -1753,7 +1757,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 		'eventMask': { inline: true, tooltip: "Event names added to this array will not be processed by GameObject or its descendents.",
 			showAll: true,
 			properties: {
-				type: { disabled: true },
+				type: { disabled: true, readOnly: true },
 			}
 		},
 		'ignoreCamera': { tooltip: "Disregard Scene's ^Bcamera...^b transforms when rendering." },
@@ -1933,14 +1937,14 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		active: { tooltip: "Render component is enabled." },
 
 		texture: {
-			autocomplete: UI.base.autocompleteTexturePath,
+			autocomplete: 'texture',
 			tooltip: "Path to texture or texture frame."
 		},
 
 		width: { min: 0, step: 1, tooltip: "Texture rendered width." },
 		height: { min: 0, step: 1, tooltip: "Texture rendered height." },
-		originalWidth: { disabled: true, tooltip: "Texture original width." },
-		originalHeight: { disabled: true, tooltip: "Texture original height." },
+		originalWidth: { readOnly: true, tooltip: "Texture original width." },
+		originalHeight: { readOnly: true, tooltip: "Texture original height." },
 
 		image: { nullable: true, tooltip: "Set to an instance of ^BImage^b class to render a dynamic texture.",
 			actions: [ { text:"new Image", action: function() { this.__pushToTarget( this.target.image = new Image(), 'image' ); } }

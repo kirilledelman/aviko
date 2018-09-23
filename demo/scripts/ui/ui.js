@@ -1224,17 +1224,31 @@ UI.base = UI.base || {
 	// textfield callback for autocompleting texture path, with optional ":frameName" at end
 	autocompleteTexturePath: function ( textfield ) {
 
-		// TODO
+		// find ":"
 		var tft = textfield.text;
-		
-		// if contains ":"
+		var suggestions = [];
 		var colonPos = tft.lastIndexOf( ':' );
-		if ( colonPos == -1 ) {
-			// set default autocompleteParam
-			if ( typeof( textfield.autocompleteParam ) === 'undefined' ) {
-				textfield.autocompleteParam = 'textures;png,jpg,jpeg';
+		var tail;
+		if ( colonPos > 0 ) {
+			// get frames for this tex
+			var texName = tft.substr( 0, colonPos );
+			tail = tft.substr( colonPos + 1 ).toLowerCase();
+			if ( texName.length ) {
+				var frames = getTextureFrames( texName );
+				if ( frames ) {
+					for ( var i in frames ) {
+						var f = frames[ i ];
+						var m = frames[ i ].toLowerCase().indexOf( tail );
+						if ( m >= 0 ) {
+							suggestions.push( {
+			                    text: f.substr( 0, m ) + '^B' + f.substr( m, tail.length ) + '^b' + f.substr( m + tail.length ),
+					            value: f
+							} );
+						}
+					}
+				}
 			}
-			///  return UI.base.auto
+			return { replaceStart:colonPos + 1, suggestions: suggestions }
 		}
 		
 		// list files matching text in box
@@ -1248,11 +1262,13 @@ UI.base = UI.base || {
 			} else exts = parts[ 0 ].split( ',' );
 		}
 		var files = listDirectory( tft, exts, startPath );
-		var suggestions = [];
 		var lastSlash = tft.lastIndexOf( '/' );
-		var tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
+		tail = lastSlash >= 0 ? tft.substr( lastSlash + 1 ) : tft;
+		var ext = /\.\w+$/;
 		for ( var i = 0; i < files.length; i++ ){
 			var f = files[ i ];
+			// strip extension
+			f = f.replace( ext, '' );
 			suggestions.push( {
 				text: "^B" + f.substr( 0, tail.length ) + "^b" + f.substr( tail.length ),
 				value: f.substr( tail.length ) } );

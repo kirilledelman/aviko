@@ -923,7 +923,6 @@ void RenderTextBehavior::ClearGlyphs() {
 	this->glyphs[ 2 ].clear();
 	this->glyphs[ 3 ].clear();
 	this->lines.clear();
-	this->width = this->height = 0;
 }
 
 /// sets font

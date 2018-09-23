@@ -630,6 +630,30 @@ void Application::InitClass() {
 	}));
 	
 	script.DefineGlobalFunction
+	( "getTextureFrames",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		string filename;
+		if ( !sa.ReadArguments( 1, TypeString, &filename ) ) {
+			script.ReportError( "usage: getTextureFrames( String textureName )" );
+			return false;
+		}
+		
+		// load texture
+		ImageResource* img = app.textureManager.Get( filename.c_str() );
+		if ( img->error ) {
+			sa.ReturnBool( false );
+		} else {
+			// get frames
+			ArgValueVector r;
+			ImageFramesMap::iterator it = img->frames.begin(), end = img->frames.end();
+			while( it != end ) { r.emplace_back( it->first.c_str() ); it++; }
+			sa.ReturnArray( r );
+		}
+		
+		return true;
+	}));
+	
+	script.DefineGlobalFunction
 	( "fileExists",
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		string filename;

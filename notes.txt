@@ -1,11 +1,12 @@
 
 Textfield
-	Typing when maxHeight is at max causes jerking (in modal window)
+	multiline text box
+		code mode } and tabs funky
+
 	Mouse select/release outside doesn't stop selection (sticky) - doesn't autoscroll either.
 
 
 Inspector
-	modify autocomplete filename to check for :frame - add getTextureFrames( tex )
 	Ctrl + wheel - zoom; LMB - pan
 
 
@@ -19,9 +20,8 @@ Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
 Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
 
-GameObject
-	moveChild( child, newIndex ) or moveChild( child, newParent ) -
-
+Text
+	spillage on wrap - trigger layout?
 
 RenderText
 	texture based fonts!
@@ -38,16 +38,14 @@ Animator class
 	tracks, keys, named animations, events, scrubbing
 
 GameObject
-	setting worldAngle, worldX etc.. on Scene, or GameObject wo parent - crash
+	moveChild( child, newIndex ) or moveChild( child, newParent ) -
 	updating z, or inserting/removing children should set _zOrderDirty on parent
 	_zSortedChildren array holds children
 	Render method should keep _zSortedChildren updated, draw in order
 	a function to get bounds of gameobject + all vis children
 
 Top level / Application
-	getTextureFrames( texture )
 	addTexture( name, image )
-	serialize - save function objects, if Function .serialize = true or something
 	'quit' event - dispatched right before exiting.
 
 Demo project

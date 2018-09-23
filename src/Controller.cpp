@@ -537,6 +537,9 @@ void Controller::DispatchActions( int key, SDL_Event& e, vector<Binding>& action
 			b.action.compare( app.input.navigationAccept ) == 0 ||
 			b.action.compare( app.input.navigationCancel ) == 0 ) ) {
 			
+			// add self as param
+			event.scriptParams.AddObjectArgument( this->scriptObject );
+			
 			// dispatch as navigation event
 			event.name = EVENT_NAVIGATION;
 			app.input.UIEvent( event );
