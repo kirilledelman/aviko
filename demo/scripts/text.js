@@ -62,7 +62,8 @@ new (function (){
 		canScrollUnfocused: true,
 		text:
 		"Aviko renders text using ^B^1RenderText^n^c class.\n\n" +
-		""
+		"Text can be drawn using different fonts, and include inline formatting." +
+		"cropped, and scrolled if "
 
 	} );
 
@@ -85,20 +86,31 @@ new (function (){
 	} );
 
 	// sample sprite container
-	var textContainer = rightColumn.addChild( 'ui/panel', {
+	var textContainer = rightColumn.addChild( 'ui/scrollable', {
 		minHeight: 150,
-		background: 0xA0A0A0,
 		layoutType: Layout.None,
+	} );
+	
+	// background for sprite
+	textContainer.addChild( 'ui/image', {
+		width: 300,
+		height: 150,
+		mode: 'fit',
+		texture: 'checker.png',
 	} );
 
 	// background for sprite
 	var text = textContainer.addChild( 'ui/text', {
 		width: 280,
 		maxWidth: 280,
-		x: 10,
+		x: 150, y: 70,
+		pivot: 0.5,
 		autoSize: true,
 		multiLine: true,
-		text: "Sample",
+		color: 0x0,
+		size: 30,
+		align: TextAlign.Center,
+		text: "Sample text:\n^BBold^b, ^IItalic^i,\n^3PURPLE!",
 	} );
 	
 	// properties
@@ -114,15 +126,14 @@ new (function (){
 	} );
 
 	// overrides
-	/*props.properties = {
-		'texture': { enum: [
-			{ text: "smiley.png", value: "/textures/smiley.png" },
-			{ text: "clown.png", value: "/textures/clown.png" },
-			{ text: "poop.png", value: "/textures/poop.png" },
-		]},
-		image: false,
+	props.properties = {
 		active: false,
-	};*/
+		italicFont: false,
+		boldItalicFont: false,
+		font: { readOnly: true },
+		boldFont: { readOnly: true },
+		colors: { inline: true, readOnly: true },
+	};
 
 	backButton.focus();
 	return scene;

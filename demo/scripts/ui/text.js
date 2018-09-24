@@ -74,35 +74,8 @@ include( './ui' );
 		// (Number) or (Color) text color
 		get color(){ return this.__rt.textColor; }, set color( v ){ this.__rt.textColor = v; },
 
-		// (Number) or (Color) ^0 color
-		get color0(){ return this.__rt.color0; }, set color0( v ){ this.__rt.color0 = v; },
-
-		// (Number) or (Color) ^1 color
-		get color1(){ return this.__rt.color1; }, set color1( v ){ this.__rt.color1 = v; },
-
-		// (Number) or (Color) ^2 color
-		get color2(){ return this.__rt.color2; }, set color2( v ){ this.__rt.color2 = v; },
-
-		// (Number) or (Color) ^3 color
-		get color3(){ return this.__rt.color3; }, set color3( v ){ this.__rt.color3 = v; },
-
-		// (Number) or (Color) ^4 color
-		get color4(){ return this.__rt.color4; }, set color4( v ){ this.__rt.color4 = v; },
-
-		// (Number) or (Color) ^5 color
-		get color5(){ return this.__rt.color5; }, set color5( v ){ this.__rt.color5 = v; },
-
-		// (Number) or (Color) ^6 color
-		get color6(){ return this.__rt.color6; }, set color6( v ){ this.__rt.color6 = v; },
-
-		// (Number) or (Color) ^7 color
-		get color7(){ return this.__rt.color7; }, set color7( v ){ this.__rt.color7 = v; },
-
-		// (Number) or (Color) ^8 color
-		get color8(){ return this.__rt.color8; }, set color8( v ){ this.__rt.color8 = v; },
-
-		// (Number) or (Color) ^9 color
-		get color9(){ return this.__rt.color9; }, set color9( v ){ this.__rt.color9 = v; },
+		// (Array) of (Color) for ^0-^9 color formatting
+		get colors(){ return this.__rt.colors; }, set colors( v ){ this.__rt.colors = v; },
 
 		// (Color) | (Number) .addColor property of current render component
 		get addColor(){ return this.__rt.addColor; }, set addColor( v ){ this.__rt.addColor = v; },
@@ -130,6 +103,15 @@ include( './ui' );
 
 		// (RenderText) returns reference to RenderText object
 		get renderText(){ return this.__rt; },
+		
+		// (Number) transform origin - sets both x and y
+		get pivot(){ return this.__rt.pivotX; }, set pivot( v ){ this.__rt.pivotX = this.__rt.pivotY = v; },
+		
+		// (Number) transform origin X
+		get pivotX(){ return this.__rt.pivotX; }, set pivotX( v ){ this.__rt.pivotX = v; },
+
+		// (Number) transform origin Y
+		get pivotY(){ return this.__rt.pivotY; }, set pivotY( v ){ this.__rt.pivotY = v; },
 		
 		__updateSize: function() {
 			if ( this.__autoResize ) {
@@ -182,6 +164,7 @@ include( './ui' );
 	} );
 	go.__proto__ = UI.base.textPrototype;
 	go.__init();
+	go.serializeMask.push( 'pivot' );
 
 	// add property-list inspectable info
 	UI.base.addInspectables( go, "Text",

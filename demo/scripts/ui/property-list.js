@@ -124,7 +124,7 @@ include( './ui' );
 		},
 
 		// (Boolean) show navigation button (used only in top level property list)
-		get showBackButton(){ return this.__backButton.active; }, set showBackButton( v ){ this.__backButton.active = v; },
+		get showBackButton(){ return this.__showBackButton; }, set showBackButton( v ){ this.__backButton.active = this.__showBackButton = v; },
 
 		// (Boolean) show context right click menu on fields
 		get showContextMenu(){ return this.__showContextMenu; }, set showContextMenu( v ){ this.__showContextMenu = v; },
@@ -638,6 +638,7 @@ include( './ui' );
 			bn.push( ( target && target.constructor ) ? target.constructor.name : ( target === undefined ? "Nothing selected" : "(null)" ) );
 			this.__backButton.text = bn.join( ' ^B->^n ' );
 			this.__backButton.disabled = ( this.__targetStack.length == 0 );
+			this.__backButton.active = this.__showBackButton || ( this.__targetStack.length > 0 );
 			if ( this.__targetStack.length ) {
 				// < icon from \/ image
 				this.__backButton.icon = UI.style.propertyList.values.object.icon;
@@ -1681,6 +1682,7 @@ include( './ui' );
 	go.__disabled = false;
 	go.__readOnly = false;
 	go.__showContextMenu = true;
+	go.__showBackButton = true;
 	go.__topPropertyList = go;
 	go.__groups = [];
 	go.__allFields = [];
@@ -2018,15 +2020,111 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 	]
 }
 
-/*RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
+RenderText.__propertyListConfigReloadWH = RenderText.__propertyListConfigReloadWH || [ 'width', 'height', 'scrollWidth', 'scrollHeight', 'numLines' ];
+RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
 {
 	showAll: true,
 	properties: {
 		
 		active: { tooltip: "Render component is enabled." },
 		
+		text: { tooltip: "Text.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		size: { min: 1, max: 256, step: 1, tooltip: "Text size.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		
+		textColor: { inline: true, tooltip: "Base text color." },
+		backgroundColor: { inline: true, tooltip: "Background color." },
+		
+		font: { tooltip: "Base font" },
+		boldFont: { tooltip: "Font used for bold characters (optional)." },
+		italicFont: { tooltip: "Font used for italic characters (optional)." },
+		boldItalicFont: { tooltip: "Font used for bold+italic characters (optional)." },
+		bold: { tooltip: "Bold style.", reloadOnChange: [ 'width', 'height' ]},
+		italic: { tooltip: "Italic style.", reloadOnChange: [ 'width', 'height' ]},
+		outline: { tooltip: "Draw text as outline.", reloadOnChange: [ 'width', 'height' ]},
+		antialias: { tooltip: "Smooth edges of characters." },
+		lineSpacing: { tooltip: "Extra spacing between lines.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		characterSpacing: { tooltip: "Extra spacing between characters.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		
+		align: {
+			enum: [
+			{ text: "Left", value: TextAlign.Left },
+			{ text: "Center", value: TextAlign.Center },
+			{ text: "Right", value: TextAlign.Right }
+			], tooltip: "Text alignment." },
+		multiLine: { tooltip: "Text drawn as multiple lines.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		wrap: { tooltip: "Auto-wrap at word boundaries when width is reached.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		autoSize: { tooltip: "Auto-resize to fit text.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		width: { min: 0, max: 4096, step: 1, integer: true, tooltip: "Text width.", reloadOnChange: [ 'height', 'scrollWidth', 'scrollHeight' ] },
+		height: { min: 0, max: 4096, step: 1, integer: true, tooltip: "Text height." },
+		pivotX: { min: 0, max: 1, step: 0.1, tooltip: "Transform origin X." },
+		pivotY: { min: 0, max: 1, step: 0.1, tooltip: "Transform origin Y." },
+		
+		formatting: { tooltip: "Show inline formatting with ^^ codes.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		colors: { inline: true, tooltip: "Inline formatting ^^0-^^9 colors." },
+		
+		outlineColor: { inline: true, hidden: function( t ){ return (t.outlineRadius === 0 && t.outlineOffsetX === 0 && t.outlineOffsetY === 0 ); }, tooltip: "Color of outline." },
+		outlineOffsetX: { step: 1, reloadOnChange: 'outlineColor', tooltip: "Outline offset in X direction." },
+		outlineOffsetY: { step: 1, reloadOnChange: 'outlineColor', tooltip: "Outline offset in Y direction." },
+		outlineRadius: { min: -16, max: 16, step: 1, reloadOnChange: 'outlineColor', tooltip: "Text outline line thickness." },
+
+		showSelection: { tooltip: "Highlight selected text." },
+		selectionStart: { min: 0, integer: true, tooltip: "First selected character." },
+		selectionEnd: { min: 0, integer: true, tooltip: "Last selected character." },
+		selectionTextColor: { inline: true, tooltip: "Text color for selected text." },
+		selectionColor: { inline: true, tooltip: "Selection background color." },
+		showCaret: { tooltip: "Show caret character." },
+		caretPosition: { min: 0, step: 1, integer: true, tooltip: "Caret position in text." },
+		
+		scrollLeft: { tooltip: "Horizontal drawing offset." },
+		scrollTop: { tooltip: "Horizontal drawing offset." },
+		scrollWidth: { readOnly: true, tooltip: "Actual text width." },
+		scrollHeight: { readOnly: true, tooltip: "Actual text height." },
+		revealStart: { min: 0, integer: true, tooltip: "Number of characters to skip drawing from the beginning." },
+		revealEnd: { min: 0, integer: true, tooltip: "Number of characters to skip drawing from the end." },
+		numLines: { readOnly: true, tooltip: "Number of lines." },
+		
+		color: { inline: true, tooltip: "Multiplicative color." },
+		addColor: { inline: true,
+			properties: {
+				'r': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional red." },
+				'g': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional green." },
+				'b': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional blue." },
+				'a': { min: -1, max: 1, step: 0.1, reloadOnChange: true, tooltip: "Additional alpha." },
+				'hex': false,
+			},
+			tooltip: "Additive color."
+		},
+		stipple: { min: 0, max: 1, step: 0.1, tooltip: "Stippling trasparency effect amount." },
+		stippleAlpha: { tooltip: "Determines whether stippling is applied to alpha transparency." },
+		blendMode: {
+			enum: [
+			{ text: "Normal", value: BlendMode.Normal },
+			{ text: "Add", value: BlendMode.Add },
+			{ text: "Subtract", value: BlendMode.Subtract },
+			{ text: "Multiply", value: BlendMode.Multiply },
+			{ text: "Screen", value: BlendMode.Screen },
+			{ text: "Burn", value: BlendMode.Burn },
+			{ text: "Dodge", value: BlendMode.Dodge },
+			{ text: "Invert", value: BlendMode.Invert },
+			{ text: "Color", value: BlendMode.Color },
+			{ text: "Hue", value: BlendMode.Hue },
+			{ text: "Saturation", value: BlendMode.Saturation },
+			{ text: "Luminosity", value: BlendMode.Luminosity },
+			{ text: "Refract", value: BlendMode.Refract },
+			{ text: "Cut", value: BlendMode.Cut },
+			], tooltip: "Blending operation with the background."
+		},
+		
 	},
 	groups: [
-		{ name: "", properties: [] }
+		{ name: "Text", properties: [ 'active', 'text', 'size', 'textColor', 'backgroundColor' ] },
+		{ name: "Font", properties: [ 'font', 'boldFont', 'italicFont', 'boldItalicFont', 'bold', 'italic', 'antialias', 'outline', 'lineSpacing', 'characterSpacing' ] },
+		{ name: "Alignment & Size", properties: [ 'align', 'multiLine', 'wrap', 'autoSize', 'width', 'height', 'pivotX', 'pivotY' ] },
+		{ name: "Formatting", properties: [ 'formatting', 'colors' ] },
+		{ name: "Selection & Caret", properties: [ 'showSelection', 'selectionStart', 'selectionEnd',
+			'selectionTextColor', 'selectionColor', 'showCaret', 'caretPosition' ] },
+		{ name: "Scrolling", properties: [ 'scrollLeft', 'scrollTop', 'scrollWidth', 'scrollHeight', 'revealStart', 'revealEnd', 'numLines' ] },
+		{ name: "Outline", properties: [ 'outlineRadius', 'outlineOffsetX', 'outlineOffsetY', 'outlineColor' ] },
+		{ name: "Blending", properties: [ 'blendMode', 'color', 'addColor', 'stipple', 'stippleAlpha' ] },
 	]
-}*/
+}

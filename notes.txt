@@ -5,6 +5,8 @@ Textfield
 
 	Mouse select/release outside doesn't stop selection (sticky) - doesn't autoscroll either.
 
+	Autosized multiline - negative line spacing crops text box.
+	If formatting is on, caret is drawn twice on format code boundary
 
 Inspector
 	Ctrl + wheel - zoom; LMB - pan
