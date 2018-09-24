@@ -5,8 +5,12 @@
 #include "ScriptableClass.hpp"
 #include "ScriptArguments.hpp"
 
+/// overrides SetElement behavior
+typedef void (*TypedVectorSetCallback)(void*,int,ArgValue&);
+
 class TypedVector;
 typedef function<void (TypedVector*)> TypedVectorCallback;
+
 
 /*
 
@@ -42,8 +46,12 @@ public:
 	
 // notifications
 	
+	/// overrides replace value behavior (used by RenderText w color array)
+	TypedVectorSetCallback setCallback = NULL;
+	
 	/// set to callback func to call on change (used by BodyShape etc)
 	TypedVectorCallback callback = NULL;
+	
 	void Notify();
 	
 // array operations

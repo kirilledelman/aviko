@@ -356,7 +356,7 @@ include( './ui' );
 						switch( pdef.autocomplete ){
 							case 'file':
 							field.autocomplete = UI.base.autocompleteFilePath;
-							field.autocompleteParam = pdef.autocompleteParam; // 'textures;png,jpg'
+							field.autocompleteParam = pdef.autocompleteParam;
 							break;
 							case 'texture':
 							field.autocomplete = UI.base.autocompleteTexturePath;
@@ -2017,3 +2017,16 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		{ name: "Slicing", properties: [ 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' ] },
 	]
 }
+
+/*RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
+{
+	showAll: true,
+	properties: {
+		
+		active: { tooltip: "Render component is enabled." },
+		
+	},
+	groups: [
+		{ name: "", properties: [] }
+	]
+}*/

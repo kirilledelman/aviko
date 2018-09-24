@@ -132,6 +132,18 @@ void RenderBehavior::InitClass() {
 
 }
 
+void RenderBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	
+	// colors
+	//protectedObjects.push_back( &this->color->scriptObject );
+	//protectedObjects.push_back( &this->addColor->scriptObject );
+	//if ( this->outlineColor ) protectedObjects.push_back( &this->outlineColor->scriptObject );
+	
+	// call super
+	ScriptableClass::TraceProtectedObjects( protectedObjects );
+	
+}
+
 
 /* MARK:	-				Padding
  -------------------------------------------------------------------- */

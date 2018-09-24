@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "RenderBehavior.hpp"
+#include "TypedVector.hpp"
 
 class FontResource;
 
@@ -73,6 +74,8 @@ public:
 	
 	/// update notification
 	ColorCallback colorUpdated;
+	TypedVectorCallback colorsUpdated;
+	static void ColorsSetItem( void*, int, ArgValue& );
 	
 	/// font size
 	unsigned fontSize = 16;
@@ -109,7 +112,8 @@ public:
 	Color *selectionTextColor = NULL;
 	
 	/// inline colors
-	Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	// Color *colors[10] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	TypedVector* colors = NULL;
 	
 	// bg
 	Color *backgroundColor = NULL;
@@ -182,6 +186,8 @@ public:
 	
 	/// registers class for scripting
 	static void InitClass();
+	
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
 	
 // methods
 	

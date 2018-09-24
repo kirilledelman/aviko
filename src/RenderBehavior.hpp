@@ -89,6 +89,9 @@ public:
 	/// creates color objects
 	void AddDefaults();
 	
+	// garbage collector
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
+	
 // shaders
 	
 	/// sprite rendering shader variant (lets us enable shader with only required features turned on/off)

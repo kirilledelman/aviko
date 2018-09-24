@@ -73,49 +73,42 @@ new (function (){
 
 	buttons.addChild( 'ui/button', {
 		text: "Text",
-		src: 'sprites',
-		disabled: true,
+		src: 'text',
+		disabled: false,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Input",
-		src: 'sprites',
+		src: 'input',
 		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
-		text: "Transforms",
-		src: 'sprites',
+		text: "Transform",
+		src: 'transform',
 		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Physics",
-		src: 'sprites',
-		disabled: true,
-		click: buttonClick
-	} );
-
-	buttons.addChild( 'ui/button', {
-		text: "Transforms",
-		src: 'sprites',
+		src: 'physics',
 		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "UI",
-		src: 'sprites',
+		src: 'ui',
 		disabled: true,
 		click: buttonClick
 	} );
 
 	buttons.addChild( 'ui/button', {
 		text: "Serialization",
-		src: 'sprites',
+		src: 'serialization',
 		disabled: true,
 		click: buttonClick
 	} );

@@ -48,6 +48,8 @@ public:
 	/// registers class for scripting
 	static void InitClass();
 	
+	void TraceProtectedObjects( vector<void**> &protectedObjects );
+	
 // ui
 	
 	void GetLocalBounds( float& x, float& y, float& w, float& h );

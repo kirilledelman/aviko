@@ -244,7 +244,7 @@ void TypedVector::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	if ( type == TypeObject || type == TypeArray ){
 		vector<void*>* cont = (vector<void*>*) container;
 		for ( size_t i = 0, nc = cont->size(); i < nc; i++ ) {
-			protectedObjects.push_back( &cont->at( i ) );
+			if ( cont->at( i ) != NULL ) protectedObjects.push_back( &cont->at( i ) );
 		}
 	}
 }
@@ -511,6 +511,13 @@ bool TypedVector::Set( ArgValue& in ) {
 /// set one element, bool on success
 bool TypedVector::SetElement( ArgValue& val, int index ) {
 	if ( !container ) return false;
+	
+	// set element callback
+	if ( this->setCallback != NULL ) {
+		this->setCallback( container, index, val );
+		return true;
+	}
+	
 	vector<bool>* vb = NULL;
 	vector<Uint8>* vc = NULL;
 	vector<int>* vi = NULL;

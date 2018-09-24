@@ -372,6 +372,16 @@ void RenderSpriteBehavior::InitClass() {
 	
 }
 
+void RenderSpriteBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
+	
+	// object refs
+	if ( this->imageInstance ) protectedObjects.push_back( &this->imageInstance->scriptObject );
+
+	// call super
+	RenderBehavior::TraceProtectedObjects( protectedObjects );
+	
+}
+
 
 /* MARK:	-				UI
  -------------------------------------------------------------------- */
