@@ -1263,6 +1263,9 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 		GameObject* oldParent = this->parent;
 		if ( oldParent ) {
 			
+			// parent's z-order should be updated
+			oldParent->zSortedChildren.clear();
+			
 			// find this object in parent's list of children
 			GameObjectVector *parentList = &oldParent->children;
 			GameObjectVector::iterator listEnd = parentList->end();
@@ -1323,6 +1326,9 @@ void GameObject::SetParent( GameObject* newParent, int desiredPosition ) {
 				newParent->children.push_back( this );
 				desiredPosition = (int) newParent->children.size();
 			}
+			
+			// parent's z-order should be updated
+			newParent->zSortedChildren.clear();
 			
 			// call event on this object only
 			Event event( this->scriptObject );
@@ -1520,7 +1526,6 @@ float* GameObject::Transform() {
 	
 	if( isnan(this->_position.x) || isnan(this->_position.y) ) {
 		_position.Set(0, 0);
-		// wtf
 	}
 
 	// body + local coords arent up to date, or parent's transform
@@ -1607,9 +1612,9 @@ void GameObject::SetY( float y ) {
 }
 
 void GameObject::SetZ( float z ) {
-	//this->Transform();
 	this->_z = z;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
+	if ( this->parent ) this->parent->zSortedChildren.clear();
 }
 
 void GameObject::SetAngle( float a ) {
@@ -1662,6 +1667,10 @@ float GameObject::GetX() {
 float GameObject::GetY() {
 	this->Transform();
 	return this->_position.y;
+}
+
+float GameObject::GetZ() {
+	return this->_z;
 }
 
 float GameObject::GetScaleX() {
@@ -2246,6 +2255,10 @@ void GameObject::DirtyTransform() {
 /* MARK:	-				Render
  -------------------------------------------------------------------- */
 
+bool _zSortChildrenCompare( GameObject* a, GameObject* b ) {
+	return a->GetZ() < b->GetZ();
+}
+
 // Renders this GameObject using renderer behavior, goes recursive
 void GameObject::Render( Event& event ) {
 	
@@ -2292,10 +2305,16 @@ void GameObject::Render( Event& event ) {
 	// debug ui
 	if ( this->ui && app.debugDraw ) ui->DebugDraw( (GPU_Target*) event.behaviorParam );
 	
-	// descend into children
+	// sort children
 	int numChildren = (int) this->children.size();
+	if ( zSortedChildren.size() != numChildren ) {
+		zSortedChildren = children;
+		if ( numChildren > 1 ) sort( zSortedChildren.begin(), zSortedChildren.end(), &_zSortChildrenCompare );
+	}
+	
+	// descend into children
 	for( int i = 0; i < numChildren; i++ ) {
-		GameObject* obj = this->children[ i ];
+		GameObject* obj = zSortedChildren[ i ];
 		// recurse if render behavior didn't ask to skip it
 		if ( obj->active() && obj != event.skipObject && obj != event.skipObject2 ) obj->Render( event );
 	}

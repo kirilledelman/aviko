@@ -183,6 +183,9 @@ public:
 	/// children of this object
 	GameObjectVector children;
 	
+	/// children of this object
+	GameObjectVector zSortedChildren;
+	
 	/// sets a new parent for object
 	virtual void SetParent( GameObject* newParent, int desiredPosition=-1 );
 
