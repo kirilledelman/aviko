@@ -1235,7 +1235,8 @@ include( './ui' );
 	go.__tc = new GameObject( { serializeable: false } );
 	go.__rt = go.__tc.render = new RenderText( {
 		autoSize: false,
-		showSelection: true
+		showSelection: true,
+		formatting: false,
 	} );
 	go.addChild( go.__tc );
 	go.__tabEnabled = false;

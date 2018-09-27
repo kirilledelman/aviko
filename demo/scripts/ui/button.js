@@ -173,7 +173,7 @@ include( './ui' );
 	
 		__click: function ( btn, x, y, wx, wy ) {
 			var go = this.gameObject;
-			if ( this.focusable ) this.focus();
+			if ( this.focusable ) this.async( this.focus );
 			stopAllEvents();
 			if ( go.__disabled ) return;
 			go.fire( 'click', btn, x, y, wx, wy );

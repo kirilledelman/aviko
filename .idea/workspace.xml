@@ -3,10 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/shapes.js" afterPath="$PROJECT_DIR$/demo/scripts/shapes.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/sprites.js" afterPath="$PROJECT_DIR$/demo/scripts/sprites.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/text.js" afterPath="$PROJECT_DIR$/demo/scripts/text.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/button.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/button.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/text.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/text.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,11 +31,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main-menu.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <file leaf-file-name="textfield.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="695">
-              <caret line="110" column="27" lean-forward="false" selection-start-line="110" selection-start-column="27" selection-end-line="110" selection-end-column="27" />
+            <state relative-caret-position="283">
+              <caret line="1250" column="30" lean-forward="true" selection-start-line="1250" selection-start-column="30" selection-end-line="1250" selection-end-column="30" />
               <folding />
             </state>
           </provider>
@@ -40,8 +44,8 @@
       <file leaf-file-name="text.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/scripts/text.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="626">
-              <caret line="134" column="32" lean-forward="false" selection-start-line="134" selection-start-column="32" selection-end-line="134" selection-end-column="32" />
+            <state relative-caret-position="395">
+              <caret line="124" column="31" lean-forward="true" selection-start-line="124" selection-start-column="31" selection-end-line="124" selection-end-column="31" />
               <folding />
             </state>
           </provider>
@@ -50,10 +54,12 @@
       <file leaf-file-name="property-list.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="281">
-              <caret line="640" column="66" lean-forward="false" selection-start-line="640" selection-start-column="66" selection-end-line="640" selection-end-column="66" />
+            <state relative-caret-position="7746">
+              <caret line="876" column="0" lean-forward="false" selection-start-line="876" selection-start-column="0" selection-end-line="876" selection-end-column="0" />
               <folding>
-                <element signature="e#78003#78748#0" expanded="false" />
+                <element signature="e#26700#27550#0" expanded="false" />
+                <element signature="e#27596#29785#0" expanded="false" />
+                <element signature="e#78459#79204#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -70,15 +76,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>__getFieldOfType</find>
-      <find>log( &quot;</find>
-      <find>log( '</find>
-      <find>__toggl</find>
-      <find>__togglePropList</find>
-      <find>popup = null</find>
-      <find>index</find>
-      <find>__cancelAutocomplete</find>
-      <find>'./bu</find>
       <find>log</find>
       <find>rendersprite</find>
       <find>disabled</find>
@@ -100,6 +97,15 @@
       <find>__makeField</find>
       <find>push</find>
       <find>backbutton</find>
+      <find>set editing</find>
+      <find>__makeFi</find>
+      <find>pop</find>
+      <find>back</find>
+      <find>__backButton</find>
+      <find>stack</find>
+      <find>showBackButton</find>
+      <find>'string'</find>
+      <find>refresh</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -165,7 +171,6 @@
         <option value="$PROJECT_DIR$/demo/scripts/controller-configurator.js" />
         <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/checkbox.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/image.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/panel.js" />
@@ -176,15 +181,16 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/window.js" />
         <option value="$PROJECT_DIR$/src/StaticResources.cpp" />
         <option value="$PROJECT_DIR$/demo/test.json" />
-        <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/scrollable.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/popup-menu.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
         <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/text.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
         <option value="$PROJECT_DIR$/demo/scripts/text.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
       </list>
     </option>
@@ -342,19 +348,19 @@
     <property name="nodejs_interpreter_path" value="/usr/local/bin/node" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/demo/scripts" />
-      <recent name="$PROJECT_DIR$/word-fish/fonts" />
-      <recent name="$PROJECT_DIR$/word-fish" />
-      <recent name="$PROJECT_DIR$/demo" />
-      <recent name="$PROJECT_DIR$/demo/textures" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/word-fish/scripts" />
       <recent name="$PROJECT_DIR$/demo/scripts/word-fish" />
       <recent name="$PROJECT_DIR$/demo/scripts/ui" />
       <recent name="$PROJECT_DIR$/demo/textures" />
       <recent name="$PROJECT_DIR$/default/scripts/UI" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/demo/scripts" />
+      <recent name="$PROJECT_DIR$/word-fish/fonts" />
+      <recent name="$PROJECT_DIR$/word-fish" />
+      <recent name="$PROJECT_DIR$/demo" />
+      <recent name="$PROJECT_DIR$/demo/textures" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -520,11 +526,13 @@
       <workItem from="1537730783800" duration="2122000" />
       <workItem from="1537736722717" duration="928000" />
       <workItem from="1537809253475" duration="5927000" />
+      <workItem from="1537891953672" duration="314000" />
+      <workItem from="1538060086081" duration="5520000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="130818000" />
+    <option name="totallyTimeSpent" value="136652000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -540,17 +548,16 @@
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27896994" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.28612304" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32070366" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.15665236" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -558,6 +565,7 @@
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" x="100" y="127" width="1240" height="632" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32070366" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -584,7 +592,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="14" />
+      <option name="time" value="15" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -766,13 +774,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="387">
-          <caret line="69" column="8" lean-forward="true" selection-start-line="69" selection-start-column="8" selection-end-line="69" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/checkbox.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="483">
@@ -865,13 +866,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/button.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="331">
-          <caret line="216" column="0" lean-forward="false" selection-start-line="216" selection-start-column="0" selection-end-line="216" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/popup-menu.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="537">
@@ -890,15 +884,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="966">
           <caret line="117" column="0" lean-forward="false" selection-start-line="117" selection-start-column="0" selection-end-line="117" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="231">
-          <caret line="766" column="25" lean-forward="false" selection-start-line="766" selection-start-column="19" selection-end-line="766" selection-end-column="25" />
-          <folding />
+        <state relative-caret-position="356">
+          <caret line="71" column="70" lean-forward="false" selection-start-line="71" selection-start-column="70" selection-end-line="71" selection-end-column="70" />
         </state>
       </provider>
     </entry>
@@ -912,34 +904,52 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="160">
-          <caret line="103" column="4" lean-forward="true" selection-start-line="103" selection-start-column="4" selection-end-line="109" selection-end-column="8" />
+        <state relative-caret-position="295">
+          <caret line="61" column="25" lean-forward="false" selection-start-line="61" selection-start-column="25" selection-end-line="61" selection-end-column="25" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/text.js">
+    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="71" column="70" lean-forward="false" selection-start-line="71" selection-start-column="70" selection-end-line="71" selection-end-column="70" />
+        <state relative-caret-position="303">
+          <caret line="62" column="25" lean-forward="false" selection-start-line="62" selection-start-column="25" selection-end-line="62" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/textfield.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="283">
+          <caret line="1250" column="30" lean-forward="true" selection-start-line="1250" selection-start-column="30" selection-end-line="1250" selection-end-column="30" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/text.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="626">
-          <caret line="134" column="32" lean-forward="false" selection-start-line="134" selection-start-column="32" selection-end-line="134" selection-end-column="32" />
+        <state relative-caret-position="395">
+          <caret line="124" column="31" lean-forward="true" selection-start-line="124" selection-start-column="31" selection-end-line="124" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/button.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="420">
+          <caret line="175" column="59" lean-forward="false" selection-start-line="175" selection-start-column="59" selection-end-line="175" selection-end-column="59" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="281">
-          <caret line="640" column="66" lean-forward="false" selection-start-line="640" selection-start-column="66" selection-end-line="640" selection-end-column="66" />
+        <state relative-caret-position="7746">
+          <caret line="876" column="0" lean-forward="false" selection-start-line="876" selection-start-column="0" selection-end-line="876" selection-end-column="0" />
           <folding>
-            <element signature="e#78003#78748#0" expanded="false" />
+            <element signature="e#26700#27550#0" expanded="false" />
+            <element signature="e#27596#29785#0" expanded="false" />
+            <element signature="e#78459#79204#0" expanded="false" />
           </folding>
         </state>
       </provider>

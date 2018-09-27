@@ -60,8 +60,9 @@ new (function (){
 		multiLine: true,
 		focusRect: true,
 		canScrollUnfocused: true,
-		text: "Aviko can render a variety of geometric shapes by assigning an instance of ^B^1RenderShape^n^c class to " +
-		"^BGameObject .render^b property.\n\n" +
+		formatting: true,
+		text: "Aviko can render a variety of geometric shapes by assigning an instance of ^B^1RenderShape^b^c class to " +
+		"^B^1GameObject^c .render^b property.\n\n" +
 		"The shape itself is determined by the value of ^B.shape^b property, set to one of constant values in ^BShapes^b enumeration:\n" +
 		"^BArc, Circle, Ellipse, Line, Polygon, Rectangle, RoundedRectangle, Sector, Triangle, Chain.^b\n\n" +
 		"The shape parameters are shared between different shape types, and can be changed on the fly.\n\n" +

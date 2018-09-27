@@ -59,12 +59,13 @@ new (function (){
 		flex: 1,
 		multiLine: true,
 		focusRect: true,
+		formatting: true,
 		canScrollUnfocused: true,
 		text:
 		"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n\n" +
 		"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
 		"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
-		"Sprite sheets (texture atlases) in JSON format can be used to " +
+		"Sprite sheets (texture atlases) in ^BJSON^b format can be used to " +
 		"combine multiple small sprites into one texture to increase performance.\n\n" +
 		"Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.\n\n" +
 		"Sprite texture can be flipped and tiled in horizontal or vertical direction.\n\n" +

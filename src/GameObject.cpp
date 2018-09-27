@@ -1133,10 +1133,11 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		event.skipChildren = false;
 	} else {
 		// for each child
-		for( int i = (int) this->children.size() - 1; i >= 0; i-- ) {
-			GameObject* obj = (GameObject*) this->children[ i ];
+		GameObjectVector _children = this->children;
+		for( int i = (int) _children.size() - 1; i >= 0; i-- ) {
+			GameObject* obj = (GameObject*) _children[ i ];
 			// recurse, if event doesn't need to skip this object
-			if ( obj->active() && obj != event.skipObject && obj != event.skipObject2 ) {
+			if ( obj->scriptObject && obj->parent && obj->active() && obj != event.skipObject && obj != event.skipObject2 ) {
 				obj->DispatchEvent( event, true, forEachGameObject );
 				if ( event.stopped ) return;
 			}

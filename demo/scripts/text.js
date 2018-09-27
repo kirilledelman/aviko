@@ -60,10 +60,12 @@ new (function (){
 		multiLine: true,
 		focusRect: true,
 		canScrollUnfocused: true,
+		formatting: true,
 		text:
-		"Aviko renders text using ^B^1RenderText^n^c class.\n\n" +
-		"Text can be drawn using different fonts, and include inline formatting." +
-		"cropped, and scrolled if "
+		"Aviko renders text using ^B^1RenderText^b^c class.\n\n" +
+		"Text can include inline formatting for ^Bbold^b, ^Iitalic^i, and ^2t^3e^4xt ^5co^8lor^c.\n\n" +
+		"Aviko includes Google's Roboto as a built-in font, and supports ^BTTF^b format for custom fonts.\n\n" +
+		"^B^1RenderText^b^c also includes properties and methods to help implement text input fields in Javascript (provided with the included UI components)."
 
 	} );
 
@@ -133,6 +135,10 @@ new (function (){
 		font: { readOnly: true },
 		boldFont: { readOnly: true },
 		colors: { inline: true, readOnly: true },
+		showSelection: false, selectionStart: false, selectionEnd: false,
+		selectionTextColor: false, selectionColor: false,
+		showCaret: false, caretPosition: false,
+		autoSize: false, pivotX: false, pivotY: false,
 	};
 
 	backButton.focus();

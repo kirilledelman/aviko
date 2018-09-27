@@ -66,6 +66,7 @@ include( './ui' );
 		//          validate: (Function) function called when field changes with new value as param, return (modified) value to accept, undefined to reject
 		//          autocomplete: (String) autocomplete type for text box. 'file' is supported
 		//          autocompleteParam: (String) autocomplete parameter - e.g. 'textures;png,jpg'
+		//          formatting: (Boolean) for string fields - whether field should allow ^code formatting
 		//
 		//      for inline object editing, when an embedded property-list will be displayed, can override defaults with:
 		//          properties: (Object) - apply properties to sub-property-list
@@ -124,7 +125,10 @@ include( './ui' );
 		},
 
 		// (Boolean) show navigation button (used only in top level property list)
-		get showBackButton(){ return this.__showBackButton; }, set showBackButton( v ){ this.__backButton.active = this.__showBackButton = v; },
+		get showBackButton(){ return this.__showBackButton; }, set showBackButton( v ){
+			this.__showBackButton = v;
+			this.__backButton.active = ( this.__showBackButton || this.__targetStack.length );
+		},
 
 		// (Boolean) show context right click menu on fields
 		get showContextMenu(){ return this.__showContextMenu; }, set showContextMenu( v ){ this.__showContextMenu = v; },
@@ -347,6 +351,8 @@ include( './ui' );
 						minWidth: valueWidth,
 						value: fieldValue,
 						autoGrow: true,
+						formatting: !!pdef.formatting,
+						bold: !pdef.formatting,
 						newLinesRequireShift: true,
 						style: this.__baseStyle.values.any
 					} ), insertChildIndex );
@@ -440,8 +446,8 @@ include( './ui' );
 	
 					} else {
 	
-						// inline option
-						var inline = !!pdef.inline;
+						// inline option - if function, invoke w value
+						var inline = ( typeof( pdef.inline ) === 'function' ? pdef.inline( fieldValue ) : !!pdef.inline );
 	
 						// create field button
 						field = cont.addChild( this.__getFieldOfType( 'button', './button', {
@@ -864,14 +870,15 @@ include( './ui' );
 				for ( var j = 0, np = props.length; j < np; j++ ) {
 					var pname = props[ j ];
 					var pdef;
+					
+					// purely numeric? special # property
+					if ( numeric.test( pname ) ) {
+						pdef = _properties[ '#' ] || { deletable: true };
+					} else pdef = _properties[ pname ] || { deletable: true };
 	
 					// skip disabled properties
-					if ( _properties[ pname ] === false ) continue;
-	
-					// purely numeric? special # property
-					if ( numeric.test( pname ) ) pdef = _properties[ '#' ] || { deletable: true };
-					else pdef = _properties[ pname ] || { deletable: true };
-	
+					if ( pdef === false ) continue;
+					
 					// skip native functions
 					if ( typeof ( this.__target[ pname ] ) === 'function' && this.__target[ pname ].toString().match( /^function.+\(\) \{\s+\[native code\]\s+\}$/g ) ) {
 						continue;
@@ -1820,7 +1827,7 @@ Vector.__propertyListConfig = Vector.__propertyListConfig ||
 		},
 		length: { min: 0, step: 1, liveUpdate: false, integer: true, reloadOnChange: 'refresh', tooltip: "Number of elements in Vector. Set to 0 to truncate." },
 		array: { readOnly: true, reloadOnChange: true, inline: true, tooltip: "Vector values as array. Modifying this array's elements will have no effect. Setting ^Barray^b property to another Array, however will overwrite the values." },
-		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true },
+		'#': { reloadOnChange: 'array', liveUpdate: false, deletable: true, inline: function (v) { return ( v && typeof(v) == 'object' && v.constructor == Color ); } },
 		'__propertyListConfig': false,
 	}
 }
@@ -2027,8 +2034,8 @@ RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
 	properties: {
 		
 		active: { tooltip: "Render component is enabled." },
-		
-		text: { tooltip: "Text.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		dirty: false,
+		text: { tooltip: "Text.", formatting: true, reloadOnChange: RenderText.__propertyListConfigReloadWH },
 		size: { min: 1, max: 256, step: 1, tooltip: "Text size.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
 		
 		textColor: { inline: true, tooltip: "Base text color." },
