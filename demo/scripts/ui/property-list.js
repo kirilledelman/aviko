@@ -2036,7 +2036,7 @@ RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
 		active: { tooltip: "Render component is enabled." },
 		dirty: false,
 		text: { tooltip: "Text.", formatting: true, reloadOnChange: RenderText.__propertyListConfigReloadWH },
-		size: { min: 1, max: 256, step: 1, tooltip: "Text size.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
+		size: { min: 4, max: 256, step: 1, tooltip: "Text size.", reloadOnChange: RenderText.__propertyListConfigReloadWH },
 		
 		textColor: { inline: true, tooltip: "Base text color." },
 		backgroundColor: { inline: true, tooltip: "Background color." },

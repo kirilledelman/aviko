@@ -308,7 +308,7 @@ void RenderTextBehavior::InitClass() {
 	 static_cast<ScriptIntCallback>([](void *b, int val ){
 		RenderTextBehavior* rs = ((RenderTextBehavior*) b);
 		// reload all font variants
-		rs->fontSize = max( 1, val );
+		rs->fontSize = max( 4, val );
 		if ( rs->fontResource && rs->fontResource->size != val ) rs->SetFont( rs->fontName.c_str(), val, false, false );
 		if ( rs->fontBoldResource && rs->fontBoldResource->size != val ) rs->SetFont( rs->fontBoldName.c_str(), val, true, false );
 		if ( rs->fontItalicResource && rs->fontItalicResource->size != val ) rs->SetFont( rs->fontItalicName.c_str(), val, false, true );
@@ -831,7 +831,7 @@ bool RenderTextBehavior::SetFont( const char* face, int size, bool b, bool i ) {
 		(*thisFontName) = face;
 	}
 	
-	this->fontSize = size;
+	this->fontSize = max( 4, size );
 	this->_dirty = true;
 	this->ClearGlyphs();
 	return true;

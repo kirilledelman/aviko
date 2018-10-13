@@ -81,7 +81,7 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Input",
 		src: 'input',
-		disabled: true,
+		disabled: false,
 		click: buttonClick
 	} );
 
