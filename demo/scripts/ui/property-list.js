@@ -123,13 +123,7 @@ include( './ui' );
 				this.debounce( 'refresh', this.refresh );
 			}
 		},
-
-		// (Boolean) show navigation button (used only in top level property list)
-		get showBackButton(){ return this.__showBackButton; }, set showBackButton( v ){
-			this.__showBackButton = v;
-			this.__backButton.active = ( this.__showBackButton || this.__targetStack.length );
-		},
-
+		
 		// (Boolean) show context right click menu on fields
 		get showContextMenu(){ return this.__showContextMenu; }, set showContextMenu( v ){ this.__showContextMenu = v; },
 
@@ -263,7 +257,6 @@ include( './ui' );
 					active: !this.pdef.expanded, // toggle
 					style: top.__baseStyle.values.any,
 					fieldButton: this,
-					showBackButton: false,
 					showContextMenu: top.__showContextMenu,
 					showMoreButton: false,
 					topPropertyList: top.__topPropertyList ? top.__topPropertyList : top,
@@ -467,7 +460,7 @@ include( './ui' );
 							field.click = this.__togglePropList;
 							field.image.angle = (field.toggleState ? 0 : -90);
 							field.image.ui.offsetY = (field.toggleState ? 0 : 9);
-							if ( pdef.expanded ) this.__togglePropList.call( field, 1 );
+							if ( pdef.expanded ) field.async( function () { this.ownPropertyList.__togglePropList.call( this, 1 ); } );
 						} else {
 							field.click = this.__pushToTargetClicked;
 							field.image.angle = -90;
@@ -496,7 +489,8 @@ include( './ui' );
 				field.pdef = pdef;
 				field.focusGroup = this.ui.focusGroup;
 				field.fieldLabel = label;
-				if ( fieldType != 'object' && ( pdef.readOnly || this.__readOnly || this.__disabled ) ) field.disabled = true;
+				field.disabled = ( fieldType == 'object' && pdef.disabled ) ||
+					( fieldType != 'object' && ( pdef.readOnly || this.__readOnly || this.__disabled ) );
 				label.tooltip = field.tooltip = ( pdef.tooltip ? pdef.tooltip : null );
 				if ( typeof( pdef.style ) === 'object' ) {
 					UI.base.applyProperties( field, pdef.style );
@@ -526,7 +520,7 @@ include( './ui' );
 		},
 	
 		// recreates controls
-		refresh: function ( restoreScrollPos ) {
+		refresh: function ( restoreScrollPos, autoFocus ) {
 			// set up container
 			var cont = this;
 			if ( this.__shouldScroll ) {
@@ -638,23 +632,25 @@ include( './ui' );
 	
 			// set header button name
 			var bn = [];
+			var spaces = '';
 			for ( var i = 0; i < this.__targetStack.length; i++ ) {
-				bn.push( this.__targetStack[ i ].name );
+				bn.push( spaces + this.__targetStack[ i ].name );
+				spaces += ' ';
 			}
-			bn.push( ( target && target.constructor ) ? target.constructor.name : ( target === undefined ? "Nothing selected" : "(null)" ) );
-			this.__backButton.text = bn.join( ' ^B->^n ' );
+			bn.push( ( target && target.constructor ) ?
+				         ( spaces + "^B" + target.constructor.name + "^b" ) :
+				         ( target === undefined ? "Nothing selected" : "(null)" ) );
+			this.__backButton.text = bn.join( '\n' );
 			this.__backButton.disabled = ( this.__targetStack.length == 0 );
-			this.__backButton.active = this.__showBackButton || ( this.__targetStack.length > 0 );
+			this.__backButton.active = ( this.topPropertyList == this );
 			if ( this.__targetStack.length ) {
 				// < icon from \/ image
 				this.__backButton.icon = UI.style.propertyList.values.object.icon;
 				this.__backButton.image.angle = 90;
 				this.__backButton.image.ui.offsetY = -2;
 				this.__backButton.image.ui.offsetX = 8;
-				this.__backButton.label.wrap = true;
 			} else {
-				this.__backButton.icon = "";
-				this.__backButton.label.wrap = false;
+				this.__backButton.icon = '';
 			}
 	
 			// remove extra buttons from header
@@ -794,12 +790,20 @@ include( './ui' );
 			var _gs = [];
 			for ( var i in _groups ) {
 				var g = _groups[ i ];
-				if ( g.name ) {
+				// if properties is a string, split by ','
+				if ( typeof ( g.properties ) === 'string' ) {
+					g.properties = g.properties.split( ',' );
+				}
+				// group has name - normal group
+				if ( typeof( g.name ) == 'string' ) {
 					_gs.push( g );
+					
+				// group with no name is used to specify order of properties in Miscellaneous group
 				} else {
 					unsortedGroup = g;
 					continue;
 				}
+				
 				var props = regroup[ g.name ] = [];
 				// copy properties that exist in target and match showing criteria
 				for( var i in g.properties ) {
@@ -848,12 +852,13 @@ include( './ui' );
 	
 			// for each group
 			var numRows = 0, numGroups = 0;
+			var firstField = null;
 			for ( var i = 0, ng = _gs.length; i <= ng; i++ ) {
 				var props = i < ng ? regroup[ _gs[ i ].name ] : regroup[ ' ' ];
 				if ( props === undefined || !props.length ) continue;
 				numGroups++;
 				var groupTitle = null;
-				if ( i < ng || numGroups > 1 ) {
+				if ( ( i < ng || numGroups > 1 ) && ( i >= ng || _gs[ i ].name.length ) ) {
 					// add group title
 					groupTitle = cont.addChild( './text', {
 						forceWrap: true,
@@ -897,6 +902,10 @@ include( './ui' );
 					// add field
 					var field = this.__makeField( ( pdef.target || this.__target ), pname, pdef, label, cont );
 	
+					// autofocus
+					if ( !firstField ) firstField = field;
+					else if ( autoFocus === pname ) firstField = field;
+					
 					// if looking to scroll to a field
 					if ( restoreScrollPos === pname ) {
 						// we found it
@@ -935,13 +944,20 @@ include( './ui' );
 				}
 				this.__scrollable.debounce( 'showScrollbars', _showScrollbars, 0.5 );
 			}
+			
+			// autofocus
+			this.async( function() {
+				if ( scrollToField ) scrollToField.focus();
+				else if ( autoFocus && firstField ) firstField.focus();
+				this.requestLayout();
+			}, 0.1 );
 	
 			// if this is an inline propList, update our button
 			if ( this.fieldButton ) this.fieldButton.text = this.__nameObject( this.__target );
 	
 			// call update on header extra buttons
 			this.__updateHeaderActionsButtons();
-	
+			
 			// clean up
 			gc();
 	
@@ -1076,16 +1092,18 @@ include( './ui' );
 	
 		},
 	
-		__pushToTarget: function( newTarget, propName ) {
+		__pushToTarget: function( newTarget, propDesc, propName ) {
 			var obj = {
 				target: this.__target,
-				name: ((this.__target && this.__target.constructor) ? ( this.__target.constructor.name + "." ) : '' ) + propName,
-				scrollTop: this.container.scrollTop
+				name: ((this.__target && this.__target.constructor) ? ( this.__target.constructor.name + "." ) : '' ) + propDesc,
+				scrollTop: this.container.scrollTop,
+				propName: propName
 			}
 			this.__targetStack.push( obj );
 			this.__target = newTarget;
 			this.fire( 'targetChanged', newTarget );
-			this.refresh();
+			this.refresh( 0, true );
+			
 		},
 	
 		
@@ -1095,9 +1113,13 @@ include( './ui' );
 			
 			// get full path
 			var propName = this.name;
+			var popName = propName; // field on which to focus when popping
 			var top = this.ownPropertyList.__topPropertyList;
 			var r = this.ownPropertyList;
+			
+			// nested property list
 			while ( r && r !== top ) {
+				popName = r.name;
 				if ( r.target.constructor == Array ) {
 					propName = r.name + '[' + propName + ']';
 				} else {
@@ -1107,7 +1129,7 @@ include( './ui' );
 			}
 			
 			// push to target
-			this.ownPropertyList.__topPropertyList.__pushToTarget( this.target[ this.name ], propName );
+			this.ownPropertyList.__topPropertyList.__pushToTarget( this.target[ this.name ], propName, popName );
 		},
 		
 		// right click menu
@@ -1660,7 +1682,6 @@ include( './ui' );
 		text: "Nothing selected",
 		focusGroup: go.ui.focusGroup,
 		flex: 1,
-		forceWrap: true,
 		click: function () {
 			// pop to previously selected object
 			if ( this.__targetStack.length ) {
@@ -1668,8 +1689,7 @@ include( './ui' );
 				this.__target = pop.target;
 				this.fire( 'targetChanged', this.__target );
 				this.__targetStack.pop();
-				this.refresh( pop.scrollTop );
-				if ( this.__targetStack.length == 0 ) this.__backButton.blur();
+				this.refresh( pop.scrollTop, pop.propName );
 			}
 		}.bind( go ),
 	} );
@@ -1689,7 +1709,6 @@ include( './ui' );
 	go.__disabled = false;
 	go.__readOnly = false;
 	go.__showContextMenu = true;
-	go.__showBackButton = true;
 	go.__topPropertyList = go;
 	go.__groups = [];
 	go.__allFields = [];
@@ -1794,7 +1813,7 @@ GameObject.__propertyListConfig = GameObject.__propertyListConfig ||
 
 	},
 	groups: [
-		{ name: "GameObject", properties: [ 'active', 'name', 'script' ] },
+		{ name: "", properties: [ 'active', 'name', 'script' ] },
 		{ name: "Hierarchy", properties: [ 'scene', 'parent', 'children' ] },
 		{ name: "Transform", properties: [ 'x', 'y', 'z', 'angle', 'scaleX', 'scaleY', 'skewX', 'skewY' ] },
 		{ name: "Display", properties: [ 'render', 'opacity', 'ignoreCamera', 'renderAfterChildren', ] },

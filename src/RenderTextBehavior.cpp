@@ -1178,7 +1178,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 							i = b;
 						} else i--;
 					}
-				}				
+				}
 			}
 			
 			// add new character

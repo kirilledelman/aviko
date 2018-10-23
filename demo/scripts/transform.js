@@ -2,7 +2,7 @@ new (function (){
 
 	// create scene
 	var scene = new Scene( {
-		name: "Sprites",
+		name: "Transform",
 		backgroundColor: Color.Background,
 		cameraX: App.windowWidth
 	} );
@@ -62,15 +62,7 @@ new (function (){
 		formatting: true,
 		canScrollUnfocused: true,
 		text:
-		"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n\n" +
-		"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
-		"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
-		"Sprite sheets (texture atlases) in ^BJSON^b format can be used to " +
-		"combine multiple small sprites into one texture to increase performance.\n\n" +
-		"Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.\n\n" +
-		"Sprite texture can be flipped and tiled in horizontal or vertical direction.\n\n" +
-		"To help create user interface elements define stretchable regions on texture by setting ^B.slice^n properties."
-
+		"Aviko organizes ^B^1GameObject^n^c class has severa.\n\n"
 	} );
 
 	// back to main menu button
@@ -110,23 +102,26 @@ new (function (){
 		texture: 'checker.png',
 	} );
 
-	// sprite
+	// head
 	var sprite = spriteContainer.addChild( {
-		render: new RenderSprite( 'smiley.png' ),
+		render: new RenderSprite( 'smiley.png', { pivot: 0.5 } ),
 		x: 150, y: 70,
-	} );
-	sprite.render.pivotX = sprite.render.pivotY = 0.5;
-
-	// rotate checkbox
-	spriteContainer.addChild( 'ui/checkbox', {
-		text: "^BSpin",
-		x: 230, y: 120, minWidth: 65,
-		change: function () {
-			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
-			else sprite.update = function ( dt ) {
-				sprite.angle += 10 * dt;
-			}
-		}
+		name: "Smiley",
+		__propertyListConfig: { properties: { parent: false } }, // hide parent field in inspector
+		children: [
+			new GameObject( {
+				render: new RenderSprite( 'poop.png', { pivot: 0.5 } ),
+				x: -25, y: -33, scale: 0.25,
+				name: "Left Eye",
+				__propertyListConfig: { properties: { parent: { disabled: true }, children: false, } }, // disable parent field in inspector
+			}),
+			new GameObject( {
+				render: new RenderSprite( 'clown.png', { pivot: 0.5 } ),
+				x: 18, y: -23, scale: 0.25,
+				name: "Right Eye",
+				__propertyListConfig: { properties: { parent: { disabled: true }, children: false, } }, // disable parent field in inspector
+			})
+		]
 	} );
 
 	// properties
@@ -135,22 +130,29 @@ new (function (){
 		minWidth: 300,
 		valueWidth: 130,
 		showAll: false,
-		showBackButton: false,
+		// showBackButton: false,
 		showContextMenu: false,
 		showMoreButton: false,
-		target: sprite.render,
+		target: sprite,
 	} );
 
 	// overrides
 	props.properties = {
-		'texture': { enum: [
-			{ text: "smiley.png", value: "/textures/smiley.png" },
-			{ text: "clown.png", value: "/textures/clown.png" },
-			{ text: "poop.png", value: "/textures/poop.png" },
-		]},
-		image: false,
-		active: false,
+		scene: false,
+		eventMask: false,
+		script: false,
+		ui: false,
+		body: false,
+		ignoreCamera: false,
+		opacity: false,
+		render: false,
+		renderAfterChildren: false,
 	};
+	props.groups = [
+		{ name: '', properties: 'active,name' },
+		{ name: 'Hierarchy', properties: 'parent,children' },
+		{ name: 'Transform', properties: 'x,y,z,scaleX,scaleY,angle,skewX,skewY' },
+	]
 
 	backButton.focus();
 	return scene;

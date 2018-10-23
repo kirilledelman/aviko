@@ -88,7 +88,7 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Transform",
 		src: 'transform',
-		disabled: true,
+		disabled: false,
 		click: buttonClick
 	} );
 

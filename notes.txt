@@ -1,3 +1,5 @@
+tooltip
+	annoying / doesnt hide
 
 Textfield
 	multiline text box
@@ -21,9 +23,6 @@ Outline, when increasing offset starts doubling up
 Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
 
 Sound FINISHED event crashes, Sounds crash on JS shutdown if playing - command to stop all sounds first?
-
-Text
-	spillage on wrap - trigger layout?
 
 RenderText
 	texture based fonts!

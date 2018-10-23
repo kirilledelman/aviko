@@ -162,6 +162,7 @@ UI.style = UI.style || {
 			color: 0xFFFFFF,
 			size: 18,
 			bold: true,
+			wrap: false
 		},
 
 		states:{
@@ -503,7 +504,6 @@ UI.style = UI.style || {
 				size: 12,
 				bold: false,
 				flex: 1,
-				wrap: true,
 				align: TextAlign.Left,
 			},
 			background: false,
