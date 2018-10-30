@@ -1744,7 +1744,7 @@ App.__propertyListConfig = App.__propertyListConfig ||
 		'scene': { nullable: true, actions: [ { text:"new Scene", action: function() { this.__pushToTarget( this.target.scene = new Scene(), 'scene' ); } } ]},
 	},
 	groups: [
-		{ name: "Scene", properties: [ 'scene' ] }
+		{ name: "", properties: [ 'scene' ] }
 	],
 }
 
@@ -1949,7 +1949,7 @@ RenderShape.__propertyListConfig = RenderShape.__propertyListConfig ||
 		'__propertyListConfig': false,
 	},
 	groups: [
-		{ name: "Shape", properties:
+		{ name: "", properties:
 			[ 'active', 'shape', 'centered', 'filled', 'width', 'height', 'radius', 'innerRadius', 'startAngle', 'endAngle',
 				'x', 'y', 'x1', 'y1', 'x2', 'y2',
 				'points', 'lineThickness', ] },
@@ -2036,7 +2036,7 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		'__propertyListConfig': false,
 	},
 	groups: [
-		{ name: "Sprite", properties: [ 'active', 'texture', 'image', ] },
+		{ name: "", properties: [ 'active', 'texture', 'image', ] },
 		{ name: "Transform", properties:
 			[ 'width', 'height', 'originalWidth', 'originalHeight', 'pivotX', 'pivotY', 'flipX', 'flipY',
 				'tileX', 'tileY', 'autoTileX', 'autoTileY', ] },
@@ -2143,7 +2143,7 @@ RenderText.__propertyListConfig = RenderText.__propertyListConfig ||
 		
 	},
 	groups: [
-		{ name: "Text", properties: [ 'active', 'text', 'size', 'textColor', 'backgroundColor' ] },
+		{ name: "", properties: [ 'active', 'text', 'size', 'textColor', 'backgroundColor' ] },
 		{ name: "Font", properties: [ 'font', 'boldFont', 'italicFont', 'boldItalicFont', 'bold', 'italic', 'antialias', 'outline', 'lineSpacing', 'characterSpacing' ] },
 		{ name: "Alignment & Size", properties: [ 'align', 'multiLine', 'wrap', 'autoSize', 'width', 'height', 'pivotX', 'pivotY' ] },
 		{ name: "Formatting", properties: [ 'formatting', 'colors' ] },

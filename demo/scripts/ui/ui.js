@@ -162,7 +162,9 @@ UI.style = UI.style || {
 			color: 0xFFFFFF,
 			size: 18,
 			bold: true,
-			wrap: false
+			wrap: false,
+			marginLeft: 4,
+			marginRight: 4,
 		},
 
 		states:{

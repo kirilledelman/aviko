@@ -48,14 +48,31 @@ include( './ui' );
 			if ( v ) {
 				if ( !this.__image ) this.__makeImage();
 				this.__image.render.texture = v;
-				this.__image.ui.minWidth = this.__image.render.originalWidth;
-				this.__image.ui.minHeight = this.__image.render.originalHeight;
 				this.__image.active = true;
+				this.iconSize = this.__iconSize;
 			} else if ( this.__image ) {
 				this.__image.active = false;
 			}
 		},
 
+		// (Number) max icon size, or 0 for full size
+		get iconSize(){ return this.__label.text; },
+		set iconSize( v ){
+			this.__iconSize = Math.max( 0, v );
+			if ( this.__image ) {
+				var _w = this.__image.render.originalWidth, _h = this.__image.render.originalHeight;
+				if ( this.__iconSize > 0 ) {
+					var _scale = Math.min( this.__iconSize / _w, this.__iconSize / _h );
+					this.__image.render.width = this.__image.ui.minWidth = _w * _scale;
+					this.__image.render.height = this.__image.ui.minHeight = _h * _scale;
+				} else {
+					this.__image.render.width = this.__image.ui.minWidth = _w;
+					this.__image.render.height = this.__image.ui.minHeight = _h;
+				}
+				this.ui.requestLayout( 'iconSize' );
+			}
+		},
+		
 		// (GameObject) instance of 'ui/text.js' used as label
 		get label(){ return this.__label; },
 
@@ -268,14 +285,15 @@ include( './ui' );
 	go.__disabled = false;
 	go.__disabledCanFocus = true;
 	go.__cancelToBlur = false;
+	go.__iconSize = 0;
 	go.__proto__ = UI.base.buttonPrototype;
 	go.__init();
 	go.serializeMask.push( 'sliceLeft', 'sliceRight', 'sliceTop', 'sliceBottom' );
 	
 	// add property-list inspectable info
 	UI.base.addInspectables( go, 'Button',
-		[ 'text', 'icon', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'style' ],
-		{ 'icon': { autocomplete: 'texture' } }, 1 );
+		[ 'text', 'icon', 'iconSize', 'disabled', 'cancelToBlur', 'disabledCanFocus', 'style' ],
+		{ 'icon': { autocomplete: 'texture' }, 'iconSize': { min: 0, step: 1 } }, 1 );
 	
 	// apply defaults
 	go.__baseStyle = UI.base.mergeStyle( {}, UI.style.button );

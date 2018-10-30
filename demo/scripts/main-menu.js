@@ -102,7 +102,7 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "UI",
 		src: 'ui',
-		disabled: true,
+		disabled: false,
 		click: buttonClick
 	} );
 

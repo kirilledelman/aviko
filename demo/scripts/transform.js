@@ -62,7 +62,9 @@ new (function (){
 		formatting: true,
 		canScrollUnfocused: true,
 		text:
-		"Aviko organizes ^B^1GameObject^n^c class has severa.\n\n"
+		"Objects on the screen are instances of ^B^1GameObject^n^c class, organized in parent-child relationship under current scene.\n\n" +
+		"When a parent object moves, scales, or rotates, so do its children. Every object's own transform i.e. ^Bx, y, z, scale, angle, skew^b are " +
+		"relative to its parent (or scene if they're top level). \n\n"
 	} );
 
 	// back to main menu button
@@ -130,7 +132,6 @@ new (function (){
 		minWidth: 300,
 		valueWidth: 130,
 		showAll: false,
-		// showBackButton: false,
 		showContextMenu: false,
 		showMoreButton: false,
 		target: sprite,

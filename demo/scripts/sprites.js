@@ -135,7 +135,6 @@ new (function (){
 		minWidth: 300,
 		valueWidth: 130,
 		showAll: false,
-		showBackButton: false,
 		showContextMenu: false,
 		showMoreButton: false,
 		target: sprite.render,
