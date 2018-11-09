@@ -25,6 +25,7 @@
 #include <float.h>
 
 // #define NDEBUG
+#define NDEBUG
 
 #define B2_NOT_USED(x) ((void)(x))
 #if DEBUG && !defined(NDEBUG)

@@ -31,13 +31,13 @@ new (function (){
 
 	// title
 	var title = leftColumn.addChild( 'ui/text', {
-		name: "UI",
+		name: "Title",
 		size: 30,
 		color: Color.Title,
 		bold: true,
 		align: TextAlign.Center,
 		wrap: false,
-		text: "Input",
+		text: "UI",
 	} );
 
 	// scrollable description
@@ -63,9 +63,9 @@ new (function (){
 		formatting: true,
 		text:
 		"^B^1UI^b^c is a class that facilitates creation of user interface elements. " +
-		"It has dual function:\n• Helps dispatch input events to on-screen ^B^1GameObject^n^c instances " +
-		"(mouse clicks, keyboard/controller, managing focus, etc.).\n• Provides a way to automatically arrange " +
-		"objects out on screen in simple layouts - rows, columns, or anchored to parent's edge.\n\n" +
+		"It has dual function:\n\n• Helps dispatch input events to on-screen ^B^1GameObject^n^c instances " +
+		"(mouse clicks, keyboard/controller, managing focus, etc.).\n\n• Provides a way to automatically arrange " +
+		"objects on screen in simple layouts - rows, columns, or anchored to parent's edge.\n\n" +
 		"^B^1GameObject^n^c has an optional ^B.ui^b property. Assign an instance of ^B^1UI^b^c class to it to use this functionality.\n\n" +
 		"Aviko provides a small library of pre-built common UI elements - feel free to modify and use them in your projects!"
 	} );
@@ -162,6 +162,7 @@ new (function (){
 	container.addChild( 'ui/textfield', {
 		text: "Editable text",
 		selectAllOnFocus: true,
+		autoGrow: true,
 	} );
 	
 	backButton.focus();

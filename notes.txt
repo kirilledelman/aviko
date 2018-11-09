@@ -1,6 +1,13 @@
 tooltip
 	annoying / doesnt hide
 
+Phys bodies arent removed after scene is finalized?
+	Added body to scene, scene removed, garbage collected - crash in physics code - invalid scriptObject?
+
+Mouse joint on kinematic body - crash
+
+Add WheelJoint
+
 Textfield
 	multiline text box
 		code mode } and tabs funky

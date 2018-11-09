@@ -295,6 +295,8 @@ void Application::InitClass() {
 			return val;
 		}
 		
+		Event event;
+
 		// different scene
 		if ( current != newScene ) {
 			// new scene is provided
@@ -321,10 +323,18 @@ void Application::InitClass() {
 				// clear
 				app.sceneStack.clear();
 			}
+
+			// call removed event on current
+			if ( current ) {
+				event.name = EVENT_REMOVED;
+				event.behaviorParam = current;
+				event.stopped = false;
+				current->CallEvent( event );
+			}
 			
 			// generate events
-			Event event;
 			event.name = EVENT_SCENECHANGED;
+			event.stopped = false;
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( current ? current->scriptObject : NULL );
 			app.CallEvent( event );
@@ -332,8 +342,13 @@ void Application::InitClass() {
 			// layout as well
 			if ( newScene ) {
 				event.stopped = false;
-				event.name = EVENT_LAYOUT;
 				event.scriptParams.ResizeArguments( 0 );
+				event.behaviorParam = newScene;
+				event.name = EVENT_ADDED;
+				newScene->CallEvent( event );
+				
+				event.name = EVENT_LAYOUT;
+				event.stopped = false;
 				newScene->DispatchEvent( event );
 			}
 		}
@@ -480,7 +495,21 @@ void Application::InitClass() {
 		
 		// generate event
 		if ( newScene != oldScene ) {
+			
 			Event event;
+			
+			if ( oldScene ) {
+				event.name = EVENT_REMOVED;
+				event.behaviorParam = oldScene;
+				oldScene->CallEvent( event );
+			}
+			
+			event.stopped = false;
+			event.name = EVENT_ADDED;
+			event.behaviorParam = newScene;
+			newScene->CallEvent( event );
+			
+			event.stopped = false;
 			event.name = EVENT_SCENECHANGED;
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
@@ -526,6 +555,19 @@ void Application::InitClass() {
 		// generate event
 		if ( newScene != oldScene ) {
 			Event event;
+			
+			if ( oldScene ) {
+				event.name = EVENT_REMOVED;
+				event.behaviorParam = oldScene;
+				oldScene->CallEvent( event );
+			}
+			
+			event.stopped = false;
+			event.name = EVENT_ADDED;
+			event.behaviorParam = newScene;
+			newScene->CallEvent( event );
+			
+			event.stopped = false;
 			event.name = EVENT_SCENECHANGED;
 			event.scriptParams.AddObjectArgument( newScene ? newScene->scriptObject : NULL );
 			event.scriptParams.AddObjectArgument( oldScene ? oldScene->scriptObject : NULL );
@@ -1166,6 +1208,17 @@ void Application::InitClass() {
 		// done
 		if ( asObj ) sa.ReturnArray( ret );
 		else sa.ReturnString( sret );
+		return true;
+	}));
+	
+	script.DefineGlobalFunction
+	( "traceObject",
+	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
+		void* obj = NULL;
+		sa.ReadArguments( 0, TypeObject, &obj );
+		
+		script.DumpObject( obj );
+		
 		return true;
 	}));
 	

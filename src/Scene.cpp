@@ -71,7 +71,8 @@ Scene::~Scene() {
 	delete this->world;
 	this->world = NULL;
 	this->groundBody = NULL;
-		
+	
+	// printf( "###\t~Scene %s\n", this->name.c_str() );
 }
 
 
@@ -172,20 +173,20 @@ void Scene::InitClass() {
 	
 	script.AddProperty<Scene>
 	( "gravityX",
-	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((Scene*) o)->gravity.x; }),
+	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((Scene*) o)->gravity.x * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
 		Scene* s = (Scene*) o;
-		s->gravity.x = val;
+		s->gravity.x = val * WORLD_TO_BOX2D_SCALE;
 		s->world->SetGravity( s->gravity );
 		return val;
 	}));
 	
 	script.AddProperty<Scene>
 	( "gravityY",
-	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((Scene*) o)->gravity.y; }),
+	 static_cast<ScriptFloatCallback>([](void* o, float) { return ((Scene*) o)->gravity.y * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void* o, float val ) {
 		Scene* s = (Scene*) o;
-		s->gravity.y = val;
+		s->gravity.y = val * WORLD_TO_BOX2D_SCALE;
 		s->world->SetGravity( s->gravity );
 		return val;
 	}));

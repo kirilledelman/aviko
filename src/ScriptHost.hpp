@@ -1430,6 +1430,18 @@ public:
 		JS_GC( this->jsr );
 	}
 	
+	void DumpObject( void* obj ) {
+	
+		size_t bufSize = 1024 * 16;
+		void* buf = malloc( bufSize );
+		FILE* f = fmemopen( buf, bufSize, "w+" ); // fopen( "dump.txt", "w+" );
+		if ( f ) {
+			JS_DumpHeap( this->jsr, f, NULL, JSTRACE_OBJECT, obj, 128, NULL );
+			fclose( f );
+			printf( "%s\n", buf );
+		}
+		free( buf );
+	}
 	
 /* MARK:	-				Script execution & JSON
  -------------------------------------------------------------------- */

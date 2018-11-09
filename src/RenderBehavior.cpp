@@ -13,7 +13,8 @@ RenderBehavior::ShaderVariant RenderBehavior::shaders[ SHADER_MAXVAL ];
 RenderBehavior::RenderBehavior( ScriptArguments* ) { script.ReportError( "RenderBehavior can't be created using 'new'." ); }
 
 /// default constructor
-RenderBehavior::RenderBehavior() { };
+RenderBehavior::RenderBehavior() {
+};
 
 /// called by child classes to add default objects
 void RenderBehavior::AddDefaults() {
@@ -51,6 +52,7 @@ bool RenderBehavior::IsScreenPointInside( float x, float y, float* outLocalX, fl
 
 }
 
+bool RenderBehavior::ClipsMouseEventsFor( GameObject* c ) { return false; }
 
 /* MARK:	-				Script
  -------------------------------------------------------------------- */
@@ -143,7 +145,6 @@ void RenderBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	ScriptableClass::TraceProtectedObjects( protectedObjects );
 	
 }
-
 
 /* MARK:	-				Padding
  -------------------------------------------------------------------- */

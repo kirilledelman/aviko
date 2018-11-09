@@ -26,8 +26,8 @@ public:
 	
 	/// params
 	float density = 5;
-	float friction = 0.25;
-	float restitution = 0.1;
+	float friction = 0.5;
+	float restitution = 0.2;
 	bool isSensor = false;
 	
 	/// will split concave polys in multiple fixtures

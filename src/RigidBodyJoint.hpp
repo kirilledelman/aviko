@@ -21,7 +21,7 @@ public:
 
 	// params
 	bool collideConnected = false;
-	float maxForce = 1000;
+	float maxForce = 100000;
 	
 	b2Vec2 anchorA = { 0, 0 };
 	b2Vec2 anchorB = { 0, 0 };

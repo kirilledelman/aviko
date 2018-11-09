@@ -1164,7 +1164,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 	}
 	
 	// if there's render component
-	if ( behavior->gameObject->render ) {
+	/* if ( behavior->gameObject->render ) {
 		// determine if there's no layout handler
 		EventListenersMap::iterator hit = behavior->eventListeners.find( string( EVENT_LAYOUT ) );
 		bool hasHandler = ( hit != behavior->eventListeners.end() && hit->second.size() > 0 );
@@ -1175,7 +1175,7 @@ void UIBehavior::Layout( UIBehavior *behavior, void *p, Event *event ){
 				behavior->gameObject->render->Resize( behavior->layoutWidth, behavior->layoutHeight );
 			}
 		}
-	}
+	}*/
 	
 	// dispatch layout event listeners on this component 
 	Event e ( EVENT_LAYOUT );
@@ -1854,35 +1854,6 @@ void UIBehavior::DebugDraw( GPU_Target* targ ) {
 }
 
 
-/* MARK:	-				Clipping
- -------------------------------------------------------------------- */
-
-
-// finds closest RenderSpriteBehavior with image+autoDraw = parent
-void UIBehavior::CheckClipping() {
-
-	// reset
-	this->clippedBy = NULL;
-	if ( !this->gameObject ) return;
-	
-	// go up the tree
-	GameObject* p = this->gameObject->parent;
-	GameObject* c = this->gameObject;
-	while ( p ) {
-		RenderSpriteBehavior* rs = ClassInstance<RenderSpriteBehavior>(p->render);
-		if ( rs ) {
-			if ( rs->imageInstance && rs->imageInstance->autoDraw == c ) {
-				this->clippedBy = rs;
-				return;
-			}
-		}
-		// keep climbing
-		c = p;
-		p = p->parent;
-	}
-	
-}
-
 
 /* MARK:	-				Events
  -------------------------------------------------------------------- */
@@ -1900,9 +1871,9 @@ void UIBehavior::MouseMove( UIBehavior* behavior, void* param, Event* e ){
 		inBounds = behavior->IsScreenPointInBounds( x, y, &localX, &localY );
 		
 		// if clipped by RenderSprite/image+autoDraw, check if still in bounds
-		if ( inBounds && behavior->clippedBy ) {
+		if ( inBounds && e->clippedBy ) {
 			float clippedLocalX, clippedLocalY;
-			inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+			inBounds = e->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
 		}
 	}
 
@@ -1984,9 +1955,9 @@ void UIBehavior::MouseButton( UIBehavior* behavior, void* param, Event* e){
 	bool down = ( strcmp( e->name, EVENT_MOUSEDOWN ) == 0 );
 	
 	// if clipped by RenderSprite/image+autoDraw, check if still in bounds
-	if ( inBounds && behavior->clippedBy ) {
+	if ( inBounds && e->clippedBy ) {
 		float clippedLocalX, clippedLocalY;
-		inBounds = behavior->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
+		inBounds = e->clippedBy->IsScreenPointInside( x, y, &clippedLocalX, &clippedLocalY );
 	}
 	
 	// special force mouse up mode
@@ -2148,7 +2119,6 @@ void UIBehavior::Attached( UIBehavior* behavior, GameObject* go, Event* e ){
 	
 	// remember scene
 	behavior->scene = go->GetScene();
-	behavior->CheckClipping();
 	
 	// do layout, if on scene
 	if ( behavior->scene ) {

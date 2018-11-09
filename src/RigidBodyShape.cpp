@@ -163,10 +163,30 @@ void RigidBodyShape::InitClass() {
 		rb->width = fmax( 0.01f, val * WORLD_TO_BOX2D_SCALE );
 		rb->UpdateFixture();
 		return val;
-	} ) );
+	} ), PROP_ENUMERABLE );
 	
 	script.AddProperty<RigidBodyShape>
 	( "height",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyShape*) b)->height * BOX2D_TO_WORLD_SCALE; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RigidBodyShape* rb = (RigidBodyShape*) b;
+		rb->height = fmax( 0.01f, val * WORLD_TO_BOX2D_SCALE );
+		rb->UpdateFixture();
+		return val;
+	} ), PROP_ENUMERABLE );
+	
+	script.AddProperty<RigidBodyShape>
+	( "x",
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyShape*) b)->width * BOX2D_TO_WORLD_SCALE; }),
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){
+		RigidBodyShape* rb = (RigidBodyShape*) b;
+		rb->width = fmax( 0.01f, val * WORLD_TO_BOX2D_SCALE );
+		rb->UpdateFixture();
+		return val;
+	} ) );
+	
+	script.AddProperty<RigidBodyShape>
+	( "y",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyShape*) b)->height * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RigidBodyShape* rb = (RigidBodyShape*) b;

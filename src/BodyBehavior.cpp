@@ -24,7 +24,7 @@ BodyBehavior::BodyBehavior() {
 };
 
 //
-BodyBehavior::~BodyBehavior() { };
+BodyBehavior::~BodyBehavior() {};
 
 
 /* MARK:	-				Script

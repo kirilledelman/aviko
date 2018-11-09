@@ -59,11 +59,13 @@ public:
 	/// UIs without layout handler will call this on gameObject's render component
 	void Resize( float w, float h );
 	
+	bool ClipsMouseEventsFor( GameObject* c );
+	
 // methods
 		
 	/// render callback
 	static void Render( RenderSpriteBehavior* behavior, GPU_Target* target, Event* event );
-
+	
 // shape from render
 	
 	RigidBodyShape* MakeShape();

@@ -142,7 +142,6 @@ new (function (){
 		}
 			
 		inputState.text = txt;
-		// textContainer.scrollHeight =
 		
 	}
 	
@@ -156,6 +155,7 @@ new (function (){
 		var index = scene.currentKeys.indexOf( name );
 		if ( index >= 0 ) scene.currentKeys.splice( index, 1 );
 	}
+
 	
 	Input.on( 'keyDown', scene.keyDown );
 	Input.on( 'keyUp', scene.keyUp );

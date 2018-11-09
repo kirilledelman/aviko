@@ -41,7 +41,8 @@ RigidBodyBehavior::~RigidBodyBehavior() {
 	
 	// remove body
 	this->RemoveBody();
-	
+
+	printf( "~RigidBodyBehavior\n" );
 }
 
 
@@ -393,7 +394,38 @@ void RigidBodyBehavior::InitClass() {
 		return true;
 	} ));
 
+	script.DefineFunction<RigidBodyBehavior>
+	("linearImpulse",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+		const char *error = "usage: linearImpulse( Number linearImpulseX, Number linearImpulseY [, Number localPointX, Number localPointY ] )";
+		b2Vec2 ctr = { 0, 0 }, imp = { 0, 0 };
+		if ( !sa.ReadArguments( 2, TypeFloat, &imp.x, TypeFloat, &imp.y, TypeFloat, &ctr.x, TypeFloat, &ctr.y ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		// if no center, use center of mass
+		if ( sa.args.size() == 2 ) {
+			ctr = self->body->GetLocalCenter();
+		}
+		// apply
+		self->Impulse( imp, ctr );
+		return true;
+	} ));
 	
+	script.DefineFunction<RigidBodyBehavior>
+	("angularImpulse",
+	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+		const char *error = "usage: angularImpulse( Number angularImpulse )";
+		float imp = 0;
+		if ( !sa.ReadArguments( 1, TypeFloat, &imp ) ) {
+			script.ReportError( error );
+			return false;
+		}
+		self->AngularImpulse( imp );
+		return true;
+	} ));
 }
 
 void RigidBodyBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -428,22 +460,29 @@ b2Vec2 RigidBodyBehavior::GetVelocity() {
 
 void RigidBodyBehavior::SetVelocity( b2Vec2 vel ) {
 	this->velocity = vel * WORLD_TO_BOX2D_SCALE;
-	if ( this->body ) this->body->SetLinearVelocity( vel );
+	if ( this->body ) this->body->SetLinearVelocity( this->velocity );
 }
 
 float RigidBodyBehavior::GetAngularVelocity() {
-	if ( this->body ) this->angularVelocity = this->body->GetAngularVelocity();
+	if ( this->body ) this->angularVelocity = this->body->GetAngularVelocity() * RAD_TO_DEG;
 	return this->angularVelocity;
 }
 
 void RigidBodyBehavior::SetAngularVelocity( float v ) {
 	this->angularVelocity = v;
-	if ( this->body ) this->body->SetAngularVelocity( v );
+	if ( this->body ) this->body->SetAngularVelocity( v * DEG_TO_RAD );
 }
 
-void RigidBodyBehavior::Impulse( b2Vec2 impulse, b2Vec2 point ){
+void RigidBodyBehavior::Impulse( b2Vec2& impulse, b2Vec2& point ){
 	if ( this->body ) {
-		this->body->ApplyLinearImpulse( impulse * WORLD_TO_BOX2D_SCALE, point * WORLD_TO_BOX2D_SCALE, true );
+		point *= WORLD_TO_BOX2D_SCALE;
+		this->body->ApplyLinearImpulse( impulse * WORLD_TO_BOX2D_SCALE, this->body->GetWorldPoint( point ), true );
+	}
+}
+
+void RigidBodyBehavior::AngularImpulse( float impulse ){
+	if ( this->body ) {
+		this->body->ApplyAngularImpulse( impulse * DEG_TO_RAD, true );
 	}
 }
 
@@ -482,9 +521,15 @@ void RigidBodyBehavior::SyncObjectToBody() {
 /// converts game object's local transform to body
 void RigidBodyBehavior::SyncBodyToObject() {
 
+	// unlink body
+	this->gameObject->body = NULL;
+	
 	// parent's world transform times local transform = this object world transform
 	if ( this->gameObject->parent ) GPU_MatrixMultiply( this->gameObject->_worldTransform, this->gameObject->parent->WorldTransform(), this->gameObject->Transform() );
 	this->gameObject->_worldTransformDirty = false;
+	
+	// relink
+	this->gameObject->body = this;
 	
 	// extract pos, rot, scale
 	b2Vec2 pos, scale;
@@ -671,6 +716,8 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 	// create body
 	this->body = scene->world->CreateBody( &bodyDef );
 	this->body->SetMassData( &massData );
+	this->body->SetLinearVelocity( this->velocity );
+	this->body->SetAngularVelocity( this->angularVelocity * DEG_TO_RAD );
 	
 	// add shapes/fixtures
 	for ( size_t i = 0, nf = shapes.size(); i < nf; i++ ) {
@@ -684,6 +731,8 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 
 void RigidBodyBehavior::RemoveBody() {
 	
+	this->EnableBody( false );
+	
 	// remove body
 	if ( this->body ) {
 		// clear fixtures from shapes
@@ -693,8 +742,6 @@ void RigidBodyBehavior::RemoveBody() {
 		this->body->GetWorld()->DestroyBody( this->body );
 	}
 	this->body = NULL;
-	
-	this->EnableBody( false );
 	
 }
 

@@ -42,9 +42,11 @@ public:
 	void SetVelocity( b2Vec2 );
 	float GetAngularVelocity();
 	void SetAngularVelocity( float );
-	void Impulse( b2Vec2 impulse, b2Vec2 point );
-	void AngularImpulse( b2Vec2 impulse, b2Vec2 point );
-	
+	void Impulse( b2Vec2& impulse, b2Vec2& point );
+	void AngularImpulse( float impulse );
+	void Force( b2Vec2& force, b2Vec2& point );
+	void AngularForce( float force );
+
 // scripting
 	
 	/// registers class for scripting

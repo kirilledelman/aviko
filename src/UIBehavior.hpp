@@ -167,11 +167,7 @@ public:
 	static void Detached( UIBehavior* behavior, GameObject* topObject, Event* event );
 	static void ActiveChanged( UIBehavior* behavior, GameObject* object, Event* event );
 	static void Layout( UIBehavior* behavior, void*, Event* event );
-	
-	// checks and (re)sets RenderSprite behavior that clips this behavior
-	void CheckClipping();
-	RenderSpriteBehavior* clippedBy = NULL;
-	
+		
 	/// blocks UI events from bubbling up
 	bool blocking = false;
 	

@@ -4,6 +4,7 @@
 #include "common.h"
 #include "ScriptHost.hpp"
 
+class RenderBehavior;
 
 /* MARK:	-				Scriptable class
  
@@ -33,6 +34,9 @@ struct Event {
 	
 	/// will be set to true when entering blocking UI event subtree
 	bool willBlockUIEvent = false;
+	
+	/// mouse UI event is clipped by this RenderBehavior
+	RenderBehavior* clippedBy = NULL;
 	
 	/// is set by disabled UIBehavior
 	bool skipChildren = false;

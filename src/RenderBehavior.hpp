@@ -15,6 +15,7 @@
 #define SHADER_MAXVAL	0x40
 
 class RigidBodyShape;
+class RenderSpriteBehavior;
 
 /// rendering behaviors should inherit from this class and override getBounds method
 class RenderBehavior : public Behavior {
@@ -35,6 +36,9 @@ public:
 	
 	/// UIs without layout handler will call this on gameObject's render component
 	virtual void Resize( float w, float h ) {};
+	
+	/// return true, if mouse events going to c should be clipped by this render component
+	virtual bool ClipsMouseEventsFor( GameObject* c );
 	
 	/// color
 	Color *color = NULL;
@@ -144,7 +148,7 @@ public:
 // shape from render
 	
 	virtual RigidBodyShape* MakeShape() { return NULL; }
-	
+
 };
 
 SCRIPT_CLASS_NAME( RenderBehavior, "RenderBehavior" );

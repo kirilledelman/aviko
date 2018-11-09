@@ -95,7 +95,7 @@ new (function (){
 	buttons.addChild( 'ui/button', {
 		text: "Physics",
 		src: 'physics',
-		disabled: true,
+		disabled: false,
 		click: buttonClick
 	} );
 

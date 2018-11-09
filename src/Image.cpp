@@ -24,8 +24,8 @@ Image::Image( ScriptArguments* args ) {
 			this->MakeImage();
 			if ( obj ) {
 				GameObject* go = script.GetInstance<GameObject>( obj );
-				// if ( go ) this->Draw( go );
-				autoDraw = go;
+				if ( go ) this->Draw( go );
+				//autoDraw = go;
 			}
 		// string
 		} else if ( args->ReadArguments( 1, TypeString, &url ) ){
@@ -87,14 +87,6 @@ void Image::InitClass() {
 		if ( img->autoDraw != go ) {
 			img->autoDraw = go;
 			img->lastRedrawFrame = 0;
-			if ( go ) {
-				// update clipping of all descendent UIObjects
-				vector<UIBehavior*> uis;
-				go->GetBehaviors( true, uis );
-				for ( size_t i = 0, nb = uis.size(); i < nb; i++ ){
-					uis[ i ]->CheckClipping();
-				}
-			}
 		}
 		return val;
 	}));

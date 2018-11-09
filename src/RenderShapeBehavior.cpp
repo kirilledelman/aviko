@@ -248,12 +248,12 @@ void RenderShapeBehavior::InitClass() {
 	script.AddProperty<RenderShapeBehavior>
 	( "width",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->x; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->x = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->x = val ); }), PROP_ENUMERABLE );
 	
 	script.AddProperty<RenderShapeBehavior>
 	( "height",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderShapeBehavior*) b)->y; }),
-	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->y = val ); }) );
+	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ( ((RenderShapeBehavior*) b)->y = val ); }), PROP_ENUMERABLE );
 	
 	script.AddProperty<RenderShapeBehavior>
 	( "x1",

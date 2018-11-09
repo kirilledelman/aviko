@@ -284,6 +284,10 @@ include( './ui' );
 				this.__showDropdown( false );
 				stopAllEvents();
 			}
+		},
+		
+		focus: function () {
+			this.__button.focus();
 		}
 		
 	};

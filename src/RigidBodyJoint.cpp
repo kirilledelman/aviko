@@ -82,6 +82,11 @@ RigidBodyJoint::RigidBodyJoint( ScriptArguments* args ) {
 				this->SetOtherBody( beh );
 			}
 			
+		} else if ( args->ReadArguments( 1, TypeObject, &obj ) ) {
+			
+			// use as init
+			script.CopyProperties( obj, this->scriptObject );
+			
 		}
 	}
 }
@@ -356,7 +361,7 @@ void RigidBodyJoint::InitClass() {
 	} ) );
 	
 	script.AddProperty<RigidBodyJoint>
-	( "mouseTargetX",
+	( "mouseX",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyJoint*) b)->mouseDef.target.x * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RigidBodyJoint* rb = (RigidBodyJoint*) b;
@@ -368,7 +373,7 @@ void RigidBodyJoint::InitClass() {
 	} ) );
 	
 	script.AddProperty<RigidBodyJoint>
-	( "mouseTargetY",
+	( "mouseY",
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RigidBodyJoint*) b)->mouseDef.target.y * BOX2D_TO_WORLD_SCALE; }),
 	 static_cast<ScriptFloatCallback>([](void *b, float val ){
 		RigidBodyJoint* rb = (RigidBodyJoint*) b;

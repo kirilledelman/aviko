@@ -1,4 +1,6 @@
 #include "RenderSpriteBehavior.hpp"
+#include "RenderShapeBehavior.hpp"
+#include "RenderTextBehavior.hpp"
 #include "ImageResource.hpp"
 #include "Application.hpp"
 
@@ -138,15 +140,6 @@ void RenderSpriteBehavior::InitClass() {
 			if ( img->image ) {
 				rs->width = img->image->base_w;
 				rs->height = img->image->base_h;
-			}
-			// assigned image's autoDraw is direct child of this gameObject
-			if ( img->autoDraw && rs->gameObject && img->autoDraw->parent == rs->gameObject ){
-				// update clipping of all descendent UIObjects
-				vector<UIBehavior*> uis;
-				rs->gameObject->GetBehaviors( true, uis );
-				for ( size_t i = 0, nb = uis.size(); i < nb; i++ ){
-					uis[ i ]->CheckClipping();
-				}
 			}
 		// NULL passed
 		} else {
@@ -594,6 +587,13 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	
 	GPU_BlitRectX( image, &srcRect, target, &dest, rotated ? -90 : 0, 0, 0, GPU_FLIP_NONE );
 	
+}
+
+bool RenderSpriteBehavior::ClipsMouseEventsFor( GameObject* c ) {
+	if ( this->imageInstance && this->imageInstance->autoDraw == c ) {
+		return true;
+	}
+	return false;
 }
 
 

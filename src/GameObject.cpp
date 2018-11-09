@@ -96,7 +96,30 @@ void GameObject::InitClass() {
 	
 	script.AddProperty<GameObject>
 	( "numChildren",
-	 static_cast<ScriptIntCallback>([](void* go, int) { return ((GameObject*) go)->children.size(); }));
+	 static_cast<ScriptIntCallback>([](void* go, int) { return ((GameObject*) go)->children.size(); }),
+	 static_cast<ScriptIntCallback>([](void* go, int n ) {
+		GameObject *g = (GameObject*) go;
+		int curSize = (int) g->children.size();
+		n = max( 0, n );
+		// removing children
+		if ( curSize > n ) {
+			while( curSize > 0 && curSize > n ) {
+				curSize--;
+				GameObject* c = g->children[ curSize ];
+				c->SetParent( NULL );
+			}
+		// adding children
+		} else if ( curSize < n ) {
+			while( curSize < n ) {
+				GameObject* c = new GameObject( NULL );
+				c->SetParent( g );
+				curSize++;
+			}
+		}
+		return curSize;
+		
+	 }),
+	 PROP_ENUMERABLE);
 	
 	script.AddProperty<GameObject>
 	( "parent",
@@ -1113,6 +1136,16 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		}
 	}
 	
+	// clippable UI events
+	bool clearClipped = false;
+	if ( event.name == EVENT_MOUSEDOWN || event.name == EVENT_MOUSEMOVE || event.name == EVENT_MOUSEUP ) {
+	    // parent clips this object
+		if ( this->parent && this->parent->render != NULL && this->parent->render->ClipsMouseEventsFor( this ) ) {
+			clearClipped = true;
+			event.clippedBy = this->parent->render;
+		}
+	}
+	
 	// if it's a UI event considered in bounds by this UI or one of children, and this UI is blocking, auto-stop it
 	if ( this->ui && this->ui->blocking && event.isBlockableUIEvent ) {
 		event.willBlockUIEvent = true;
@@ -1157,6 +1190,9 @@ void GameObject::DispatchEvent( Event& event, bool callOnSelf, GameObjectCallbac
 		event.isUIEventInBounds = event.willBlockUIEvent = false;
 	}
 	
+	// clear clippedby when leaving recursion
+	if ( clearClipped ) event.clippedBy = NULL;
+	
 }
 
 // calls handler for event on each behavior
@@ -1179,6 +1215,7 @@ void GameObject::CallEvent( Event &event ) {
 	
 	// dispatches script events on this object
 	if ( !event.stopped && !event.behaviorsOnly ) ScriptableClass::CallEvent( event );
+	
 }
 
 /// returns ArgValueVector with each behavior's scriptObject
@@ -2262,6 +2299,13 @@ bool _zSortChildrenCompare( GameObject* a, GameObject* b ) {
 // Renders this GameObject using renderer behavior, goes recursive
 void GameObject::Render( Event& event ) {
 	
+	// clipped by image
+	bool clearClipped = false;
+	if ( this->parent && this->parent->render != NULL && this->parent->render->ClipsMouseEventsFor( this ) ) {
+		clearClipped = true;
+		event.clippedBy = this->parent->render;
+	}
+	
 	// push view matrix
 	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PushMatrix();
@@ -2280,7 +2324,14 @@ void GameObject::Render( Event& event ) {
 	// transforming using body
 	if ( this->HasBody() ) {
 		
-		GPU_MatrixCopy( GPU_GetCurrentMatrix(), this->_worldTransform );
+		// if rendering to image / clipped
+		if ( event.clippedBy ) {
+			// container's world transform
+			GPU_MatrixCopy( GPU_GetCurrentMatrix(), event.clippedBy->gameObject->InverseWorld() );
+			GPU_MultMatrix( this->_worldTransform );
+		} else {
+			GPU_MatrixCopy( GPU_GetCurrentMatrix(), this->_worldTransform );
+		}
 		
 	} else {
 		
@@ -2334,6 +2385,8 @@ void GameObject::Render( Event& event ) {
 	GPU_PopMatrix();
 	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PopMatrix();
+	
+	// clear clippedby when leaving recursion
+	if ( clearClipped ) event.clippedBy = NULL;
+
 }
-
-
