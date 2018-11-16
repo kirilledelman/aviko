@@ -42,7 +42,6 @@ RigidBodyBehavior::~RigidBodyBehavior() {
 	// remove body
 	this->RemoveBody();
 
-	printf( "~RigidBodyBehavior\n" );
 }
 
 

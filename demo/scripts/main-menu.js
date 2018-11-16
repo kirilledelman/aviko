@@ -107,6 +107,20 @@ new (function (){
 	} );
 
 	buttons.addChild( 'ui/button', {
+		text: "Animation",
+		src: 'animation',
+		disabled: true,
+		click: buttonClick
+	} );
+	
+	buttons.addChild( 'ui/button', {
+		text: "Sound",
+		src: 'sound',
+		disabled: true,
+		click: buttonClick
+	} );
+	
+	buttons.addChild( 'ui/button', {
 		text: "Serialization",
 		src: 'serialization',
 		disabled: true,

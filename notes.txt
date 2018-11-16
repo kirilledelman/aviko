@@ -6,7 +6,7 @@ Phys bodies arent removed after scene is finalized?
 
 Mouse joint on kinematic body - crash
 
-Add WheelJoint
+Add WheelJoint, gravityScale, particles
 
 Textfield
 	multiline text box
@@ -216,7 +216,7 @@ Building and dependencies
 
 SDL_gpu - compile from source:
 	git clone https://github.com/grimfang4/sdl-gpu.git sdl-gpu
-	use cmake to turn off building demos, and GLES3
+	use cmake to turn off building demos, and DISABLE_GLES to build SDL2_gpu.framework
 
 ORi/RPi:
 	CMakeLists.txt - disable all but OpenGL 1 base and OpenGLES 2.x renderer

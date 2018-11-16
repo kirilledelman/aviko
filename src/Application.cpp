@@ -1482,9 +1482,8 @@ void Application::GameLoop() {
 			event.behaviorParam = NULL;
 			event.skipObject = NULL;
 			event.stopped = false; // reused
-		
 		}
-		
+
 		// copy to main screen and flip
 		GPU_ActivateShaderProgram(0, NULL);
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );

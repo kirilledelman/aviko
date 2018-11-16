@@ -63,7 +63,12 @@ new (function (){
 		canScrollUnfocused: true,
 		formatting: true,
 		text:
-		"Aviko provides ^B^1Body^b^c "
+		"Aviko physics is based on venerable open-source ^BBox2D^b library developed by Erin Catto.\n\n" +
+		"To make a ^1^BGameObject^c^b participate in physics, assign an instance of ^B^1Body^c^b to its ^B.body^b property.\n\n" +
+		"Body shape for collision detection is set by adding one or more ^1^BBodyShape^c^b objects to body's ^B.shapes^b array.\n\n" +
+		"Bodies can be static, dynamic, or kinematic, and be connected to each other by several different types " +
+		"of ^1^BJoint^c^b.\n\nBodies' collisions generate events, which can be filtered per-shape using bitmasks.\n\n"
+		
 	} );
 
 	// back to main menu button
@@ -536,11 +541,88 @@ new (function (){
 			}
 		}
 	} );
-	//App.debugDraw=1;
+	
+	// example 4
+	var e4 = rightColumn.addChild( 'ui/panel', {
+		layoutType: Layout.Vertical,
+		active: false,
+		children: [
+			new GameObject( 'ui/text', { color: 0x0, size: 12, multiLine: true,
+				text:
+				"^BSensors^b\n\n" +
+				"Sensors are body shapes that don't collide, but \ngenerate `touch` and `untouch` events when\n" +
+				"other bodies enter and leave their area."
+			} )
+		],
+		activeChanged: function () {
+			if ( this.active ) {
+				makeBox();
+				
+				
+				// rectangle
+				var b = container.addChild( new GameObject({
+					name: "Box",
+					render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x333333, x: 20, y: 60, lineThickness: 2 } ),
+					body: new Body( {
+						fixedRotation: true,
+						shapes: [
+							new BodyShape( {
+								type: Shape.Rectangle,
+								x: 20, y: 60,
+								density: 20,
+								bounce: 0.2,
+				            } ),
+							new BodyShape( {
+								type: Shape.Circle,
+								centerX: 10, centerY: 0,
+								radius: 50,
+								sensor: true,
+				            } ) ],
+						touch: function ( sh, o ) {
+							// log( "touch", o.body.gameObject );
+							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
+								o.body.gameObject.render.bold = true;
+								o.body.gameObject.render.color = 0x990000;
+							}
+						},
+						untouch: function ( sh, o ) {
+							// log( "untouch", o.body.gameObject );
+							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
+								o.body.gameObject.render.bold = false;
+								o.body.gameObject.render.color = 0x003399;
+							}
+						},
+			        } ),
+					x: 150, y: 100, ui: new UI( { focusable: true } ),
+			    }));
+				b.addChild( new GameObject({ x: 10, render: new RenderShape( {
+					shape: Shape.Circle, radius: 50, color: 'FFFF0099'
+	            } ) }) );
+				b.ui.__proto__ = draggableObjectUIProto;
+				
+				// generate objects
+				for ( var i = 0; i < 5; i++ ) {
+					b = container.addChild( new GameObject({
+						name: "X",
+						render: new RenderText( { text: ( i + 1 ), pivot: 0.5, size: 15, color: 0x003399 } ),
+						body: new Body( {
+							type: BodyType.Static,
+							shape: new BodyShape( {
+								type: Shape.Rectangle,
+								centerX: 5, centerY: 5,
+								x: 10, y: 10, sensor: true
+				            } ),
+				        } ),
+						x: 20 + i * 50, y: 60 + Math.sin ( i ) * 50,
+			        }));
+				}
+			}
+		}
+	} );
 	
 	// example selector activates panel corresponding to example
 	selector.change = function () {
-		var examples = [ e1, e2, e3 ];
+		var examples = [ e1, e2, e3, e4 ];
 		for ( i in examples ) examples[ i ].active = ( i == this.selectedIndex );
 	};
 	

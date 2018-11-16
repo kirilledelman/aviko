@@ -59,7 +59,7 @@ public:
 	Uint16 screenHeight = 768;
 	
 	/// upscaling
-	float windowScalingFactor = 2;
+	float windowScalingFactor = 1;// 2;
 	
 	//
 	bool windowResizable = true;

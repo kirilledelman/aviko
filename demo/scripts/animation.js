@@ -2,7 +2,7 @@ new (function (){
 
 	// create scene
 	var scene = new Scene( {
-		name: "Sprites",
+		name: "Animation",
 		backgroundColor: Color.Background,
 		cameraX: App.windowWidth
 	} );
@@ -37,7 +37,7 @@ new (function (){
 		bold: true,
 		align: TextAlign.Center,
 		wrap: false,
-		text: "Sprites",
+		text: "Animation",
 	} );
 
 	// scrollable description
@@ -59,18 +59,11 @@ new (function (){
 		flex: 1,
 		multiLine: true,
 		focusRect: true,
-		formatting: true,
 		canScrollUnfocused: true,
+		formatting: true,
 		text:
-		"Aviko renders sprites using ^B^1RenderSprite^n^c class.\n\n" +
-		"It can display images loaded from ^Bpng^n, and ^Bjpg^n files, as " +
-		"well as dynamic textures, using ^B^1Image^n^c class.\n\n" +
-		"Sprite sheets (texture atlases) in ^BJSON^b format can be used to " +
-		"combine multiple small sprites into one texture to increase performance.\n\n" +
-		"Various blending modes, colored outline, multiplicative and additive color tinting are supported, as well as opacity, and stippling.\n\n" +
-		"Sprite texture can be flipped and tiled in horizontal or vertical direction.\n\n" +
-		"To help create user interface elements define stretchable regions on texture by setting ^B.slice^n properties."
-
+		"^B^1Tween^b^c class helps interpolate one or more property of any object over time.\n\n" +
+		""
 	} );
 
 	// back to main menu button
@@ -116,41 +109,7 @@ new (function (){
 		x: 150, y: 70,
 	} );
 	sprite.render.pivot = 0.5;
-
-	// rotate checkbox
-	spriteContainer.addChild( 'ui/checkbox', {
-		text: "^BSpin",
-		x: 230, y: 120, minWidth: 65,
-		change: function () {
-			if ( sprite.update ) { sprite.angle = 0; sprite.update = null; }
-			else sprite.update = function ( dt ) {
-				sprite.angle += 10 * dt;
-			}
-		}
-	} );
-
-	// properties
-	var props = rightColumn.addChild( 'ui/property-list', {
-		flex: 1,
-		minWidth: 300,
-		valueWidth: 130,
-		showAll: false,
-		showContextMenu: false,
-		showMoreButton: false,
-		target: sprite.render,
-	} );
-
-	// overrides
-	props.properties = {
-		'texture': { enum: [
-			{ text: "smiley.png", value: "/textures/smiley.png" },
-			{ text: "clown.png", value: "/textures/clown.png" },
-			{ text: "poop.png", value: "/textures/poop.png" },
-		]},
-		image: false,
-		active: false,
-	};
-
+	
 	backButton.focus();
 	return scene;
 })();

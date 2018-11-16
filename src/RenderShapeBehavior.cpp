@@ -645,7 +645,6 @@ void RenderShapeBehavior::Render( RenderShapeBehavior* behavior, GPU_Target* tar
 		GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
 	} else {
 		// normal mode
-		// GPU_SetShapeBlendMode( GPU_BLEND_NORMAL );
 		GPU_SetShapeBlendFunction( GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
 		GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_ADD);
 		
