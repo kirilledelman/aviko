@@ -2311,7 +2311,12 @@ void GameObject::Render( Event& event ) {
 	GPU_PushMatrix();
 	
 	// if ignoring camera, load identity
-	if ( this->ignoreCamera ) GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+    if ( this->ignoreCamera ) {
+        GPU_Target* rt = (GPU_Target*) event.behaviorParam;
+        float *p = GPU_GetProjection();
+        GPU_MatrixIdentity( p );
+        GPU_MatrixOrtho( p, 0, rt->w, 0, rt->h, -1024, 1024 );
+    }
 	
 	// push parent transform matrix
 	GPU_MatrixMode( GPU_MODELVIEW );

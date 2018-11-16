@@ -47,19 +47,19 @@ public:
 // rendering
 	
 	/// display width
-	Uint16 windowWidth = 800;
+	Uint16 windowWidth = 640;
 
 	/// display height
 	Uint16 windowHeight = 480;
 	
 	/// screen width
-	Uint16 screenWidth = 1024;
+	Uint16 screenWidth = 640;
 	
 	/// screen height
-	Uint16 screenHeight = 768;
+	Uint16 screenHeight = 480;
 	
 	/// upscaling
-	float windowScalingFactor = 1;// 2;
+	float windowScalingFactor = 2;
 	
 	//
 	bool windowResizable = true;
@@ -67,7 +67,7 @@ public:
 	bool fixedWindowResolution = true;
 	
 	/// computed in UpdateBackscreen
-	float backscreenScale = 0.5;
+	float backscreenScale = 1;
 	
 	// draw debug data
 	bool debugDraw = false;

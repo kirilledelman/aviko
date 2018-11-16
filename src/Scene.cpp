@@ -347,8 +347,11 @@ void Scene::Render( Event& event ) {
 	// set up camera transform
 	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PushMatrix();
-	GPU_MatrixCopy( GPU_GetCurrentMatrix(), this->CameraTransform() );
-	
+    float *p = GPU_GetProjection();
+    GPU_MatrixIdentity( p );
+    GPU_MatrixOrtho( p, 0, rt->w, 0, rt->h, -1024, 1024 );
+    GPU_MultiplyAndAssign( p, this->CameraTransform() );
+    
 	// base
 	GameObject::Render( event );
 	
@@ -357,7 +360,7 @@ void Scene::Render( Event& event ) {
 		GPU_ActivateShaderProgram( 0, NULL );
 		this->world->DrawDebugData();
 	}
-	
+    
 	// restore
 	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PopMatrix();

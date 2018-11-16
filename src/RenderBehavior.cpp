@@ -184,7 +184,9 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 			// push view matrices
 			GPU_MatrixMode( GPU_PROJECTION );
 			GPU_PushMatrix();
-			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+            float *p = GPU_GetProjection();
+            GPU_MatrixIdentity( p );
+            GPU_MatrixOrtho( p, 0, targ->w, 0, targ->h, -1024, 1024 );
 			GPU_MatrixMode( GPU_MODELVIEW );
 			GPU_PushMatrix();
 			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );

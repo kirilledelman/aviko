@@ -1260,7 +1260,9 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			// push matrices
 			GPU_MatrixMode( GPU_PROJECTION );
 			GPU_PushMatrix();
-			GPU_LoadIdentity();
+            float *p = GPU_GetProjection();
+            GPU_MatrixIdentity( p );
+            GPU_MatrixOrtho( p, 0, this->surface->w, 0, this->surface->h, -1024, 1024 );
 			GPU_MatrixMode( GPU_MODELVIEW );
 			GPU_PushMatrix();
 			GPU_LoadIdentity();

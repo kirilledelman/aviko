@@ -3,27 +3,14 @@
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/SDL2_gpu" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/SDL2_gpu" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/main-menu.js" afterPath="$PROJECT_DIR$/demo/scripts/main-menu.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/sprites.js" afterPath="$PROJECT_DIR$/demo/scripts/sprites.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_1.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_1.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_2.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_GLES_2.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1_BASE.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_1_BASE.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_2.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_2.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_3.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_OpenGL_3.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Headers/SDL_gpu_RendererImpl.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" afterPath="$PROJECT_DIR$/lib/OSX/sdl/SDL2_gpu.framework/Versions/A/Resources/Info.plist" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.hpp" afterPath="$PROJECT_DIR$/src/Application.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.cpp" afterPath="$PROJECT_DIR$/src/Image.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
     </list>
     <ignored path="nikogame.iws" />
@@ -48,8 +35,8 @@
       <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="22" column="91" lean-forward="false" selection-start-line="22" selection-start-column="91" selection-end-line="22" selection-end-column="91" />
+            <state relative-caret-position="609">
+              <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -541,7 +528,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="192737000" />
+    <option name="totallyTimeSpent" value="194861000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -606,46 +593,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1680">
-          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1650">
-          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1125">
-          <caret line="89" column="37" lean-forward="false" selection-start-line="89" selection-start-column="37" selection-end-line="89" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1344">
-          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1320">
-          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="900">
@@ -811,8 +758,209 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="22" column="91" lean-forward="false" selection-start-line="22" selection-start-column="91" selection-end-line="22" selection-end-column="91" />
+        <state relative-caret-position="98">
+          <caret line="23" column="8" lean-forward="false" selection-start-line="23" selection-start-column="8" selection-end-line="23" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1680">
+          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1650">
+          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1125">
+          <caret line="89" column="37" lean-forward="false" selection-start-line="89" selection-start-column="37" selection-end-line="89" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1344">
+          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1320">
+          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="900">
+          <caret line="89" column="37" lean-forward="false" selection-start-line="89" selection-start-column="37" selection-end-line="89" selection-end-column="37" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1344">
+          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1320">
+          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="228">
+          <caret line="33" column="12" lean-forward="true" selection-start-line="33" selection-start-column="12" selection-end-line="33" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1344">
+          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1320">
+          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="420">
+          <caret line="49" column="12" lean-forward="true" selection-start-line="49" selection-start-column="12" selection-end-line="49" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1224">
+          <caret line="116" column="5" lean-forward="true" selection-start-line="116" selection-start-column="5" selection-end-line="116" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="624">
+          <caret line="52" column="35" lean-forward="false" selection-start-line="52" selection-start-column="35" selection-end-line="52" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2544">
+          <caret line="212" column="33" lean-forward="true" selection-start-line="212" selection-start-column="33" selection-end-line="212" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/input.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="565">
+          <caret line="162" column="33" lean-forward="false" selection-start-line="162" selection-start-column="33" selection-end-line="162" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-79">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/inspector.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="121">
+          <caret line="540" column="40" lean-forward="false" selection-start-line="540" selection-start-column="40" selection-end-line="540" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/select.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-11">
+          <caret line="287" column="8" lean-forward="true" selection-start-line="287" selection-start-column="8" selection-end-line="287" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1119">
+          <caret line="122" column="4" lean-forward="false" selection-start-line="122" selection-start-column="4" selection-end-line="128" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="220">
+          <caret line="60" column="24" lean-forward="false" selection-start-line="60" selection-start-column="24" selection-end-line="60" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1680">
+          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="354">
+          <caret line="117" column="23" lean-forward="false" selection-start-line="117" selection-start-column="23" selection-end-line="117" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1650">
+          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="609">
+          <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
           <folding />
         </state>
       </provider>

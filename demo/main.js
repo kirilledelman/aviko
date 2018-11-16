@@ -14,16 +14,14 @@
 
  */
 
-
 // set screen size
 App.setWindowSize( 640, 480, 1 );
 App.windowResizable = true;
 App.fixedWindowResolution = false;
 
-App.scene.addChild( new GameObject( { x: 0, y: 0, render: new RenderShape( Shape.Circle, 100 ) } ) );
 
 // auto-configure controller
-/* var configurator = include( 'controller-configurator', {
+var configurator = include( 'controller-configurator', {
 	axis: [
 		{
 			id: 'horizontal',
@@ -120,6 +118,6 @@ function transitionScene( newScene, oldScene, dir ) {
 	// done
 	return newScene;
 }
-*/
+
 
 

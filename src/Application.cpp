@@ -126,11 +126,11 @@ void Application::InitRender() {
 	}
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode( 0, &current );
-	this->screenWidth = current.w;
-	this->screenHeight = current.h;
+	// this->screenWidth = current.w;
+	//this->screenHeight = current.h;
 	
 	// init GPU
-	this->screen = GPU_Init( current.w, current.h, GPU_DEFAULT_INIT_FLAGS );
+	this->screen = GPU_Init( this->screenWidth, this->screenHeight, GPU_DEFAULT_INIT_FLAGS );
 	if ( this->screen == NULL ) {
 		GPU_ErrorObject err = GPU_PopErrorCode();
 		printf( "Failed to initialize SDL_gpu library: %s.\n", err.details );
@@ -140,7 +140,8 @@ void Application::InitRender() {
 	this->windowWidth = this->screen->base_w;
 	this->windowHeight = this->screen->base_h;
 	GPU_UnsetVirtualResolution( this->screen );
-	GPU_SetBlendMode( this->screen->image, GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+    GPU_UnsetClip( this->screen );
+    GPU_UnsetViewport( this->screen );
 	GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
 	if ( !GPU_AddDepthBuffer( this->screen ) ){
 		printf( "Warning: depth buffer is not supported.\n" );
@@ -150,6 +151,8 @@ void Application::InitRender() {
 	GPU_SetDepthFunction( this->screen, GPU_ComparisonEnum::GPU_LEQUAL );
 	this->screen->camera.z_near = -1024;
 	this->screen->camera.z_far = 1024;
+    this->screen->camera.use_centered_origin = false;
+    GPU_EnableCamera( this->screen, false );
 	
 	SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
 	
@@ -208,8 +211,8 @@ void Application::UpdateBackscreen() {
 	// actual size
 	int ww = this->windowWidth / this->windowScalingFactor,
 		hh = this->windowHeight / this->windowScalingFactor;
-	
-	// if resize / recreate is needed
+
+    // if resize / recreate is needed
 	if ( !this->backScreen || this->backScreen->base_w != ww || this->backScreen->base_h != hh ) {
 		
 		// if already have a back screen
@@ -243,8 +246,7 @@ void Application::UpdateBackscreen() {
 		GPU_SetDepthTest( this->backScreen->target, true );
 		GPU_SetDepthWrite( this->backScreen->target, true );
 		GPU_SetDepthFunction( this->backScreen->target, GPU_ComparisonEnum::GPU_LEQUAL );
-		this->backScreen->target->camera.z_near = -1024;
-		this->backScreen->target->camera.z_far = 1024;
+        GPU_EnableCamera( this->backScreen->target, false );
 	}
 	
 	// update sizes to center small screen inside large
@@ -261,7 +263,7 @@ void Application::UpdateBackscreen() {
 	// scale for mouse position calculation
 	this->backscreenScale = min( (float) this->backScreen->base_w / (float) this->backScreenDstRect.w,
 								(float) this->backScreen->base_h / (float) this->backScreenDstRect.h );
-
+    
 }
 
 
@@ -1471,19 +1473,20 @@ void Application::GameLoop() {
 		
 		// clear with scene's bg color
 		GPU_ClearColor( this->screen, scene->backgroundColor->rgba );
-		
+        GPU_ResetProjection();
+        
 		// render scene graph
 		if ( scene ) {
 			// render to backscreen
 			event.name = EVENT_RENDER;
-			event.behaviorParam = this->backScreen->target;
+            event.behaviorParam = this->backScreen->target;
 			event.behaviorParam2 = &this->blendTarget;
 			scene->Render( event );
 			event.behaviorParam = NULL;
 			event.skipObject = NULL;
 			event.stopped = false; // reused
 		}
-
+        
 		// copy to main screen and flip
 		GPU_ActivateShaderProgram(0, NULL);
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );

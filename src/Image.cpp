@@ -374,25 +374,28 @@ bool Image::FromTexture( string &s ) {
 	// load texture
 	ImageResource* res = app.textureManager.Get( s.c_str() );
 	if ( res && res->error == ResourceError::ERROR_NONE ) {
-		
-		// push view matrices
-		GPU_MatrixMode( GPU_PROJECTION );
-		GPU_PushMatrix();
-		GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
-		GPU_MatrixMode( GPU_MODELVIEW );
-		GPU_PushMatrix();
-		GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
-		
+				
 		// make image
 		GPU_Image* src = res->mainResource ? res->mainResource->image : res->image;
 		GPU_Image* img = GPU_CreateImage( res->frame.actualWidth, res->frame.actualHeight, app.backScreen->format );
 		if ( !img ) return false;
+        
 		img->anchor_x = img->anchor_y = 0;
 		GPU_UnsetImageVirtualResolution( img );
 		GPU_SetImageFilter( img, GPU_FILTER_NEAREST );
 		GPU_SetSnapMode( img, GPU_SNAP_NONE );
 		GPU_LoadTarget( img );
 		
+        // push view matrices
+        GPU_MatrixMode( GPU_PROJECTION );
+        GPU_PushMatrix();
+        float *p = GPU_GetProjection();
+        GPU_MatrixIdentity( p );
+        GPU_MatrixOrtho( p, 0, img->w, 0, img->h, -1024, 1024 );
+        GPU_MatrixMode( GPU_MODELVIEW );
+        GPU_PushMatrix();
+        GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+        
 		// draw to it
 		if ( res->frame.rotated ) {
 			GPU_BlitRotate( src, &res->frame.locationOnTexture, img->target, res->frame.trimOffsetX, res->frame.trimOffsetY + res->frame.locationOnTexture.w, -90 );
@@ -518,6 +521,7 @@ void Image::Draw( GameObject* go, bool toMask, float x, float y, float angle, fl
 	// set view matrix
 	float mat[ 16 ];
 	GPU_MatrixIdentity( mat );
+    GPU_MatrixOrtho( mat, 0, curTarget->w, 0, curTarget->h, -1024, 1024 );
 	GPU_MatrixTranslate( mat, x, y, 0 );
 	GPU_MatrixRotate( mat, angle, 0, 0, 1 );
 	GPU_MatrixScale( mat, scaleX, scaleY, 1 );
@@ -553,7 +557,9 @@ void Image::ApplyMask( bool inverted ) {
 	// push
 	GPU_MatrixMode( GPU_PROJECTION );
 	GPU_PushMatrix();
-	GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
+    float *p = GPU_GetProjection();
+    GPU_MatrixIdentity( p );
+    GPU_MatrixOrtho( p, 0, this->image->w, 0, this->image->h, -1024, 1024 );
 	GPU_MatrixMode( GPU_MODELVIEW );
 	GPU_PushMatrix();
 	GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
