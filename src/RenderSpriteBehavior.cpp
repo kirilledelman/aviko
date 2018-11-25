@@ -14,6 +14,7 @@ RenderSpriteBehavior::RenderSpriteBehavior( ScriptArguments* args ) : RenderSpri
 	
 	// add scriptObject
 	script.NewScriptObject<RenderSpriteBehavior>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// add defaults
 	RenderBehavior::AddDefaults();	

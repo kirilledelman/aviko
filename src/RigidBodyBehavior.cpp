@@ -13,6 +13,7 @@ RigidBodyBehavior::RigidBodyBehavior( ScriptArguments* args ) : RigidBodyBehavio
 	
 	// add scriptObject
 	script.NewScriptObject<RigidBodyBehavior>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// defaults
 	this->massData.center.Set( 0, 0 );
@@ -24,6 +25,7 @@ RigidBodyBehavior::RigidBodyBehavior( ScriptArguments* args ) : RigidBodyBehavio
 	if ( args && args->ReadArguments( 1, TypeObject, &initObj ) ) {
 		script.CopyProperties( initObj, this->scriptObject );
 	}
+    
 }
 
 // init

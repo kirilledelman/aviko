@@ -641,11 +641,11 @@ public:
 	ScriptHost() {
 		
 		// init JS context
-        this->jsr = JS_NewRuntime(1L * 1024 * 1024, JS_USE_HELPER_THREADS );
-        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
-
-//        this->jsr = JS_NewRuntime(32L * 1024 * 1024, JS_USE_HELPER_THREADS );
+//        this->jsr = JS_NewRuntime(1L * 1024 * 1024, JS_USE_HELPER_THREADS );
 //        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
+
+        this->jsr = JS_NewRuntime(4L * 1024 * 1024, JS_NO_HELPER_THREADS );
+        this->js = this->jsr ? JS_NewContext( this->jsr, 8192 ) : NULL;
 		if ( !this->js || !this->jsr ) {
 			printf( "Can't initialize Javascript runtime or context.\n" );
 			exit( 1 );
@@ -673,7 +673,7 @@ public:
          13    Check internal hashtables on minor GC.
          14    Perform a shrinking collection every frequency allocations.
         */
-        JS_SetGCZeal( this->js, 0, 0 );
+        // JS_SetGCZeal( this->js, 14, 512 );
         
 		// set error handler
 		JS_SetErrorReporter( this->js, this->ErrorReport );
@@ -986,21 +986,21 @@ public:
 	
 	/// sets property on script object
 	void SetProperty( const char *propName, ArgValue value, void* obj ) {
-		//JSAutoRequest req( this->js );
+        if ( !obj ) { printf( "Trying to set property %s on NULL object. Out of memory?\n", propName ); exit( 1 ); }
 		jsval val = value.toValue();
 		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
 	}
 	
 	/// sets property on script object (pointer version)
 	void SetProperty( const char *propName, ArgValue *value, void* obj ) {
-		//JSAutoRequest req( this->js );
+        if ( !obj ) { printf( "Trying to set property %s on NULL object. Out of memory?\n", propName ); exit( 1 ); }
 		jsval val = value->toValue();
 		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
 	}
 	
 	/// sets property on script object (string version)
 	void SetProperty( const char *propName, const char* value, void* obj ) {
-		//JSAutoRequest req( this->js );
+        if ( !obj ) { printf( "Trying to set property %s on NULL object. Out of memory?\n", propName ); exit( 1 ); }
 		JSString* str = JS_NewStringCopyZ( this->js, value );
 		jsval val = STRING_TO_JSVAL( str );
 		JS_SetProperty( this->js, (JSObject*) obj, propName, &val );
@@ -1440,46 +1440,22 @@ public:
 	}
 	
 	/// protect / release script object from garbage collecton
-	void ProtectObject( void ** obj, bool protect ) {
+	/* void ProtectObject( void ** obj, bool protect ) {
 		
 		if ( !script.js ) return; // if called after shutdown, ignore
 
 		// protect
 		if ( protect ) {
-			JS_AddObjectRoot( script.js, (JSObject**) obj );
+			// JS_AddObjectRoot( script.js, (JSObject**) obj );
 		} else {
-			JS_RemoveObjectRoot( script.js, (JSObject**) obj );
+			// JS_RemoveObjectRoot( script.js, (JSObject**) obj );
 		}
-	}
+	}*/
 	
 	/// call garbage collector
 	void GC() {
 		// call garbage collection in Spidermonkey
-        
-        /*
-         0    Normal amount of collection.  The default: no additional collections are performed.
-         1    Collect when roots are added or removed.
-         2    Collect when every frequency allocations.
-         3    Collect on window paints.
-         4    Verify pre write barriers between instructions.
-         5    Verify pre write barriers between window paints.
-         6    Verify stack rooting.
-         7    Collect the nursery every frequency nursery allocations.
-         8    Incremental GC in two slices: 1) mark roots 2) finish collection.
-         9    Incremental GC in two slices: 1) mark all 2) new marking and finish.
-         10    Incremental GC in multiple slices.
-         11    Verify post write barriers between instructions.
-         12    Verify post write barriers between paints.
-         13    Check internal hashtables on minor GC.
-         14    Perform a shrinking collection every frequency allocations.
-         */
-        
-        JS_SetGCZeal( this->js, 8, 0 );
 		JS_GC( this->jsr );
-        JS_SetGCZeal( this->js, 14, 0 );
-        JS_GC( this->jsr );
-
-        JS_SetGCZeal( this->js, 0, 0 );
 	}
 	
 	void DumpObject( void* obj ) {

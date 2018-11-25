@@ -10,6 +10,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 
 	// add scriptObject
 	script.NewScriptObject<RenderShapeBehavior>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// polypoints
 	this->polyPoints = new TypedVector( NULL );
@@ -143,6 +144,7 @@ RenderShapeBehavior::RenderShapeBehavior( ScriptArguments* args ) : RenderShapeB
 			}
 		}
 	}
+    
 }
 
 // init

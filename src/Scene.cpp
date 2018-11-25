@@ -15,6 +15,7 @@ Scene::Scene( ScriptArguments* args ) : Scene() {
 	
 	// add scriptObject
 	script.NewScriptObject<Scene>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// create color object
 	backgroundColor = new Color( NULL );
@@ -37,7 +38,7 @@ Scene::Scene( ScriptArguments* args ) : Scene() {
 			script.CopyProperties( args->args[ 0 ].value.objectValue, this->scriptObject );
 		}
 	}
-	
+    
 }
 
 
@@ -75,7 +76,13 @@ Scene::~Scene() {
         this->particleSystems.back()->SetScene(NULL);
     }
     
-    // all bodies
+    // remove all bodies
+    b2Body* b = this->world->GetBodyList();
+    while ( b ) {
+        RigidBodyBehavior* rig = (RigidBodyBehavior*) b->GetUserData();
+        b = b->GetNext();
+        if ( rig ) rig->RemoveBody();
+    }
     
 	// printf( "Scene(%s) destructor on %p\n", this->name.c_str(), this );
 	// TODO ? should all bodies, joints, etc. still in the world, be checked and destroyed first?

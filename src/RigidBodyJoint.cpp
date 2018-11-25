@@ -11,6 +11,7 @@ RigidBodyJoint::RigidBodyJoint( ScriptArguments* args ) {
 	
 	// add scriptObject
 	script.NewScriptObject<RigidBodyJoint>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// arguments?
 	if ( args ) {
@@ -89,6 +90,7 @@ RigidBodyJoint::RigidBodyJoint( ScriptArguments* args ) {
 			
 		}
 	}
+    
 }
 
 RigidBodyJoint::~RigidBodyJoint() {

@@ -26,13 +26,13 @@ UIBehavior::UIBehavior( ScriptArguments* args ) : UIBehavior() {
 	
 	// add scriptObject
 	script.NewScriptObject<UIBehavior>( this );
-
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
+    
 	// obj argument - init object
 	void *initObj = NULL;
 	if ( args && args->ReadArguments( 1, TypeObject, &initObj ) ) {
 		script.CopyProperties( initObj, this->scriptObject );
 	}
-	
 }
 
 // init

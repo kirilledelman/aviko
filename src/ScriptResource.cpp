@@ -25,7 +25,7 @@ ScriptResource::ScriptResource( const char* originalKey, string& path, string& e
 	} else {
 		this->error = ERROR_COMPILE;
 		printf( "Compilation error in %s, check syntax.\n", path.c_str() );
-		JS_ReportPendingException( script.js );		
+		if ( JS_IsExceptionPending( script.js ) ) JS_ReportPendingException( script.js );
 	}
 	free( (void*) buf );	
 }

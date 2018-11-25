@@ -29,7 +29,7 @@ TypedVector::TypedVector( ScriptArguments* args ) {
 		// default
 		script.SetProperty( "type", ArgValue( "Number" ), this->scriptObject );
 	}
-	
+    
 }
 
 TypedVector::~TypedVector() {

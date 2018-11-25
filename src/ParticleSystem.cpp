@@ -11,6 +11,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
     
     // add scriptObject
     script.NewScriptObject<ParticleSystem>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
     
     // read params
     void *initObj = NULL;
@@ -22,11 +23,18 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
         script.CopyProperties( initObj, this->scriptObject );
 
     }
+    
 }
 
 ParticleSystem::~ParticleSystem() {
     
     this->RemoveFromWorld();
+    
+    // remove all groups
+    unordered_set<ParticleGroupBehavior*>::iterator it;
+    while ( ( it = this->groups.begin() ) != this->groups.end() ) {
+        (*it)->SetSystem( NULL );
+    }
     
 }
 
@@ -419,11 +427,14 @@ void ParticleSystem::RemoveFromWorld() {
     
     if ( this->particleSystem && this->scene ) {
         
+        printf( "ParticleSystem::RemoveFromWorld\n" );
+        
         // remove all groups
         unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin();
         while ( it != this->groups.end() ) {
             ParticleGroupBehavior* g = *it;
             g->RemoveBody();
+            printf( "ParticleSystem::RemoveFromWorld->removebody %p!\n", g );
             it++;
         }
 

@@ -14,6 +14,7 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     
     // add scriptObject
     script.NewScriptObject<ParticleGroupBehavior>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
     
     // defaults
     this->groupDef.flags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup;
@@ -24,6 +25,7 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     if ( args && args->ReadArguments( 1, TypeObject, &initObj ) ) {
         script.CopyProperties( initObj, this->scriptObject );
     }
+    
 }
 
 // init
@@ -188,7 +190,6 @@ void ParticleGroupBehavior::SetSystem( ParticleSystem* newSystem ) {
             
             // add self
             newSystem->groups.insert( this );
-            printf( "added ParticleGroupBehavior %p to %p.groups, size=%d\n", this, newSystem, newSystem->groups.size() );
             
             // new system is on scene, and this object isn't an orphan
             if ( newSystem->scene && !this->gameObject->orphan ) {

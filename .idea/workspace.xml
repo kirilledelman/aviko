@@ -2,33 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleSystem.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/BodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/BodyBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.hpp" afterPath="$PROJECT_DIR$/src/GameObject.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.cpp" afterPath="$PROJECT_DIR$/src/Image.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderShapeBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyJoint.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyJoint.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyShape.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyShape.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.hpp" afterPath="$PROJECT_DIR$/src/Scene.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.cpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptResource.cpp" afterPath="$PROJECT_DIR$/src/ScriptResource.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Sound.cpp" afterPath="$PROJECT_DIR$/src/Sound.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Tween.cpp" afterPath="$PROJECT_DIR$/src/Tween.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TypedVector.cpp" afterPath="$PROJECT_DIR$/src/TypedVector.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.cpp" afterPath="$PROJECT_DIR$/src/UIBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -49,21 +42,21 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1665">
-              <caret line="125" column="22" lean-forward="false" selection-start-line="125" selection-start-column="22" selection-end-line="125" selection-end-column="22" />
+            <state relative-caret-position="73">
+              <caret line="87" column="14" lean-forward="true" selection-start-line="87" selection-start-column="14" selection-end-line="87" selection-end-column="14" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="physics.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="213">
-              <caret line="654" column="27" lean-forward="false" selection-start-line="654" selection-start-column="27" selection-end-line="654" selection-end-column="27" />
+            <state relative-caret-position="138">
+              <caret line="649" column="20" lean-forward="true" selection-start-line="649" selection-start-column="20" selection-end-line="649" selection-end-column="20" />
               <folding />
             </state>
           </provider>
@@ -195,8 +188,8 @@
         <option value="$PROJECT_DIR$/demo/scripts/animation.js" />
         <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
         <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
-        <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/demo/scripts/physics.js" />
+        <option value="$PROJECT_DIR$/demo/main.js" />
       </list>
     </option>
   </component>
@@ -556,12 +549,12 @@
       <workItem from="1542746471700" duration="676000" />
       <workItem from="1542815816386" duration="22000" />
       <workItem from="1543079660400" duration="2524000" />
-      <workItem from="1543158745145" duration="2103000" />
+      <workItem from="1543158745145" duration="3145000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="200593000" />
+    <option name="totallyTimeSpent" value="201635000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -978,18 +971,18 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="213">
-          <caret line="654" column="27" lean-forward="false" selection-start-line="654" selection-start-column="27" selection-end-line="654" selection-end-column="27" />
+        <state relative-caret-position="73">
+          <caret line="87" column="14" lean-forward="true" selection-start-line="87" selection-start-column="14" selection-end-line="87" selection-end-column="14" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1665">
-          <caret line="125" column="22" lean-forward="false" selection-start-line="125" selection-start-column="22" selection-end-line="125" selection-end-column="22" />
+        <state relative-caret-position="138">
+          <caret line="649" column="20" lean-forward="true" selection-start-line="649" selection-start-column="20" selection-end-line="649" selection-end-column="20" />
           <folding />
         </state>
       </provider>

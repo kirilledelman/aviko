@@ -13,6 +13,7 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 	
 	// add scriptObject
 	script.NewScriptObject<GameObject>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 
 	// event mask
 	this->eventMask = new TypedVector( NULL );
@@ -32,7 +33,7 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 		// if have object param, copy properties from it
 		if ( obj ) script.CopyProperties( obj, this->scriptObject );
 	}
-	
+    
 }
 
 /// base constructor

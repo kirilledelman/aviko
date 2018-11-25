@@ -10,6 +10,7 @@ Tween::Tween( ScriptArguments* args ) {
 	
 	// add scriptObject
 	script.NewScriptObject<Tween>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// with arguments
 	if ( args && args->args.size() ) {
@@ -67,7 +68,7 @@ Tween::Tween( ScriptArguments* args ) {
 		// start, if valid
 		this->active( true );
 	}
-	
+    
 }
 
 /// destructor

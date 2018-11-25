@@ -10,6 +10,7 @@ Image::Image( ScriptArguments* args ) {
 	
 	// add scriptObject
 	script.NewScriptObject<Image>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// with arguments
 	if ( args ) {

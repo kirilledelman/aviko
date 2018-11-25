@@ -10,6 +10,7 @@ RenderTextBehavior::RenderTextBehavior( ScriptArguments* args ) : RenderTextBeha
 	
 	// add scriptObject
 	script.NewScriptObject<RenderTextBehavior>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// add defaults
 	RenderBehavior::AddDefaults();

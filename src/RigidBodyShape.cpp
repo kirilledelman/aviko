@@ -9,6 +9,7 @@ RigidBodyShape::RigidBodyShape( ScriptArguments* args ) {
 	
 	// add scriptObject
 	script.NewScriptObject<RigidBodyShape>( this );
+    RootedObject robj( script.js, (JSObject*) this->scriptObject );
 	
 	// polypoints
 	this->polyPoints = new TypedVector( NULL );
@@ -64,7 +65,7 @@ RigidBodyShape::RigidBodyShape( ScriptArguments* args ) {
 				}
 			}
 		}
-
+    
 }
 
 RigidBodyShape::~RigidBodyShape() {}
