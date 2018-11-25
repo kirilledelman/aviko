@@ -5,13 +5,33 @@
 /// static event stack
 vector<Event*> Event::eventStack;
 
+#ifdef DEBUG_GC
+unordered_map<string, unordered_set<ScriptableClass*>> allScriptableObjects;
+#endif
+
 // destructor
 ScriptableClass::~ScriptableClass() {
 	
-	// script
+    // script
 	if ( this->scriptObject != NULL && script.js != NULL ) {
 		
-		// remove from all scheduled calls
+#ifdef DEBUG_GC
+        // remove from tracking
+        string cname = this->scriptClassName;
+        unordered_map<string, unordered_set<ScriptableClass*>>::iterator it = allScriptableObjects.find( cname );
+        if ( it == allScriptableObjects.end() ) {
+            printf( "~%s %p %s - classname not found in allScriptableObjects\n", cname.c_str(), this->debugDescription.c_str() );
+        } else {
+            unordered_set<ScriptableClass*>::iterator ti = it->second.find( this );
+            if ( ti == it->second.end() ) {
+                printf( "~%s %p %s - object not found in allScriptableObjects[%s]\n", cname.c_str(), this->debugDescription.c_str(), cname.c_str() );
+            } else {
+                it->second.erase( ti );
+                printf( "~%s %p %s\n", cname.c_str(), this, this->debugDescription.c_str() );
+            }
+        }
+#endif
+        // remove from all scheduled calls
 		ScriptableClass::CancelAsync( this->scriptObject, -1 );
 		ScriptableClass::CancelDebouncer( this->scriptObject, "" );
 		

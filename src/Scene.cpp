@@ -7,6 +7,7 @@
 #include "SampleBehavior.hpp"
 
 
+
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
 
@@ -25,6 +26,10 @@ Scene::Scene( ScriptArguments* args ) : Scene() {
 	ArgValue dv( "String" );
 	this->eventMask->InitWithType( dv );	
 	
+    // default particle sys
+    ParticleSystem* ps = new ParticleSystem( NULL );
+    ps->SetScene( this );
+    
 	// if have at least one argument
 	if ( args && args->args.size() >= 1 ) {
 		// type object - copy props
@@ -53,9 +58,9 @@ Scene::Scene() {
 	b2BodyDef bd;
 	bd.type = b2_staticBody;
 	this->groundBody = this->world->CreateBody( &bd );
-	
+
 	// set debug draw
-	this->SetFlags( b2Draw::e_shapeBit | b2Draw::e_pairBit | b2Draw::e_jointBit );
+    this->SetFlags( b2Draw::e_shapeBit | b2Draw::e_pairBit | b2Draw::e_jointBit | b2Draw::e_particleBit );
 	this->world->SetDebugDraw( this );
 	this->world->SetContactListener( this );
 	this->world->SetContactFilter( this );
@@ -65,14 +70,21 @@ Scene::Scene() {
 // scene clean up
 Scene::~Scene() {
 	
+    // remove all particle systems
+    while( this->particleSystems.size() ) {
+        this->particleSystems.back()->SetScene(NULL);
+    }
+    
+    // all bodies
+    
 	// printf( "Scene(%s) destructor on %p\n", this->name.c_str(), this );
-	
+	// TODO ? should all bodies, joints, etc. still in the world, be checked and destroyed first?
+    
 	// destroy world
 	delete this->world;
 	this->world = NULL;
 	this->groundBody = NULL;
 	
-	// printf( "###\t~Scene %s\n", this->name.c_str() );
 }
 
 
@@ -191,6 +203,77 @@ void Scene::InitClass() {
 		return val;
 	}));
 	
+    script.AddProperty<Scene>
+    ( "particleSystems",
+     static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ) { return ((Scene*) go)->GetParticleSystemsVector(); }),
+     static_cast<ScriptArrayCallback>([](void *go, ArgValueVector* in ){ return ((Scene*) go)->SetParticleSystemsVector( in ); }),
+     PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
+     );
+    
+    script.AddProperty<Scene>
+    ("particleSystem",
+     static_cast<ScriptObjectCallback>([](void* s, void* val ){ // return last one
+        Scene* self = (Scene*) s;
+        return self->particleSystems.size() ? self->particleSystems.back()->scriptObject : NULL;
+    }),
+     static_cast<ScriptObjectCallback>([](void* s, void* val ){
+        Scene* self = (Scene*) s;
+        ParticleSystem* newPS = script.GetInstance<ParticleSystem>( (JSObject*) val );
+        vector<ParticleSystem*>::iterator it, end = self->particleSystems.end();
+        
+        // error if object is not ParticleSystem
+        if ( !newPS && val ) {
+            script.ReportError( ".particleSystem assignment: Object is not ParticleSystem instance" );
+            return val;
+        }
+        
+        // new scene is provided
+        if ( newPS ) {
+            // check if it's already in the stack
+            it = find( self->particleSystems.begin(), end, newPS );
+            if ( it != end ) {
+                // move it to end
+                self->particleSystems.erase( it );
+            }
+            // add at the end
+            newPS->SetScene( self );
+            
+        // setting PS to null, removes all particle systems
+        } else {
+            // clear
+            int n;
+            while( ( n = (int) self->particleSystems.size() ) > 0 ) self->particleSystems[ n - 1 ]->SetScene( NULL );
+        }
+        
+        return val;
+    }), PROP_ENUMERABLE );
+    
+    script.AddProperty<Scene>
+    ( "numParticleSystems",
+     static_cast<ScriptIntCallback>([](void* go, int) { return ((Scene*) go)->particleSystems.size(); }),
+     static_cast<ScriptIntCallback>([](void* go, int n ) {
+        Scene *g = (Scene*) go;
+        int curSize = (int) g->particleSystems.size();
+        n = max( 0, n );
+        // removing particle systems
+        if ( curSize > n ) {
+            while( curSize > 0 && curSize > n ) {
+                curSize--;
+                ParticleSystem* c = g->particleSystems[ curSize ];
+                c->SetScene( NULL );
+            }
+        // adding
+        } else if ( curSize < n ) {
+            while( curSize < n ) {
+                ParticleSystem* c = new ParticleSystem( NULL );
+                c->SetScene( g );
+                curSize++;
+            }
+        }
+        return curSize;        
+    }),
+     PROP_ENUMERABLE);
+    
 	// functions
 
 	script.DefineFunction<Scene>
@@ -266,6 +349,108 @@ void Scene::InitClass() {
 		delete res;
 		return true;
 	}));
+    
+    script.DefineFunction<Scene>
+    ( "getParticleSystem",
+     static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+        
+        // validate params
+        const char* error = "usage: getParticleSystem( Int position )";
+        int pos = -1;
+        Scene* self = (Scene*) go;
+        ParticleSystem* ps = NULL;
+        
+        // if not a valid call report error
+        if ( !sa.ReadArguments( 1, TypeInt, &pos ) ) {
+            script.ReportError( error );
+            return false;
+        }
+        
+        // evaluate
+        int num = (int) self->particleSystems.size();
+        if ( pos < 0 ) pos = num + pos;
+        if ( pos >= 0 && pos < num ) ps = self->particleSystems[ pos ];
+        
+        // return object
+        sa.ReturnObject( ps ? ps->scriptObject : NULL );
+        return true;
+    }));
+    
+    script.DefineFunction<Scene>
+    ("addParticleSystem", //
+     static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+        // validate params
+        const char* error = "usage: addParticleSystem( [ ParticleSystem ps [, Integer desiredPosition ] )";
+        void* obj = NULL;
+        ParticleSystem* other = NULL;
+        
+        // read args
+        if ( sa.ReadArguments( 0, TypeObject, &obj ) ) {
+            // no object?
+            if ( !obj ) {
+                // make new
+                other = new ParticleSystem( NULL );
+            } else {
+                other = script.GetInstance<ParticleSystem>( obj );
+            }
+        }
+        
+        // validate
+        if ( !other ){
+            script.ReportError( error );
+            return false;
+        }
+        
+        // optional pos
+        int pos = -1;
+        sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
+        
+        // all good
+        Scene* self = (Scene*) go;
+        other->SetScene( self, pos );
+        
+        // return added object
+        sa.ReturnObject( other->scriptObject );
+        return true;
+    }));
+    
+    script.DefineFunction<Scene>
+    ( "removeParticleSystem",
+     static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
+        
+        // validate params
+        const char* error = "usage: removeParticleSystem( ParticleSystem obj | Int removePosition )";
+        Scene* self = (Scene*) go;
+        ParticleSystem* other = NULL;
+        void* obj = NULL;
+        int pos = -1;
+        
+        // argument is object?
+        if ( sa.ReadArguments( 1, TypeObject, &obj ) ) {
+            other = script.GetInstance<ParticleSystem>( obj );
+            if ( !other ) error = "removeParticleSystem - parameter object is null";
+            // argument is int?
+        } else if ( sa.ReadArguments( 1, TypeInt, &pos ) ) {
+            int num = (int) self->particleSystems.size();
+            if ( pos < 0 ) pos = num + pos;
+            if ( pos < 0 || pos >= num ) error = "removeParticleSystem - index out of range";
+            else other = self->particleSystems[ pos ];
+        }
+        
+        // if not a valid call report error
+        if ( !other ) {
+            script.ReportError( error );
+            return false;
+        }
+        
+        // return the object
+        sa.ReturnObject( other->scriptObject );
+        
+        // remove
+        other->SetScene( NULL );
+        
+        return true;
+    }));
 	
 }
 
@@ -279,6 +464,11 @@ void Scene::TraceProtectedObjects( vector<void **> &protectedObjects ) {
 	// focused ui
 	if ( this->focusedUI ) protectedObjects.push_back( &this->focusedUI->scriptObject );
 	
+    // particle systems
+    for ( size_t i = 0, ns = this->particleSystems.size(); i < ns; i++ ) {
+        protectedObjects.push_back( &this->particleSystems[ i ]->scriptObject );
+    }
+    
 	// call super
 	GameObject::TraceProtectedObjects( protectedObjects );
 }
@@ -591,7 +781,10 @@ void Scene::SimulatePhysics() {
 		// keep going
 		body = body->GetNext();
 		
-	};
+	}
+    
+    // particle systems
+    // 
 	
 	// dispatch physics events
 	for ( size_t i = 0, ne = physicsEvents.size(); i < ne; i++ ){
@@ -599,6 +792,59 @@ void Scene::SimulatePhysics() {
 	}
 	
 }
+
+
+/// returns ArgValueVector with each PS's scriptObject
+ArgValueVector* Scene::GetParticleSystemsVector() {
+    ArgValueVector* vec = new ArgValueVector();
+    size_t nc = this->particleSystems.size();
+    vec->resize( nc );
+    for ( size_t i = 0; i < nc; i++ ){
+        ArgValue &val = (*vec)[ i ];
+        val.type = TypeObject;
+        val.value.objectValue = this->particleSystems[ i ]->scriptObject;
+    }
+    return vec;
+}
+
+/// overwrites particle systems, skips nulls
+ArgValueVector* Scene::SetParticleSystemsVector( ArgValueVector* in ) {
+    // go over passed array
+    int nc = (int) in->size();
+    size_t curSize;
+    size_t i = 0;
+    for (; i < nc; i++ ){
+        // each element
+        ArgValue &val = (*in)[ i ];
+        ParticleSystem* go = NULL;
+        curSize = this->particleSystems.size();
+        if ( val.type == TypeObject && val.value.objectValue != NULL ) {
+            go = script.GetInstance<ParticleSystem>( val.value.objectValue );
+        }
+        // if a valid gameobject, and not same as one at this spot
+        if ( go && ( i >= curSize || go != this->particleSystems[ i ] ) ) {
+            // if there's a ps here
+            if ( i < curSize ) {
+                // remove it
+                this->particleSystems[ i ]->SetScene( NULL );
+            }
+            // insert in this spot
+            go->SetScene( this, (int) i );
+            
+            // otherwise
+        } else {
+            // skip over this spot
+        }
+    }
+    // remove remaining
+    if ( in->size() < this->particleSystems.size() ) {
+        for ( int j = (int) this->particleSystems.size() - 1; j >= nc; j-- ){ // >= ?
+            this->particleSystems[ j ]->SetScene( NULL );
+        }
+    }
+    return in;
+}
+
 
 
 /* MARK:	-				Box2d debug draw
@@ -674,6 +920,11 @@ void Scene::DrawTransform(const b2Transform& xf) {
 }
 
 void Scene::DrawParticles(const b2Vec2 *centers, float32 radius, const b2ParticleColor *colors, int32 count) {
+    b2Color clr = { 0, 0, 0 };
+    for ( int32 i = 0; i < count; i++ ) {
+        if ( colors ) clr = colors[ i ].GetColor();
+        this->DrawCircle( centers[ i ], radius, clr );
+    }
 }
 
 void Scene::DrawPoint(const b2Vec2 &p, float32 size, const b2Color &color) {

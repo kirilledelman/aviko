@@ -34,6 +34,13 @@ TypedVector::TypedVector( ScriptArguments* args ) {
 
 TypedVector::~TypedVector() {
 	
+#ifdef DEBUG_GC
+    // description
+    static char buf[128];
+    sprintf( buf, "%s[%d]", this->typeName.c_str(), this->GetLength() );
+    this->debugDescription = buf;
+#endif
+    
 	// free container
 	if ( container != NULL ) {
 		if ( type == TypeInt ){

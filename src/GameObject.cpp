@@ -13,7 +13,7 @@ GameObject::GameObject( ScriptArguments* args ) : GameObject() {
 	
 	// add scriptObject
 	script.NewScriptObject<GameObject>( this );
-	
+
 	// event mask
 	this->eventMask = new TypedVector( NULL );
 	ArgValue dv( "String" );
@@ -42,11 +42,18 @@ GameObject::GameObject() {
 /// destructor
 GameObject::~GameObject() {
 	
-	// printf( "~GameObject %p (%s)\n", this, this->name.c_str() );
-	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
 
+#ifdef DEBUG_GC
+    // description
+    static char buf[128];
+    if ( this->name.length() ) {
+        sprintf( buf, "\"%s\"", this->name.substr( 0, 64 ).c_str() );
+        this->debugDescription = buf;
+    }
+#endif
+    
 }
 
 

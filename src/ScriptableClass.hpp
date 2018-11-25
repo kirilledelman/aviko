@@ -148,7 +148,6 @@ public:
 			}
 			it++;
 		}
-		
 	}
 
 	// async, debounce
@@ -282,6 +281,10 @@ public:
 		return NULL;
 	}
 	
+#ifdef DEBUG_GC
+    string debugDescription; // used when destructor prints out deallocated objects
+#endif
+    
 // init
 	
 	// constructor

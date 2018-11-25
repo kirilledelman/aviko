@@ -180,7 +180,7 @@ new (function (){
 	
 	// example picker
 	var selector = rightColumn.addChild( 'ui/select', {
-		items: [ "Dynamic bodies", "Kinematic bodies", "Joints", "Sensors" ],
+		items: [ "Dynamic bodies", "Kinematic bodies", "Joints", "Sensors", "Particles" ],
 		margin: [ 8, 4, 8, 4 ]
 	} );
 	
@@ -619,16 +619,64 @@ new (function (){
 			}
 		}
 	} );
-	
-	// example selector activates panel corresponding to example
+
+    // example 5
+    var e5 = rightColumn.addChild( 'ui/panel', {
+        layoutType: Layout.Vertical,
+        active: false,
+        children: [
+            new GameObject( 'ui/text', { color: 0x0, size: 12, multiLine: true,
+                text:
+                "^BParticles^b\n\n"
+            } )
+        ],
+        activeChanged: function () {
+            if ( this.active ) {
+                makeBox();
+
+                // rectangle
+                var b = container.addChild( new GameObject({
+                    name: "Box",
+                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x666633, x: 40, y: 20, lineThickness: 2 } ),
+                    body: new Body( {
+                        shape: new BodyShape( {
+                            type: Shape.Rectangle,
+                            x: 40, y: 20,
+                            density: 20,
+                            bounce: 0.2,
+                        } ),
+                    } ),
+                    x: 150, y: 10, ui: new UI( { focusable: true } ),
+                }));
+                b.ui.__proto__ = draggableObjectUIProto;
+
+                // particles
+                b = container.addChild( new GameObject({
+                    name: "Particles",
+                    // render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x666633, x: 40, y: 20, lineThickness: 2 } ),
+                    body: new Particles( {
+                        shape: new BodyShape( {
+                            type: Shape.Rectangle,
+                            x: 40, y: 20
+                        } ),
+                    } ),
+                    x: 10, y: 50
+                }));
+            }
+        }
+    } );
+
+    App.debugDraw = true;
+
+    // example selector activates panel corresponding to example
 	selector.change = function () {
-		var examples = [ e1, e2, e3, e4 ];
+		var examples = [ e1, e2, e3, e4, e5 ];
 		for ( i in examples ) examples[ i ].active = ( i == this.selectedIndex );
 	};
 	
 	// select first example after scene initializes
 	scene.async( function() {
-		selector.selectedIndex = 0;
+		selector.selectedIndex = 4;
 		selector.fire( 'change' );
 		selector.focus();
 	}, 0.5 );

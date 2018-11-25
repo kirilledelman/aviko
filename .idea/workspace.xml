@@ -2,16 +2,33 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/ParticleSystem.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/xcuserdata/kirilledelman.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.hpp" afterPath="$PROJECT_DIR$/src/Application.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/BodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/BodyBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Image.cpp" afterPath="$PROJECT_DIR$/src/Image.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.hpp" afterPath="$PROJECT_DIR$/src/GameObject.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.hpp" afterPath="$PROJECT_DIR$/src/Scene.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.cpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Tween.cpp" afterPath="$PROJECT_DIR$/src/Tween.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TypedVector.cpp" afterPath="$PROJECT_DIR$/src/TypedVector.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.cpp" afterPath="$PROJECT_DIR$/src/UIBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -35,8 +52,18 @@
       <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="609">
-              <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+            <state relative-caret-position="1665">
+              <caret line="125" column="22" lean-forward="false" selection-start-line="125" selection-start-column="22" selection-end-line="125" selection-end-column="22" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="physics.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="213">
+              <caret line="654" column="27" lean-forward="false" selection-start-line="654" selection-start-column="27" selection-end-line="654" selection-end-column="27" />
               <folding />
             </state>
           </provider>
@@ -53,8 +80,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>button:</find>
-      <find>__backButton =</find>
       <find>forcew</find>
       <find>group name</find>
       <find>g.name</find>
@@ -83,6 +108,8 @@
       <find>constructor =</find>
       <find>debug</find>
       <find>app.</find>
+      <find>$0</find>
+      <find>sceneForward</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -110,6 +137,7 @@
     <dirStrings>
       <dir>$PROJECT_DIR$/demo/scripts</dir>
       <dir>$PROJECT_DIR$/demo/scripts/ui</dir>
+      <dir>$PROJECT_DIR$/demo</dir>
     </dirStrings>
   </component>
   <component name="Git.Settings">
@@ -164,11 +192,11 @@
         <option value="$PROJECT_DIR$/demo/scripts/input.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/select.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/physics.js" />
         <option value="$PROJECT_DIR$/demo/scripts/animation.js" />
         <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
         <option value="$PROJECT_DIR$/demo/main.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/physics.js" />
       </list>
     </option>
   </component>
@@ -242,7 +270,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -307,6 +334,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
@@ -315,9 +343,8 @@
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="WebServerToolWindowFactoryState" value="true" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.JavaScript" />
+    <property name="settings.editor.selected.configurable" value="configurable.group.editor" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.splitter.proportion" value="0.2" />
     <property name="nodejs_interpreter_path" value="/usr/local/bin/node" />
   </component>
   <component name="RecentsManager">
@@ -524,11 +551,17 @@
       <workItem from="1542143678188" duration="1609000" />
       <workItem from="1542212385131" duration="8000" />
       <workItem from="1542381276297" duration="453000" />
+      <workItem from="1542641068885" duration="5000" />
+      <workItem from="1542734858783" duration="166000" />
+      <workItem from="1542746471700" duration="676000" />
+      <workItem from="1542815816386" duration="22000" />
+      <workItem from="1543079660400" duration="2524000" />
+      <workItem from="1543158745145" duration="2103000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="194861000" />
+    <option name="totallyTimeSpent" value="200593000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -540,7 +573,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="22" width="1440" height="841" extended-state="6" />
+    <frame x="0" y="22" width="1440" height="841" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -548,6 +581,7 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32070366" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.15665236" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -561,7 +595,6 @@
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" x="100" y="127" width="1240" height="632" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32070366" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -605,7 +638,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1344">
           <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -613,7 +645,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1320">
           <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -629,7 +660,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1344">
           <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -637,7 +667,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1320">
           <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -737,7 +766,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1680">
           <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -752,7 +780,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1650">
           <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -929,20 +956,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="220">
-          <caret line="60" column="24" lean-forward="false" selection-start-line="60" selection-start-column="24" selection-end-line="60" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1680">
-          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="354">
@@ -957,10 +970,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="219">
+          <caret line="113" column="8" lean-forward="false" selection-start-line="113" selection-start-column="8" selection-end-line="113" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="213">
+          <caret line="654" column="27" lean-forward="false" selection-start-line="654" selection-start-column="27" selection-end-line="654" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="609">
-          <caret line="120" column="0" lean-forward="true" selection-start-line="120" selection-start-column="0" selection-end-line="120" selection-end-column="0" />
+        <state relative-caret-position="1665">
+          <caret line="125" column="22" lean-forward="false" selection-start-line="125" selection-start-column="22" selection-end-line="125" selection-end-column="22" />
           <folding />
         </state>
       </provider>

@@ -3,6 +3,7 @@
 #include "RenderSpriteBehavior.hpp"
 #include "RenderTextBehavior.hpp"
 #include "UIBehavior.hpp"
+#include "ParticleGroupBehavior.hpp"
 #include "SampleBehavior.hpp"
 #include "TypedVector.hpp"
 
@@ -1218,7 +1219,7 @@ void Application::InitClass() {
 	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
 		void* obj = NULL;
 		sa.ReadArguments( 0, TypeObject, &obj );
-		
+        script.GC();
 		script.DumpObject( obj );
 		
 		return true;
@@ -1250,18 +1251,21 @@ void Application::InitClass() {
 	Color::InitClass();
 	Sound::InitClass();
 	Tween::InitClass();
+    Behavior::InitClass();
 	GameObject::InitClass();
 	Scene::InitClass();
 	Image::InitClass();
 	RigidBodyShape::InitClass();
 	RigidBodyJoint::InitClass();
-	Behavior::InitClass();
+    ParticleSystem::InitClass();
 	RenderBehavior::InitClass();
 	RenderShapeBehavior::InitClass();
 	RenderSpriteBehavior::InitClass();
 	RenderTextBehavior::InitClass();
 	BodyBehavior::InitClass();
 	RigidBodyBehavior::InitClass();
+
+    ParticleGroupBehavior::InitClass();
 	UIBehavior::InitClass();
 	SampleBehavior::InitClass();
 	

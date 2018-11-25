@@ -10,6 +10,7 @@
 		7129EE5D1FF412EF00BCF1F7 /* ScriptHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7129EE5C1FF412EF00BCF1F7 /* ScriptHost.cpp */; };
 		713D46BF1FF0276A00BBAEFF /* RigidBodyJoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */; };
 		713DD01D20DACB16005E00D2 /* StaticResources.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 713DD01C20DACB16005E00D2 /* StaticResources.cpp */; };
+		714878AE21A486A3002F816D /* ParticleGroupBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 714878AC21A486A3002F816D /* ParticleGroupBehavior.cpp */; };
 		7172A4A9203789FD00492B46 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A3203789FD00492B46 /* SDL2_image.framework */; };
 		7172A4AA203789FD00492B46 /* SDL2_mixer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A4203789FD00492B46 /* SDL2_mixer.framework */; };
 		7172A4AB203789FD00492B46 /* SDL2_net.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A5203789FD00492B46 /* SDL2_net.framework */; };
@@ -17,6 +18,7 @@
 		7172A4AD203789FD00492B46 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7172A4A7203789FD00492B46 /* SDL2.framework */; };
 		71739E7F2038B5B300EECB02 /* SDL2_gpu.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71739E7E2038B5B300EECB02 /* SDL2_gpu.framework */; };
 		71766D7E1FEFFAB200E13A92 /* RigidBodyShape.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */; };
+		7190108F21A3303800BBFC6B /* ParticleSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7190108D21A3303800BBFC6B /* ParticleSystem.cpp */; };
 		71A077F72003D9230074D54A /* ScriptableClass.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71A077F62003D9230074D54A /* ScriptableClass.cpp */; };
 		71D3CB681FEB3E9E006F7678 /* Box2D.h in Sources */ = {isa = PBXBuildFile; fileRef = 71F4846D1F814B9300AF17EA /* Box2D.h */; };
 		71D3CB691FEB3E9E006F7678 /* b2BroadPhase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71F484701F814B9300AF17EA /* b2BroadPhase.cpp */; };
@@ -217,6 +219,8 @@
 		713DD01C20DACB16005E00D2 /* StaticResources.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StaticResources.cpp; path = src/StaticResources.cpp; sourceTree = "<group>"; };
 		713F33A31FE5B046001147CD /* Tween.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Tween.cpp; path = src/Tween.cpp; sourceTree = "<group>"; };
 		713F33A41FE5B046001147CD /* Tween.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Tween.hpp; path = src/Tween.hpp; sourceTree = "<group>"; };
+		714878AC21A486A3002F816D /* ParticleGroupBehavior.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ParticleGroupBehavior.cpp; path = src/ParticleGroupBehavior.cpp; sourceTree = "<group>"; };
+		714878AD21A486A3002F816D /* ParticleGroupBehavior.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ParticleGroupBehavior.hpp; path = src/ParticleGroupBehavior.hpp; sourceTree = "<group>"; };
 		71515BAC1F682EDB004ED8C0 /* ScriptHost.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ScriptHost.hpp; path = src/ScriptHost.hpp; sourceTree = "<group>"; };
 		715EEE571F7555DD000B99AE /* ScriptableClass.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ScriptableClass.hpp; path = src/ScriptableClass.hpp; sourceTree = "<group>"; };
 		7172A4A3203789FD00492B46 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = ../../../../../Library/Frameworks/SDL2_image.framework; sourceTree = "<group>"; };
@@ -233,6 +237,8 @@
 		718533221F9FCD660080B05A /* SoundResource.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SoundResource.hpp; path = src/SoundResource.hpp; sourceTree = "<group>"; };
 		718533241F9FF7B90080B05A /* Sound.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Sound.cpp; path = src/Sound.cpp; sourceTree = "<group>"; };
 		718533251F9FF7B90080B05A /* Sound.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Sound.hpp; path = src/Sound.hpp; sourceTree = "<group>"; };
+		7190108D21A3303800BBFC6B /* ParticleSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ParticleSystem.cpp; path = src/ParticleSystem.cpp; sourceTree = "<group>"; };
+		7190108E21A3303800BBFC6B /* ParticleSystem.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ParticleSystem.hpp; path = src/ParticleSystem.hpp; sourceTree = "<group>"; };
 		719291BC1FA26BAA0067892E /* Controller.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Controller.cpp; path = src/Controller.cpp; sourceTree = "<group>"; };
 		719291BD1FA26BAA0067892E /* Controller.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Controller.hpp; path = src/Controller.hpp; sourceTree = "<group>"; };
 		7194130D1F48887B0066EF3D /* notes.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = notes.txt; sourceTree = "<group>"; };
@@ -413,10 +419,6 @@
 		710A472A1F7EB4D100A89171 /* Support */ = {
 			isa = PBXGroup;
 			children = (
-				71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */,
-				71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */,
-				713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */,
-				713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */,
 				713D70211F82CDE80011B7E8 /* Input.hpp */,
 				713D70201F82CDE80011B7E8 /* Input.cpp */,
 				719291BD1FA26BAA0067892E /* Controller.hpp */,
@@ -432,6 +434,12 @@
 				71E793911FC47DAD0026ABCB /* Image.hpp */,
 				71E793901FC47DAD0026ABCB /* Image.cpp */,
 				713DD01C20DACB16005E00D2 /* StaticResources.cpp */,
+				71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */,
+				71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */,
+				713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */,
+				713D46BD1FF0276A00BBAEFF /* RigidBodyJoint.cpp */,
+				7190108E21A3303800BBFC6B /* ParticleSystem.hpp */,
+				7190108D21A3303800BBFC6B /* ParticleSystem.cpp */,
 			);
 			name = Support;
 			sourceTree = "<group>";
@@ -532,6 +540,8 @@
 				71E694631F5318E9001EB381 /* SampleBehavior.cpp */,
 				71130ED91F5494CD001D453E /* RigidBodyBehavior.hpp */,
 				71130ED81F5494CD001D453E /* RigidBodyBehavior.cpp */,
+				714878AD21A486A3002F816D /* ParticleGroupBehavior.hpp */,
+				714878AC21A486A3002F816D /* ParticleGroupBehavior.cpp */,
 			);
 			name = Behavior;
 			sourceTree = "<group>";
@@ -923,6 +933,7 @@
 				71D3CBD71FEB3E9E006F7678 /* b2VoronoiDiagram.h in Sources */,
 				71D3CBD81FEB3E9E006F7678 /* b2Rope.cpp in Sources */,
 				71D3CBD91FEB3E9E006F7678 /* b2Rope.h in Sources */,
+				714878AE21A486A3002F816D /* ParticleGroupBehavior.cpp in Sources */,
 				71D3CBDA1FEB3E9E006F7678 /* common.h in Sources */,
 				71D3CBDC1FEB3E9E006F7678 /* main.cpp in Sources */,
 				71D3CBDD1FEB3E9E006F7678 /* Application.hpp in Sources */,
@@ -944,6 +955,7 @@
 				71D3CBEC1FEB3E9E006F7678 /* RenderTextBehavior.cpp in Sources */,
 				71D3CBED1FEB3E9E006F7678 /* RigidBodyBehavior.hpp in Sources */,
 				71D3CBEE1FEB3E9E006F7678 /* RigidBodyBehavior.cpp in Sources */,
+				7190108F21A3303800BBFC6B /* ParticleSystem.cpp in Sources */,
 				71D3CBEF1FEB3E9E006F7678 /* UIBehavior.hpp in Sources */,
 				71D3CBF01FEB3E9E006F7678 /* UIBehavior.cpp in Sources */,
 				71D3CBF11FEB3E9E006F7678 /* SampleBehavior.hpp in Sources */,

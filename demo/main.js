@@ -19,7 +19,7 @@ App.setWindowSize( 640, 480, 1 );
 App.windowResizable = true;
 App.fixedWindowResolution = false;
 
-
+/*
 // auto-configure controller
 var configurator = include( 'controller-configurator', {
 	axis: [
@@ -56,6 +56,7 @@ var configurator = include( 'controller-configurator', {
 
 // inspector - hold right mouse button down to activate
 var inspector = include( 'ui/inspector' );
+*/
 
 // used by controller to pop scene or exit app
 function maybeExit() {
@@ -80,11 +81,14 @@ function sceneBack() {
 
 // pushes new scene in via a transition
 function sceneForward( sub ){
-	if (sub.ui) sub.ui.async( sub.ui.requestLayout, 0.3 );
+	/* if (sub.ui) sub.ui.async( sub.ui.requestLayout, 0.3 );
 	this.async( function () {
 		transitionScene( sub, App.scene, -1 );
 		App.pushScene( sub );
-	}, 0.25 );
+	}, 0.25 );*/
+
+	App.pushScene( sub );
+	sub.cameraX = 0;
 }
 
 // auto-show mouse as soon as it moves
@@ -101,8 +105,11 @@ App.scene = include( 'main-menu' );
 
 // helper for scene transition - adds an image of current scene on top of newScene, and starts fading/moving animation
 function transitionScene( newScene, oldScene, dir ) {
+	newScene.cameraX = 0;
+	return newScene;
+
 	// draw old scene to image
-	var ghost = new GameObject( {
+	/*var ghost = new GameObject( {
 		render: new RenderSprite( {
 			image: new Image( App.windowWidth, App.windowHeight, oldScene ),
 		} ),
@@ -116,7 +123,7 @@ function transitionScene( newScene, oldScene, dir ) {
 		gc();
 	}
 	// done
-	return newScene;
+	return newScene;*/
 }
 
 

@@ -231,6 +231,16 @@ void RigidBodyBehavior::InitClass() {
 	 PROP_ENUMERABLE | PROP_SERIALIZED | PROP_NOSTORE
 	 );
 	
+    script.AddProperty<RigidBodyBehavior>
+    ( "gravityScale",
+     static_cast<ScriptFloatCallback>([]( void* p, float val ) { return ((RigidBodyBehavior*)p)->gravityScale; }),
+     static_cast<ScriptFloatCallback>([]( void* p, float val ) {
+        RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
+        rb->gravityScale = val;
+        if ( rb->body ) rb->body->SetGravityScale( val );
+        return val;
+    }));
+    
 	script.AddProperty<RigidBodyBehavior>
 	( "joint",
 	 static_cast<ScriptObjectCallback>([]( void* p, void* val ) {
@@ -729,8 +739,6 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 }
 
 void RigidBodyBehavior::RemoveBody() {
-	
-	this->EnableBody( false );
 	
 	// remove body
 	if ( this->body ) {

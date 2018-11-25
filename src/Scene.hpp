@@ -5,6 +5,7 @@
 #include "GameObject.hpp"
 #include "Color.hpp"
 #include "UIBehavior.hpp"
+#include "ParticleSystem.hpp"
 
 #define MAX_DEBUG_POLY_VERTS 512
 
@@ -30,13 +31,16 @@ public:
 	UIBehavior* focusedUI = NULL;
 	
 // physics
-	
-	/// Box2D world
+		
 	b2World* world = NULL;
 	
 	b2Vec2 gravity;
 	
 	b2Body *groundBody = NULL;
+    
+    vector<ParticleSystem*> particleSystems;
+    ArgValueVector* GetParticleSystemsVector();
+    ArgValueVector* SetParticleSystemsVector( ArgValueVector* in );
 	
 	typedef function<void()> PhysicsEventCallback;
 	

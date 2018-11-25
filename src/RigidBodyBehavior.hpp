@@ -34,6 +34,8 @@ public:
 	float angularDamping = 0.1;
 	
 	float linearDamping = 0.1;
+    
+    float gravityScale = 1;
 	
 	b2Vec2 velocity = { 0, 0 };
 	float angularVelocity = 0;

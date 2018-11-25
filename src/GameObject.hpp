@@ -202,7 +202,7 @@ public:
 	
 	/// garbage collection callback
 	void TraceProtectedObjects( vector<void **> &protectedObjects );
-	
+    
 // render
 	
 	/// called to render this object, and all children

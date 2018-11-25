@@ -7,6 +7,11 @@
 
 class ScriptableClass;
 
+#ifdef DEBUG_GC
+extern unordered_map<string, unordered_set<ScriptableClass*>> allScriptableObjects;
+#endif
+
+
 /* MARK:	-				Get/set callback types
  
  Different types of getter an setter callbacks, based on value types
@@ -636,18 +641,40 @@ public:
 	ScriptHost() {
 		
 		// init JS context
-		this->jsr = JS_NewRuntime(32L * 1024 * 1024, JS_USE_HELPER_THREADS );
-		this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
+        this->jsr = JS_NewRuntime(1L * 1024 * 1024, JS_USE_HELPER_THREADS );
+        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
+
+//        this->jsr = JS_NewRuntime(32L * 1024 * 1024, JS_USE_HELPER_THREADS );
+//        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
 		if ( !this->js || !this->jsr ) {
 			printf( "Can't initialize Javascript runtime or context.\n" );
 			exit( 1 );
 		}
 		
-		// set context option
-		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX | JSOPTION_ASMJS );
+		// set context options
+		JS_SetOptions( this->js, JS_GetOptions( this->js ) | JSOPTION_VAROBJFIX | JSOPTION_ASMJS | JSOPTION_DONT_REPORT_UNCAUGHT );
 		JS_SetParallelCompilationEnabled( this->js, true );
 		JS_SetGlobalCompilerOption( this->js, JSCOMPILER_PJS_ENABLE, 1);
-		
+        
+        /*
+         0    Normal amount of collection.  The default: no additional collections are performed.
+         1    Collect when roots are added or removed.
+         2    Collect when every frequency allocations.
+         3    Collect on window paints.
+         4    Verify pre write barriers between instructions.
+         5    Verify pre write barriers between window paints.
+         6    Verify stack rooting.
+         7    Collect the nursery every frequency nursery allocations.
+         8    Incremental GC in two slices: 1) mark roots 2) finish collection.
+         9    Incremental GC in two slices: 1) mark all 2) new marking and finish.
+         10    Incremental GC in multiple slices.
+         11    Verify post write barriers between instructions.
+         12    Verify post write barriers between paints.
+         13    Check internal hashtables on minor GC.
+         14    Perform a shrinking collection every frequency allocations.
+        */
+        JS_SetGCZeal( this->js, 0, 0 );
+        
 		// set error handler
 		JS_SetErrorReporter( this->js, this->ErrorReport );
 		
@@ -793,8 +820,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_NOSTORE ){ //PROP_ENUMERABLE|PROP_SERIALIZED
-																					  //JSAutoRequest req( this->js );
+	void AddIndexProperty( ScriptIndexCallback getter, unsigned flags=PROP_NOSTORE|PROP_NOSTORE ){ 
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		GetterSetter gs( TypeIndex, flags ); gs.Init( &getter );
 		classDef->getterSetter[ string("#") ] = gs;
@@ -812,7 +838,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptValueCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptValueCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
@@ -834,7 +860,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptIntCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptIntCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
@@ -856,7 +882,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptFloatCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY ;
@@ -878,7 +904,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptBoolCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptBoolCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
@@ -900,7 +926,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptStringCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptStringCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
@@ -922,7 +948,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptObjectCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptObjectCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
@@ -944,7 +970,7 @@ public:
 	}
 	
 	template <class CLASS>
-	void AddProperty( const char *propName, ScriptArrayCallback getter, unsigned flags=PROP_ENUMERABLE ){
+	void AddProperty( const char *propName, ScriptArrayCallback getter, unsigned flags=PROP_ENUMERABLE|PROP_NOSTORE ){
 		//JSAutoRequest req( this->js );
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		unsigned jflags = ((flags & PROP_NOSTORE) ? JSPROP_SHARED : 0 ) | ((flags & PROP_ENUMERABLE) ? JSPROP_ENUMERATE : 0) | (flags & PROP_OVERRIDE ? 0 : JSPROP_PERMANENT) | JSPROP_NATIVE_ACCESSORS | JSPROP_READONLY;
@@ -1362,13 +1388,15 @@ public:
 	/// constructs and attaches a new scripting object to class instance. This must be called from constructor with ScriptArguments* parameter
 	template <class CLASS>
 	bool NewScriptObject( CLASS* instance ) {
-		//JSAutoRequest req( this->js );
 		// find classDef
 		ClassDef *classDef = CDEF( ScriptClassDesc<CLASS>::name() );
 		instance->scriptClassName = classDef->jsc.name;
 		// add
 		instance->scriptObject = JS_NewObject( this->js, &classDef->jsc, classDef->proto, NULL );
 		JS_SetPrivate( (JSObject*) instance->scriptObject, instance );
+#ifdef DEBUG_GC
+        allScriptableObjects[instance->scriptClassName].insert( instance );
+#endif
 		return true;
 	}
 	
@@ -1427,7 +1455,31 @@ public:
 	/// call garbage collector
 	void GC() {
 		// call garbage collection in Spidermonkey
+        
+        /*
+         0    Normal amount of collection.  The default: no additional collections are performed.
+         1    Collect when roots are added or removed.
+         2    Collect when every frequency allocations.
+         3    Collect on window paints.
+         4    Verify pre write barriers between instructions.
+         5    Verify pre write barriers between window paints.
+         6    Verify stack rooting.
+         7    Collect the nursery every frequency nursery allocations.
+         8    Incremental GC in two slices: 1) mark roots 2) finish collection.
+         9    Incremental GC in two slices: 1) mark all 2) new marking and finish.
+         10    Incremental GC in multiple slices.
+         11    Verify post write barriers between instructions.
+         12    Verify post write barriers between paints.
+         13    Check internal hashtables on minor GC.
+         14    Perform a shrinking collection every frequency allocations.
+         */
+        
+        JS_SetGCZeal( this->js, 8, 0 );
 		JS_GC( this->jsr );
+        JS_SetGCZeal( this->js, 14, 0 );
+        JS_GC( this->jsr );
+
+        JS_SetGCZeal( this->js, 0, 0 );
 	}
 	
 	void DumpObject( void* obj ) {
