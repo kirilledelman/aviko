@@ -229,7 +229,8 @@ public:
 	
 	// can access private fields
 	friend class RigidBodyBehavior;
-	
+    friend class ParticleGroupBehavior;
+
 	/// inactive objects are skipped for rendering, and event dispatches
 	bool active(){ return this->_active; } // getter
 	

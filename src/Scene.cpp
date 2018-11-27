@@ -387,20 +387,22 @@ void Scene::InitClass() {
     ("addParticleSystem", //
      static_cast<ScriptFunctionCallback>([]( void* go, ScriptArguments& sa ) {
         // validate params
-        const char* error = "usage: addParticleSystem( [ ParticleSystem ps [, Integer desiredPosition ] )";
-        void* obj = NULL;
+        const char* error = "usage: addParticleSystem( [ ParticleSystem ps | Object initObject [, Integer desiredPosition ] )";
+        void* obj = NULL, *initObj = NULL;
         ParticleSystem* other = NULL;
         
         // read args
-        if ( sa.ReadArguments( 0, TypeObject, &obj ) ) {
-            // no object?
-            if ( !obj ) {
+        if ( sa.ReadArguments( 0, TypeObject, &obj ) && obj ) {
+            
+            other = script.GetInstance<ParticleSystem>( obj );
+            if ( !other ) {
                 // make new
                 other = new ParticleSystem( NULL );
-            } else {
-                other = script.GetInstance<ParticleSystem>( obj );
+                initObj = obj;
             }
         }
+        
+        // if no other,
         
         // validate
         if ( !other ){
@@ -411,6 +413,9 @@ void Scene::InitClass() {
         // optional pos
         int pos = -1;
         sa.ReadArgumentsFrom( 1, 1, TypeInt, &pos );
+        
+        // initObj
+        if ( initObj ) script.CopyProperties( initObj, other->scriptObject );
         
         // all good
         Scene* self = (Scene*) go;

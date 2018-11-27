@@ -1439,30 +1439,18 @@ public:
 		}
 	}
 	
-	/// protect / release script object from garbage collecton
-	/* void ProtectObject( void ** obj, bool protect ) {
-		
-		if ( !script.js ) return; // if called after shutdown, ignore
-
-		// protect
-		if ( protect ) {
-			// JS_AddObjectRoot( script.js, (JSObject**) obj );
-		} else {
-			// JS_RemoveObjectRoot( script.js, (JSObject**) obj );
-		}
-	}*/
-	
 	/// call garbage collector
 	void GC() {
 		// call garbage collection in Spidermonkey
 		JS_GC( this->jsr );
 	}
 	
+    /// prints object trace 
 	void DumpObject( void* obj ) {
 	
 		size_t bufSize = 1024 * 16;
 		void* buf = malloc( bufSize );
-		FILE* f = fmemopen( buf, bufSize, "w+" ); // fopen( "dump.txt", "w+" );
+		FILE* f = fmemopen( buf, bufSize, "w+" );
 		if ( f ) {
 			JS_DumpHeap( this->jsr, f, NULL, JSTRACE_OBJECT, obj, 128, NULL );
 			fclose( f );

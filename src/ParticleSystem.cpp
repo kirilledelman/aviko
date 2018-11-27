@@ -12,6 +12,9 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
     // add scriptObject
     script.NewScriptObject<ParticleSystem>( this );
     RootedObject robj( script.js, (JSObject*) this->scriptObject );
+   
+    // defaults
+    psDef.radius = 4 * WORLD_TO_BOX2D_SCALE;
     
     // read params
     void *initObj = NULL;
@@ -207,11 +210,11 @@ void ParticleSystem::InitClass() {
     
     script.AddProperty<ParticleSystem>
     ( "radius",
-     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((ParticleSystem*) b)->psDef.radius; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((ParticleSystem*) b)->psDef.radius * BOX2D_TO_WORLD_SCALE; }),
      static_cast<ScriptFloatCallback>([](void *b, float val ){
         ParticleSystem* ps = (ParticleSystem*) b;
-        ps->psDef.radius = val;
-        if ( ps->particleSystem ) ps->particleSystem->SetRadius( val );
+        ps->psDef.radius = val * WORLD_TO_BOX2D_SCALE;
+        if ( ps->particleSystem ) ps->particleSystem->SetRadius( ps->psDef.radius );
         return val;
     } ) );
 

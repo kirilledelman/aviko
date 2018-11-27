@@ -14,11 +14,16 @@ public:
 	
 	RigidBodyBehavior* body = NULL;
 	vector<b2Fixture*> fixtures;
-	
+	vector<b2Shape*> shapes;
+    
 	void SetBody( RigidBodyBehavior* b );
 	
 	/// re-creates fixture, if dirty, and have body
 	void UpdateFixture();
+    
+    // creates shapes array for particle group
+    void MakeShapesList();
+    void ClearShapesList();
 	
 	// override body collision settings
 	uint32 categoryBits = 0x0;

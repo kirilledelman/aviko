@@ -68,7 +68,11 @@ RigidBodyShape::RigidBodyShape( ScriptArguments* args ) {
     
 }
 
-RigidBodyShape::~RigidBodyShape() {}
+RigidBodyShape::~RigidBodyShape() {
+    
+    this->ClearShapesList();
+    
+}
 
 
 /* MARK:	-				Scripting
@@ -555,3 +559,61 @@ void RigidBodyShape::UpdateFixture() {
 	
 }
 
+
+
+/// creates an array of shapes
+void RigidBodyShape::MakeShapesList() {
+    
+    // clean up
+    this->ClearShapesList();
+    
+    // make shape
+    b2PolygonShape* polyShape = NULL;
+    if ( shapeType == RenderShapeBehavior::ShapeType::Polygon && polyPoints->GetLength() > 2 ) {
+        vector<b2Vec2> points;
+        polyPoints->ToVec2Vector( points );
+        // split into multiple convex shapes
+        if ( splitConcave ) {
+            static vector<vector<b2Vec2>> split;
+            if ( _splitShapes( points, split ) ) {
+                for ( size_t i = 0, ns = split.size(); i < ns; i++ ) {
+                    vector<b2Vec2>& sh = split[ i ];
+                    polyShape = new b2PolygonShape();
+                    polyShape->m_centroid.Set( center.x, center.y );
+                    polyShape->Set( sh.data(), (int) sh.size() );
+                    this->shapes.push_back( polyShape );
+                }
+            }
+            
+            // no need to split
+        } else {
+            polyShape = new b2PolygonShape();
+            polyShape->m_centroid.Set( center.x, center.y );
+            polyShape->Set( points.data(), (int) points.size() );
+            this->shapes.push_back( polyShape );
+        }
+        
+    } else if ( shapeType == RenderShapeBehavior::ShapeType::Circle ){
+        b2CircleShape* circleShape = new b2CircleShape();
+        circleShape->m_p.Set( center.x, center.y );
+        circleShape->m_radius = radius;
+        this->shapes.push_back( circleShape );
+    } else if ( shapeType == RenderShapeBehavior::ShapeType::Rectangle ) {
+        b2Vec2 offs;
+        offs.x = width * 0.5 - center.x;
+        offs.y = height * 0.5 - center.y;
+        polyShape = new b2PolygonShape();
+        polyShape->SetAsBox( width * 0.5, height * 0.5, offs, 0 );
+        this->shapes.push_back( polyShape );
+    }
+    
+}
+
+void RigidBodyShape::ClearShapesList() {
+    // clean up shapes
+    for ( size_t i = 0, nf = this->shapes.size(); i < nf; i++ ) {
+        b2Shape* shp = this->shapes[ i ];
+        delete shp;
+    }
+    this->shapes.clear();
+}

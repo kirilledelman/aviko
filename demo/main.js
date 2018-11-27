@@ -53,10 +53,11 @@ var configurator = include( 'controller-configurator', {
 		controller.on( ['select','start' ], maybeExit );
 	}
 } );
+*/
 
 // inspector - hold right mouse button down to activate
 var inspector = include( 'ui/inspector' );
-*/
+
 
 // used by controller to pop scene or exit app
 function maybeExit() {
