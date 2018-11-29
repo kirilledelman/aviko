@@ -17,9 +17,15 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     RootedObject robj( script.js, (JSObject*) this->scriptObject );
     
     // defaults
-    this->groupDef.groupFlags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup;
+    this->groupDef.groupFlags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup | b2_rigidParticleGroup;
     this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle;
     this->groupDef.userData = this;
+    
+    // create color object
+    colorUpdated = static_cast<ColorCallback>([this](Color* c){ this->UpdateColor(); });
+    Color *clr = new Color( NULL );
+    clr->callback = colorUpdated;
+    script.SetProperty( "color", ArgValue( clr->scriptObject ), this->scriptObject );
     
     // obj argument - init object
     void *initObj = NULL;
@@ -71,56 +77,6 @@ void ParticleGroupBehavior::InitClass() {
     script.SetProperty( "CollisionEvent", ArgValue( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ), constants );
     script.FreezeObject( constants );
     
-    /* enum b2ParticleFlag
-     {
-     /// Water particle.
-     b2_waterParticle = 0,
-     /// Removed after next simulation step.
-     b2_zombieParticle = 1 << 1,
-     /// Zero velocity.
-     b2_wallParticle = 1 << 2,
-     /// With restitution from stretching.
-     b2_springParticle = 1 << 3,
-     /// With restitution from deformation.
-     b2_elasticParticle = 1 << 4,
-     /// With viscosity.
-     b2_viscousParticle = 1 << 5,
-     /// Without isotropic pressure.
-     b2_powderParticle = 1 << 6,
-     /// With surface tension.
-     b2_tensileParticle = 1 << 7,
-     /// Mix color between contacting particles.
-     b2_colorMixingParticle = 1 << 8,
-     /// Call b2DestructionListener on destruction.
-     b2_destructionListenerParticle = 1 << 9,
-     /// Prevents other particles from leaking.
-     b2_barrierParticle = 1 << 10,
-     /// Less compressibility.
-     b2_staticPressureParticle = 1 << 11,
-     /// Makes pairs or triads with other particles.
-     b2_reactiveParticle = 1 << 12,
-     /// With high repulsive force.
-     b2_repulsiveParticle = 1 << 13,
-     /// Call b2ContactListener when this particle is about to interact with
-     /// a rigid body or stops interacting with a rigid body.
-     /// This results in an expensive operation compared to using
-     /// b2_fixtureContactFilterParticle to detect collisions between
-     /// particles.
-     b2_fixtureContactListenerParticle = 1 << 14,
-     /// Call b2ContactListener when this particle is about to interact with
-     /// another particle or stops interacting with another particle.
-     /// This results in an expensive operation compared to using
-     /// b2_particleContactFilterParticle to detect collisions between
-     /// particles.
-     b2_particleContactListenerParticle = 1 << 15,
-     /// Call b2ContactFilter when this particle interacts with rigid bodies.
-     b2_fixtureContactFilterParticle = 1 << 16,
-     /// Call b2ContactFilter when this particle interacts with other
-     /// particles.
-     b2_particleContactFilterParticle = 1 << 17,
-     };
-     */
-    
     // properties
     
     script.AddProperty<ParticleGroupBehavior>
@@ -147,7 +103,7 @@ void ParticleGroupBehavior::InitClass() {
         RigidBodyShape* other = script.GetInstance<RigidBodyShape>( p );
         self->shape = other;
         // replacing shape repopulates
-        if ( other && self->particleSystem && self->particleSystem->scene ) {
+        if ( other && self->group ) {
             self->RemoveBody();
             self->AddBody( self->particleSystem->scene );
         }
@@ -155,19 +111,24 @@ void ParticleGroupBehavior::InitClass() {
     }), PROP_ENUMERABLE | PROP_NOSTORE );
     
     script.AddProperty<ParticleGroupBehavior>
-    ( "stride",
-     static_cast<ScriptFloatCallback>([]( void* p, float val ) { return ((ParticleGroupBehavior*)p)->groupDef.stride * BOX2D_TO_WORLD_SCALE; }),
-     static_cast<ScriptFloatCallback>([]( void* p, float val ) {
-        ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        self->groupDef.stride = val * WORLD_TO_BOX2D_SCALE;
-        if ( self->particleSystem && self->particleSystem->scene ) {
-            self->RemoveBody();
-            self->AddBody( self->particleSystem->scene );
+    ( "color",
+     static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((ParticleGroupBehavior*) b)->color->scriptObject); }),
+     static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+        ParticleGroupBehavior* pg = (ParticleGroupBehavior*) b;
+        if ( val.type == TypeObject ) {
+            // replace if it's a color
+            Color* other = script.GetInstance<Color>( val.value.objectValue );
+            if ( other ) pg->color = other;
+        } else {
+            pg->color->Set( val );
         }
-        return val;
-    }));
-    
-   // TODO - particle color - update all particles on the fly
+        SDL_Color sclr = pg->color->rgba;
+        pg->groupDef.color.Set( sclr.r, sclr.g, sclr.b, sclr.a );
+
+        // update colors
+        pg->UpdateColor();
+        return pg->color->scriptObject;
+    }) );
     
     script.AddProperty<ParticleGroupBehavior>
     ( "solid",
@@ -193,7 +154,7 @@ void ParticleGroupBehavior::InitClass() {
         if ( val ) {
             self->groupDef.groupFlags |= b2_rigidParticleGroup;
         } else {
-            self->groupDef.groupFlags &= b2_rigidParticleGroup;
+            self->groupDef.groupFlags &= ~b2_rigidParticleGroup;
         }
         if ( self->group ) self->group->SetGroupFlags( self->groupDef.groupFlags );
         return val;
@@ -234,6 +195,17 @@ void ParticleGroupBehavior::InitClass() {
     
     // TODO - velocity / ang velocity
     
+    // TODO - get/set points as array
+    
+    // mass
+    
+    // inertia
+    
+    
+    // methods
+    
+    //
+    
 }
 
 void ParticleGroupBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -243,6 +215,25 @@ void ParticleGroupBehavior::TraceProtectedObjects( vector<void**> &protectedObje
     
     // shape
     if ( this->shape ) protectedObjects.push_back( &this->shape->scriptObject );
+    
+    // if live
+    /* if ( this->group ) {
+        void** userData = this->group->GetParticleSystem()->GetUserDataBuffer();
+        for ( int32 i = this->group->GetBufferIndex(), np = i + this->group->GetParticleCount(); i < np; i++ ){
+            if ( userData[ i ] != NULL ) {
+                protectedObjects.push_back( &userData[ i ] );
+            }
+        }
+    // add points otherwise
+    } else {
+        // points userdata
+        for ( size_t i = 0, np = this->points.size(); i < np; i++ ){
+            b2ParticleDef& pd = this->points[ i ];
+            if ( pd.userData != NULL ) {
+                protectedObjects.push_back( &pd.userData );
+            }
+        }
+    }*/
     
     // call super
     Behavior::TraceProtectedObjects( protectedObjects );
@@ -387,16 +378,14 @@ void ParticleGroupBehavior::AddBody( Scene *scene ) {
     b2Vec2 wpos, wscale;
     float wangle;
     this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), wpos, wangle, wscale );
-    
+    this->groupDef.position = wpos * WORLD_TO_BOX2D_SCALE;
+    this->groupDef.angle = wangle * DEG_TO_RAD;
+
     // create group
     b2ParticleSystem* ps = this->particleSystem->particleSystem;
-    
+
     /// populate with stored points
     if ( this->points.size() ) {
-        
-        // reset
-        this->groupDef.position.SetZero();
-        this->groupDef.angle = 0 ;
         
         // make points
         vector<b2Vec2> pts;
@@ -416,14 +405,14 @@ void ParticleGroupBehavior::AddBody( Scene *scene ) {
         int32 offset = this->group->GetBufferIndex();
         b2Vec2* velocityBuf = this->particleSystem->particleSystem->GetVelocityBuffer();
         b2ParticleColor* colorBuf = this->particleSystem->particleSystem->GetColorBuffer();
-        float32* weightBuf = this->particleSystem->particleSystem->GetWeightBuffer();
+        // float32* weightBuf = this->particleSystem->particleSystem->GetWeightBuffer();
         for ( int32 i = offset, last = offset + count; i < last; i++ ) {
             b2ParticleDef& pd = this->points[ i - offset ];
             ps->SetParticleFlags( i, pd.flags );
             ps->SetParticleLifetime( i, pd.lifetime );
             velocityBuf[ i ].Set( pd.velocity.x, pd.velocity.y );
             colorBuf[ i ].Set( pd.color.r, pd.color.g, pd.color.b, pd.color.a );
-            weightBuf[ i ] = (float32) ( ( (long) pd.userData ) * 0.001f );
+            // weightBuf[ i ] = (float32) ( ( (long) pd.userData ) * 0.001f );
         }
         
         this->points.clear();
@@ -432,9 +421,6 @@ void ParticleGroupBehavior::AddBody( Scene *scene ) {
         
     } else if ( this->shape ) {
 
-        this->groupDef.position = wpos * WORLD_TO_BOX2D_SCALE;
-        this->groupDef.angle = wangle * DEG_TO_RAD;
-        
         this->shape->MakeShapesList();
         this->groupDef.shapes = this->shape->shapes.data();
         this->groupDef.shapeCount = (int32) this->shape->shapes.size();
@@ -454,6 +440,12 @@ void ParticleGroupBehavior::RemoveBody() {
     this->live = false;
     if ( this->group ) {
         
+        // extract center
+        b2Vec2 center = this->group->GetCenter();
+        if ( this->gameObject ) {
+            this->gameObject->SetWorldPositionAndAngle(center.x * BOX2D_TO_WORLD_SCALE, center.y * BOX2D_TO_WORLD_SCALE, 0 );
+        }
+        
         // store particles info
         b2ParticleSystem* ps = this->group->GetParticleSystem();
         int32 i = this->group->GetBufferIndex();
@@ -462,16 +454,17 @@ void ParticleGroupBehavior::RemoveBody() {
         b2ParticleColor* colors = ps->GetColorBuffer();
         b2Vec2* positions = ps->GetPositionBuffer();
         b2Vec2* velocities = ps->GetVelocityBuffer();
-        float32* weights = ps->GetWeightBuffer();
+        void** userData = ps->GetUserDataBuffer();
+        // float32* weights = ps->GetWeightBuffer();
         for (; i < last; i++) {
             this->points.emplace_back();
             b2ParticleDef &pf = this->points.back();
             pf.flags = ps->GetParticleFlags( i );
             pf.color = colors[ i ];
             pf.lifetime = ps->GetParticleLifetime( i );
-            pf.position = positions[ i ];
+            pf.position = positions[ i ] - center;
             pf.velocity = velocities[ i ];
-            pf.userData = (void*) ((long) weights[ i ] * 1000);
+            pf.userData = userData[ i ];
             
             // delete next step
             ps->SetParticleFlags( i, b2_zombieParticle );
@@ -488,3 +481,18 @@ void ParticleGroupBehavior::RemoveBody() {
     
 }
 
+/// apply color to all
+void ParticleGroupBehavior::UpdateColor() {
+    SDL_Color& sclr = this->color->rgba;
+    if ( this->group ) {
+        b2ParticleColor* colors = this->group->GetParticleSystem()->GetColorBuffer();
+        for ( int32 i = this->group->GetBufferIndex(), np = i + this->group->GetParticleCount(); i < np; i++ ){
+            colors[ i ].Set( sclr.r, sclr.g, sclr.b, sclr.a );
+        }
+    } else {
+        for ( size_t i = 0, np = this->points.size(); i < np; i++ ){
+            b2ParticleDef& pd = this->points[ i ];
+            pd.color.Set( sclr.r, sclr.g, sclr.b, sclr.a );
+        }
+    }
+}

@@ -31,6 +31,11 @@ public:
     /// stored points
     vector<b2ParticleDef> points;
     
+    /// color
+    Color* color = NULL;
+    ColorCallback colorUpdated;
+    void UpdateColor();
+    
     /*
     float angularDamping = 0.1;
     

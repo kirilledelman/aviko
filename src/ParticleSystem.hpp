@@ -32,6 +32,7 @@ public:
     
     void AddToWorld();
     void RemoveFromWorld();
+    void SyncObjectsToGroups();
     
     // garbage collector
     void TraceProtectedObjects( vector<void**> &protectedObjects );

@@ -15,6 +15,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
    
     // defaults
     psDef.radius = 4 * WORLD_TO_BOX2D_SCALE;
+    psDef.density = 5;
     
     // read params
     void *initObj = NULL;
@@ -69,7 +70,7 @@ void ParticleSystem::InitClass() {
      static_cast<ScriptBoolCallback>([](void *p, bool val ){
         ParticleSystem* ps = (ParticleSystem*) p;
         ps->active = val;
-        if( ps->particleSystem ) ps->particleSystem->SetPaused( val );
+        if( ps->particleSystem ) ps->particleSystem->SetPaused( !val );
         return val;
     } ) );
     
@@ -406,6 +407,7 @@ ArgValueVector* ParticleSystem::GetParticleGroupsVector() {
     return in;
 } */
 
+
 /* MARK:    -                Physics
  -------------------------------------------------------------------- */
 
@@ -447,6 +449,16 @@ void ParticleSystem::RemoveFromWorld() {
     }
 }
 
+void ParticleSystem::SyncObjectsToGroups() {
+ 
+    unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin(), end = this->groups.end();
+    while( it != end ) {
+        ParticleGroupBehavior* pg = *it;
+        if ( pg->live ) pg->SyncObjectToBody();
+        it++;
+    }
+    
+}
 
 /* MARK:    -                Properties
  -------------------------------------------------------------------- */

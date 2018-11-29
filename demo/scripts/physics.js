@@ -665,7 +665,7 @@ new (function (){
                     x: 40, y: 50
                 }));
 
-                $0 = scene.particleSystem;
+                $0 = b.body;
 
             }
         }

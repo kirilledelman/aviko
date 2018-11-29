@@ -1,13 +1,13 @@
+Added ParticleSystem::SyncObjectsToGroups() - do we need it? maybe only do each on demand, or only for rigid groups?
+
+
 
 tooltip
 	annoying / doesnt hide
 
-Phys bodies arent removed after scene is finalized?
-	Added body to scene, scene removed, garbage collected - crash in physics code - invalid scriptObject?
-
 Mouse joint on kinematic body - crash
 
-Add WheelJoint, gravityScale, particles
+Add WheelJoint, gravityScale
 
 Textfield
 	multiline text box

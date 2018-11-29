@@ -796,7 +796,13 @@ void Scene::SimulatePhysics() {
 	}
     
     // particle systems
-    // 
+    for ( size_t i = 0, nps = this->particleSystems.size(); i < nps; i++ ) {
+        ParticleSystem* ps = this->particleSystems[ i ];
+        if ( ps->active ) {
+            // update groups
+            ps->SyncObjectsToGroups();
+        }
+    }
 	
 	// dispatch physics events
 	for ( size_t i = 0, ne = physicsEvents.size(); i < ne; i++ ){
