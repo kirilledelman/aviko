@@ -89,6 +89,7 @@ struct ArgValue {
 	bool toNumber( double& dest );
 	bool toInt( int& dest );
 	bool toInt8( Uint8& dest );
+    bool toInt32( uint32& dest );
 	bool toBool();
 	bool isNull( bool strict=false );
 	bool isTrue() { return (type == TypeBool && value.boolValue == true); }

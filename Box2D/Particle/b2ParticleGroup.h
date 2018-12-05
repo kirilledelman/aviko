@@ -168,6 +168,8 @@ struct b2ParticleGroupDef
 #endif // LIQUIDFUN_EXTERNAL_LANGUAGE_API
 };
 
+class ParticleGroupBehavior;
+
 /// A group of particles. b2ParticleGroup::CreateParticleGroup creates these.
 class b2ParticleGroup
 {
@@ -262,6 +264,7 @@ public:
 private:
 
 	friend class b2ParticleSystem;
+    friend class ParticleGroupBehavior;
 
 	b2ParticleSystem* m_system;
 	int32 m_firstIndex, m_lastIndex;

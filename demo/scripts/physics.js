@@ -653,19 +653,18 @@ new (function (){
                 // particles
                 b = container.addChild( new GameObject({
                     name: "Particles",
-					angle: 45,
-                    // render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x666633, x: 40, y: 20, lineThickness: 2 } ),
+                    // render: new RenderShape( { shape: Shape.Rectangle, centered: true, color: '66663333', x: 50, y: 20, lineThickness: 2 } ),
                     body: new Particles( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
-                            x: 40, y: 20
+                            x: 10, y: 10
                         } ),
-
+						color: 0x333399,
                     } ),
-                    x: 40, y: 50
+                    x: 20, y: 40
                 }));
 
-                $0 = b.body;
+                // $0 = b.body;
 
             }
         }

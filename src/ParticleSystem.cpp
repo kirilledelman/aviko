@@ -454,7 +454,7 @@ void ParticleSystem::SyncObjectsToGroups() {
     unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin(), end = this->groups.end();
     while( it != end ) {
         ParticleGroupBehavior* pg = *it;
-        if ( pg->live ) pg->SyncObjectToBody();
+        if ( pg->live && pg->syncObjectPosition ) pg->SyncObjectToBody();
         it++;
     }
     

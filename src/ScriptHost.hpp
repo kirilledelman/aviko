@@ -644,7 +644,7 @@ public:
 //        this->jsr = JS_NewRuntime(1L * 1024 * 1024, JS_USE_HELPER_THREADS );
 //        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
 
-        this->jsr = JS_NewRuntime(4L * 1024 * 1024, JS_NO_HELPER_THREADS );
+        this->jsr = JS_NewRuntime(16L * 1024 * 1024, JS_USE_HELPER_THREADS );
         this->js = this->jsr ? JS_NewContext( this->jsr, 8192 ) : NULL;
 		if ( !this->js || !this->jsr ) {
 			printf( "Can't initialize Javascript runtime or context.\n" );

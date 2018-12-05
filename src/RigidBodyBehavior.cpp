@@ -34,13 +34,13 @@ RigidBodyBehavior::RigidBodyBehavior() : BodyBehavior::BodyBehavior() {}
 // destroy
 RigidBodyBehavior::~RigidBodyBehavior() {
 	
-	// clean up
-	this->ReplaceShapes( NULL );
-	
 	// unlink joints
 	while ( this->joints.size() ) this->joints[ 0 ]->SetBody( NULL );
 	while ( this->otherJoints.size() ) this->otherJoints[ 0 ]->SetOtherBody( NULL );
 	
+    // clean up
+    this->ReplaceShapes( NULL );
+    
 	// remove body
 	this->RemoveBody();
 
@@ -102,12 +102,12 @@ void RigidBodyBehavior::InitClass() {
 	( "velocityX",
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
-		return rb->GetVelocity().x;
+		return rb->GetVelocity().x * BOX2D_TO_WORLD_SCALE;
 	}),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		b2Vec2 vel = rb->GetVelocity();
-		vel.x = val;
+		vel.x = val * WORLD_TO_BOX2D_SCALE;
 		rb->SetVelocity( vel );
 		return val;
 	}));
@@ -116,12 +116,12 @@ void RigidBodyBehavior::InitClass() {
 	( "velocityY",
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
-		return rb->GetVelocity().y;
+		return rb->GetVelocity().y * BOX2D_TO_WORLD_SCALE;
 	}),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		b2Vec2 vel = rb->GetVelocity();
-		vel.y = val;
+		vel.y = val * WORLD_TO_BOX2D_SCALE;
 		rb->SetVelocity( vel );
 		return val;
 	}));
@@ -406,10 +406,10 @@ void RigidBodyBehavior::InitClass() {
 	} ));
 
 	script.DefineFunction<RigidBodyBehavior>
-	("linearImpulse",
+	("impulse",
 	 static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
 		RigidBodyBehavior* self = (RigidBodyBehavior*) p;
-		const char *error = "usage: linearImpulse( Number linearImpulseX, Number linearImpulseY [, Number localPointX, Number localPointY ] )";
+		const char *error = "usage: impulse( Number linearImpulseX, Number linearImpulseY [, Number localPointX, Number localPointY ] )";
 		b2Vec2 ctr = { 0, 0 }, imp = { 0, 0 };
 		if ( !sa.ReadArguments( 2, TypeFloat, &imp.x, TypeFloat, &imp.y, TypeFloat, &ctr.x, TypeFloat, &ctr.y ) ) {
 			script.ReportError( error );
@@ -423,6 +423,25 @@ void RigidBodyBehavior::InitClass() {
 		self->Impulse( imp, ctr );
 		return true;
 	} ));
+    
+    script.DefineFunction<RigidBodyBehavior>
+    ("force",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        RigidBodyBehavior* self = (RigidBodyBehavior*) p;
+        const char *error = "usage: force( Number forceX, Number forceY [, Number localPointX, Number localPointY ] )";
+        b2Vec2 ctr = { 0, 0 }, imp = { 0, 0 };
+        if ( !sa.ReadArguments( 2, TypeFloat, &imp.x, TypeFloat, &imp.y, TypeFloat, &ctr.x, TypeFloat, &ctr.y ) ) {
+            script.ReportError( error );
+            return false;
+        }
+        // if no center, use center of mass
+        if ( sa.args.size() == 2 ) {
+            ctr = self->body->GetLocalCenter();
+        }
+        // apply
+        self->Force( imp, ctr );
+        return true;
+    } ));
 	
 	script.DefineFunction<RigidBodyBehavior>
 	("angularImpulse",
@@ -437,6 +456,7 @@ void RigidBodyBehavior::InitClass() {
 		self->AngularImpulse( imp );
 		return true;
 	} ));
+    
 }
 
 void RigidBodyBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -495,6 +515,13 @@ void RigidBodyBehavior::AngularImpulse( float impulse ){
 	if ( this->body ) {
 		this->body->ApplyAngularImpulse( impulse * DEG_TO_RAD, true );
 	}
+}
+
+void RigidBodyBehavior::Force( b2Vec2& f, b2Vec2& point ){
+    if ( this->body ) {
+        point *= WORLD_TO_BOX2D_SCALE;
+        this->body->ApplyForce( f * WORLD_TO_BOX2D_SCALE, this->body->GetWorldPoint( point ), true );
+    }
 }
 
 
@@ -559,13 +586,13 @@ void RigidBodyBehavior::SyncBodyToObject() {
 /// just sets body transform
 void RigidBodyBehavior::SetBodyTransform( b2Vec2 pos, float angleInRad ) {
 	if ( !this->body ) return;
-	this->body->SetTransform( pos, angleInRad );
+	this->body->SetTransform( pos * WORLD_TO_BOX2D_SCALE, angleInRad );
 }
 
 /// set body position
 void RigidBodyBehavior::SetBodyPosition( b2Vec2 pos ) {
 	if ( !this->body ) return;
-	this->body->SetTransform( pos, this->body->GetAngle() );
+	this->body->SetTransform( pos * WORLD_TO_BOX2D_SCALE, this->body->GetAngle() );
 }
 
 /// set body angle

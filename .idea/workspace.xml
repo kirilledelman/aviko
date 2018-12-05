@@ -4,13 +4,18 @@
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Box2D/Particle/b2ParticleGroup.h" afterPath="$PROJECT_DIR$/Box2D/Particle/b2ParticleGroup.h" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.hpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyJoint.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyJoint.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.cpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.hpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -34,8 +39,8 @@
       <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="630">
-              <caret line="56" column="0" lean-forward="false" selection-start-line="56" selection-start-column="0" selection-end-line="56" selection-end-column="0" />
+            <state relative-caret-position="735">
+              <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
               <folding />
             </state>
           </provider>
@@ -44,8 +49,8 @@
       <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="201">
-              <caret line="645" column="40" lean-forward="true" selection-start-line="645" selection-start-column="40" selection-end-line="645" selection-end-column="40" />
+            <state relative-caret-position="211">
+              <caret line="655" column="23" lean-forward="true" selection-start-line="655" selection-start-column="23" selection-end-line="655" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -252,6 +257,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
@@ -317,7 +323,6 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -543,11 +548,16 @@
       <workItem from="1543342965456" duration="3007000" />
       <workItem from="1543431301092" duration="6000" />
       <workItem from="1543519696058" duration="657000" />
+      <workItem from="1543590924827" duration="16000" />
+      <workItem from="1543865122015" duration="1435000" />
+      <workItem from="1543946311326" duration="9000" />
+      <workItem from="1543947134237" duration="1560000" />
+      <workItem from="1544040159274" duration="1000000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="205478000" />
+    <option name="totallyTimeSpent" value="209498000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -559,11 +569,11 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="22" width="1440" height="838" extended-state="6" />
+    <frame x="0" y="22" width="1440" height="838" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2067239" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22103004" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -965,16 +975,16 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="630">
-          <caret line="56" column="0" lean-forward="false" selection-start-line="56" selection-start-column="0" selection-end-line="56" selection-end-column="0" />
+        <state relative-caret-position="735">
+          <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="201">
-          <caret line="645" column="40" lean-forward="true" selection-start-line="645" selection-start-column="40" selection-end-line="645" selection-end-column="40" />
+        <state relative-caret-position="211">
+          <caret line="655" column="23" lean-forward="true" selection-start-line="655" selection-start-column="23" selection-end-line="655" selection-end-column="23" />
           <folding />
         </state>
       </provider>

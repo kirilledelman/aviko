@@ -513,6 +513,23 @@ bool ArgValue::toInt8( Uint8& dest ) {
 	return true;
 }
 
+bool ArgValue::toInt32( uint32& dest ) {
+    if ( this->type == TypeBool ) {
+        dest = this->value.boolValue ? 1 : 0;
+    } else if ( this->type == TypeFloat ) {
+        dest = this->value.floatValue;
+    } else if ( this->type == TypeDouble ) {
+        dest = this->value.doubleValue;
+    } else if ( this->type == TypeInt ) {
+        dest = (float) this->value.intValue;
+    } else if ( this->type == TypeChar ) {
+        dest = this->value.charValue;
+    } else {
+        return false;
+    }
+    return true;
+}
+
 /// easy convert any value to bool
 bool ArgValue::toBool() {
 	if ( this->type == TypeBool ) {

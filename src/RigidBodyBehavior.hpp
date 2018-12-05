@@ -47,7 +47,6 @@ public:
 	void Impulse( b2Vec2& impulse, b2Vec2& point );
 	void AngularImpulse( float impulse );
 	void Force( b2Vec2& force, b2Vec2& point );
-	void AngularForce( float force );
 
 // scripting
 	

@@ -37,6 +37,7 @@ public:
 	b2MouseJointDef mouseDef;
 	b2DistanceJointDef distanceDef;
 	b2WeldJointDef weldDef;
+    b2WheelJointDef wheelDef;
 	
 	
 	// rebuilds joint
