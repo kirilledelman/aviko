@@ -409,6 +409,7 @@ b2ParticleSystem::b2ParticleSystem(const b2ParticleSystemDef* def,
 	SetRadius(def->radius);
 	SetMaxParticleCount(def->maxCount);
 
+    m_userData = def->userData; // modified
 	m_count = 0;
 	m_internalAllocatedCapacity = 0;
 	m_forceBuffer = NULL;
@@ -1107,6 +1108,8 @@ b2ParticleGroup* b2ParticleSystem::CreateParticleGroup(
 
 	return group;
 }
+
+void* b2ParticleSystem::GetUserData() { return m_userData; }
 
 void b2ParticleSystem::JoinParticleGroups(b2ParticleGroup* groupA,
 										  b2ParticleGroup* groupB)

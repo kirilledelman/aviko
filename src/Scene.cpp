@@ -4,6 +4,9 @@
 #include "RenderShapeBehavior.hpp"
 #include "RenderSpriteBehavior.hpp"
 #include "RigidBodyBehavior.hpp"
+#include "RigidBodyJoint.hpp"
+#include "ParticleSystem.hpp"
+#include "ParticleGroupBehavior.hpp"
 #include "SampleBehavior.hpp"
 
 
@@ -65,7 +68,7 @@ Scene::Scene() {
 	this->world->SetDebugDraw( this );
 	this->world->SetContactListener( this );
 	this->world->SetContactFilter( this );
-
+    this->world->SetDestructionListener( this );
 }
 
 // scene clean up
@@ -81,7 +84,10 @@ Scene::~Scene() {
     while ( b ) {
         RigidBodyBehavior* rig = (RigidBodyBehavior*) b->GetUserData();
         b = b->GetNext();
-        if ( rig ) rig->RemoveBody();
+        if ( rig ) {
+            rig->RemoveBody();
+            
+        }
     }
     
 	// printf( "Scene(%s) destructor on %p\n", this->name.c_str(), this );
@@ -675,6 +681,31 @@ ArgValueVector* Scene::Query( float x, float y, float w, float h, int maxResults
 	}
 	return ret;
 }
+
+// clean up
+void Scene::SayGoodbye( b2Joint* j ){
+    RigidBodyJoint* joint = (RigidBodyJoint*) j->GetUserData();
+    if ( joint != NULL && joint->joint == j ) joint->joint = NULL;
+}
+
+// clean up
+void Scene::SayGoodbye( b2ParticleGroup* g ){
+    ParticleGroupBehavior* group = (ParticleGroupBehavior*) g->GetUserData();
+    if ( group != NULL && group->group == g ) group->group = NULL;
+}
+
+// particle destroyed
+void Scene::SayGoodbye( b2ParticleSystem* ps, int32 index ){
+    ParticleSystem* particleSystem = (ParticleSystem*) ps->GetUserData();
+    if ( particleSystem != NULL ) {
+        b2ParticleGroup* group = ps->GetGroupBuffer()[ index ];
+        if ( group != NULL ){
+            ParticleGroupBehavior* beh = (ParticleGroupBehavior*) group->GetUserData();
+            if ( beh ) beh->ParticleDestroyed( index );
+        }
+    }
+}
+
 
 bool Scene::ShouldCollide( b2Fixture* a, b2Fixture* b ) {
 	RigidBodyShape *shapeA = (RigidBodyShape*) a->GetUserData();

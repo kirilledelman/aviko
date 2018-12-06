@@ -54,16 +54,18 @@ public:
     
     void TraceProtectedObjects( vector<void**> &protectedObjects );
     
-    // serializing
+    //
     ArgValueVector* GetParticleVector();
-    ArgValueVector* SetParticleVector( ArgValueVector* in );
+    ArgValueVector* SetParticleVector( ArgValueVector* in, bool append=false, float offsetX=0.0f, float offsetY=0.0f, float offsetAngle=0.0f );
+    int32 AddParticle( ParticleInfo& p );
+    
+    // callbacks
+    void ParticleDestroyed( int32 index );
     
     // methods
     
     /// turns on and off ( active switch )
     void EnableBody( bool e );
-    
-    bool syncObjectPosition = true;
     
     /// called after physics step on each body to sync position and rotation
     void SyncObjectToBody();
@@ -73,7 +75,6 @@ public:
     
     /// attach to particle system
     void SetSystem( ParticleSystem* s );
-    
     
     /// sets body transform
     void SetBodyTransform( b2Vec2, float angleInRad );

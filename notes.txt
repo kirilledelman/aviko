@@ -1,14 +1,28 @@
+Confusion
+    when adding particles their coordinates are local to object, inc. rotation
+    only rigid group syncs object position to group center
+    
 
 
+
+numParticles
+getParticle( i, [ Bool asArray ] )
+addParticle( Obj | Array )
+updateParticle( i, Obj | Array )
+destroyParticle( i )
 
 
 RenderParticles
 
+Bodies contact - store/remove contact list - add "isTouching(b)" and "getContact(b)"
+
+One way platforms
+
+
 Mouse joint on kinematic body - crash
 
-Add WheelJoint
 
-tooltip - annoying / doesnt hide
+tooltip - annoying / doesnt hide - remove on mousemove instead
 
 Textfield
 	multiline text box
@@ -26,7 +40,6 @@ Inspector
 Body
 	add method - "makeDefaultShape" creating shape from sprite, or shape
 	Add global collision listener to scene?
-	SyncObjectToBody - NaN
 
 Outline, when increasing offset starts doubling up
 Add shader offsetX, offsetY for scrolling effect (to base, no new shader_ )
@@ -57,19 +70,15 @@ Top level / Application
 	'quit' event - dispatched right before exiting.
 
 Demo project
-	Main screen
-		about aviko
-		how to navigate
-
-
-	UI
-
 
 	Percussion playground
 
 Image
 	save to png
 
+Networking
+    getURL( url, postJson, success )
+    sockets?
 
 
 
@@ -79,9 +88,6 @@ Image
 Nice to have
 
 =============================================
-
-ScriptHost
-	SetProperty( "propname", int|float|void* etc... ) - easy
 
 GameObject
 	$( 'childname,childname,childname' ) -> [] children
@@ -124,14 +130,7 @@ Input class
 
 Dropdown - jump to item by typing
 
-Textured shapes/polys
-	need to figure out how to compute uvs - maybe in shader based on screen coord?
-
-RenderSprite .texture = "https://...."
-
-add convenience anchor/placement methods
-
-UIBehavior / setparent - to accelerate UI event dispatching - add a counter to gameobject - "numChildrenWithUI" or something and maintain it
+add convenience anchor/placement methods for UI layout?
 
 Add Color.Red, Blue, etc. constants
 
@@ -141,37 +140,16 @@ ui/input - ctrl+z, ctrl+shift+z or ctrl+y (.clearUndoOnBlur)
 
 Physics:
 	Add collision exclusion/inclusion lists? Always collide/never collide? Object removal implications.
-	Add the rest of joint types
 
 modify query and rayTrace for non-physics based queries
 
 Sound generation - fill / edit / play buffer - Int vector?
 
-Transplant from parent to parent, maintain transform (only need to do anything if no body)
-
-Add logging level - none, normal, verbose
-
-
-BodyShape
-.setCircle( radius, x, y );
-.setX___....
-
-RenderSprite
-	.frames = [ "anim/1", "anim/2", "anim/3" ] | null
-	.frame = 0
-
 Image
-save( pngpath )in /textures by default
+    save( pngpath )in /textures by default
 
 
 Install MS Visual Studio in windows, look at how to compile on win.
-
-
-
-RenderParticles - Liquidfun ParticleSystem , or series of points render behavior
-
-
-
 
 Can use this class to download images .src = url
 And to save images to disk

@@ -14,6 +14,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
     RootedObject robj( script.js, (JSObject*) this->scriptObject );
    
     // defaults
+    psDef.userData = this;
     psDef.radius = 4 * WORLD_TO_BOX2D_SCALE;
     psDef.density = 5;
     
@@ -338,11 +339,11 @@ void ParticleSystem::TraceProtectedObjects( vector<void**> &protectedObjects ) {
     if ( this->scene ) protectedObjects.push_back( &this->scene->scriptObject );
     
     // groups
-    /* unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin(), end = this->groups.end();
+    unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin(), end = this->groups.end();
     while ( it != end ) {
         protectedObjects.push_back( &((*it)->scriptObject) );
         it++;
-    }*/
+    }
     
     // call super
     ScriptableClass::TraceProtectedObjects( protectedObjects );
@@ -365,48 +366,6 @@ ArgValueVector* ParticleSystem::GetParticleGroupsVector() {
     }
     return vec;
 }
-
-/// overwrites particle systems, skips nulls
-/* ArgValueVector* ParticleSystem::SetParticleGroupsVector( ArgValueVector* in ) {
-    
-    // make copy of current, erase current
-    unordered_set<ParticleGroupBehavior*> oldGroups = this->groups;
-    this->groups.clear();
-    
-    // remove bodies of all current
-    unordered_set<ParticleGroupBehavior*>::iterator it = oldGroups.begin(), end = oldGroups.end();
-    while ( it != end ) { (*it)->RemoveBody(); it++; }
-    
-    // go over passed array
-    int nc = (int) in->size();
-    size_t i = 0;
-    
-    // each element
-    for (; i < nc; i++ ){
-        ArgValue &val = (*in)[ i ];
-        ParticleGroupBehavior* g = NULL;
-        if ( val.type == TypeObject && val.value.objectValue != NULL ) {
-            g = script.GetInstance<ParticleGroupBehavior>( val.value.objectValue );
-        }
-        
-        // if valid
-        if ( g ) {
-            // remove from stored, if present
-            oldGroups.erase( g );
-            
-            // set system
-            g->particleSystem = NULL;
-            g->SetSystem( this );
-        }
-    }
-    
-    // remove remaining
-    it = oldGroups.begin(), end = oldGroups.end();
-    while ( it != end ) { (*it)->SetSystem( NULL ); it++; }
-    
-    return in;
-} */
-
 
 /* MARK:    -                Physics
  -------------------------------------------------------------------- */

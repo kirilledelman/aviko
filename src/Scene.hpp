@@ -9,7 +9,7 @@
 
 #define MAX_DEBUG_POLY_VERTS 512
 
-class Scene : public GameObject, b2Draw, b2ContactListener, b2ContactFilter, b2RayCastCallback, b2QueryCallback {
+class Scene : public GameObject, b2Draw, b2DestructionListener, b2ContactListener, b2ContactFilter, b2RayCastCallback, b2QueryCallback {
 public:
 
 	// init, destroy
@@ -76,6 +76,12 @@ public:
 	/// Return true if contact calculations should be performed between two particles.  This is only called if the b2_particleContactListenerParticle flag is set on the particle.
 	// bool ShouldCollide(b2ParticleSystem* particleSystem, int32 particleIndexA, int32 particleIndexB);
 	
+    // destruction listeners
+    void SayGoodbye(b2Joint* joint);
+    void SayGoodbye(b2Fixture* fix){};
+    void SayGoodbye(b2ParticleGroup* group);
+    void SayGoodbye(b2ParticleSystem* particleSystem, int32 index);
+    
 	/// AABB query callback
 	bool ReportFixture(b2Fixture* fixture);
 	

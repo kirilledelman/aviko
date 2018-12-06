@@ -116,6 +116,7 @@ void RigidBodyJoint::InitClass() {
 	script.SetProperty( "Prismatic", ArgValue( (int) b2JointType::e_prismaticJoint  ), constants );
 	script.SetProperty( "Distance", ArgValue( (int) b2JointType::e_distanceJoint  ), constants );
 	script.SetProperty( "Weld", ArgValue( (int) b2JointType::e_weldJoint  ), constants );
+    script.SetProperty( "Wheel", ArgValue( (int) b2JointType::e_wheelJoint  ), constants );
 	script.FreezeObject( constants );
 	
 	// props
@@ -287,6 +288,10 @@ void RigidBodyJoint::InitClass() {
 					((b2PrismaticJoint*)rb->joint)->SetMotorSpeed( val * DEG_TO_RAD );
 					((b2PrismaticJoint*)rb->joint)->EnableMotor( val != 0 );
 					break;
+                case b2JointType::e_wheelJoint:
+                    ((b2WheelJoint*)rb->joint)->SetMotorSpeed( val * DEG_TO_RAD );
+                    ((b2WheelJoint*)rb->joint)->EnableMotor( val != 0 );
+                break;
 				default: break;
 			}
 		}
@@ -310,6 +315,9 @@ void RigidBodyJoint::InitClass() {
 				case b2JointType::e_mouseJoint:
 					((b2MouseJoint*)rb->joint)->SetMaxForce( val );
 					break;
+                case b2JointType::e_wheelJoint:
+                    ((b2WheelJoint*)rb->joint)->SetMaxMotorTorque( val );
+                    break;
 				default: break;
 			}
 		}
@@ -333,6 +341,9 @@ void RigidBodyJoint::InitClass() {
 				case b2JointType::e_mouseJoint:
 					((b2MouseJoint*)rb->joint)->SetDampingRatio( val );
 					break;
+                case b2JointType::e_wheelJoint:
+                    ((b2WheelJoint*)rb->joint)->SetSpringDampingRatio( val );
+                    break;
 				default: break;
 			}
 		}
@@ -356,6 +367,9 @@ void RigidBodyJoint::InitClass() {
 				case b2JointType::e_mouseJoint:
 					((b2MouseJoint*)rb->joint)->SetFrequency( val );
 					break;
+                case b2JointType::e_wheelJoint:
+                    ((b2WheelJoint*)rb->joint)->SetSpringFrequencyHz( val );
+                    break;
 				default: break;
 			}
 		}
@@ -640,9 +654,14 @@ void RigidBodyJoint::UpdateJoint() {
 	
 	// destroy old
 	if ( this->joint ) {
-		b2Body* b = this->joint->GetBodyA();
-		if ( !b ) b = this->joint->GetBodyB();
-		if ( b ) b->GetWorld()->DestroyJoint( this->joint );
+        // find world
+        Scene* scene = NULL;
+        if ( this->body && this->body->gameObject ) scene = this->body->gameObject->GetScene();
+        if ( !scene && this->otherBody && this->otherBody->gameObject ) scene = this->otherBody->gameObject->GetScene();
+        b2World* world = NULL;
+        if ( scene ) world = scene->world;
+        else world = this->joint->GetBodyB()->GetWorld();
+        if ( world ) world->DestroyJoint( this->joint );
 		this->joint = NULL;
 	}
 	
@@ -732,12 +751,29 @@ void RigidBodyJoint::UpdateJoint() {
 			weldDef.frequencyHz = frequency;
 			jointDef = &weldDef;
 			
-		}
+        // JOINT_WHEEL
+        } else if ( jointType == b2JointType::e_wheelJoint ) {
+            
+            wheelDef.bodyA = body->body;
+            wheelDef.bodyB = otherBody->body;
+            wheelDef.localAnchorA = anchorA;
+            wheelDef.localAnchorB = anchorB;
+            wheelDef.localAxisA = axis;
+            wheelDef.localAxisA.Normalize();
+            wheelDef.enableMotor = ( motorSpeed != 0 );
+            wheelDef.motorSpeed = motorSpeed;
+            wheelDef.maxMotorTorque = maxForce;
+            wheelDef.dampingRatio = damping;
+            wheelDef.frequencyHz = frequency;
+            jointDef = &wheelDef;
+            
+        }
 		
 		// construct
 		if ( jointDef ) {
 			
 			jointDef->collideConnected = collideConnected;
+            jointDef->userData = this;
 			this->joint = world->CreateJoint( jointDef );
 			
 		}

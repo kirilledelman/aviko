@@ -102,12 +102,12 @@ void RigidBodyBehavior::InitClass() {
 	( "velocityX",
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
-		return rb->GetVelocity().x * BOX2D_TO_WORLD_SCALE;
+		return rb->GetVelocity().x;
 	}),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		b2Vec2 vel = rb->GetVelocity();
-		vel.x = val * WORLD_TO_BOX2D_SCALE;
+		vel.x = val;
 		rb->SetVelocity( vel );
 		return val;
 	}));
@@ -116,12 +116,12 @@ void RigidBodyBehavior::InitClass() {
 	( "velocityY",
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
-		return rb->GetVelocity().y * BOX2D_TO_WORLD_SCALE;
+		return rb->GetVelocity().y;
 	}),
 	 static_cast<ScriptFloatCallback>([]( void* p, float val ) {
 		RigidBodyBehavior* rb = (RigidBodyBehavior*)p;
 		b2Vec2 vel = rb->GetVelocity();
-		vel.y = val * WORLD_TO_BOX2D_SCALE;
+		vel.y = val;
 		rb->SetVelocity( vel );
 		return val;
 	}));
@@ -769,6 +769,17 @@ void RigidBodyBehavior::AddBody( Scene *scene ) {
 
 void RigidBodyBehavior::RemoveBody() {
 	
+    // mark live first
+    this->live = false;
+    
+    // update all joints
+    for ( size_t i = 0, nf = joints.size(); i < nf; i++ ) {
+        joints[ i ]->UpdateJoint();
+    }
+    for ( size_t i = 0, nf = otherJoints.size(); i < nf; i++ ) {
+        otherJoints[ i ]->UpdateJoint();
+    }
+    
 	// remove body
 	if ( this->body ) {
 		// clear fixtures from shapes
@@ -778,6 +789,6 @@ void RigidBodyBehavior::RemoveBody() {
 		this->body->GetWorld()->DestroyBody( this->body );
 	}
 	this->body = NULL;
-	
+
 }
 

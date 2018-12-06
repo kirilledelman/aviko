@@ -389,7 +389,7 @@ new (function (){
 				text:
 				"^BJoints example^b\n\nJoints connect two bodies, constraining movement\n" +
 				"and rotation in various ways. Joint types:\n\n" +
-				"Ball with cap - Weld joint\nBridge - Revolute joint\nSliding ball - Prismatic joint\n" +
+				"Ball with cap - Weld joint\nBridge - Revolute joint\nCar - Wheel joints\nSliding ball - Prismatic joint\n" +
 				"Squares - Distance joint\nDragging objects with mouse - Mouse joint"
 			} )
 		],
@@ -518,7 +518,7 @@ new (function (){
 							x: 15, y: 15,
 			            } ),
 			        } ),
-					x: 220, y: 160, ui: new UI( { focusable: true } ),
+					x: 150, y: 160, ui: new UI( { focusable: true } ),
 			    }));
 				b.ui.__proto__ = draggableObjectUIProto;
 				c = container.addChild( new GameObject({
@@ -535,9 +535,75 @@ new (function (){
 							otherBody: b.body,
 			                distance: 25 } )
 			        } ),
-					x: 255, y: 160, ui: new UI( { focusable: true } ),
+					x: 185, y: 160, ui: new UI( { focusable: true } ),
 			    }));
 				c.ui.__proto__ = draggableObjectUIProto;
+
+				// subfloor
+				pts = [ 0, 0, 25, 10, 50, -5, 75, 15, 100, 0, 125, -5, 150, 10, 175, 10, 200, -5, 250, 15 ];
+                b = container.addChild( new GameObject({
+                    name: "Subfloor",
+                    render: new RenderShape( { shape: Shape.Chain, color: 0x663366, points: pts, lineThickness: 2 } ),
+                    body: new Body( {
+						type: BodyType.Static,
+                        shape: new BodyShape( {
+                            type: Shape.Chain,
+                            points: pts
+                        } ),
+                    } ),
+                    x: 10, y: 120,
+                }));
+
+                // Wheel joint
+                b = container.addChild( new GameObject({
+                    name: "Car",
+                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x663366, x: 40, y: 10, lineThickness: 2 } ),
+                    body: new Body( {
+                        shape: new BodyShape( {
+                            type: Shape.Rectangle,
+                            x: 40, y: 10,
+                        } ),
+                    } ),
+                    x: 10, y: 100, ui: new UI( { focusable: true } ),
+                }));
+                b.ui.__proto__ = draggableObjectUIProto;
+                c = container.addChild( new GameObject({
+                    name: "Wheel1",
+                    render: new RenderShape( { shape: Shape.Circle, color: 'D0306399', radius: 5, lineThickness: 2 } ),
+                    body: new Body( {
+                        shape: new BodyShape( {
+                            type: Shape.Circle,
+                            radius: 5,
+                        } )
+                    } ),
+					x: 15, y: 110
+                }));
+                var d = container.addChild( new GameObject({
+                    name: "Wheel2",
+                    render: new RenderShape( { shape: Shape.Circle, color: 'D0306399', radius: 5, lineThickness: 2 } ),
+                    body: new Body( {
+                        shape: new BodyShape( {
+                            type: Shape.Circle,
+                            radius: 5,
+                        } )
+                    } ),
+                    x: 45, y: 110
+                }));
+				b.body.joints = [ new Joint( {
+                    type: JointType.Wheel,
+                    axisX: 0, axisY: 1,
+					anchorX: 5, anchorY: 15,
+					motorSpeed: 15,
+					damping: 0.9,
+                    otherBody: c.body,
+                } ), new Joint( {
+                    type: JointType.Wheel,
+                    axisX: 0, axisY: 1,
+                    anchorX: 35, anchorY: 15,
+                    motorSpeed: 15,
+                    damping: 0.9,
+                    otherBody: d.body,
+                } ) ];
 			}
 		}
 	} );
@@ -651,17 +717,30 @@ new (function (){
                 b.ui.__proto__ = draggableObjectUIProto;
 
                 // particles
-                b = container.addChild( new GameObject({
+                c = container.addChild( new GameObject({
                     name: "Particles",
-                    // render: new RenderShape( { shape: Shape.Rectangle, centered: true, color: '66663333', x: 50, y: 20, lineThickness: 2 } ),
+                    render: new RenderShape( { shape: Shape.Rectangle, centered: true, color: '66663333', x: 10, y: 10, lineThickness: 2 } ),
                     body: new Particles( {
-                        shape: new BodyShape( {
+                        /* shape: new BodyShape( {
                             type: Shape.Rectangle,
-                            x: 10, y: 10
-                        } ),
+                            x: 280, y: 60
+                        } ), */
 						color: 0x333399,
+						rigid: false,
+						solid: true,
+						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
+						lifetime: 5,
                     } ),
-                    x: 20, y: 40
+                    x: 10, y: 10,
+					addedToScene: function(){ this.a = this.async( this.emit, 0.5 ); },
+                    removedFromScene: function(){ this.cancelAsync( this.a ); },
+					emit: function (){
+                    	log( "emit ", this.x, this.y );
+                    	this.body.addParticles( [
+                    		[ 0, 0 ]// , [ 5, 5 ], [ 5, 0 ], [ 5, 5 ]
+						] );
+                    	this.a = this.async( this.emit, 0.5 );
+					},
                 }));
 
                 // $0 = b.body;

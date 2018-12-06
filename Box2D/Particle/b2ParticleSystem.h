@@ -178,6 +178,8 @@ struct b2ParticleSystemDef
 		colorMixingStrength = 0.5f;
 		destroyByAge = true;
 		lifetimeGranularity = 1.0f / 60.0f;
+        
+        userData = NULL;
 	}
 
 	/// Enable strict Particle/Body contact check.
@@ -275,6 +277,9 @@ struct b2ParticleSystemDef
 	/// With the value set to 1/60 the maximum lifetime or age of a particle is
 	/// 2.27 years.
 	float32 lifetimeGranularity;
+    
+    // modified
+    void* userData = NULL;
 };
 
 
@@ -696,6 +701,9 @@ public:
 	/// @param aabb Returns the axis-aligned bounding box of the system.
 	void ComputeAABB(b2AABB* const aabb) const;
 
+    /// returns userdata
+    void* GetUserData();
+    
 #if LIQUIDFUN_EXTERNAL_LANGUAGE_API
 public:
 	enum b2ExceptionType
@@ -726,7 +734,7 @@ public:
 	/// Copy color buffer into a specified buffer, starting from startIndex.
 	int CopyWeightBuffer(int startIndex, int numParticles, void* outBuf,
 						 int size) const;
-
+    
 private:
 	/// Helper function for buffer copies.
 	int CopyBuffer(int startIndex, int numParticles, void* inBufWithOffset,
@@ -1064,6 +1072,9 @@ private:
 		float32 invMass, float32 invInertia, float32 tangentDistance,
 		bool isRigidGroup, b2ParticleGroup* group, int32 particleIndex,
 		float32 impulse, const b2Vec2& normal);
+
+    /// userdata
+    void* m_userData;
 
 	bool m_paused;
 	int32 m_timestamp;

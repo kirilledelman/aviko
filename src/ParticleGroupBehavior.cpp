@@ -18,7 +18,7 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     
     // defaults
     this->groupDef.groupFlags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup | b2_rigidParticleGroup;
-    this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle;
+    this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
     this->groupDef.userData = NULL;
     
     // create color object
@@ -46,7 +46,6 @@ ParticleGroupBehavior::~ParticleGroupBehavior() {
         
 }
 
-
 /* MARK:    -                Javascript
  -------------------------------------------------------------------- */
 
@@ -69,12 +68,12 @@ void ParticleGroupBehavior::InitClass() {
     script.SetProperty( "Powder", ArgValue( b2_powderParticle ), constants );
     script.SetProperty( "Tensile", ArgValue( b2_tensileParticle ), constants );
     script.SetProperty( "ColorMixing", ArgValue( b2_colorMixingParticle ), constants );
-    script.SetProperty( "DestructionEvent", ArgValue( b2_destructionListenerParticle ), constants );
+    // script.SetProperty( "DestructionEvent", ArgValue( b2_destructionListenerParticle ), constants );
     script.SetProperty( "Barrier", ArgValue( b2_barrierParticle ), constants );
     script.SetProperty( "StaticPressure", ArgValue( b2_staticPressureParticle ), constants );
     script.SetProperty( "Reactive", ArgValue( b2_reactiveParticle ), constants );
     script.SetProperty( "Repulsive", ArgValue( b2_repulsiveParticle ), constants );
-    script.SetProperty( "CollisionEvent", ArgValue( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ), constants );
+    // script.SetProperty( "CollisionEvent", ArgValue( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ), constants );
     script.FreezeObject( constants );
     
     // properties
@@ -180,11 +179,14 @@ void ParticleGroupBehavior::InitClass() {
     ( "flags",
      static_cast<ScriptIntCallback>([]( void* p, int val ) {
         int32 flags = ((ParticleGroupBehavior*)p)->groupDef.flags;
-        return ( flags & ~b2_fixtureContactFilterParticle ) & ~b2_particleContactFilterParticle;
+        return (((( flags & ~b2_fixtureContactFilterParticle )
+                & ~b2_particleContactFilterParticle )
+                & ~b2_destructionListenerParticle )
+                & ~b2_particleContactListenerParticle );
     }),
      static_cast<ScriptIntCallback>([]( void* p, int val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        self->groupDef.flags = ( val | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle );
+        self->groupDef.flags = ( val | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle );
         self->UpdateFlags();
         return val;
     }));
@@ -301,6 +303,29 @@ void ParticleGroupBehavior::InitClass() {
         return true;
     } ));
     
+    script.DefineFunction<ParticleGroupBehavior>
+    ("addParticles",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*) p;
+        const char *error = "usage: addParticles( Array particles, [ Number offsetX, Number offsetY, [ Number angle ] ] )";
+        ArgValueVector* vec = NULL;
+        float ox = 0, oy = 0, oa = 0;
+        if ( !sa.ReadArguments( 1, TypeArray, &vec, TypeFloat, &ox, TypeFloat, &oy, TypeFloat, &oa ) ) {
+            script.ReportError( error );
+            return false;
+        }
+        self->SetParticleVector( vec, true, ox, oy, oa );
+        return true;
+    } ));
+    
+//    numParticles
+//    getParticle( i, [ Bool asArray ] )
+//    addParticle( Obj | Array )
+//    updateParticle( i, Obj | Array )
+//    destroyParticle( i )
+//      clear
+//    join( otherGroup ) - otherGroup loses all particles, but remains
+    
 }
 
 void ParticleGroupBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -343,7 +368,7 @@ void ParticleGroupBehavior::TraceProtectedObjects( vector<void**> &protectedObje
 /// copies body transform to game object
 void ParticleGroupBehavior::SyncObjectToBody() {
     
-    if ( !this->group || !this->live ) return;
+    if ( !this->group || !this->live || !( this->groupDef.groupFlags & b2_rigidParticleGroup ) ) return;
     
     b2Vec2 pos = this->group->GetCenter() * BOX2D_TO_WORLD_SCALE;
     float angle = this->group->GetAngle() * RAD_TO_DEG;
@@ -443,8 +468,10 @@ void ParticleGroupBehavior::GetBodyTransform( b2Vec2& pos, float& angle ) {
     angle = this->group->GetAngle();
 }
 
+
 /* MARK:    -                Attached / removed / active
  -------------------------------------------------------------------- */
+
 
 /// attach to particle system
 void ParticleGroupBehavior::SetSystem( ParticleSystem* newSystem ) {
@@ -633,6 +660,13 @@ void ParticleGroupBehavior::RemoveBody() {
     
 }
 
+void ParticleGroupBehavior::ParticleDestroyed( int32 index ) {
+    Event event( EVENT_DESTROYED );
+    event.scriptParams.AddIntArgument( index );
+    event.scriptParams.AddObjectArgument( this->scriptObject );
+    this->CallEvent( event );
+}
+
 
 /* MARK:    -                Update
  -------------------------------------------------------------------- */
@@ -732,7 +766,8 @@ void ParticleGroupBehavior::UpdateAngularVelocity() {
 /// returns ArgValueVector with each particle's info
 ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
     ArgValueVector* vec = new ArgValueVector();
-    
+    int32 flags;
+
     if ( this->group ) {
         
         b2Vec2 center = this->group->GetCenter();
@@ -766,7 +801,11 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
             pt->emplace_back( (float) pos.x * BOX2D_TO_WORLD_SCALE );
             pt->emplace_back( (float) pos.y * BOX2D_TO_WORLD_SCALE );
 
-            pt->emplace_back( (int) ps->GetParticleFlags( i ) );
+            flags = (((( ps->GetParticleFlags( i ) & ~b2_fixtureContactFilterParticle )
+                       & ~b2_particleContactFilterParticle )
+                      & ~b2_destructionListenerParticle )
+                     & ~b2_particleContactListenerParticle );
+            pt->emplace_back( (int) flags );
             
             pt->emplace_back( (float) ps->GetParticleLifetime( i ) );
             
@@ -790,7 +829,12 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
             pt->emplace_back( (float) pi.def.position.y * BOX2D_TO_WORLD_SCALE );
             pt->emplace_back( (float) pi.def.velocity.x * BOX2D_TO_WORLD_SCALE );
             pt->emplace_back( (float) pi.def.velocity.y * BOX2D_TO_WORLD_SCALE );
-            pt->emplace_back( (int) pi.def.flags );
+            
+            flags = (((( pi.def.flags & ~b2_fixtureContactFilterParticle )
+                       & ~b2_particleContactFilterParticle )
+                      & ~b2_destructionListenerParticle )
+                     & ~b2_particleContactListenerParticle );
+            pt->emplace_back( (int) flags );
             pt->emplace_back( (float) pi.def.lifetime );
             
             pt->emplace_back( (int) pi.def.color.r );
@@ -805,27 +849,30 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
 }
 
 /// overwrites particles
-ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in ) {
+ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bool append, float offsetX, float  offsetY, float offsetAngle ) {
     
-    // remove current
-    this->RemoveBody();
-    this->points.clear();
+    if ( !append ) {
+        // remove current
+        this->RemoveBody();
+        this->points.clear();
+    }
     
     // add new points
     int nc = (int) in->size();
     size_t i = 0;
+    // float sa = sin( offsetAngle ), ca = cos( offsetAngle );
     for (; i < nc; i++ ){
+        
         // add a point w defaults
-        this->points.emplace_back();
-        ParticleInfo& p = this->points.back();
-        p.def.position.SetZero();
+        ParticleInfo p;
+        p.def.position.SetZero(); // ( offsetX, offsetY );
         p.def.velocity.SetZero();
         p.def.color.r = this->color->rgba.r;
         p.def.color.g = this->color->rgba.g;
         p.def.color.b = this->color->rgba.b;
         p.def.color.a = this->color->rgba.a;
         p.def.lifetime = this->groupDef.lifetime;
-        p.def.flags = this->groupDef.flags;
+        p.def.flags = this->groupDef.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
         p.weight = 0;
         p.def.userData = NULL;
         
@@ -844,7 +891,10 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in ) {
                 pd[ 3 ].toNumber( p.def.velocity.y );
                 p.def.velocity *= WORLD_TO_BOX2D_SCALE;
             }
-            if ( len >= 5 ) pd[ 4 ].toInt32( p.def.flags );
+            if ( len >= 5 ) {
+                uint32 flags = p.def.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
+                pd[ 4 ].toInt32( flags );
+            }
             if ( len >= 6 ) pd[ 5 ].toNumber( p.def.lifetime );
             if ( len >= 10 ){
                 pd[ 6 ].toInt8( p.def.color.r );
@@ -854,9 +904,22 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in ) {
             }
             if ( len >= 11 && pd[ 10 ].type == TypeObject ) p.def.userData = pd[ 10 ].value.objectValue;
         }
+        
+        this->AddParticle( p );
+
     }
     
     // add body
-    if ( this->particleSystem ) this->AddBody( this->particleSystem->scene );
+    this->AddBody( this->particleSystem->scene );
     return in;
+}
+
+int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p ) {
+    if ( this->group ) {
+        p.def.group = this->group;
+        return this->group->GetParticleSystem()->CreateParticle( p.def );
+    } else {
+        this->points.push_back( p );
+        return (int32) this->points.size();
+    }
 }

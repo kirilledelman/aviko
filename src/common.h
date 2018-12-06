@@ -142,6 +142,7 @@ extern int RobotoBold_size;
 #define EVENT_ERROR "error"
 #define EVENT_LOG "log"
 #define EVENT_CHANGE "change"
+#define EVENT_DESTROYED "destroyed"
 
 // additional blending mode
 #define GPU_BLEND_CUT_ALPHA 16
