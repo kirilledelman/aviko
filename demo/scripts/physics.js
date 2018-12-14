@@ -693,7 +693,7 @@ new (function (){
         children: [
             new GameObject( 'ui/text', { color: 0x0, size: 12, multiLine: true,
                 text:
-                "^BParticles^b\n\n"
+                "^BParticles^b\n\nCan be used to simulate liquids."
             } )
         ],
         activeChanged: function () {
@@ -712,38 +712,26 @@ new (function (){
                             bounce: 0.2,
                         } ),
                     } ),
-                    x: 150, y: 10, ui: new UI( { focusable: true } ),
+                    x: 150, y: 15, ui: new UI( { focusable: true } ),
                 }));
                 b.ui.__proto__ = draggableObjectUIProto;
 
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
-                    render: new RenderShape( { shape: Shape.Rectangle, centered: true, color: '66663333', x: 10, y: 10, lineThickness: 2 } ),
+                    render: new RenderParticles(),
                     body: new Particles( {
-                        /* shape: new BodyShape( {
+                        shape: new BodyShape( {
                             type: Shape.Rectangle,
-                            x: 280, y: 60
-                        } ), */
+                            x: 280, y: 50
+                        } ),
 						color: 0x333399,
 						rigid: false,
 						solid: true,
 						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
-						lifetime: 5,
                     } ),
-                    x: 10, y: 10,
-					addedToScene: function(){ this.a = this.async( this.emit, 0.5 ); },
-                    removedFromScene: function(){ this.cancelAsync( this.a ); },
-					emit: function (){
-                    	log( "emit ", this.x, this.y );
-                    	this.body.addParticles( [
-                    		[ 0, 0 ]// , [ 5, 5 ], [ 5, 0 ], [ 5, 5 ]
-						] );
-                    	this.a = this.async( this.emit, 0.5 );
-					},
+                    x: 10, y: 135,
                 }));
-
-                // $0 = b.body;
 
             }
         }

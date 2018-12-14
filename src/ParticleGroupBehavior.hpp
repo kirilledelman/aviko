@@ -57,13 +57,16 @@ public:
     //
     ArgValueVector* GetParticleVector();
     ArgValueVector* SetParticleVector( ArgValueVector* in, bool append=false, float offsetX=0.0f, float offsetY=0.0f, float offsetAngle=0.0f );
-    int32 AddParticle( ParticleInfo& p );
+    int32 AddParticle( ParticleInfo& p, b2Vec2 &worldPos, float worldAngle );
     
     // callbacks
     void ParticleDestroyed( int32 index );
     
     // methods
     
+    /// return true if body is live, and GameObject's transform should use this body's tranform instead of local+parent
+    bool UseBodyTransform();
+
     /// turns on and off ( active switch )
     void EnableBody( bool e );
     

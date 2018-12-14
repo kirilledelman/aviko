@@ -16,7 +16,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
     // defaults
     psDef.userData = this;
     psDef.radius = 4 * WORLD_TO_BOX2D_SCALE;
-    psDef.density = 5;
+    psDef.density = 10;
     
     // read params
     void *initObj = NULL;
@@ -413,7 +413,8 @@ void ParticleSystem::SyncObjectsToGroups() {
     unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin(), end = this->groups.end();
     while( it != end ) {
         ParticleGroupBehavior* pg = *it;
-        if ( pg->live && pg->syncObjectPosition ) pg->SyncObjectToBody();
+        //if ( pg->group && pg->live && ( pg->groupDef.groupFlags & b2_rigidParticleGroup ) )
+        pg->SyncObjectToBody();
         it++;
     }
     

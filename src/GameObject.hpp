@@ -7,6 +7,7 @@
 #include "RenderBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "RigidBodyBehavior.hpp"
+#include "ParticleGroupBehavior.hpp"
 #include "TypedVector.hpp"
 
 typedef vector<GameObject*> GameObjectVector;
@@ -89,8 +90,8 @@ public:
 	/// shortcut to rigid body behavior, if attached
 	BodyBehavior* body = NULL;
 	
-	/// returns true if theres a physics body in the world
-	bool HasBody();
+	/// returns true if theres a live physics body in the world, and it wants us to use its transform instead of object's local+parent transform
+	inline bool UseBodyTransform();
 	
 	/// shortcut to rendering behavior
 	RenderBehavior* render = NULL;

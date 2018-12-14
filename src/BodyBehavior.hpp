@@ -69,6 +69,9 @@ public:
 	// is set to true when body is in the world
 	bool live = false;
 	
+    /// return true if body is live, and GameObject's transform should use this body's tranform instead of local+parent
+    virtual bool UseBodyTransform() { return false; }
+    
 	// converts flags to value array or single int
 	static void BitsToValue( uint32, ArgValue& );
 	

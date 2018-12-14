@@ -185,6 +185,7 @@
 		71D3CC101FEB3EC6006F7678 /* libmozjs-24.0.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A691FEADBFF00995D61 /* libmozjs-24.0.a */; };
 		71D3CC181FEB3F40006F7678 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 71339A6B1FEADDDB00995D61 /* libz.tbd */; };
 		71D9A14F20308AC4006E0FD3 /* TypedVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */; };
+		71DAAC7921C44C6B0006AC38 /* RenderParticlesBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71DAAC7721C44C6B0006AC38 /* RenderParticlesBehavior.cpp */; };
 		71E28C401FF00A6300637B80 /* BodyBehavior.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */; };
 		71E626F81FF935D9001A203F /* aviko in CopyFiles */ = {isa = PBXBuildFile; fileRef = 71A460D91FEB3E3500129194 /* aviko */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -255,6 +256,8 @@
 		71D8D3A31FCC9640004DDE7E /* UIBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UIBehavior.hpp; path = src/UIBehavior.hpp; sourceTree = "<group>"; };
 		71D9A14D20308AC4006E0FD3 /* TypedVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypedVector.cpp; path = src/TypedVector.cpp; sourceTree = "<group>"; };
 		71D9A14E20308AC4006E0FD3 /* TypedVector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = TypedVector.hpp; path = src/TypedVector.hpp; sourceTree = "<group>"; };
+		71DAAC7721C44C6B0006AC38 /* RenderParticlesBehavior.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RenderParticlesBehavior.cpp; path = src/RenderParticlesBehavior.cpp; sourceTree = "<group>"; };
+		71DAAC7821C44C6B0006AC38 /* RenderParticlesBehavior.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = RenderParticlesBehavior.hpp; path = src/RenderParticlesBehavior.hpp; sourceTree = "<group>"; };
 		71E28C3E1FF00A6300637B80 /* BodyBehavior.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BodyBehavior.cpp; path = src/BodyBehavior.cpp; sourceTree = "<group>"; };
 		71E28C3F1FF00A6300637B80 /* BodyBehavior.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = BodyBehavior.hpp; path = src/BodyBehavior.hpp; sourceTree = "<group>"; };
 		71E694511F5318E9001EB381 /* Application.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Application.cpp; path = src/Application.cpp; sourceTree = "<group>"; };
@@ -534,6 +537,8 @@
 				71E694601F5318E9001EB381 /* RenderSpriteBehavior.cpp */,
 				7185331F1F9F92E60080B05A /* RenderTextBehavior.hpp */,
 				7185331E1F9F92E60080B05A /* RenderTextBehavior.cpp */,
+				71DAAC7821C44C6B0006AC38 /* RenderParticlesBehavior.hpp */,
+				71DAAC7721C44C6B0006AC38 /* RenderParticlesBehavior.cpp */,
 				71D8D3A31FCC9640004DDE7E /* UIBehavior.hpp */,
 				71D8D3A21FCC9640004DDE7E /* UIBehavior.cpp */,
 				71E694641F5318E9001EB381 /* SampleBehavior.hpp */,
@@ -979,6 +984,7 @@
 				71D3CC031FEB3E9E006F7678 /* GameObject.hpp in Sources */,
 				71D3CC041FEB3E9E006F7678 /* GameObject.cpp in Sources */,
 				71D3CC071FEB3E9E006F7678 /* SoundResource.hpp in Sources */,
+				71DAAC7921C44C6B0006AC38 /* RenderParticlesBehavior.cpp in Sources */,
 				71D3CC081FEB3E9E006F7678 /* SoundResource.cpp in Sources */,
 				71D3CC091FEB3E9E006F7678 /* FontResource.hpp in Sources */,
 				71D3CC0A1FEB3E9E006F7678 /* FontResource.cpp in Sources */,

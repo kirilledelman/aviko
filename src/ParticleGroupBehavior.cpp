@@ -195,12 +195,12 @@ void ParticleGroupBehavior::InitClass() {
     ( "velocityX",
      static_cast<ScriptFloatCallback>([]( void* p, float val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        if ( self->group ) return self->group->GetLinearVelocity().x;
+        if ( self->group ) return self->group->GetLinearVelocity().x * BOX2D_TO_WORLD_SCALE;
         return self->groupDef.linearVelocity.x;
     }),
      static_cast<ScriptFloatCallback>([]( void* p, float val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        self->groupDef.linearVelocity.x = val;
+        self->groupDef.linearVelocity.x = val * WORLD_TO_BOX2D_SCALE;
         self->UpdateVelocity( true, false );
         return val;
     }));
@@ -209,12 +209,12 @@ void ParticleGroupBehavior::InitClass() {
     ( "velocityY",
      static_cast<ScriptFloatCallback>([]( void* p, float val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        if ( self->group ) return self->group->GetLinearVelocity().y;
+        if ( self->group ) return self->group->GetLinearVelocity().y * BOX2D_TO_WORLD_SCALE;
         return self->groupDef.linearVelocity.y;
     }),
      static_cast<ScriptFloatCallback>([]( void* p, float val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        self->groupDef.linearVelocity.y = val;
+        self->groupDef.linearVelocity.y = val * WORLD_TO_BOX2D_SCALE;
         self->UpdateVelocity( false, true );
         return val;
     }));
@@ -314,13 +314,13 @@ void ParticleGroupBehavior::InitClass() {
             script.ReportError( error );
             return false;
         }
-        self->SetParticleVector( vec, true, ox, oy, oa );
+        self->SetParticleVector( vec, true, ox * WORLD_TO_BOX2D_SCALE, oy * WORLD_TO_BOX2D_SCALE, oa * DEG_TO_RAD );
         return true;
     } ));
     
 //    numParticles
 //    getParticle( i, [ Bool asArray ] )
-//    addParticle( Obj | Array )
+//    addParticle( Obj | Array | x, y, ....)
 //    updateParticle( i, Obj | Array )
 //    destroyParticle( i )
 //      clear
@@ -364,11 +364,16 @@ void ParticleGroupBehavior::TraceProtectedObjects( vector<void**> &protectedObje
 /* MARK:    -                Sync body <-> object
  -------------------------------------------------------------------- */
 
+/// use this body transform if this is a rigid group
+bool ParticleGroupBehavior::UseBodyTransform() {
+    return (this->group && this->live && (this->groupDef.groupFlags & b2_rigidParticleGroup) );
+}
 
 /// copies body transform to game object
+/// only valid for rigid groups
 void ParticleGroupBehavior::SyncObjectToBody() {
     
-    if ( !this->group || !this->live || !( this->groupDef.groupFlags & b2_rigidParticleGroup ) ) return;
+    if ( !(this->group && this->live && (this->groupDef.groupFlags & b2_rigidParticleGroup ) ) ) return;
     
     b2Vec2 pos = this->group->GetCenter() * BOX2D_TO_WORLD_SCALE;
     float angle = this->group->GetAngle() * RAD_TO_DEG;
@@ -385,6 +390,7 @@ void ParticleGroupBehavior::SyncObjectToBody() {
 }
 
 /// converts game object's local transform to body
+/// only valid for rigid groups
 void ParticleGroupBehavior::SyncBodyToObject() {
     
     // unlink body
@@ -409,23 +415,33 @@ void ParticleGroupBehavior::SyncBodyToObject() {
 
 /// just sets body transform
 void ParticleGroupBehavior::SetBodyTransform( b2Vec2 newPos, float angleInRad ) {
-    newPos *= WORLD_TO_BOX2D_SCALE;
-    b2ParticleSystem* ps = this->group->GetParticleSystem();
-    b2Vec2 center = this->group->GetCenter();
-    float angle = this->group->GetAngle();
-    int32 i = this->group->GetBufferIndex();
-    int32 last = i + this->group->GetParticleCount();
-    b2Vec2* positions = ps->GetPositionBuffer();
-    b2Vec2 pos;
-    float co = cos( -angle ), so = sin( -angle );
-    float ca = cos( angleInRad ), sa = sin( angleInRad );
-    for (; i < last; i++) {
-        pos = positions[ i ] - center;
-        pos.Set( pos.x * co - pos.y * so, pos.x * so + pos.y * co );
-        pos.Set( pos.x * ca - pos.y * sa, pos.x * sa + pos.y * ca );
-        positions[ i ] = pos + newPos;
+    if ( this->group ) {
+        newPos *= WORLD_TO_BOX2D_SCALE;
+        b2ParticleSystem* ps = this->group->GetParticleSystem();
+        b2Vec2 center = { 0, 0 };
+        float angle = 0;
+        center = this->group->GetCenter();
+        angle = this->group->GetAngle();
+        int32 i = this->group->GetBufferIndex();
+        int32 last = i + this->group->GetParticleCount();
+        b2Vec2* positions = ps->GetPositionBuffer();
+        b2Vec2* velocities = ps->GetVelocityBuffer();
+        b2Vec2 pos;
+        float co = cos( -angle ), so = sin( -angle );
+        float ca = cos( angleInRad ), sa = sin( angleInRad );
+        for (; i < last; i++) {
+            pos = positions[ i ] - center;
+            pos.Set( pos.x * co - pos.y * so, pos.x * so + pos.y * co );
+            pos.Set( pos.x * ca - pos.y * sa, pos.x * sa + pos.y * ca );
+            positions[ i ] = pos + newPos;
+            pos = velocities[ i ];
+            pos.Set( pos.x * co - pos.y * so, pos.x * so + pos.y * co );
+            pos.Set( pos.x * ca - pos.y * sa, pos.x * sa + pos.y * ca );
+            velocities[ i ] = pos;
+        }
+        this->group->m_transform.Set( newPos, angleInRad );
+        this->group->m_center = newPos;
     }
-    this->group->m_transform.Set( newPos, angleInRad );
 }
 
 /// set body position
@@ -440,6 +456,7 @@ void ParticleGroupBehavior::SetBodyPosition( b2Vec2 newPos ) {
         positions[ i ] = positions[ i ] - center + newPos;
     }
     this->group->m_transform.Set( newPos, this->group->GetAngle() );
+    this->group->m_center = newPos;
 }
 
 /// set body angle
@@ -450,6 +467,7 @@ void ParticleGroupBehavior::SetBodyAngle( float angleInRad ) {
     int32 i = this->group->GetBufferIndex();
     int32 last = i + this->group->GetParticleCount();
     b2Vec2* positions = ps->GetPositionBuffer();
+    b2Vec2* velocities = ps->GetVelocityBuffer();
     b2Vec2 pos;
     float co = cos( -angle ), so = sin( -angle );
     float ca = cos( angleInRad ), sa = sin( angleInRad );
@@ -458,6 +476,10 @@ void ParticleGroupBehavior::SetBodyAngle( float angleInRad ) {
         pos.Set( pos.x * co - pos.y * so, pos.x * so + pos.y * co );
         pos.Set( pos.x * ca - pos.y * sa, pos.x * sa + pos.y * ca );
         positions[ i ] = pos + center;
+        pos = velocities[ i ];
+        pos.Set( pos.x * co - pos.y * so, pos.x * so + pos.y * co );
+        pos.Set( pos.x * ca - pos.y * sa, pos.x * sa + pos.y * ca );
+        velocities[ i ] = pos;
     }
     this->group->m_transform.Set( center, angleInRad );
 }
@@ -608,39 +630,72 @@ void ParticleGroupBehavior::AddBody( Scene *scene ) {
 
 void ParticleGroupBehavior::RemoveBody() {
     
+    this->gameObject->_worldTransformDirty = this->gameObject->_localCoordsAreDirty = true;
+    this->gameObject->Transform();
+    
     this->live = false;
     if ( this->group ) {
         
-        // extract center
-        b2Vec2 center = this->group->GetCenter();
-        float32 angle = this->group->GetAngle();
+        b2Vec2 center = { 0, 0 };
+        float angle = 0, ca = 0, sa = 0;
+        
+        // if have gameObject
         if ( this->gameObject ) {
-            this->gameObject->SetWorldPositionAndAngle(center.x * BOX2D_TO_WORLD_SCALE, center.y * BOX2D_TO_WORLD_SCALE, angle * RAD_TO_DEG );
+            // get world pos / angle
+            b2Vec2 wscale;
+            this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), center, angle, wscale );
+            center *= WORLD_TO_BOX2D_SCALE;
+            angle *= DEG_TO_RAD;
+        } else {
+            // use body center
+            center = this->group->GetCenter();
+            angle = this->group->GetAngle();
         }
         
-        // store particles info
+        // clear stored
+        this->points.clear();
+        
+        // get particles info
         b2ParticleSystem* ps = this->group->GetParticleSystem();
         int32 i = this->group->GetBufferIndex();
         int32 last = i + this->group->GetParticleCount();
-        this->points.clear();
         b2ParticleColor* colors = ps->GetColorBuffer();
         b2Vec2* positions = ps->GetPositionBuffer();
         b2Vec2* velocities = ps->GetVelocityBuffer();
         void** userData = ps->GetUserDataBuffer();
         float32 *weights = ps->GetWeightBuffer();
-        float ca = cos( -angle ), sa = sin( -angle );
+        ca = cos( -angle ), sa = sin( -angle );
+
+        // for each particle
         for (; i < last; i++) {
+            
+            // new stored point
             this->points.emplace_back();
             ParticleInfo &pi = this->points.back();
+            
+            // store data
             pi.def.flags = ps->GetParticleFlags( i );
             pi.def.color = colors[ i ];
             pi.def.lifetime = ps->GetParticleLifetime( i );
-            pi.def.position = positions[ i ] - center;
-            pi.def.position.Set( pi.def.position.x * ca - pi.def.position.y * sa, pi.def.position.x * sa + pi.def.position.y * ca );
-            pi.def.velocity = velocities[ i ];
-            pi.def.velocity.Set( pi.def.velocity.x * ca - pi.def.velocity.y * sa, pi.def.velocity.x * sa + pi.def.velocity.y * ca );
             pi.def.userData = userData[ i ];
             pi.weight = weights[ i ];
+            
+            // if have gameObject
+            if ( this->gameObject ) {
+                // convert to local, relative to object
+                this->gameObject->ConvertPoint(
+                   positions[ i ].x * BOX2D_TO_WORLD_SCALE, positions[ i ].y * BOX2D_TO_WORLD_SCALE,
+                   pi.def.position.x, pi.def.position.y, false );
+                pi.def.position *= WORLD_TO_BOX2D_SCALE;
+            } else {
+                // store relative to center
+                pi.def.position = positions[ i ] - center;
+                pi.def.position.Set( pi.def.position.x * ca - pi.def.position.y * sa, pi.def.position.x * sa + pi.def.position.y * ca );
+            }
+            
+            // store velocity transformed relative to object
+            pi.def.velocity = velocities[ i ];
+            pi.def.velocity.Set( pi.def.velocity.x * ca - pi.def.velocity.y * sa, pi.def.velocity.x * sa + pi.def.velocity.y * ca );
             
             // delete next step
             ps->SetParticleFlags( i, b2_zombieParticle );
@@ -703,6 +758,7 @@ void ParticleGroupBehavior::UpdateFlags() {
     }
 }
 
+/// update lifetime
 void ParticleGroupBehavior::UpdateLifetime() {
     if ( group ) {
         b2ParticleSystem* ps = this->group->GetParticleSystem();
@@ -742,7 +798,7 @@ void ParticleGroupBehavior::UpdateAngularVelocity() {
         b2Vec2 linearVel = group->GetLinearVelocity();
         b2Vec2 *velocities = ps->GetVelocityBuffer();
         b2Vec2 *positions = ps->GetPositionBuffer();
-        b2Vec2 center = group->m_center;
+        b2Vec2 center = group->GetCenter();
         for (int32 i = group->GetBufferIndex(), last = i + group->GetParticleCount(); i < last; i++) {
             pos = positions[ i ] - center;
             float ang = atan2( pos.y, pos.x ) + M_PI_2;
@@ -770,8 +826,16 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
 
     if ( this->group ) {
         
-        b2Vec2 center = this->group->GetCenter();
-        float32 angle = this->group->GetAngle();
+        b2Vec2 center = { 0, 0 };
+        float32 angle = 0;
+        
+        if ( this->UseBodyTransform() ) {
+            center = this->group->GetCenter();
+            angle = this->group->GetAngle();
+        } else if ( this->gameObject ) {
+            center = this->gameObject->_position * WORLD_TO_BOX2D_SCALE;
+            angle = this->gameObject->_angle;
+        }
 
         // store particles info
         b2ParticleSystem* ps = this->group->GetParticleSystem();
@@ -849,7 +913,24 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
 }
 
 /// overwrites particles
-ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bool append, float offsetX, float  offsetY, float offsetAngle ) {
+ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bool append, float offsetX, float offsetY, float offsetAngle ) {
+
+    // transform point to world
+    b2Vec2 center = { 0, 0 };
+    float angle = 0;
+    
+    // if have gameObject
+    if ( this->gameObject ) {
+        // get world pos / angle
+        b2Vec2 wscale;
+        this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), center, angle, wscale );
+        center *= WORLD_TO_BOX2D_SCALE;
+        angle *= DEG_TO_RAD;
+    } else {
+        // use body center
+        center = this->group->GetCenter();
+        angle = this->group->GetAngle();
+    }
     
     if ( !append ) {
         // remove current
@@ -860,12 +941,12 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
     // add new points
     int nc = (int) in->size();
     size_t i = 0;
-    // float sa = sin( offsetAngle ), ca = cos( offsetAngle );
+    float so = sin( offsetAngle ), co = cos( offsetAngle );
     for (; i < nc; i++ ){
         
         // add a point w defaults
         ParticleInfo p;
-        p.def.position.SetZero(); // ( offsetX, offsetY );
+        p.def.position.SetZero();
         p.def.velocity.SetZero();
         p.def.color.r = this->color->rgba.r;
         p.def.color.g = this->color->rgba.g;
@@ -905,7 +986,14 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
             if ( len >= 11 && pd[ 10 ].type == TypeObject ) p.def.userData = pd[ 10 ].value.objectValue;
         }
         
-        this->AddParticle( p );
+        // apply offset
+        p.def.position.Set( offsetX + p.def.position.x * co - p.def.position.y * so,
+                           offsetY + p.def.position.x * so + p.def.position.y * co );
+        p.def.velocity.Set( p.def.velocity.x * co - p.def.velocity.y * so,
+                           p.def.velocity.x * so + p.def.velocity.y * co );
+        
+        // add particle
+        this->AddParticle( p, center, angle );
 
     }
     
@@ -914,11 +1002,26 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
     return in;
 }
 
-int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p ) {
+/// particleinfo is always in local coords
+int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p, b2Vec2 &worldPos, float worldAngle ) {
+    
+    // if have live group
     if ( this->group ) {
+        
+        // apply body transform
+        float sa = sin( worldAngle ), ca = cos( worldAngle );
+        p.def.position.Set( worldPos.x + p.def.position.x * ca - p.def.position.y * sa,
+                           worldPos.y + p.def.position.x * sa + p.def.position.y * ca );
+        p.def.velocity.Set( p.def.velocity.x * ca - p.def.velocity.y * sa,
+                           p.def.velocity.x * sa + p.def.velocity.y * ca );    
+
+        // add
         p.def.group = this->group;
         return this->group->GetParticleSystem()->CreateParticle( p.def );
+        
+    // not live
     } else {
+        
         this->points.push_back( p );
         return (int32) this->points.size();
     }

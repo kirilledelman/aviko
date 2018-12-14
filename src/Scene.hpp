@@ -125,7 +125,7 @@ public:
 	void DrawSolidCircle(const b2Vec2& center, float32 radius, const b2Vec2& axis, const b2Color& color);
 	
 	/// Draw a particle array
-	void DrawParticles(const b2Vec2 *centers, float32 radius, const b2ParticleColor *colors, int32 count);
+	void DrawParticles(const b2Vec2 *centers, const b2Vec2 *velocities, float32 radius, const b2ParticleColor *colors, int32 count);
 	
 	/// Draw a line segment.
 	void DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color);

@@ -1,7 +1,3 @@
-Confusion
-    when adding particles their coordinates are local to object, inc. rotation
-    only rigid group syncs object position to group center
-    
 
 
 
@@ -15,6 +11,8 @@ destroyParticle( i )
 RenderParticles
 
 Bodies contact - store/remove contact list - add "isTouching(b)" and "getContact(b)"
+
+Limit max DT for physics to prevent explosions
 
 One way platforms
 

@@ -968,11 +968,23 @@ void Scene::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b2Color& color
 void Scene::DrawTransform(const b2Transform& xf) {
 }
 
-void Scene::DrawParticles(const b2Vec2 *centers, float32 radius, const b2ParticleColor *colors, int32 count) {
-    b2Color clr = { 0, 0, 0 };
+void Scene::DrawParticles(const b2Vec2 *centers, const b2Vec2 *velocities, float32 radius, const b2ParticleColor *colors, int32 count) {
+    SDL_Color velClr = { 32, 192, 32, 128 }, pClr = { 0, 0, 0, 128 };
+    b2Color clr;
+    b2Vec2 a, b;
     for ( int32 i = 0; i < count; i++ ) {
-        if ( colors ) clr = colors[ i ].GetColor();
-        this->DrawCircle( centers[ i ], radius, clr );
+        if ( colors ) {
+            clr = colors[ i ].GetColor();
+            pClr.r = clr.r * 255;
+            pClr.g = clr.g * 255;
+            pClr.b = clr.b * 255;
+        } else {
+            pClr = { 0, 0, 0, 255 };
+        }
+        a = centers[ i ] * BOX2D_TO_WORLD_SCALE;
+        b = a + velocities[ i ] * BOX2D_TO_WORLD_SCALE * 0.25;
+        GPU_CircleFilled( app.backScreen->target, a.x, a.y, radius * BOX2D_TO_WORLD_SCALE, pClr );
+        GPU_Line( app.backScreen->target, a.x, a.y, b.x, b.y, velClr );
     }
 }
 

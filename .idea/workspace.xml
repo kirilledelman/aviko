@@ -2,22 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Box2D/Particle/b2ParticleSystem.cpp" afterPath="$PROJECT_DIR$/Box2D/Particle/b2ParticleSystem.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Box2D/Particle/b2ParticleSystem.h" afterPath="$PROJECT_DIR$/Box2D/Particle/b2ParticleSystem.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.pbxproj" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Box2D/Common/b2Draw.h" afterPath="$PROJECT_DIR$/Box2D/Common/b2Draw.h" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Box2D/Dynamics/b2World.cpp" afterPath="$PROJECT_DIR$/Box2D/Dynamics/b2World.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/BodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/BodyBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.hpp" afterPath="$PROJECT_DIR$/src/GameObject.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyJoint.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyJoint.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.hpp" afterPath="$PROJECT_DIR$/src/Scene.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.cpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -41,7 +45,7 @@
       <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="688">
+            <state relative-caret-position="735">
               <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
               <folding />
             </state>
@@ -51,8 +55,8 @@
       <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="480">
-              <caret line="733" column="33" lean-forward="true" selection-start-line="733" selection-start-column="33" selection-end-line="733" selection-end-column="33" />
+            <state relative-caret-position="338">
+              <caret line="721" column="48" lean-forward="false" selection-start-line="721" selection-start-column="48" selection-end-line="721" selection-end-column="48" />
               <folding />
             </state>
           </provider>
@@ -557,11 +561,16 @@
       <workItem from="1544040159274" duration="1012000" />
       <workItem from="1544112595177" duration="2000" />
       <workItem from="1544117825950" duration="5608000" />
+      <workItem from="1544199190505" duration="73000" />
+      <workItem from="1544208460265" duration="2742000" />
+      <workItem from="1544555759221" duration="163000" />
+      <workItem from="1544558508736" duration="444000" />
+      <workItem from="1544814168520" duration="2332000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="215120000" />
+    <option name="totallyTimeSpent" value="220874000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -573,11 +582,11 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="22" width="1440" height="838" extended-state="0" />
+    <frame x="0" y="22" width="1440" height="838" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2267525" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24177396" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -979,7 +988,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/main.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="688">
+        <state relative-caret-position="735">
           <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
           <folding />
         </state>
@@ -987,8 +996,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="733" column="33" lean-forward="true" selection-start-line="733" selection-start-column="33" selection-end-line="733" selection-end-column="33" />
+        <state relative-caret-position="338">
+          <caret line="721" column="48" lean-forward="false" selection-start-line="721" selection-start-column="48" selection-end-line="721" selection-end-column="48" />
           <folding />
         </state>
       </provider>

@@ -528,6 +528,8 @@ void RigidBodyBehavior::Force( b2Vec2& f, b2Vec2& point ){
 /* MARK:	-				Sync body <-> object
  -------------------------------------------------------------------- */
 
+/// return true if body is live, and GameObject's transform should use this body's tranform instead of local+parent
+bool RigidBodyBehavior::UseBodyTransform() { return (this->body && this->live); }
 
 /// copies body transform to game object
 void RigidBodyBehavior::SyncObjectToBody() {

@@ -2,6 +2,7 @@
 #include "RenderShapeBehavior.hpp"
 #include "RenderSpriteBehavior.hpp"
 #include "RenderTextBehavior.hpp"
+#include "RenderParticlesBehavior.hpp"
 #include "UIBehavior.hpp"
 #include "ParticleGroupBehavior.hpp"
 #include "SampleBehavior.hpp"
@@ -1262,9 +1263,9 @@ void Application::InitClass() {
 	RenderShapeBehavior::InitClass();
 	RenderSpriteBehavior::InitClass();
 	RenderTextBehavior::InitClass();
+    RenderParticlesBehavior::InitClass();
 	BodyBehavior::InitClass();
 	RigidBodyBehavior::InitClass();
-
     ParticleGroupBehavior::InitClass();
 	UIBehavior::InitClass();
 	SampleBehavior::InitClass();

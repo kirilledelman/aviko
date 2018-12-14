@@ -86,7 +86,10 @@ public:
 	ArgValueVector* SetJointsVector( ArgValueVector* in, bool other );
 	
 // methods
-	
+
+    /// return true if body is live, and GameObject's transform should use this body's tranform instead of local+parent
+    bool UseBodyTransform();
+
 	/// turns body on and off ( active switch )
 	void EnableBody( bool e );
 	

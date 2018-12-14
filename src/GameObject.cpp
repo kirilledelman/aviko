@@ -1564,7 +1564,10 @@ ArgValueVector* GameObject::RayCastAll( float x, float y, float dx, float dy, in
  -------------------------------------------------------------------- */
 
 
-bool GameObject::HasBody(){ return ( this->body && this->body->live ); }
+bool GameObject::UseBodyTransform(){
+    if ( this->body ) return this->body->UseBodyTransform();
+    return false;
+}
 
 // returns current transformation matrix, also updates local coords, if body+dirty
 float* GameObject::Transform() {
@@ -1574,7 +1577,7 @@ float* GameObject::Transform() {
 	}
 
 	// body + local coords arent up to date, or parent's transform
-	if ( this->HasBody() && ( this->_localCoordsAreDirty || ( this->parent && this->parent->_inverseWorldDirty ) ) ) {
+	if ( this->UseBodyTransform() && ( this->_localCoordsAreDirty || ( this->parent && this->parent->_inverseWorldDirty ) ) ) {
 		
 		// get global coords from body
 		b2Vec2 pos; float angle;
@@ -1624,14 +1627,14 @@ void GameObject::SetTransform( float x, float y, float angle, float scaleX, floa
 	this->_angle = angle;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
 	this->_localCoordsAreDirty = false;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetPosition( float x, float y ) {
 	//this->Transform();
 	this->_position.Set( x, y );
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetPositionAndAngle( float x, float y, float angle ) {
@@ -1639,21 +1642,21 @@ void GameObject::SetPositionAndAngle( float x, float y, float angle ) {
 	this->_position.Set( x, y );
 	this->_angle = angle;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetX( float x ) {
 	//this->Transform();
 	this->_position.x = x;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetY( float y ) {
 	//this->Transform();
 	this->_position.y = y;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetZ( float z ) {
@@ -1666,42 +1669,42 @@ void GameObject::SetAngle( float a ) {
 	//this->Transform();
 	this->_angle = a;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetSkewX( float sx ) {
 	//this->Transform();
 	this->_skew.x = sx;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetSkewY( float sy ) {
 	//this->Transform();
 	this->_skew.y = sy;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScale( float sx, float sy ) {
 	//this->Transform();
 	this->_scale.Set( sx, sy );
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScaleX( float sx ) {
 	//this->Transform();
 	this->_scale.x = sx;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 void GameObject::SetScaleY( float sy ) {
 	//this->Transform();
 	this->_scale.y = sy;
 	this->_transformDirty = this->_inverseWorldDirty = this->_worldTransformDirty = true;
-	if ( this->HasBody() ) this->body->SyncBodyToObject();
+	if ( this->UseBodyTransform() ) this->body->SyncBodyToObject();
 }
 
 float GameObject::GetX() {
@@ -1749,7 +1752,7 @@ void GameObject::SetWorldTransform( float x, float y, float angle, float scaleX,
 	this->_skew.SetZero();
 	
 	// have body
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		// set body transform
 		this->_scale.Set( scaleX, scaleY );
 		this->body->SetBodyTransform( b2Vec2( x, y ) , angle * DEG_TO_RAD );
@@ -1769,7 +1772,7 @@ void GameObject::SetWorldPosition( float x, float y ) {
 	// resets skew
 	this->_skew.SetZero();
 	
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->SetBodyPosition( b2Vec2( x, y ) );
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1790,7 +1793,7 @@ void GameObject::SetWorldPositionAndAngle( float x, float y, float angle ) {
 	// resets skew
 	this->_skew.SetZero();
 	
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->SetBodyTransform( b2Vec2( x, y ), angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1813,7 +1816,7 @@ void GameObject::SetWorldX( float x ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 		this->body->SetBodyPosition( b2Vec2( x, wpos.y ) );
 		this->body->SyncObjectToBody();
@@ -1835,7 +1838,7 @@ void GameObject::SetWorldY( float y ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 		this->body->SetBodyPosition( b2Vec2( wpos.x, y ) );
 		this->body->SyncObjectToBody();
@@ -1857,7 +1860,7 @@ void GameObject::SetWorldAngle( float angle ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->SetBodyAngle( angle * DEG_TO_RAD );
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1878,7 +1881,7 @@ void GameObject::SetWorldScale( float sx, float sy ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->_scale.Set( sx, sy );
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1899,7 +1902,7 @@ void GameObject::SetWorldScaleX( float sx ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->_scale.x = sx;
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1920,7 +1923,7 @@ void GameObject::SetWorldScaleY( float sy ) {
 	
 	// get world space coords first
 	b2Vec2 wpos, wscale; float wangle;
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->_scale.y = sy;
 		this->body->SyncObjectToBody();
 	} else if ( this->parent ) {
@@ -1938,7 +1941,7 @@ void GameObject::SetWorldScaleY( float sy ) {
 b2Vec2 GameObject::GetWorldPosition() {
 	b2Vec2 wpos, wscale; float wangle;
 	this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 	}
 	return wpos;
@@ -1947,7 +1950,7 @@ b2Vec2 GameObject::GetWorldPosition() {
 float GameObject::GetWorldX() {
 	b2Vec2 wpos, wscale; float wangle;
 	this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 	}
 	return wpos.x;
@@ -1956,7 +1959,7 @@ float GameObject::GetWorldX() {
 float GameObject::GetWorldY() {
 	b2Vec2 wpos, wscale; float wangle;
 	this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 	}
 	return wpos.y;
@@ -1983,7 +1986,7 @@ b2Vec2 GameObject::GetWorldScale() {
 float GameObject::GetWorldAngle() {
 	b2Vec2 wpos, wscale; float wangle;
 	this->DecomposeTransform( this->WorldTransform(), wpos, wangle, wscale );
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		this->body->GetBodyTransform( wpos, wangle );
 		wangle *= RAD_TO_DEG;
 	}
@@ -2335,7 +2338,7 @@ void GameObject::Render( Event& event ) {
 	this->combinedOpacity = ( this->parent ? this->parent->combinedOpacity : 1 ) * this->opacity;
 	
 	// transforming using body
-	if ( this->HasBody() ) {
+	if ( this->UseBodyTransform() ) {
 		
 		// if rendering to image / clipped
 		if ( event.clippedBy ) {
