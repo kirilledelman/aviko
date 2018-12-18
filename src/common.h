@@ -80,6 +80,8 @@ extern unsigned char RobotoRegular[];
 extern int RobotoRegular_size;
 extern unsigned char RobotoBold[];
 extern int RobotoBold_size;
+extern unsigned char ParticleTexture[];
+extern int ParticleTexture_size;
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

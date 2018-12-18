@@ -45,6 +45,8 @@ public:
 	
 	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
 	
+    bool LoadFromMemory(void *p, int size);
+    
 	// init, destroy
 	ImageResource( const char* originalKey, string& path, string& ext );
 	~ImageResource();

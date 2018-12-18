@@ -649,6 +649,7 @@ new (function (){
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = true;
 								o.body.gameObject.render.color = 0x990000;
+                                o.body.gameObject.scale = 1.5;
 							}
 						},
 						untouch: function ( sh, o ) {
@@ -656,6 +657,7 @@ new (function (){
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = false;
 								o.body.gameObject.render.color = 0x003399;
+                                o.body.gameObject.scale = 1;
 							}
 						},
 			        } ),
@@ -719,13 +721,14 @@ new (function (){
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
+					opacity: 0.9,
                     render: new RenderParticles(),
                     body: new Particles( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
                             x: 280, y: 50
                         } ),
-						color: 0x333399,
+						color: 0x3333FF,
 						rigid: false,
 						solid: true,
 						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
@@ -737,7 +740,7 @@ new (function (){
         }
     } );
 
-    App.debugDraw = true;
+    // App.debugDraw = true;
 
     // example selector activates panel corresponding to example
 	selector.change = function () {

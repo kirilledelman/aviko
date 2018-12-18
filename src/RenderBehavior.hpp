@@ -12,7 +12,8 @@
 #define SHADER_TILE		0x8
 #define SHADER_STIPPLE	0x10
 #define SHADER_OUTLINE	0x20
-#define SHADER_MAXVAL	0x40
+#define SHADER_PARTICLE 0x40
+#define SHADER_MAXVAL	0x80
 
 class RigidBodyShape;
 class RenderSpriteBehavior;
@@ -51,6 +52,9 @@ public:
 
 	// texture padding
 	int texturePad = 0;
+    
+    // alpha thresh (particles)
+    float alphaThresh = 0;
 	
 	/// called after effect type of params change to reserve appropriate padding
 	void UpdateTexturePad();
@@ -116,6 +120,7 @@ public:
 		int blendUniform;
 		int outlineColorUniform;
 		int outlineOffsetRadiusUniform;
+        int alphaThreshUniform;
 	} ShaderVariant;
 
 	/// shader permutations
@@ -125,7 +130,7 @@ public:
 	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
 	
 	/// applies current shader + params
-	size_t SelectTexturedShader(
+	virtual size_t SelectTexturedShader(
 					 float tw = 0, float th = 0,
 					 float u = 0, float v = 0, float w = 0, float h = 0,
 					 float st = 0, float sr = 0, float sb = 0, float sl = 0,

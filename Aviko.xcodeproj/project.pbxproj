@@ -436,7 +436,6 @@
 				718533241F9FF7B90080B05A /* Sound.cpp */,
 				71E793911FC47DAD0026ABCB /* Image.hpp */,
 				71E793901FC47DAD0026ABCB /* Image.cpp */,
-				713DD01C20DACB16005E00D2 /* StaticResources.cpp */,
 				71766D7D1FEFFAB200E13A92 /* RigidBodyShape.hpp */,
 				71766D7C1FEFFAB200E13A92 /* RigidBodyShape.cpp */,
 				713D46BE1FF0276A00BBAEFF /* RigidBodyJoint.hpp */,
@@ -565,6 +564,7 @@
 		71E694741F532532001EB381 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				713DD01C20DACB16005E00D2 /* StaticResources.cpp */,
 				7126DBBA1F8404B900BD4E44 /* ScriptResource.hpp */,
 				7126DBB91F8404B900BD4E44 /* ScriptResource.cpp */,
 				71A09F211F9BC785005ED838 /* FontResource.hpp */,

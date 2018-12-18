@@ -241,6 +241,33 @@ bool ImageResource::CanUnload() {
 	else return Resource::CanUnload();
 }
 
+/// load from png from memory
+bool ImageResource::LoadFromMemory(void *p, int s ) {
+    SDL_RWops* rwops = SDL_RWFromMem( p, s );
+    SDL_Surface* surface = IMG_Load_RW( rwops, 1 );
+    if ( !surface ) return false;
+    this->image = GPU_CopyImageFromSurface( surface );
+    SDL_FreeSurface( surface );
+    if ( this->image ) {
+    
+        // init bounds
+        this->frame.locationOnTexture = { 0, 0, (float) this->image->base_w, (float) this->image->base_h };
+        this->frame.actualWidth = this->frame.locationOnTexture.w;
+        this->frame.actualHeight = this->frame.locationOnTexture.h;
+        
+        // convert to image
+        this->image->anchor_x = this->image->anchor_y = 0; // reset
+        GPU_SetImageFilter( this->image, GPU_FILTER_NEAREST );
+        GPU_SetSnapMode( this->image, GPU_SNAP_NONE );
+        GPU_SetWrapMode( this->image, GPU_WRAP_NONE, GPU_WRAP_NONE );
+
+        // clear error
+        this->error = ERROR_NONE;
+        return true;
+    } else return false;
+    
+}
+
 // destroy
 ImageResource::~ImageResource() {
 

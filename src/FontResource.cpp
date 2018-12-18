@@ -30,9 +30,8 @@ FontResource::FontResource( const char* originalKey, string& path, string& ext )
 	if ( fontName.compare( "Roboto" ) == 0 ) {
 		
 		// load built in
-		SDL_RWops* rwops = SDL_RWFromMem( RobotoRegular, RobotoRegular_size );
-		this->font = TTF_OpenFontRW( rwops, 1, this->size );
-		if ( !this->font ) {
+		
+		if ( !this->LoadFromMemory( RobotoRegular, RobotoRegular_size ) ) {
 			printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );
 			this->error = ERROR_COMPILE;
 		}
@@ -40,9 +39,7 @@ FontResource::FontResource( const char* originalKey, string& path, string& ext )
 	} else if ( fontName.compare( "RobotoBold" ) == 0 ) {
 		
 		// load built in
-		SDL_RWops* rwops = SDL_RWFromMem( RobotoBold, RobotoBold_size );
-		this->font = TTF_OpenFontRW( rwops, 1, this->size );
-		if ( !this->font ) {
+		if ( !this->LoadFromMemory( RobotoBold, RobotoBold_size ) ) {
 			printf( "Font %s couldn't be loaded: %s\n", path.c_str(), TTF_GetError() );
 			this->error = ERROR_COMPILE;
 		}
@@ -92,4 +89,10 @@ FontResource::~FontResource (){
 	// clean up
 	if ( this->font ) TTF_CloseFont( this->font );
 	
+}
+
+bool FontResource::LoadFromMemory(void *p, int s) {
+    SDL_RWops* rwops = SDL_RWFromMem( p, s );
+    this->font = TTF_OpenFontRW( rwops, 1, this->size );
+    return (this->font != NULL);
 }

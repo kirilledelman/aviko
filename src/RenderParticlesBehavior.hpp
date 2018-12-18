@@ -4,6 +4,7 @@
 #include "common.h"
 #include "RenderBehavior.hpp"
 #include "ParticleGroupBehavior.hpp"
+#include "ImageResource.hpp"
 
 class RenderParticlesBehavior: public RenderBehavior {
 public:
@@ -13,8 +14,20 @@ public:
     RenderParticlesBehavior();
     ~RenderParticlesBehavior();
     
-    /// render surface
-    GPU_Image* surface = NULL;
+    /// render
+    static GPU_Image* surface;
+    static ImageResource* particleTexture;
+    
+    /// texture to fill with
+    ImageResource* imageResource = NULL;
+    float tileX = 1;
+    float tileY = 1;
+    
+    // params
+    float fadeTime = 0.25;
+    float velocityStretch = 50;
+    float velocityStretchFactor = 0.25;
+    float extents = 2.0;
     
     // particles
     ParticleGroupBehavior* particles = NULL;
@@ -22,6 +35,11 @@ public:
     /// render callback
     static void Render( RenderParticlesBehavior* behavior, GPU_Target* target, Event* event );
     
+    /// shader select
+    virtual size_t SelectParticleShader(float tw, float th,
+                                        float u, float v, float w, float h,
+                                        float tx, float ty,
+                                        GPU_Image *image, GPU_Target* targ );
     // scripting
     
     /// registers class for scripting

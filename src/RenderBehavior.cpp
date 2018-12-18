@@ -254,6 +254,11 @@ size_t RenderBehavior::SelectTexturedShader(
 		GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
 	}
 	
+    // thresh
+    if ( variant.alphaThreshUniform >= 0 ) {
+        GPU_SetUniformf( variant.alphaThreshUniform, (float) this->alphaThresh );
+    }
+    
 	// pad
 	if ( variant.texPadUniform >= 0 ) {
 		GPU_SetUniformf( variant.texPadUniform, (float) this->texturePad );
@@ -406,9 +411,10 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		"uniform sampler2D tex;\n\
 		uniform vec2 texSize;\n\
 		uniform vec4 texInfo;\n\
+        uniform float alphaThresh;\n\
 		uniform float texPad;";
 		funcs =
-		"vec4 readPixel( vec2 uv ){\n\
+		"vec4 readPixel( sampler2D _tex, vec2 uv ){\n\
 			uv = uv - texInfo.xy;\n\
 			if ( texPad > 0.0 ){\n\
 				float texPad2 = 2.0 * texPad;\n\
@@ -463,18 +469,56 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		
 		// finish read pixel func
 		funcs += glsles ?
-		"return texture2D( tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
-		"return texture( tex, ( uv + texInfo.xy ) / texSize );\n}\n";
+		"return texture2D( _tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
+		"return texture( _tex, ( uv + texInfo.xy ) / texSize );\n}\n";
 		
-		// read pixel color
-		features +=
-		( featuresMask & SHADER_OUTLINE ) ?
-		"src = readPixel( coord * texSize );\n" :
-		"src = readPixel( coord * texSize ) * color + addColor;\n";
-	} else {
-		features +=
-		"src = color + addColor;";
 	}
+    
+    // particle
+    if ( featuresMask & SHADER_PARTICLE ) {
+        // particle with background
+        if ( featuresMask & SHADER_TEXTURE ) {
+            params +=
+            "uniform sampler2D tex;\n\
+            uniform sampler2D background;\n";
+            
+            features += "src = vec4(1.0,0.0,0.0,1.0);";
+            
+        // particle without background
+        } else {
+            
+            params +=
+            "uniform float particleAlphaThresh;\n\
+            uniform sampler2D tex;\n";
+            
+            features += glsles ?
+            "src = texture2D( tex, coord ) * color + addColor;\n" :
+            "src = texture( tex, coord ) * color + addColor;\n";
+        }
+        
+    // normal
+    } else {
+        // textured
+        if ( featuresMask & SHADER_TEXTURE ) {
+            // alpha thresh
+            features +=
+            "if ( alphaThresh > 0.0 ) {\n\
+                src = readPixel( tex, coord * texSize ) * vec4(color.r, color.g, color.b, 1.0) + addColor;\n\
+                src.a = step( alphaThresh, src.a ) * color.a;\n\
+            } else {\n";
+            // read pixel color
+            features +=
+            ( featuresMask & SHADER_OUTLINE ) ?
+            "src = readPixel( tex, coord * texSize );\n" :
+            "src = readPixel( tex, coord * texSize ) * color + addColor;\n";
+            features +=
+            "}\n\n";
+        } else {
+            // return base color
+            features +=
+            "src = color + addColor;";
+        }
+    }
 	
 	// effects
 	if ( featuresMask & SHADER_OUTLINE ) {
@@ -484,24 +528,24 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		
 		funcs +=
 		"vec4 outlineSample( vec2 coord ){\n\
-			vec4 result = readPixel( coord ); \n\
+			vec4 result = readPixel( tex, coord ); \n\
 			float radius = abs( outlineOffsetRadius.z );\n\
 			float numRings = radius > 1.0 ? 2.0 : 1.0;\n\
 			vec4 r1 = vec4( 0.0, 0.0, 0.0, 0.0 ),\n\
 				 r2 = vec4( 0.0, 0.0, 0.0, 0.0 );\n\
 			float ringStep = radius / numRings; \n\
 			if ( numRings >= 1.0 ) { \n\
-				result = max( result, readPixel( coord + vec2( 0.0, -ringStep ) ) );\n\
-				result = max( result, readPixel( coord + vec2( ringStep, 0.0 ) ) );\n\
-				result = max( result, readPixel( coord + vec2( 0.0, ringStep ) ) );\n\
-				result = max( result, readPixel( coord + vec2( -ringStep, 0.0 ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( 0.0, -ringStep ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( ringStep, 0.0 ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( 0.0, ringStep ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( -ringStep, 0.0 ) ) );\n\
 			}\n\
 			if ( numRings >= 2.0 ) { \n\
 				float ringRadius = radius * 0.35; \n\
-				result = max( result, readPixel( coord + vec2( -ringRadius, -ringRadius ) ) );\n\
-				result = max( result, readPixel( coord + vec2( ringRadius, ringRadius ) ) );\n\
-				result = max( result, readPixel( coord + vec2( -ringRadius, ringRadius ) ) );\n\
-				result = max( result, readPixel( coord + vec2( ringRadius, -ringRadius ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( -ringRadius, -ringRadius ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( ringRadius, ringRadius ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( -ringRadius, ringRadius ) ) );\n\
+				result = max( result, readPixel( tex, coord + vec2( ringRadius, -ringRadius ) ) );\n\
 			}\n\
 			return result;\n\
 		}";
@@ -684,6 +728,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		variant.blendUniform = GPU_GetUniformLocation( variant.shader, "blendMode" );
 		variant.outlineColorUniform = GPU_GetUniformLocation( variant.shader, "outlineColor" );
 		variant.outlineOffsetRadiusUniform = GPU_GetUniformLocation( variant.shader, "outlineOffsetRadius" );
+        variant.alphaThreshUniform = GPU_GetUniformLocation( variant.shader, "alphaThresh" );
 	} else {
 		printf ( "Shader error: %s\nin shaders[%zu]:\n%s\n%s\n", GPU_GetShaderMessage(), featuresMask, fragShader, vertShader );
 		exit(1);

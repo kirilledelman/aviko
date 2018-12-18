@@ -16,6 +16,8 @@ public:
 	
 	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
 	
+    bool LoadFromMemory( void* p, int size );
+    
 	// init, destroy
 	FontResource( const char* originalKey, const unsigned char* data );
 	FontResource( const char* originalKey, string& path, string& ext );

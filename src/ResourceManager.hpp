@@ -52,6 +52,9 @@ public:
 		return ( !dontUnload && useCount <= 0 );
 	}
 	
+    /// loads resource from memory location
+    virtual bool LoadFromMemory( void* p, int size ){ return false; }
+    
 	/// creates new key (as path to file without app.currentDir part), extracts filename, extension, if provided
 	static string ResolveKey( const char* ckey, string& fullpath, string& extension );
 	
