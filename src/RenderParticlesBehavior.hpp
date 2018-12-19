@@ -27,7 +27,7 @@ public:
     float fadeTime = 0.25;
     float velocityStretch = 50;
     float velocityStretchFactor = 0.25;
-    float extents = 2.0;
+    float extents = 0;
     
     // particles
     ParticleGroupBehavior* particles = NULL;

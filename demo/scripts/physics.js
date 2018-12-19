@@ -730,11 +730,13 @@ new (function (){
                         } ),
 						color: 0x3333FF,
 						rigid: false,
-						solid: true,
+						solid: false,
 						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
                     } ),
                     x: 10, y: 135,
                 }));
+
+                $0 = c.render;
 
             }
         }

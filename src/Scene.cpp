@@ -983,7 +983,7 @@ void Scene::DrawParticles(const b2Vec2 *centers, const b2Vec2 *velocities, float
         }
         a = centers[ i ] * BOX2D_TO_WORLD_SCALE;
         b = a + velocities[ i ] * BOX2D_TO_WORLD_SCALE * 0.25;
-        GPU_CircleFilled( app.backScreen->target, a.x, a.y, radius * BOX2D_TO_WORLD_SCALE, pClr );
+        GPU_Circle( app.backScreen->target, a.x, a.y, radius * BOX2D_TO_WORLD_SCALE, pClr );
         GPU_Line( app.backScreen->target, a.x, a.y, b.x, b.y, velClr );
     }
 }

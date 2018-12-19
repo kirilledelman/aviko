@@ -18,7 +18,7 @@ RenderParticlesBehavior::RenderParticlesBehavior( ScriptArguments* args ) : Rend
     RenderBehavior::AddDefaults();
     
     // anything above this alpha val is drawn as solid
-    this->alphaThresh = 0.1;
+    this->alphaThresh = 0.25;
     
     // with arguments
     if ( args ) {
@@ -97,6 +97,38 @@ void RenderParticlesBehavior::InitClass() {
         return val;
     }));
     
+    script.AddProperty<RenderParticlesBehavior>
+    ( "velocityStretch",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->velocityStretch; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->velocityStretch = fmax( 0, val ) );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "velocityStretchFactor",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->velocityStretchFactor; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->velocityStretchFactor = fmax( 0, val ) );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "fadeTime",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->fadeTime; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->fadeTime = fmax( 0, val ) );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "extents",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->extents; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->extents = val );
+    } ) );
+    
 }
 
 void RenderParticlesBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -152,11 +184,8 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     // draw particles to surface
     GPU_ClearRGBA( RenderParticlesBehavior::surface->target, 0, 0, 0, 0 );
     
-    // behavior->alphaThresh = 0.25;
-    
     // set shader etc
-    GPU_SetBlendFunction( RenderParticlesBehavior::surface, GPU_FUNC_ZERO, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_ZERO, GPU_FUNC_ONE );
-    GPU_SetBlendEquation( RenderParticlesBehavior::surface, GPU_EQ_ADD, GPU_EQ_ADD);
+    GPU_SetBlendMode( RenderParticlesBehavior::particleTexture->image, GPU_BLEND_NORMAL );
     GPU_Image* image = NULL;
     GPU_Rect srcRect = { 0, 0, 0, 0 };
     bool rotated = false;
@@ -245,6 +274,10 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     b2ParticleColor* colors = ps->GetColorBuffer();
     b2Vec2* velocities = ps->GetVelocityBuffer();
     float radius = ps->GetRadius() * BOX2D_TO_WORLD_SCALE;
+    float baseScale = (( 2 * radius + behavior->extents + ( 1 - behavior->alphaThresh ) * RenderParticlesBehavior::particleTexture->image->base_w ) / (float) RenderParticlesBehavior::particleTexture->image->base_w );
+    float rotation = 0, lifeTime = 0, vel = 0;
+    float velStretch = 0, velStretchSquared = WORLD_TO_BOX2D_SCALE * behavior->velocityStretch * behavior->velocityStretch;
+    bool doFade = ( behavior->fadeTime > 0 );
     for ( ; i < last; i++ ) {
         // color
         b2ParticleColor &pclr = colors[ i ];
@@ -252,19 +285,40 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         RenderParticlesBehavior::particleTexture->image->color.g = pclr.g * behavior->color->g;
         RenderParticlesBehavior::particleTexture->image->color.b = pclr.b * behavior->color->b;
         RenderParticlesBehavior::particleTexture->image->color.a = pclr.a * behavior->color->a;
-
+        
         // rotation
+        rotation = atan2( velocities[ i ].y, velocities[ i ].x );
         
-        // scale / lifetime
-        float lifeTime = ps->GetParticleLifetime( i );
-        float rotation = 0;
-        sx = 1; sy = 1;
+        // velocity
         
-        GPU_BlitTransform(RenderParticlesBehavior::particleTexture->image,
-                          &RenderParticlesBehavior::particleTexture->frame.locationOnTexture,
-                          RenderParticlesBehavior::surface->target, positions[ i ].x * BOX2D_TO_WORLD_SCALE,
-                          positions[ i ].y * BOX2D_TO_WORLD_SCALE,
-                          rotation, sx, sy );
+        vel = velocities[ i ].LengthSquared();
+        if ( vel > 0 ) {
+            velStretch = vel / velStretchSquared;
+            sx = baseScale * ( 1 + behavior->velocityStretchFactor * fmin( 1.0, velStretch ) );
+            sy = baseScale * ( 1 - 0.6 * behavior->velocityStretchFactor * fmin( 1.0, velStretch ) );
+        } else {
+            sx = sy = baseScale;
+        }
+
+        // lifetime
+        lifeTime = ps->GetParticleLifetime( i );
+        if ( doFade && lifeTime > 0 && lifeTime <= behavior->fadeTime ) {
+            float fade = lifeTime / behavior->fadeTime;
+            sx *= fade; sy *= fade;
+        }
+        
+        GPU_PushMatrix();
+        
+        GPU_Translate( positions[ i ].x * BOX2D_TO_WORLD_SCALE,
+                      positions[ i ].y * BOX2D_TO_WORLD_SCALE, 0 );
+        GPU_Rotate( RAD_TO_DEG * rotation, 0, 0, 1 );
+        GPU_Scale( sx, sy, 1 );
+        
+        GPU_Blit(RenderParticlesBehavior::particleTexture->image,
+                 &RenderParticlesBehavior::particleTexture->frame.locationOnTexture,
+                 RenderParticlesBehavior::surface->target, 0, 0 );
+        
+        GPU_PopMatrix();
         
     }
 
@@ -279,8 +333,9 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         GPU_SetBlendEquation( RenderParticlesBehavior::surface, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
     } else {
         // normal mode
-        GPU_SetBlendFunction( RenderParticlesBehavior::surface, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
+        GPU_SetBlendFunction( RenderParticlesBehavior::surface, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA );
         GPU_SetBlendEquation( RenderParticlesBehavior::surface, GPU_EQ_ADD, GPU_EQ_ADD);
+        // GPU_SetBlendMode( RenderParticlesBehavior::surface, GPU_BLEND_SET );
     }
     
     // set shader
