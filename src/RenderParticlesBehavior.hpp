@@ -27,7 +27,7 @@ public:
     float fadeTime = 0.25;
     float velocityStretch = 50;
     float velocityStretchFactor = 0.25;
-    float extents = 0;
+    float extents = -20;
     
     // particles
     ParticleGroupBehavior* particles = NULL;
@@ -36,9 +36,8 @@ public:
     static void Render( RenderParticlesBehavior* behavior, GPU_Target* target, Event* event );
     
     /// shader select
-    virtual size_t SelectParticleShader(float tw, float th,
-                                        float u, float v, float w, float h,
-                                        float tx, float ty,
+    virtual size_t SelectParticleShader(float u, float v, float w, float h,
+                                        float tx, float ty, bool rotated,
                                         GPU_Image *image, GPU_Target* targ );
     // scripting
     

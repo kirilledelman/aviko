@@ -189,6 +189,7 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 			GPU_PushMatrix();
 			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
 			// draw target
+            GPU_ActivateShaderProgram( 0, NULL );
 			GPU_Rect srcRect = { 0, 0, (float) targ->base_w, (float) targ->base_h };
 			GPU_Blit( targ->image, &srcRect, *blendTarg, 0, 0 );
 			// pop
@@ -207,11 +208,11 @@ size_t RenderBehavior::SelectTexturedShader(
 		float st, float sr, float sb, float sl,
 		float sx, float sy,
 		float tx, float ty,
+        float ox, float oy,
 		GPU_Image *image, GPU_Target* targ, GPU_Target** blendTarg ){
 
 	size_t shaderIndex = SHADER_TEXTURE;
 	
-	if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
 	if ( this->stipple != 0 || this->stippleAlpha ) shaderIndex |= SHADER_STIPPLE;
 	if ( st != 0 || sr != 0 || sl != 0 || sb != 0 ) shaderIndex |= SHADER_SLICE;
 	if ( this->blendMode != BlendMode::Normal && this->blendMode != BlendMode::Cut ) {
@@ -296,6 +297,13 @@ size_t RenderBehavior::SelectTexturedShader(
 		GPU_SetUniformfv( variant.sliceScaleUniform, 2, 1, params );
 	}
 	
+    // scroll
+    if ( variant.scrollOffsetUniform >= 0 ) {
+        params[ 0 ] = ox;
+        params[ 1 ] = oy;
+        GPU_SetUniformfv( variant.scrollOffsetUniform, 2, 1, params );
+    }
+    
 	// blend mode
 	if ( variant.blendUniform >= 0 ) {
 		GPU_SetUniformi( variant.blendUniform, this->blendMode );
@@ -411,17 +419,19 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		"uniform sampler2D tex;\n\
 		uniform vec2 texSize;\n\
 		uniform vec4 texInfo;\n\
+        uniform vec2 scrollOffset;\n\
+        uniform vec2 tile;\n\
         uniform float alphaThresh;\n\
 		uniform float texPad;";
 		funcs =
 		"vec4 readPixel( sampler2D _tex, vec2 uv ){\n\
-			uv = uv - texInfo.xy;\n\
+			uv = uv * tile - texInfo.xy;\n\
 			if ( texPad > 0.0 ){\n\
 				float texPad2 = 2.0 * texPad;\n\
 				uv.x = uv.x * ( ( texInfo.z + texPad2 ) / texInfo.z ) - texPad;\n\
 				uv.y = uv.y * ( ( texInfo.w + texPad2 ) / texInfo.w ) - texPad;\n\
-			}\n\
-			if ( uv.x < 0.0 || uv.x >= texInfo.z || uv.y < 0.0 || uv.y >= texInfo.w ) return vec4(0.0,0.0,0.0,0.0);\n";
+                if ( uv.x < 0.0 || uv.x >= texInfo.z || uv.y < 0.0 || uv.y >= texInfo.w ) return vec4(0.0,0.0,0.0,0.0);\n\
+            }\n";
 		
 		// sliced
 		if ( featuresMask & SHADER_SLICE ) {
@@ -436,37 +446,19 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 			vec2 sliceMid = vec2 ( sliceRightBottom.x - slice.w, sliceRightBottom.y - slice.x );\n\
 			vec2 actMid = vec2 ( actRightBottom.x - slice.w, actRightBottom.y - slice.x );\n";
 			
-			// with tiling
-			if ( featuresMask & SHADER_TILE ) {
-				params +=
-				"uniform vec2 tile;";
-				funcs +=
-				"if ( suv.x < slice.w ) uv.x = suv.x;\n\
-				else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
-				else uv.x = slice.w + mod( tile.x * sliceMid.x * ( suv.x - slice.w ) / actMid.x, sliceMid.x );\n\
-				if ( suv.y < slice.x ) uv.y = suv.y;\n\
-				else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
-				else uv.y = slice.x + mod( tile.y * sliceMid.y * ( suv.y - slice.x ) / actMid.y, sliceMid.y );\n";
-			// sliced without tiling
-			} else {
-				funcs +=
-				"if ( suv.x < slice.w ) uv.x = suv.x;\n\
-				else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
-				else uv.x = slice.w + sliceMid.x * ( suv.x - slice.w ) / actMid.x;\n\
-				if ( suv.y < slice.x ) uv.y = suv.y;\n\
-				else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
-				else uv.y = slice.x + sliceMid.y * ( suv.y - slice.x ) / actMid.y;\n";
-			}
-			
-		// not sliced, but tiled
-		} else if ( featuresMask & SHADER_TILE ) {
-			params +=
-			"uniform vec2 tile;";
-			funcs +=
-			"if ( tile.x != 1.0 ) uv.x = mod( uv.x * tile.x, texInfo.z );\n\
-			if ( tile.y != 1.0 ) uv.y = mod( uv.y * tile.y, texInfo.w );\n";
+            funcs +=
+            "if ( suv.x < slice.w ) uv.x = suv.x;\n\
+            else if ( suv.x >= actRightBottom.x ) uv.x = suv.x - actRightBottom.x + sliceRightBottom.x;\n\
+            else uv.x = slice.w + mod( tile.x * sliceMid.x * ( suv.x - slice.w ) / actMid.x, sliceMid.x );\n\
+            if ( suv.y < slice.x ) uv.y = suv.y;\n\
+            else if ( suv.y >= actRightBottom.y ) uv.y = suv.y - actRightBottom.y + sliceRightBottom.y;\n\
+            else uv.y = slice.x + mod( tile.y * sliceMid.y * ( suv.y - slice.x ) / actMid.y, sliceMid.y );\n";
 		}
-		
+        
+        funcs +=
+        "uv.x = mod( uv.x + scrollOffset.x * tile.x, texInfo.z );\n\
+        uv.y = mod( uv.y  + scrollOffset.y * tile.y, texInfo.w );\n";
+                
 		// finish read pixel func
 		funcs += glsles ?
 		"return texture2D( _tex, ( uv + texInfo.xy ) / texSize );\n}\n" :
@@ -479,21 +471,26 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
         // particle with background
         if ( featuresMask & SHADER_TEXTURE ) {
             params +=
-            "uniform sampler2D tex;\n\
-            uniform sampler2D background;\n";
+            "uniform sampler2D background;\n\
+            uniform vec2 backgroundSize;\n";
             
-            features += "src = vec4(1.0,0.0,0.0,1.0);";
+            features += glsles ?
+            "vec4 part = texture2D( tex, coord );\n" :
+            "vec4 part = texture( tex, coord );\n";
+            
+            features +=
+            "if ( backgroundSize.x > 0.0 ) src = readPixel( background, vec2( -gl_FragCoord.y, gl_FragCoord.x ) ) * vec4( color.r, color.g, color.b, part.a ) + addColor;\n\
+            else src = readPixel( background, gl_FragCoord.xy ) * vec4( color.r, color.g, color.b, part.a ) + addColor;";
             
         // particle without background
         } else {
             
             params +=
-            "uniform float particleAlphaThresh;\n\
-            uniform sampler2D tex;\n";
+            "uniform sampler2D tex;\n";
             
             features += glsles ?
-            "src = texture2D( tex, coord ) * color + addColor;\n" :
-            "src = texture( tex, coord ) * color + addColor;\n";
+            "src = texture2D( tex, coord ) * vec4( color.r, color.g, color.b, 1.0 ) + addColor;\n" :
+            "src = texture( tex, coord ) * vec4( color.r, color.g, color.b, 1.0 ) + addColor;\n";
         }
         
     // normal
@@ -546,8 +543,9 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 				result = max( result, readPixel( tex, coord + vec2( ringRadius, ringRadius ) ) );\n\
 				result = max( result, readPixel( tex, coord + vec2( -ringRadius, ringRadius ) ) );\n\
 				result = max( result, readPixel( tex, coord + vec2( ringRadius, -ringRadius ) ) );\n\
-			}\n\
-			return result;\n\
+            }\n\
+            if ( alphaThresh > 0.0 ) result.a = step( alphaThresh, result.a );\n\
+            return result;\n\
 		}";
 		features +=
 		"vec4 smp = outlineSample( coord * texSize - outlineOffsetRadius.xy );\n\
@@ -580,7 +578,7 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 		"vec2 fragCoord = gl_FragCoord.xy;\n\
 		if ( blendMode == 12 ) fragCoord += 255.0 * vec2( src.r - 0.5, src.b - 0.5 ) * src.b; \n";
 		features += glsles ?
-		"vec4 bg = texture2D( background, fragCoord / backgroundSize  );\n" :
+		"vec4 bg = texture2D( background, fragCoord / backgroundSize );\n" :
 		"vec4 bg = texture( background, fragCoord / backgroundSize );\n";
 		features +=
 		"if ( blendMode == 1 ) src.rgb += bg.rgb; // add \n\
@@ -714,17 +712,18 @@ RenderBehavior::ShaderVariant& RenderBehavior::CompileShaderWithFeatures( size_t
 	// compile variant
 	ShaderVariant& variant = shaders[ featuresMask ];
 	if ( CompileShader( variant.shader, variant.shaderBlock, vertShader, fragShader ) ) {
+        variant.scrollOffsetUniform = GPU_GetUniformLocation( variant.shader, "scrollOffset" );
+        variant.backgroundUniform = GPU_GetUniformLocation( variant.shader, "background" );
+        variant.backgroundSizeUniform = GPU_GetUniformLocation( variant.shader, "backgroundSize" );
 		variant.addColorUniform = GPU_GetUniformLocation( variant.shader, "addColor" );
 		variant.tileUniform = GPU_GetUniformLocation( variant.shader, "tile" );
 		variant.texInfoUniform = GPU_GetUniformLocation( variant.shader, "texInfo" );
 		variant.texSizeUniform = GPU_GetUniformLocation( variant.shader, "texSize" );
 		variant.texPadUniform = GPU_GetUniformLocation( variant.shader, "texPad" );
-		variant.sliceUniform = GPU_GetUniformLocation( variant.shader, "slice" );
+        variant.sliceUniform = GPU_GetUniformLocation( variant.shader, "slice" );
 		variant.sliceScaleUniform = GPU_GetUniformLocation( variant.shader, "sliceScale" );
 		variant.stippleUniform = GPU_GetUniformLocation( variant.shader, "stipple" );
 		variant.stippleAlphaUniform = GPU_GetUniformLocation( variant.shader, "stippleAlpha" );
-		variant.backgroundUniform = GPU_GetUniformLocation( variant.shader, "background" );
-		variant.backgroundSizeUniform = GPU_GetUniformLocation( variant.shader, "backgroundSize" );
 		variant.blendUniform = GPU_GetUniformLocation( variant.shader, "blendMode" );
 		variant.outlineColorUniform = GPU_GetUniformLocation( variant.shader, "outlineColor" );
 		variant.outlineOffsetRadiusUniform = GPU_GetUniformLocation( variant.shader, "outlineOffsetRadius" );

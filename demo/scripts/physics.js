@@ -705,7 +705,7 @@ new (function (){
                 // rectangle
                 var b = container.addChild( new GameObject({
                     name: "Box",
-                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0x666633, x: 40, y: 20, lineThickness: 2 } ),
+                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0xf06620, x: 40, y: 20, lineThickness: 0, blendMode: BlendMode.Subtract } ),
                     body: new Body( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
@@ -721,14 +721,14 @@ new (function (){
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
-					opacity: 0.9,
-                    render: new RenderParticles(),
+					// opacity: 0.9,
+                    render: new RenderParticles( { blendMode: BlendMode.Subtract } ),// { texture: 'player:fish-title' } ),
                     body: new Particles( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
                             x: 280, y: 50
                         } ),
-						color: 0x3333FF,
+						color: 0xf06620,
 						rigid: false,
 						solid: false,
 						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
@@ -742,7 +742,7 @@ new (function (){
         }
     } );
 
-    // App.debugDraw = true;
+    // App.debugDraw = 1;
 
     // example selector activates panel corresponding to example
 	selector.change = function () {

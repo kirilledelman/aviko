@@ -15,8 +15,8 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
    
     // defaults
     psDef.userData = this;
-    psDef.radius = 4 * WORLD_TO_BOX2D_SCALE;
-    psDef.density = 10;
+    psDef.radius = 2 * WORLD_TO_BOX2D_SCALE;
+    psDef.density = 20;
     
     // read params
     void *initObj = NULL;

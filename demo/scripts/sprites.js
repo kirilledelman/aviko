@@ -146,7 +146,9 @@ new (function (){
 			{ text: "smiley.png", value: "/textures/smiley.png" },
 			{ text: "clown.png", value: "/textures/clown.png" },
 			{ text: "poop.png", value: "/textures/poop.png" },
-		]},
+            { text: "sliced1", value: "/textures/player:Frame001" },
+            { text: "sliced2", value: "/textures/player:fish-title" },
+		], reloadOnChange: true },
 		image: false,
 		active: false,
 	};

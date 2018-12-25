@@ -5,9 +5,18 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/shapes.js" afterPath="$PROJECT_DIR$/demo/scripts/shapes.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/sprites.js" afterPath="$PROJECT_DIR$/demo/scripts/sprites.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" afterPath="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.hpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderParticlesBehavior.hpp" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.hpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderSpriteBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -41,8 +50,35 @@
       <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="411">
-              <caret line="738" column="30" lean-forward="false" selection-start-line="738" selection-start-column="30" selection-end-line="738" selection-end-column="30" />
+            <state relative-caret-position="488">
+              <caret line="732" column="37" lean-forward="true" selection-start-line="732" selection-start-column="37" selection-end-line="732" selection-end-column="37" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="shapes.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="118">
+              <caret line="107" column="8" lean-forward="false" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="player.png" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/textures/player.png">
+          <provider selected="true" editor-type-id="images">
+            <state />
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="player.json" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/demo/textures/player.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="30">
+              <caret line="2" column="5" lean-forward="false" selection-start-line="2" selection-start-column="5" selection-end-line="2" selection-end-column="15" />
               <folding />
             </state>
           </provider>
@@ -59,7 +95,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>g.name</find>
       <find>&quot;GameObj</find>
       <find>label</find>
       <find>./text'</find>
@@ -89,6 +124,7 @@
       <find>sceneForward</find>
       <find>wheel</find>
       <find>sensor</find>
+      <find>,</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -161,8 +197,6 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/text.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/textfield.js" />
         <option value="$PROJECT_DIR$/demo/scripts/text.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
         <option value="$PROJECT_DIR$/demo/scripts/transform.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/ui.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/button.js" />
@@ -171,11 +205,13 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/select.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
         <option value="$PROJECT_DIR$/demo/scripts/animation.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
         <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
         <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/src/StaticResources.cpp" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
         <option value="$PROJECT_DIR$/demo/scripts/physics.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
       </list>
     </option>
   </component>
@@ -249,7 +285,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -312,8 +347,31 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="nikogame" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="nikogame" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="demo" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
@@ -560,11 +618,15 @@
       <workItem from="1545161051302" duration="1516000" />
       <workItem from="1545240660626" duration="58000" />
       <workItem from="1545249779040" duration="1108000" />
+      <workItem from="1545329875829" duration="3470000" />
+      <workItem from="1545405296305" duration="3985000" />
+      <workItem from="1545756349357" duration="511000" />
+      <workItem from="1545769805410" duration="1150000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="227058000" />
+    <option name="totallyTimeSpent" value="236174000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -580,7 +642,7 @@
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27038628" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2846924" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -629,50 +691,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1320">
-          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="228">
-          <caret line="33" column="12" lean-forward="true" selection-start-line="33" selection-start-column="12" selection-end-line="33" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1344">
-          <caret line="112" column="23" lean-forward="false" selection-start-line="112" selection-start-column="23" selection-end-line="112" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/animation.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1320">
-          <caret line="110" column="23" lean-forward="false" selection-start-line="110" selection-start-column="23" selection-end-line="110" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="49" column="12" lean-forward="true" selection-start-line="49" selection-start-column="12" selection-end-line="49" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -916,13 +934,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-79">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/inspector.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="121">
@@ -934,20 +945,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-11">
           <caret line="287" column="8" lean-forward="true" selection-start-line="287" selection-start-column="8" selection-end-line="287" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1119">
-          <caret line="122" column="4" lean-forward="false" selection-start-line="122" selection-start-column="4" selection-end-line="128" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="354">
-          <caret line="117" column="23" lean-forward="false" selection-start-line="117" selection-start-column="23" selection-end-line="117" selection-end-column="23" />
         </state>
       </provider>
     </entry>
@@ -981,10 +978,70 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/demo/textures/poop.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/textures/clown.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1907">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-9154">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="2003" column="51" lean-forward="true" selection-start-line="2003" selection-start-column="51" selection-end-line="2003" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/textures/player.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/textures/player.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="2" column="5" lean-forward="false" selection-start-line="2" selection-start-column="5" selection-end-line="2" selection-end-column="15" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="903">
+          <caret line="150" column="33" lean-forward="false" selection-start-line="150" selection-start-column="33" selection-end-line="150" selection-end-column="33" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="118">
+          <caret line="107" column="8" lean-forward="false" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="411">
-          <caret line="738" column="30" lean-forward="false" selection-start-line="738" selection-start-column="30" selection-end-line="738" selection-end-column="30" />
+        <state relative-caret-position="488">
+          <caret line="732" column="37" lean-forward="true" selection-start-line="732" selection-start-column="37" selection-end-line="732" selection-end-column="37" />
           <folding />
         </state>
       </provider>

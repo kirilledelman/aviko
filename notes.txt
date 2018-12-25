@@ -1,20 +1,20 @@
+RenderParticles
+To draw multiple particle systems w one renderer, traverse children
 
 
-
-numParticles
 getParticle( i, [ Bool asArray ] )
 addParticle( Obj | Array )
 updateParticle( i, Obj | Array )
 destroyParticle( i )
+particle collisions with body - MAKE TOUCH FLAG OPTIONAL
 
 
-RenderParticles
 
 Bodies contact - store/remove contact list - add "isTouching(b)" and "getContact(b)"
 
-Limit max DT for physics to prevent explosions
+Limit max DT for physics to prevent particle / body explosions
 
-One way platforms
+One way platforms?
 
 
 Mouse joint on kinematic body - crash
@@ -36,7 +36,7 @@ Inspector
 
 
 Body
-	add method - "makeDefaultShape" creating shape from sprite, or shape
+	add method - "makeDefaultShape" creating shape from sprite, or shape (http://www.deluge.co/?q=box2d-tracing-shape-outlines)
 	Add global collision listener to scene?
 
 Outline, when increasing offset starts doubling up
@@ -64,12 +64,8 @@ GameObject
 	moveChild( child, newIndex ) or moveChild( child, newParent ) -
 
 Top level / Application
-	addTexture( name, image )
+	addTexture( name, image ), unloadTexture( 'name' )
 	'quit' event - dispatched right before exiting.
-
-Demo project
-
-	Percussion playground
 
 Image
 	save to png

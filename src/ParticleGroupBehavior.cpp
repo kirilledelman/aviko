@@ -18,7 +18,7 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     
     // defaults
     this->groupDef.groupFlags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup | b2_rigidParticleGroup;
-    this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
+    this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle | b2_colorMixingParticle;
     this->groupDef.userData = NULL;
     
     // create color object
@@ -271,6 +271,15 @@ void ParticleGroupBehavior::InitClass() {
         return 0.0f;
     }));
     
+    // mass
+    script.AddProperty<ParticleGroupBehavior>
+    ( "numParticles",
+     static_cast<ScriptIntCallback>([]( void* p, int val ) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
+        if ( self->group ) return (int) self->group->GetParticleCount();
+        else return (int) self->points.size();
+    }));
+    
     // methods
     
     script.DefineFunction<ParticleGroupBehavior>
@@ -318,7 +327,6 @@ void ParticleGroupBehavior::InitClass() {
         return true;
     } ));
     
-//    numParticles
 //    getParticle( i, [ Bool asArray ] )
 //    addParticle( Obj | Array | x, y, ....)
 //    updateParticle( i, Obj | Array )

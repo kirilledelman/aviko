@@ -17,8 +17,13 @@ RenderParticlesBehavior::RenderParticlesBehavior( ScriptArguments* args ) : Rend
     // add defaults
     RenderBehavior::AddDefaults();
     
+    // create effect color object
+    Color* color = new Color( NULL );
+    color->SetInts( 0, 0, 0, 255 );
+    script.SetProperty( "outlineColor", ArgValue( color->scriptObject ), this->scriptObject );
+
     // anything above this alpha val is drawn as solid
-    this->alphaThresh = 0.25;
+    this->alphaThresh = 0.15;
     
     // with arguments
     if ( args ) {
@@ -63,8 +68,9 @@ void RenderParticlesBehavior::InitClass() {
     RenderParticlesBehavior::particleTexture = app.textureManager.Get( "#particle" );
     RenderParticlesBehavior::particleTexture->LoadFromMemory( ParticleTexture, ParticleTexture_size );
     RenderParticlesBehavior::particleTexture->image->anchor_x = RenderParticlesBehavior::particleTexture->image->anchor_y = 0.5;
+    GPU_SetBlendMode( RenderParticlesBehavior::particleTexture->image, GPU_BLEND_NORMAL );
     RenderParticlesBehavior::particleTexture->AdjustUseCount( 1 );
-    
+
     script.AddProperty<RenderParticlesBehavior>
     ( "texture",
      static_cast<ScriptValueCallback>([](void *b, ArgValue val) {
@@ -129,6 +135,94 @@ void RenderParticlesBehavior::InitClass() {
         return ( ps->extents = val );
     } ) );
     
+    script.AddProperty<RenderParticlesBehavior>
+    ( "alphaThreshold",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->alphaThresh; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->alphaThresh = fmax( 0.0, fmin( 1.0, val ) ) );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "tileX",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->tileX; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->tileX = val );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "tileY",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->tileY; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->tileY = val );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "offsetX",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->offsetX; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->offsetX = val );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "offsetY",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderParticlesBehavior*) b)->offsetY; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderParticlesBehavior* ps = (RenderParticlesBehavior*) b;
+        return ( ps->offsetY = val );
+    } ) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "outlineColor",
+     static_cast<ScriptValueCallback>([](void *b, ArgValue val ){ return ArgValue(((RenderBehavior*) b)->outlineColor->scriptObject); }),
+     static_cast<ScriptValueCallback>([](void *b, ArgValue val ){
+        RenderBehavior* rs = (RenderBehavior*) b;
+        if ( val.type == TypeObject ) {
+            // replace if it's a color
+            Color* other = script.GetInstance<Color>( val.value.objectValue );
+            if ( other ) rs->outlineColor = other;
+        } else {
+            rs->outlineColor->Set( val );
+        }
+        return rs->outlineColor->scriptObject;
+    }) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "outlineOffsetX",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetX; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderBehavior *rs = (RenderBehavior*) b;
+        if ( rs->outlineOffsetX != val ) {
+            rs->outlineOffsetX = val;
+        }
+        return val;
+    }) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "outlineOffsetY",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineOffsetY; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderBehavior *rs = (RenderBehavior*) b;
+        if ( rs->outlineOffsetY != val ) {
+            rs->outlineOffsetY = val;
+        }
+        return val;
+    }) );
+    
+    script.AddProperty<RenderParticlesBehavior>
+    ( "outlineRadius",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderBehavior*) b)->outlineRadius; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderBehavior *rs = (RenderBehavior*) b;
+        if ( rs->outlineRadius != val ) {
+            rs->outlineRadius = fmax( -16, fmin( val, 16 ) );
+        }
+        return val;
+    }) );
+    
 }
 
 void RenderParticlesBehavior::TraceProtectedObjects( vector<void**> &protectedObjects ) {
@@ -148,22 +242,25 @@ void RenderParticlesBehavior::TraceProtectedObjects( vector<void**> &protectedOb
 /// render callback
 void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Target* target, Event* event ) {
     
+    // TODO - draw this gameObject's particles, and its children's particles, if no render component
+    
     // find particles
     if ( ( !behavior->particles || ( behavior->particles && behavior->particles->gameObject != behavior->gameObject ) ) && behavior->gameObject->body ) {
         behavior->particles = script.GetInstance<ParticleGroupBehavior>( behavior->gameObject->body->scriptObject );
     }
     
-    // no particles
+    // no particles? bail
     if ( !behavior->particles || !behavior->particles->group ) return;
     
-    // params
+    // get/check color
     SDL_Color color = behavior->color->rgba;
     color.a *= behavior->gameObject->combinedOpacity;
     if ( color.a == 0.0 ) return;
     
-    // if surface size doesn't match target
+    // if rendering surface size doesn't match target
     if ( RenderParticlesBehavior::surface &&
         ( RenderParticlesBehavior::surface->base_w != target->base_w || RenderParticlesBehavior::surface->base_h != target->base_h ) ) {
+        // free and clear it
         GPU_FreeTarget( RenderParticlesBehavior::surface->target );
         GPU_FreeImage( RenderParticlesBehavior::surface );
         RenderParticlesBehavior::surface = NULL;
@@ -181,18 +278,13 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         RenderParticlesBehavior::surface->anchor_x = RenderParticlesBehavior::surface->anchor_y = 0;
     }
 
-    // draw particles to surface
-    GPU_ClearRGBA( RenderParticlesBehavior::surface->target, 0, 0, 0, 0 );
-    
-    // set shader etc
-    GPU_SetBlendMode( RenderParticlesBehavior::particleTexture->image, GPU_BLEND_NORMAL );
+    // prepare texture
     GPU_Image* image = NULL;
     GPU_Rect srcRect = { 0, 0, 0, 0 };
     bool rotated = false;
-    float cx = 0, cy = 0, sx = 1, sy = 1;
-    float effectiveWidth = 0, effectiveHeight = 0;
     float shaderU = 0, shaderV = 0, shaderW = 0, shaderH = 0; // bounds of texture slice
-    
+    float shaderTileX = 1, shaderTileY = 1;
+
     // texture
     if ( behavior->imageResource ) {
         
@@ -205,68 +297,44 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         srcRect = frame->locationOnTexture;
         rotated = frame->rotated;
         
-        // apply trim
-        effectiveWidth = fmax( 0, frame->actualWidth );
-        effectiveHeight = fmax( 0, frame->actualHeight );
-        
-        // draw rotated
-        if ( rotated ) {
-            sy = effectiveWidth / (frame->actualWidth - frame->trimWidth);
-            sx = effectiveHeight / (frame->actualHeight - frame->trimHeight);
-            cx = frame->trimOffsetX * sy;
-            cy = ( frame->locationOnTexture.w + frame->trimOffsetY ) * sx;
-            // normal
-        } else {
-            sx = effectiveWidth / (frame->actualWidth - frame->trimWidth);
-            sy = effectiveHeight / (frame->actualHeight - frame->trimHeight);
-            cx = frame->trimOffsetX * sx;
-            cy = frame->trimOffsetY * sy;
-        }
-        
         // shader params
         shaderU = srcRect.x;
         shaderV = srcRect.y;
         shaderW = srcRect.w;
         shaderH = srcRect.h;
+        
+        // tiling
         if ( rotated ) {
-            cx = floor( cx - ( effectiveWidth * behavior->pivotX + behavior->texturePad * sy ) );
-            cy = floor( cy - ( effectiveHeight * behavior->pivotY - behavior->texturePad * sx ) );
+            shaderTileX = ( behavior->tileY );
+            shaderTileY = ( behavior->tileX );
+            
         } else {
-            cx = floor( cx - ( effectiveWidth * behavior->pivotX + behavior->texturePad * sx ) );
-            cy = floor( cy - ( effectiveHeight * behavior->pivotY + behavior->texturePad * sy ) );
+            shaderTileX = ( behavior->tileX );
+            shaderTileY = ( behavior->tileY );
         }
         
     }
-    
-    // tiling
-    float shaderTileX, shaderTileY;
-    if ( rotated ) {
-        shaderTileX = ( behavior->tileY * sx );
-        shaderTileY = ( behavior->tileX * sy );
-        
-    } else {
-        shaderTileX = ( behavior->tileX * sx );
-        shaderTileY = ( behavior->tileY * sy );
-    }
+
+    // clear surface
+    GPU_ClearRGBA( RenderParticlesBehavior::surface->target, 0, 0, 0, 0 );
     
     // activate shader
-    behavior->SelectParticleShader(
-                                   effectiveWidth, effectiveHeight,
-                                   shaderU, shaderV, shaderW, shaderH,
-                                   shaderTileX, shaderTileY,
+    behavior->SelectParticleShader(shaderU, shaderV, shaderW, shaderH,
+                                   shaderTileX, shaderTileY, rotated,
                                    image, RenderParticlesBehavior::surface->target );
     
     // push view matrix
     GPU_MatrixMode( GPU_MODELVIEW );
     GPU_PushMatrix();
     GPU_LoadIdentity();
+    
     // if rendering to image / clipped
     if ( event->clippedBy ) {
         // apply inverse of container's world transform
         GPU_MatrixCopy( GPU_GetCurrentMatrix(), event->clippedBy->gameObject->InverseWorld() );
     }
     
-    // go over each particle
+    // set up to go over each particle
     b2ParticleSystem* ps = behavior->particles->group->GetParticleSystem();
     b2ParticleGroup* group = behavior->particles->group;
     int32 i = group->GetBufferIndex(), last = i + group->GetParticleCount();
@@ -274,11 +342,16 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     b2ParticleColor* colors = ps->GetColorBuffer();
     b2Vec2* velocities = ps->GetVelocityBuffer();
     float radius = ps->GetRadius() * BOX2D_TO_WORLD_SCALE;
-    float baseScale = (( 2 * radius + behavior->extents + ( 1 - behavior->alphaThresh ) * RenderParticlesBehavior::particleTexture->image->base_w ) / (float) RenderParticlesBehavior::particleTexture->image->base_w );
+    float baseScale = ( 2 * radius + behavior->extents + ( 1 - behavior->alphaThresh ) * RenderParticlesBehavior::particleTexture->image->base_w )
+                       / (float) RenderParticlesBehavior::particleTexture->image->base_w;
     float rotation = 0, lifeTime = 0, vel = 0;
     float velStretch = 0, velStretchSquared = WORLD_TO_BOX2D_SCALE * behavior->velocityStretch * behavior->velocityStretch;
     bool doFade = ( behavior->fadeTime > 0 );
+    float sx = 1, sy = 1;
+    
+    // for each particle
     for ( ; i < last; i++ ) {
+        
         // color
         b2ParticleColor &pclr = colors[ i ];
         RenderParticlesBehavior::particleTexture->image->color.r = pclr.r * behavior->color->r;
@@ -290,7 +363,6 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         rotation = atan2( velocities[ i ].y, velocities[ i ].x );
         
         // velocity
-        
         vel = velocities[ i ].LengthSquared();
         if ( vel > 0 ) {
             velStretch = vel / velStretchSquared;
@@ -307,21 +379,23 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
             sx *= fade; sy *= fade;
         }
         
+        // apply transform
         GPU_PushMatrix();
-        
-        GPU_Translate( positions[ i ].x * BOX2D_TO_WORLD_SCALE,
-                      positions[ i ].y * BOX2D_TO_WORLD_SCALE, 0 );
+        GPU_Translate( positions[ i ].x * BOX2D_TO_WORLD_SCALE, positions[ i ].y * BOX2D_TO_WORLD_SCALE, 0 );
         GPU_Rotate( RAD_TO_DEG * rotation, 0, 0, 1 );
         GPU_Scale( sx, sy, 1 );
-        
+
+        // draw
         GPU_Blit(RenderParticlesBehavior::particleTexture->image,
                  &RenderParticlesBehavior::particleTexture->frame.locationOnTexture,
                  RenderParticlesBehavior::surface->target, 0, 0 );
         
+        // pop transform
         GPU_PopMatrix();
         
     }
 
+    // pop modelview
     GPU_PopMatrix();
     
     // prepare to draw surface to target
@@ -333,9 +407,7 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         GPU_SetBlendEquation( RenderParticlesBehavior::surface, GPU_EQ_ADD, GPU_EQ_REVERSE_SUBTRACT);
     } else {
         // normal mode
-        GPU_SetBlendFunction( RenderParticlesBehavior::surface, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA );
-        GPU_SetBlendEquation( RenderParticlesBehavior::surface, GPU_EQ_ADD, GPU_EQ_ADD);
-        // GPU_SetBlendMode( RenderParticlesBehavior::surface, GPU_BLEND_SET );
+        GPU_SetBlendMode( RenderParticlesBehavior::surface, GPU_BLEND_NORMAL );
     }
     
     // set shader
@@ -344,6 +416,7 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
                                    0, 0, 0, 0,
                                    0, 0,
                                    1, 1,
+                                   0, 0,
                                    RenderParticlesBehavior::surface, target, (GPU_Target**) event->behaviorParam2 );
     // reset transform
     GPU_MatrixMode( GPU_PROJECTION );
@@ -355,30 +428,27 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     GPU_PushMatrix();
     GPU_LoadIdentity();
 
-    // opacity
-    RenderParticlesBehavior::surface->color.a = 255 * behavior->gameObject->combinedOpacity;
+    // set color
+    RenderParticlesBehavior::surface->color = behavior->color->rgba;
+    RenderParticlesBehavior::surface->color.a *= behavior->gameObject->combinedOpacity;
     
     // draw
     GPU_BlitRect( RenderParticlesBehavior::surface, &RenderParticlesBehavior::surface->target->viewport, target, &RenderParticlesBehavior::surface->target->viewport );
 
+    // pop modelview and projection
     GPU_PopMatrix();
     GPU_MatrixMode( GPU_PROJECTION );
     GPU_PopMatrix();
-
 }
 
-size_t RenderParticlesBehavior::SelectParticleShader(float tw, float th,
-                                                     float u, float v, float w, float h,
-                                                     float tx, float ty,
+size_t RenderParticlesBehavior::SelectParticleShader(float u, float v, float w, float h,
+                                                     float tx, float ty, bool rotated,
                                                      GPU_Image *image, GPU_Target* targ ){
     
     size_t shaderIndex = SHADER_PARTICLE | ( image ? SHADER_TEXTURE : 0 );
-    if ( tx != 1 || ty != 1 ) shaderIndex |= SHADER_TILE;
     
     ShaderVariant &variant = shaders[ shaderIndex ];
     if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );
-    
-    //
     
     // activate shader
     GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
@@ -389,6 +459,44 @@ size_t RenderParticlesBehavior::SelectParticleShader(float tw, float th,
     // background
     if ( variant.backgroundUniform >= 0 ) {
         GPU_SetShaderImage( image, variant.backgroundUniform, 1 );
+        
+        // rotated flag
+        if ( variant.backgroundSizeUniform >= 0 ) {
+            params[ 0 ] = rotated ? 1 : 0;
+            params[ 1 ] = 1;
+            GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
+        }
+        
+        // tile
+        if ( variant.tileUniform >= 0 ) {
+            params[ 1 ] = ty;
+            params[ 0 ] = tx;
+            GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
+        }
+        
+        // texture size
+        if ( variant.texSizeUniform >= 0 ) {
+            params[ 0 ] = image->base_w;
+            params[ 1 ] = image->base_h;
+            GPU_SetUniformfv( variant.texSizeUniform, 2, 1, params );
+        }
+        
+        // scroll
+        if ( variant.scrollOffsetUniform >= 0 ) {
+            params[ 0 ] = this->offsetX;
+            params[ 1 ] = this->offsetY;
+            GPU_SetUniformfv( variant.scrollOffsetUniform, 2, 1, params );
+        }
+        
+        // sprite on texture
+        if ( variant.texInfoUniform >= 0 ) {
+            params[ 0 ] = u;
+            params[ 1 ] = v;
+            params[ 2 ] = w;
+            params[ 3 ] = h;
+            GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
+        }
+        
     }
     
     // addColor
@@ -398,34 +506,6 @@ size_t RenderParticlesBehavior::SelectParticleShader(float tw, float th,
         params[ 2 ] = this->addColor->b;
         params[ 3 ] = this->addColor->a;
         GPU_SetUniformfv( variant.addColorUniform, 4, 1, params );
-    }
-    
-    // tile
-    if ( variant.tileUniform >= 0 ) {
-        params[ 1 ] = ty;
-        params[ 0 ] = tx;
-        GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
-    }
-    
-    // pad
-    if ( variant.texPadUniform >= 0 ) {
-        GPU_SetUniformf( variant.texPadUniform, (float) this->texturePad );
-    }
-    
-    // texture size
-    if ( variant.texSizeUniform >= 0 ) {
-        params[ 0 ] = tw;
-        params[ 1 ] = th;
-        GPU_SetUniformfv( variant.texSizeUniform, 2, 1, params );
-    }
-    
-    // sprite on texture
-    if ( variant.texInfoUniform >= 0 ) {
-        params[ 0 ] = u;
-        params[ 1 ] = v;
-        params[ 2 ] = w;
-        params[ 3 ] = h;
-        GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
     }
     
     return shaderIndex;

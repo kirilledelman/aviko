@@ -9,7 +9,7 @@
 #define SHADER_TEXTURE	0x1
 #define SHADER_BLEND	0x2
 #define SHADER_SLICE	0x4
-#define SHADER_TILE		0x8
+#define SHADER_WAVE		0x8
 #define SHADER_STIPPLE	0x10
 #define SHADER_OUTLINE	0x20
 #define SHADER_PARTICLE 0x40
@@ -52,6 +52,8 @@ public:
 
 	// texture padding
 	int texturePad = 0;
+    float offsetX=0;
+    float offsetY=0;
     
     // alpha thresh (particles)
     float alphaThresh = 0;
@@ -113,7 +115,8 @@ public:
 		int texPadUniform; // empty margin added around texture in px
 		int sliceUniform; // top, right, bottom, left slice margins in px, from respective sides
 		int sliceScaleUniform; // scale of actual sprite without pad in px
-		int stippleUniform;
+		int scrollOffsetUniform; // scroll
+        int stippleUniform;
 		int stippleAlphaUniform;
 		int backgroundUniform;
 		int backgroundSizeUniform;
@@ -130,12 +133,13 @@ public:
 	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
 	
 	/// applies current shader + params
-	virtual size_t SelectTexturedShader(
+	size_t SelectTexturedShader(
 					 float tw = 0, float th = 0,
 					 float u = 0, float v = 0, float w = 0, float h = 0,
 					 float st = 0, float sr = 0, float sb = 0, float sl = 0,
 					 float sw = 0, float sh = 0,
 					 float tx = 1, float ty = 1,
+                     float ox = 0, float oy = 0,
 					 GPU_Image *image = NULL, GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// selects untextured shader

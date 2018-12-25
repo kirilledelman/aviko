@@ -348,6 +348,22 @@ void RenderSpriteBehavior::InitClass() {
 		return val;
 	}) );
 		
+    script.AddProperty<RenderSpriteBehavior>
+    ( "offsetX",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->offsetX; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderSpriteBehavior* ps = (RenderSpriteBehavior*) b;
+        return ( ps->offsetX = val );
+    } ) );
+    
+    script.AddProperty<RenderSpriteBehavior>
+    ( "offsetY",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderSpriteBehavior*) b)->offsetY; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderSpriteBehavior* ps = (RenderSpriteBehavior*) b;
+        return ( ps->offsetY = val );
+    } ) );
+    
 	// functions
 	
 	script.DefineFunction<RenderSpriteBehavior>
@@ -559,14 +575,14 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 	float shaderTileX, shaderTileY;
 	float sliceScaleX, sliceScaleY;
 	if ( rotated ) {
-		shaderTileX = behavior->autoTileY ? ( behavior->tileY * sx ) : behavior->tileY;
-		shaderTileY = behavior->autoTileX ? ( behavior->tileX * sy ) : behavior->tileX;
+		shaderTileX = behavior->autoTileY ? ( behavior->tileY * fabs(sx) ) : behavior->tileY;
+		shaderTileY = behavior->autoTileX ? ( behavior->tileX * fabs(sy) ) : behavior->tileX;
 		sliceScaleY = behavior->width / srcRect.h;
 		sliceScaleX = behavior->height / srcRect.w;
 
 	} else {
-		shaderTileX = behavior->autoTileX ? ( behavior->tileX * sx ) : behavior->tileX;
-		shaderTileY = behavior->autoTileY ? ( behavior->tileY * sy ) : behavior->tileY;
+		shaderTileX = behavior->autoTileX ? ( behavior->tileX * fabs(sx) ) : behavior->tileX;
+		shaderTileY = behavior->autoTileY ? ( behavior->tileY * fabs(sy) ) : behavior->tileY;
 		sliceScaleX = behavior->width / srcRect.w;
 		sliceScaleY = behavior->height / srcRect.h;
 	}
@@ -578,6 +594,7 @@ void RenderSpriteBehavior::Render( RenderSpriteBehavior* behavior, GPU_Target* t
 		top, right, bottom, left,
 		sliceScaleX, sliceScaleY,
 	    shaderTileX, shaderTileY,
+        behavior->offsetX, behavior->offsetY,
 	    image, target, (GPU_Target**) event->behaviorParam2 );
 	
 	GPU_Rect dest = {

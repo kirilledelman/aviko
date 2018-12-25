@@ -1989,6 +1989,9 @@ RenderSprite.__propertyListConfig = RenderSprite.__propertyListConfig ||
 		flipX: { tooltip: "Flip texture horizontally." },
 		flipY: { tooltip: "Flip texture vertically." },
 
+        offsetX: { step: 1, tooltip: "Texture offset/scroll in X direction." },
+        offsetY: { step: 1, tooltip: "Texture offset/scroll in Y direction." },
+
 		slice: false,
 		sliceLeft: { min: 0, step: 1, tooltip: "Left slicing boundary." },
 		sliceTop: { min: 0, step: 1, tooltip: "Top slicing boundary." },

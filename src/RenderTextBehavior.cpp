@@ -727,6 +727,22 @@ void RenderTextBehavior::InitClass() {
 		return val;
 	}) );
 	
+    script.AddProperty<RenderTextBehavior>
+    ( "offsetX",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderTextBehavior*) b)->offsetX; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderTextBehavior* ps = (RenderTextBehavior*) b;
+        return ( ps->offsetX = val );
+    } ) );
+    
+    script.AddProperty<RenderTextBehavior>
+    ( "offsetY",
+     static_cast<ScriptFloatCallback>([](void *b, float val ){ return ((RenderTextBehavior*) b)->offsetY; }),
+     static_cast<ScriptFloatCallback>([](void *b, float val ){
+        RenderTextBehavior* ps = (RenderTextBehavior*) b;
+        return ( ps->offsetY = val );
+    } ) );
+    
 	// functions
 	
     script.DefineFunction<RenderTextBehavior>
@@ -1422,6 +1438,7 @@ void RenderTextBehavior::Render( RenderTextBehavior* behavior, GPU_Target* targe
 		0, 0, 0, 0,
 	    0, 0,
 		1, 1,
+        behavior->offsetX, behavior->offsetY,
 	    behavior->surface, target, (GPU_Target**) event->behaviorParam2 );
 	
 	// draw
