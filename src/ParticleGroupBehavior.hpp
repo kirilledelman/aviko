@@ -32,7 +32,7 @@ public:
     struct ParticleInfo {
         b2ParticleDef def;
         float32 weight;
-        ParticleInfo(){ weight = 0; }
+        ParticleInfo(){ weight = 0; };
     };
     vector<ParticleInfo> points;
     
@@ -58,6 +58,9 @@ public:
     ArgValueVector* GetParticleVector();
     ArgValueVector* SetParticleVector( ArgValueVector* in, bool append=false, float offsetX=0.0f, float offsetY=0.0f, float offsetAngle=0.0f );
     int32 AddParticle( ParticleInfo& p, b2Vec2 &worldPos, float worldAngle );
+    int UpdateParticle ( ScriptArguments &sa, bool addNew );
+    int DestroyParticles ( ScriptArguments &sa );
+    bool GetParticle( ScriptArguments &sa );
     
     // callbacks
     void ParticleDestroyed( int32 index );

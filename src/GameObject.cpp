@@ -2281,6 +2281,27 @@ void GameObject::ConvertPoint( float x, float y, float &outX, float &outY, bool 
 	outY = isnan(res[ 13 ]) ? 0 : res[ 13 ];
 }
 
+void GameObject::ConvertDirection( float x, float y, float &outX, float &outY, bool localToGlobal ) {
+    float* m;
+    float len = sqrtf( x * x + y * y );
+    if ( len == 0.0 ) {
+        outX = outY = 0;
+        return;
+    }
+    
+    // multiply by inverse world
+    if ( localToGlobal ) {
+        this->_worldTransformDirty = true;
+        m = this->WorldTransform();
+    // multiply by world
+    } else {
+       m = this->InverseWorld();
+    }
+
+    outX = m[ 0 ] * x + m[ 4 ] * y;
+    outY = m[ 1 ] * x + m[ 5 ] * y;
+}
+
 GPU_Rect GameObject::GetBounds(){
 	if ( this->ui ) return { 0, 0, this->ui->layoutWidth, this->ui->layoutHeight };
 	if ( this->render ) return this->render->GetBounds(); // TODO - shape bounds arent implemented

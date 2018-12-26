@@ -18,7 +18,12 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
     
     // defaults
     this->groupDef.groupFlags = b2_particleGroupCanBeEmpty | b2_solidParticleGroup | b2_rigidParticleGroup;
-    this->groupDef.flags = b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle | b2_colorMixingParticle;
+    this->groupDef.flags =
+        // unchangeable flags
+        b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle |
+        // changeable flags
+        b2_fixtureContactListenerParticle | b2_particleContactListenerParticle |
+        b2_colorMixingParticle;
     this->groupDef.userData = NULL;
     
     // create color object
@@ -73,7 +78,7 @@ void ParticleGroupBehavior::InitClass() {
     script.SetProperty( "StaticPressure", ArgValue( b2_staticPressureParticle ), constants );
     script.SetProperty( "Reactive", ArgValue( b2_reactiveParticle ), constants );
     script.SetProperty( "Repulsive", ArgValue( b2_repulsiveParticle ), constants );
-    // script.SetProperty( "CollisionEvent", ArgValue( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ), constants );
+    script.SetProperty( "CollisionEvent", ArgValue( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ), constants );
     script.FreezeObject( constants );
     
     // properties
@@ -179,14 +184,13 @@ void ParticleGroupBehavior::InitClass() {
     ( "flags",
      static_cast<ScriptIntCallback>([]( void* p, int val ) {
         int32 flags = ((ParticleGroupBehavior*)p)->groupDef.flags;
-        return (((( flags & ~b2_fixtureContactFilterParticle )
+        return ((( flags & ~b2_fixtureContactFilterParticle )
                 & ~b2_particleContactFilterParticle )
-                & ~b2_destructionListenerParticle )
-                & ~b2_particleContactListenerParticle );
+                & ~b2_destructionListenerParticle );
     }),
      static_cast<ScriptIntCallback>([]( void* p, int val ) {
         ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
-        self->groupDef.flags = ( val | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle );
+        self->groupDef.flags = ( val | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle );
         self->UpdateFlags();
         return val;
     }));
@@ -327,11 +331,58 @@ void ParticleGroupBehavior::InitClass() {
         return true;
     } ));
     
-//    getParticle( i, [ Bool asArray ] )
-//    addParticle( Obj | Array | x, y, ....)
-//    updateParticle( i, Obj | Array )
-//    destroyParticle( i )
-//      clear
+    script.DefineFunction<ParticleGroupBehavior>
+    ("addParticle",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*) p;
+        const char *error = "usage: addParticle( Object particle | Array particle | Number x, Number y, Number velocityX, Number velocityY, Integer flags, Number lifetime, Color color | Integer r,g,b,a , Object data )";
+        int index = self->UpdateParticle( sa, true );
+        if ( index < 0 ) {
+            script.ReportError( error );
+            return false;
+        }
+        sa.ReturnInt( index );
+        return true;
+    } ));
+    
+    script.DefineFunction<ParticleGroupBehavior>
+    ("updateParticle",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*) p;
+        const char *error = "usage: updateParticle( Integer index, Object particle | Array particle | Number x, Number y, Number velocityX, Number velocityY, Integer flags, Number lifetime, Color color | Integer r,g,b,a , Object data )";
+        if ( self->UpdateParticle( sa, false ) == -1 ) {
+            script.ReportError( error );
+            return false;
+        }
+        return true;
+    } ));
+    
+    script.DefineFunction<ParticleGroupBehavior>
+    ("destroyParticles",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*) p;
+        const char *error = "usage: destroyParticles( Integer index | Array particleIndexes )";
+        int numDestroyed = self->DestroyParticles( sa );
+        if ( numDestroyed < 0 ) {
+            script.ReportError( error );
+            return false;
+        }
+        return true;
+    } ));
+    
+    script.DefineFunction<ParticleGroupBehavior>
+    ("getParticle",
+     static_cast<ScriptFunctionCallback>([](void* p, ScriptArguments &sa) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*) p;
+        const char *error = "usage: getParticle( Integer index, [ Boolean returnAsArray ] )";
+        if ( !self->GetParticle( sa ) ) {
+            script.ReportError( error );
+            return false;
+        }
+        return true;
+    } ));
+    
+//    clear()
 //    join( otherGroup ) - otherGroup loses all particles, but remains
     
 }
@@ -873,10 +924,9 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
             pt->emplace_back( (float) pos.x * BOX2D_TO_WORLD_SCALE );
             pt->emplace_back( (float) pos.y * BOX2D_TO_WORLD_SCALE );
 
-            flags = (((( ps->GetParticleFlags( i ) & ~b2_fixtureContactFilterParticle )
+            flags = ((( ps->GetParticleFlags( i ) & ~b2_fixtureContactFilterParticle )
                        & ~b2_particleContactFilterParticle )
-                      & ~b2_destructionListenerParticle )
-                     & ~b2_particleContactListenerParticle );
+                      & ~b2_destructionListenerParticle );
             pt->emplace_back( (int) flags );
             
             pt->emplace_back( (float) ps->GetParticleLifetime( i ) );
@@ -902,10 +952,9 @@ ArgValueVector* ParticleGroupBehavior::GetParticleVector() {
             pt->emplace_back( (float) pi.def.velocity.x * BOX2D_TO_WORLD_SCALE );
             pt->emplace_back( (float) pi.def.velocity.y * BOX2D_TO_WORLD_SCALE );
             
-            flags = (((( pi.def.flags & ~b2_fixtureContactFilterParticle )
+            flags = ((( pi.def.flags & ~b2_fixtureContactFilterParticle )
                        & ~b2_particleContactFilterParticle )
-                      & ~b2_destructionListenerParticle )
-                     & ~b2_particleContactListenerParticle );
+                      & ~b2_destructionListenerParticle );
             pt->emplace_back( (int) flags );
             pt->emplace_back( (float) pi.def.lifetime );
             
@@ -934,7 +983,7 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
         this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), center, angle, wscale );
         center *= WORLD_TO_BOX2D_SCALE;
         angle *= DEG_TO_RAD;
-    } else {
+    } else if ( this->group ){
         // use body center
         center = this->group->GetCenter();
         angle = this->group->GetAngle();
@@ -961,12 +1010,13 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
         p.def.color.b = this->color->rgba.b;
         p.def.color.a = this->color->rgba.a;
         p.def.lifetime = this->groupDef.lifetime;
-        p.def.flags = this->groupDef.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
+        p.def.flags = this->groupDef.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
         p.weight = 0;
         p.def.userData = NULL;
         
         // each element
         ArgValue &val = (*in)[ i ];
+        // array?
         if ( val.type == TypeArray ) {
             ArgValueVector &pd = *val.value.arrayValue;
             size_t len = pd.size();
@@ -981,8 +1031,9 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
                 p.def.velocity *= WORLD_TO_BOX2D_SCALE;
             }
             if ( len >= 5 ) {
-                uint32 flags = p.def.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle | b2_particleContactListenerParticle;
+                uint32 flags = p.def.flags;
                 pd[ 4 ].toInt32( flags );
+                p.def.flags = flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
             }
             if ( len >= 6 ) pd[ 5 ].toNumber( p.def.lifetime );
             if ( len >= 10 ){
@@ -992,6 +1043,36 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
                 pd[ 9 ].toInt8( p.def.color.a );
             }
             if ( len >= 11 && pd[ 10 ].type == TypeObject ) p.def.userData = pd[ 10 ].value.objectValue;
+        } else if ( val.type == TypeObject && val.value.objectValue != NULL ) {
+            ArgValue v = script.GetProperty( "x", val.value.objectValue );
+            v.toNumber( p.def.position.x );
+            v = script.GetProperty( "y", val.value.objectValue );
+            v.toNumber( p.def.position.y );
+            p.def.position *= WORLD_TO_BOX2D_SCALE;
+            v = script.GetProperty( "velocityX", val.value.objectValue );
+            v.toNumber( p.def.velocity.x );
+            v = script.GetProperty( "velocityY", val.value.objectValue );
+            v.toNumber( p.def.velocity.y );
+            p.def.velocity *= WORLD_TO_BOX2D_SCALE;
+            v = script.GetProperty( "flags", val.value.objectValue );
+            uint32 flags = p.def.flags;
+            v.toInt32( flags );
+            p.def.flags = flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
+            v = script.GetProperty( "lifetime", val.value.objectValue );
+            v.toNumber( p.def.lifetime );
+            v = script.GetProperty( "color", val.value.objectValue );
+            Color temp_color;
+            temp_color.rgba.r = p.def.color.r;
+            temp_color.rgba.g = p.def.color.g;
+            temp_color.rgba.b = p.def.color.b;
+            temp_color.rgba.a = p.def.color.a;
+            temp_color.Set( v );
+            p.def.color.r = temp_color.rgba.r;
+            p.def.color.g = temp_color.rgba.g;
+            p.def.color.b = temp_color.rgba.b;
+            p.def.color.a = temp_color.rgba.a;
+            v = script.GetProperty( "data", val.value.objectValue );
+            if ( v.type == TypeObject ) p.def.userData = v.value.objectValue;
         }
         
         // apply offset
@@ -1010,7 +1091,226 @@ ArgValueVector* ParticleGroupBehavior::SetParticleVector( ArgValueVector* in, bo
     return in;
 }
 
-/// particleinfo is always in local coords
+int ParticleGroupBehavior::UpdateParticle( ScriptArguments &sa, bool addNew ) {
+    
+    // new vs update
+    size_t numArgs = sa.args.size();
+    if ( !numArgs ) return -1;
+    size_t firstArg = 0;
+    int updateIndex = 0;
+    if ( !addNew ) {
+        if ( !sa.args[ 0 ].toInt( updateIndex ) ) return -1;
+        if ( ( this->group && updateIndex >= this->group->GetParticleCount() ) || ( !this->group && updateIndex >= this->points.size() )) {
+            sa.ReturnBool( false );
+            return 0;
+        }
+        firstArg = 1;
+        numArgs--;
+    }
+    
+    // get object transform
+    b2Vec2 center = { 0, 0 };
+    float angle = 0;
+    if ( this->gameObject ) {
+        // get world pos / angle
+        b2Vec2 wscale;
+        this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), center, angle, wscale );
+        center *= WORLD_TO_BOX2D_SCALE;
+        angle *= DEG_TO_RAD;
+    } else if ( this->group ){
+        // use body center
+        center = this->group->GetCenter();
+        angle = this->group->GetAngle();
+    }
+    
+    // add a point w defaults
+    ParticleInfo p;
+    p.def.position.SetZero();
+    p.def.velocity.SetZero();
+    p.def.color.r = this->color->rgba.r;
+    p.def.color.g = this->color->rgba.g;
+    p.def.color.b = this->color->rgba.b;
+    p.def.color.a = this->color->rgba.a;
+    p.def.lifetime = this->groupDef.lifetime;
+    p.def.flags = this->groupDef.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
+    p.weight = 0;
+    p.def.userData = NULL;
+
+    // used for update
+    bool hasPositionX = false, hasPositionY = false,
+         hasVelocityX = false, hasVelocityY = false,
+         hasFlags = false, hasLifetime = false, hasColor = false, hasData = false;
+    
+    if ( numArgs == 1 ) {
+        ArgValue& val = sa.args[ firstArg ];
+        // Array
+        if ( val.type == TypeArray ) {
+            ArgValueVector &pd = *val.value.arrayValue;
+            size_t len = pd.size();
+            if ( len >= 2 ){
+                pd[ 0 ].toNumber( p.def.position.x );
+                pd[ 1 ].toNumber( p.def.position.y );
+                p.def.position *= WORLD_TO_BOX2D_SCALE;
+                hasPositionX = hasPositionY = true;
+            }
+            if ( len >= 4 ){
+                pd[ 2 ].toNumber( p.def.velocity.x );
+                pd[ 3 ].toNumber( p.def.velocity.y );
+                p.def.velocity *= WORLD_TO_BOX2D_SCALE;
+                hasVelocityX = hasVelocityY = true;
+            }
+            if ( len >= 5 ) {
+                uint32 flags = p.def.flags;
+                pd[ 4 ].toInt32( flags );
+                p.def.flags = flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
+                hasFlags = true;
+            }
+            if ( len >= 6 ) {
+                pd[ 5 ].toNumber( p.def.lifetime );
+                hasLifetime = true;
+            }
+            if ( len >= 10 ){
+                pd[ 6 ].toInt8( p.def.color.r );
+                pd[ 7 ].toInt8( p.def.color.g );
+                pd[ 8 ].toInt8( p.def.color.b );
+                pd[ 9 ].toInt8( p.def.color.a );
+                hasColor = true;
+            }
+            if ( len >= 11 && pd[ 10 ].type == TypeObject ) {
+                p.def.userData = pd[ 10 ].value.objectValue;
+                hasData = true;
+            }
+        } else if ( val.type == TypeObject && val.value.objectValue != NULL ){
+            ArgValue v = script.GetProperty( "x", val.value.objectValue );
+            if ( v.toNumber( p.def.position.x ) ) hasPositionX = true;
+            v = script.GetProperty( "y", val.value.objectValue );
+            if ( v.toNumber( p.def.position.y ) ) hasPositionY = true;
+            p.def.position *= WORLD_TO_BOX2D_SCALE;
+            v = script.GetProperty( "velocityX", val.value.objectValue );
+            if ( v.toNumber( p.def.velocity.x ) ) hasVelocityX = true;
+            v = script.GetProperty( "velocityY", val.value.objectValue );
+            if ( v.toNumber( p.def.velocity.y ) ) hasVelocityY = true;
+            p.def.velocity *= WORLD_TO_BOX2D_SCALE;
+            v = script.GetProperty( "flags", val.value.objectValue );
+            uint32 flags = p.def.flags;
+            if ( v.toInt32( flags ) ) hasFlags = true;
+            p.def.flags = flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
+            v = script.GetProperty( "lifetime", val.value.objectValue );
+            if ( v.toNumber( p.def.lifetime ) ) hasLifetime = true;
+            Color temp_color;
+            temp_color.rgba.r = p.def.color.r;
+            temp_color.rgba.g = p.def.color.g;
+            temp_color.rgba.b = p.def.color.b;
+            temp_color.rgba.a = p.def.color.a;
+            v = script.GetProperty( "color", val.value.objectValue );
+            if ( v.type == TypeUndefined ) {
+                v = script.GetProperty( "r", val.value.objectValue );
+                if ( v.toInt8( p.def.color.r ) ) hasColor = true;
+                v = script.GetProperty( "g", val.value.objectValue );
+                if ( v.toInt8( p.def.color.g ) ) hasColor = true;
+                v = script.GetProperty( "b", val.value.objectValue );
+                if ( v.toInt8( p.def.color.b ) ) hasColor = true;
+                v = script.GetProperty( "a", val.value.objectValue );
+                if ( v.toInt8( p.def.color.a ) ) hasColor = true;
+            } else if ( v.type == TypeObject || v.type == TypeString || v.type == TypeArray ) {
+                temp_color.Set( v );
+                hasColor = true;
+            }
+            p.def.color.r = temp_color.rgba.r;
+            p.def.color.g = temp_color.rgba.g;
+            p.def.color.b = temp_color.rgba.b;
+            p.def.color.a = temp_color.rgba.a;
+            v = script.GetProperty( "data", val.value.objectValue );
+            if ( v.type == TypeObject ) {
+                p.def.userData = v.value.objectValue;
+                hasData = true;
+            }
+        } else return -1;
+    } else if ( sa.ReadArgumentsFrom( (int) firstArg, 0, TypeFloat, &p.def.position.x, TypeFloat, &p.def.position.y,
+                                 TypeFloat, &p.def.velocity.x, TypeFloat, &p.def.velocity.y,
+                                 TypeInt, &p.def.flags, TypeFloat, &p.def.lifetime ) ) {
+        
+        // convert
+        p.def.position *= WORLD_TO_BOX2D_SCALE;
+        p.def.velocity *= WORLD_TO_BOX2D_SCALE;
+        p.def.flags = p.def.flags | b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle;
+        
+        // count args
+        hasPositionX = (numArgs >= 1);
+        hasPositionY = (numArgs >= 2);
+        hasVelocityX = (numArgs >= 3);
+        hasVelocityY = (numArgs >= 4);
+        hasFlags = (numArgs >= 5);
+        hasLifetime = (numArgs >= 6);
+        
+        // color as ints
+        if ( numArgs >= 10 ){
+            if ( sa.ReadArgumentsFrom( (int) firstArg + 7, 4, TypeInt, &p.def.color.r, TypeInt, &p.def.color.r, TypeInt, &p.def.color.g, TypeInt, &p.def.color.b, TypeInt, &p.def.color.a ) ) hasColor = true;
+            if ( numArgs >= 11 && sa.args[ firstArg + 10 ].type == TypeObject ) {
+                p.def.userData = sa.args[ firstArg + 10 ].value.objectValue;
+                hasData = true;
+            }
+        } else if ( numArgs >= 7 ) {
+            Color temp_color;
+            ArgValue &v = sa.args[ firstArg + 6 ];
+            if ( v.type == TypeObject || v.type == TypeString || v.type == TypeArray ) {
+                temp_color.Set( v );
+                hasColor = true;
+            }
+            if ( numArgs >= 8 && sa.args[ firstArg + 7 ].type == TypeObject ) {
+                p.def.userData = sa.args[ firstArg + 7 ].value.objectValue;
+                hasData = true;
+            }
+        }
+    }
+    
+    // add particle
+    if ( addNew ) return this->AddParticle( p, center, angle );
+    
+    // update otherwise
+    if ( this->group ) {
+        
+        // apply body transform
+        float _sa = sin( angle ), _ca = cos( angle );
+        p.def.position.Set( center.x + p.def.position.x * _ca - p.def.position.y * _sa,
+                           center.y + p.def.position.x * _sa + p.def.position.y * _ca );
+        p.def.velocity.Set( p.def.velocity.x * _ca - p.def.velocity.y * _sa,
+                           p.def.velocity.x * _sa + p.def.velocity.y * _ca );
+        
+        // update existing particle
+        b2ParticleSystem* ps = this->group->GetParticleSystem();
+        uint32 start = this->group->GetBufferIndex();
+        b2Vec2 *positions = ps->GetPositionBuffer();
+        b2Vec2 *velocities = ps->GetPositionBuffer();
+        void** userData = ps->GetUserDataBuffer();
+        b2ParticleColor* colors = ps->GetColorBuffer();
+        if ( hasPositionX ) positions[ start + updateIndex ].x = p.def.position.x;
+        if ( hasPositionY ) positions[ start + updateIndex ].y = p.def.position.y;
+        if ( hasVelocityX ) velocities[ start + updateIndex ].x = p.def.velocity.x;
+        if ( hasVelocityY ) velocities[ start + updateIndex ].y = p.def.velocity.y;
+        if ( hasColor ) colors[ start + updateIndex ] = p.def.color;
+        if ( hasFlags ) ps->SetParticleFlags( start + updateIndex, p.def.flags );
+        if ( hasLifetime ) ps->SetParticleLifetime( start + updateIndex, p.def.lifetime );
+        if ( hasData ) userData[ start + updateIndex ] = p.def.userData;
+        
+    // stored particle
+    } else {
+        ParticleInfo& pi = this->points[ updateIndex ];
+        if ( hasPositionX ) pi.def.position.x = p.def.position.x;
+        if ( hasPositionY ) pi.def.position.y = p.def.position.y;
+        if ( hasVelocityX ) pi.def.velocity.x = p.def.velocity.x;
+        if ( hasVelocityY ) pi.def.velocity.y = p.def.velocity.y;
+        if ( hasColor ) pi.def.color = p.def.color;
+        if ( hasFlags ) pi.def.flags = p.def.flags;
+        if ( hasLifetime ) pi.def.lifetime = p.def.lifetime;
+        if ( hasData ) pi.def.userData = p.def.userData;
+    }
+    
+    // return index
+    return updateIndex;
+}
+
+/// particleinfo is always in local coords; worldPos, worldAngle - global transform of this gameObject
 int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p, b2Vec2 &worldPos, float worldAngle ) {
     
     // if have live group
@@ -1025,7 +1325,7 @@ int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p, b2Vec2 &worldPos, flo
 
         // add
         p.def.group = this->group;
-        return this->group->GetParticleSystem()->CreateParticle( p.def );
+        return this->group->GetParticleSystem()->CreateParticle( p.def ) - this->group->GetBufferIndex();
         
     // not live
     } else {
@@ -1033,4 +1333,187 @@ int32 ParticleGroupBehavior::AddParticle( ParticleInfo& p, b2Vec2 &worldPos, flo
         this->points.push_back( p );
         return (int32) this->points.size();
     }
+}
+
+/// returns info from particle with index
+bool ParticleGroupBehavior::GetParticle( ScriptArguments &sa ) {
+
+    bool asArray = false;
+    int index = 0;
+    if ( !sa.ReadArguments( 1, TypeInt, &index, TypeBool, &asArray ) ) return false;
+    
+    // get object transform
+    b2Vec2 center = { 0, 0 };
+    float angle = 0;
+    if ( this->gameObject ) {
+        // get world pos / angle
+        b2Vec2 wscale;
+        this->gameObject->DecomposeTransform( this->gameObject->WorldTransform(), center, angle, wscale );
+        center *= WORLD_TO_BOX2D_SCALE;
+        angle *= DEG_TO_RAD;
+    } else if ( this->group ){
+        // use body center
+        center = this->group->GetCenter();
+        angle = this->group->GetAngle();
+    }
+    
+    ParticleInfo pi;
+    if ( this->group ) {
+        
+        // out of range
+        if ( index >= this->group->GetParticleCount() ) { sa.ReturnNull(); return false; }
+        
+        b2ParticleSystem* ps = this->group->GetParticleSystem();
+        uint32 start = this->group->GetBufferIndex();
+        b2Vec2 *positions = ps->GetPositionBuffer();
+        b2Vec2 *velocities = ps->GetPositionBuffer();
+        void** userData = ps->GetUserDataBuffer();
+        b2ParticleColor* colors = ps->GetColorBuffer();
+        
+        pi.def.position = positions[ index + start ];
+        pi.def.velocity = velocities[ index + start ];
+        pi.def.flags = ((( ps->GetParticleFlags( index + start ) & ~b2_fixtureContactFilterParticle )
+                           & ~b2_particleContactFilterParticle )
+                           & ~b2_destructionListenerParticle );
+        pi.def.lifetime = ps->GetParticleLifetime( index + start );
+        pi.def.color = colors[ index + start ];
+        pi.def.userData = userData[ index + start ];
+
+        // to local
+        if ( gameObject ) {
+            gameObject->ConvertPoint(pi.def.position.x, pi.def.position.y, pi.def.position.x, pi.def.position.y, false );
+            gameObject->ConvertDirection(pi.def.velocity.x, pi.def.velocity.y, pi.def.velocity.x, pi.def.velocity.y, false );
+        }
+
+    } else {
+        
+        // out of range
+        if ( index >= this->points.size() ) { sa.ReturnNull(); return false; }
+        
+        ParticleInfo& pa = this->points[ index ];
+        pi.def.position = pa.def.position;
+        pi.def.velocity = pa.def.velocity;
+        pi.def.flags = ((( pa.def.flags & ~b2_fixtureContactFilterParticle )
+                         & ~b2_particleContactFilterParticle )
+                         & ~b2_destructionListenerParticle );
+        pi.def.lifetime = pa.def.lifetime;
+        pi.def.color = pa.def.color;
+        pi.def.userData = pa.def.userData;
+
+    }
+    
+    // transform flags
+    pi.def.flags = ((( pi.def.flags & ~b2_fixtureContactFilterParticle ) & ~b2_particleContactFilterParticle ) & ~b2_destructionListenerParticle );
+    
+    // array
+    if ( asArray ) {
+        
+        ArgValueVector vec;
+        vec.emplace_back( pi.def.position.x );
+        vec.emplace_back( pi.def.position.y );
+        vec.emplace_back( pi.def.velocity.x );
+        vec.emplace_back( pi.def.velocity.y );
+        vec.emplace_back( (int) pi.def.flags );
+        vec.emplace_back( (int) pi.def.color.r );
+        vec.emplace_back( (int) pi.def.color.g );
+        vec.emplace_back( (int) pi.def.color.b );
+        vec.emplace_back( (int) pi.def.color.a );
+        if ( pi.def.userData ) vec.emplace_back( pi.def.userData );
+        sa.ReturnArray( vec );
+        
+    // object
+    } else {
+        void* obj = script.NewObject();
+        sa.ReturnObject( obj );
+        ArgValue v;
+        v.type = TypeFloat;
+        v.value.floatValue = pi.def.position.x;
+        script.SetProperty( "x", v, obj );
+        v.value.floatValue = pi.def.position.y;
+        script.SetProperty( "y", v, obj );
+        v.value.floatValue = pi.def.velocity.x;
+        script.SetProperty( "velocityX", v, obj );
+        v.value.floatValue = pi.def.velocity.y;
+        script.SetProperty( "velocityY", v, obj );
+        v.value.floatValue = pi.def.lifetime;
+        script.SetProperty( "lifetime", v, obj );
+        v.type = TypeInt;
+        v.value.intValue = pi.def.flags;
+        script.SetProperty( "flags", v, obj );
+        v.type = TypeObject;
+        if ( pi.def.userData ) {
+            v.value.objectValue = pi.def.userData;
+            script.SetProperty( "data", v, obj );
+        }
+        Color* clr = new Color( NULL );
+        clr->SetInts( pi.def.color.r, pi.def.color.g, pi.def.color.b, pi.def.color.a );
+        v.value.objectValue = clr->scriptObject;
+    }
+    
+    return true;
+}
+
+
+int ParticleGroupBehavior::DestroyParticles ( ScriptArguments &sa ) {
+    
+    if ( sa.args.size() != 1 ) return -1;
+    
+    ArgValue& val = sa.args[ 0 ];
+    uint32 index = 0;
+    // many
+    if ( val.type == TypeArray ) {
+        
+        int numRemoved = 0;
+
+        // live
+        if ( this->group ) {
+            uint32 start = this->group->GetBufferIndex();
+            uint32 count = this->group->GetParticleCount();
+            b2ParticleSystem* ps = this->group->GetParticleSystem();
+            for ( size_t i = 0, np = val.value.arrayValue->size(); i < np; i++ ) {
+                if ( (*val.value.arrayValue)[ i ].toInt32( index ) && index >= 0 && index < count ) {
+                    // mark as zombie
+                    ps->SetParticleFlags( start + index, b2_zombieParticle );
+                    numRemoved++;
+                }
+            }
+        // stored
+        } else {
+            // copy
+            size_t count = this->points.size();
+            vector<ParticleInfo> replace;
+            vector<bool> marked;
+            marked.resize( count );
+            // mark indexes to delete
+            for ( size_t i = 0, np = val.value.arrayValue->size(); i < np; i++ ) {
+                if ( (*val.value.arrayValue)[ i ].toInt32( index ) && index >= 0 && index < count ) {
+                    marked[ index ] = true;
+                    numRemoved++;
+                }
+            }
+            // make copy of unmarked
+            for ( size_t i = 0; i < count; i++ ) {
+                if ( !marked[ i ] ) replace.emplace_back( this->points[ i ] );
+            }
+            // done
+            this->points = replace;
+            
+        }
+        
+        return numRemoved;
+        
+    // single
+    } else if ( val.toInt32( index ) ) {
+        if ( this->group ) {
+            if ( index >= this->group->GetParticleCount() ) return 0;
+            this->group->GetParticleSystem()->DestroyParticle( this->group->GetBufferIndex() + index, true );
+        } else {
+            if ( index >= this->points.size() ) return 0;
+            this->points.erase( this->points.begin() + index );
+            return 1;
+        }
+    }
+    
+    return -1;
+    
 }

@@ -154,7 +154,8 @@ public:
 	
 	// convert local to global and back
 	void ConvertPoint( float x, float y, float &outX, float &outY, bool localToGlobal, bool screenSpace=true );
-
+    void ConvertDirection( float x, float y, float &outX, float &outY, bool localToGlobal );
+    
 	/// returns local bounding box
 	GPU_Rect GetBounds();
 	

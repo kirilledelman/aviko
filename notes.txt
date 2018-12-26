@@ -2,11 +2,11 @@ RenderParticles
 To draw multiple particle systems w one renderer, traverse children
 
 
-getParticle( i, [ Bool asArray ] )
-addParticle( Obj | Array )
-updateParticle( i, Obj | Array )
-destroyParticle( i )
-particle collisions with body - MAKE TOUCH FLAG OPTIONAL
+
+particle collisions with body - implement callback
+
+go through all local/global transforms of points and replace with ConvertPosition/Direction
+
 
 
 
@@ -20,7 +20,7 @@ One way platforms?
 Mouse joint on kinematic body - crash
 
 
-tooltip - annoying / doesnt hide - remove on mousemove instead
+tooltip - spills out, also annoying / doesnt hide - remove on mousemove instead
 
 Textfield
 	multiline text box

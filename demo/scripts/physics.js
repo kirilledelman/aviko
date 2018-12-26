@@ -705,7 +705,7 @@ new (function (){
                 // rectangle
                 var b = container.addChild( new GameObject({
                     name: "Box",
-                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0xf06620, x: 40, y: 20, lineThickness: 0, blendMode: BlendMode.Subtract } ),
+                    render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0xf06620, x: 40, y: 20, lineThickness: 2 } ),
                     body: new Body( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
@@ -718,6 +718,8 @@ new (function (){
                 }));
                 b.ui.__proto__ = draggableObjectUIProto;
 
+                scene.particleSystem.radius = 8;
+                
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
@@ -736,7 +738,7 @@ new (function (){
                     x: 10, y: 135,
                 }));
 
-                $0 = c.render;
+                $0 = c.body;
 
             }
         }
