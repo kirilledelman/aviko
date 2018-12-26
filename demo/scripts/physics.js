@@ -644,7 +644,7 @@ new (function (){
 								radius: 50,
 								sensor: true,
 				            } ) ],
-						touch: function ( sh, o ) {
+						touch: function ( o, sh ) {
 							// log( "touch", o.body.gameObject );
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = true;
@@ -652,7 +652,7 @@ new (function (){
                                 o.body.gameObject.scale = 1.5;
 							}
 						},
-						untouch: function ( sh, o ) {
+						untouch: function ( o, sh ) {
 							// log( "untouch", o.body.gameObject );
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = false;
@@ -713,27 +713,30 @@ new (function (){
                             density: 20,
                             bounce: 0.2,
                         } ),
+						touch: function ( other, box, x, y, nx, ny, i ) {
+                        	if ( other.constructor == Particles ) {
+                        		other.updateParticle( i, { color: 'FF0000FF' } );
+							}
+						}
                     } ),
                     x: 150, y: 15, ui: new UI( { focusable: true } ),
                 }));
                 b.ui.__proto__ = draggableObjectUIProto;
 
-                scene.particleSystem.radius = 8;
-                
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
-					// opacity: 0.9,
-                    render: new RenderParticles( { blendMode: BlendMode.Subtract } ),// { texture: 'player:fish-title' } ),
+					opacity: 0.8,
+                    render: new RenderParticles(),
                     body: new Particles( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
                             x: 280, y: 50
                         } ),
-						color: 0xf06620,
+						color: 0x3366D0,
 						rigid: false,
 						solid: false,
-						flags: ParticleFlags.Tensile | ParticleFlags.StaticPressure,
+						flags: ParticleFlags.ColorMixing | ParticleFlags.Tensile | ParticleFlags.StaticPressure | ParticleFlags.CollisionEvent,
                     } ),
                     x: 10, y: 135,
                 }));

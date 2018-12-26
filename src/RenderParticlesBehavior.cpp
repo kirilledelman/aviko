@@ -241,9 +241,7 @@ void RenderParticlesBehavior::TraceProtectedObjects( vector<void**> &protectedOb
 
 /// render callback
 void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Target* target, Event* event ) {
-    
-    // TODO - draw this gameObject's particles, and its children's particles, if no render component
-    
+        
     // find particles
     if ( ( !behavior->particles || ( behavior->particles && behavior->particles->gameObject != behavior->gameObject ) ) && behavior->gameObject->body ) {
         behavior->particles = script.GetInstance<ParticleGroupBehavior>( behavior->gameObject->body->scriptObject );

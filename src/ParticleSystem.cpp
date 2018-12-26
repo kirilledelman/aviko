@@ -17,6 +17,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
     psDef.userData = this;
     psDef.radius = 2 * WORLD_TO_BOX2D_SCALE;
     psDef.density = 20;
+    psDef.colorMixingStrength = 0.2;
     
     // read params
     void *initObj = NULL;

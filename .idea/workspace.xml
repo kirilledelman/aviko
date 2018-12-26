@@ -6,10 +6,12 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.hpp" afterPath="$PROJECT_DIR$/src/GameObject.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyShape.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyShape.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.hpp" afterPath="$PROJECT_DIR$/src/Scene.hpp" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -43,8 +45,8 @@
       <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="338">
-              <caret line="721" column="16" lean-forward="false" selection-start-line="721" selection-start-column="16" selection-end-line="721" selection-end-column="16" />
+            <state relative-caret-position="359">
+              <caret line="654" column="49" lean-forward="false" selection-start-line="654" selection-start-column="49" selection-end-line="654" selection-end-column="49" />
               <folding />
             </state>
           </provider>
@@ -88,7 +90,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>&quot;GameObj</find>
       <find>label</find>
       <find>./text'</find>
       <find>'\n</find>
@@ -118,6 +119,7 @@
       <find>wheel</find>
       <find>sensor</find>
       <find>,</find>
+      <find>touch</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -616,12 +618,12 @@
       <workItem from="1545756349357" duration="511000" />
       <workItem from="1545769805410" duration="1150000" />
       <workItem from="1545841094091" duration="528000" />
-      <workItem from="1545841654297" duration="213000" />
+      <workItem from="1545841654297" duration="2294000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="236915000" />
+    <option name="totallyTimeSpent" value="238996000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1034,8 +1036,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="338">
-          <caret line="721" column="16" lean-forward="false" selection-start-line="721" selection-start-column="16" selection-end-line="721" selection-end-column="16" />
+        <state relative-caret-position="359">
+          <caret line="654" column="49" lean-forward="false" selection-start-line="654" selection-start-column="49" selection-end-line="654" selection-end-column="49" />
           <folding />
         </state>
       </provider>

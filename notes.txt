@@ -1,16 +1,11 @@
+
+Scene Contact listeners:
+to prevent multiple "touch" events:
+store/remove contact list - add "isTouching(b)" and "getContact(b)"
+
 RenderParticles
 To draw multiple particle systems w one renderer, traverse children
-
-
-
-particle collisions with body - implement callback
-
-go through all local/global transforms of points and replace with ConvertPosition/Direction
-
-
-
-
-Bodies contact - store/remove contact list - add "isTouching(b)" and "getContact(b)"
+Implement wavy shader
 
 Limit max DT for physics to prevent particle / body explosions
 

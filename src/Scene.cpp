@@ -758,8 +758,8 @@ void Scene::BeginContact( b2Contact* contact ) {
 	physicsEvents.emplace_back
 	( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point, normal, separation ](){
 		Event event( EVENT_TOUCH );
+        event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
-		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 		event.scriptParams.AddFloatArgument( point.x );
 		event.scriptParams.AddFloatArgument( point.y );
 		event.scriptParams.AddFloatArgument( normal.x );
@@ -768,8 +768,8 @@ void Scene::BeginContact( b2Contact* contact ) {
 		shapeA->body->CallEvent( event );
 		if ( !event.stopped ) {
 			event.scriptParams.ResizeArguments( 0 );
-			event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 			event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+            event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 			event.scriptParams.AddFloatArgument( point.x );
 			event.scriptParams.AddFloatArgument( point.y );
 			event.scriptParams.AddFloatArgument( normal.x );
@@ -803,6 +803,117 @@ void Scene::EndContact( b2Contact* contact ) {
 		}
 	}) );
 }
+
+void Scene::BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact ){
+    b2Fixture* fix = particleBodyContact->fixture;
+    int32 index = particleBodyContact->index;
+    RigidBodyShape *shape = fix ? (RigidBodyShape*) fix->GetUserData() : NULL;
+    b2ParticleGroup* pg = particleSystem->GetGroupBuffer()[ index ];
+    ParticleGroupBehavior* group = (ParticleGroupBehavior*) pg->GetUserData();
+    
+    if ( !shape || !shape->body || !shape->body->gameObject ||
+        !group || !group->gameObject ) return;
+    
+    b2Vec2
+    point = particleSystem->GetPositionBuffer()[ index ],
+    normal = particleBodyContact->normal;
+    
+    point *= BOX2D_TO_WORLD_SCALE;
+    physicsEvents.emplace_back
+    ( static_cast<PhysicsEventCallback>([ shape, group, point, normal, index ](){
+        Event event( EVENT_TOUCH );
+        event.scriptParams.AddObjectArgument( group->scriptObject );
+        event.scriptParams.AddObjectArgument( shape->scriptObject );
+        event.scriptParams.AddFloatArgument( point.x );
+        event.scriptParams.AddFloatArgument( point.y );
+        event.scriptParams.AddFloatArgument( normal.x );
+        event.scriptParams.AddFloatArgument( normal.y );
+        event.scriptParams.AddIntArgument( index );
+        shape->body->CallEvent( event );
+        if ( !event.stopped ) {
+            event.scriptParams.ResizeArguments( 0 );
+            event.scriptParams.AddObjectArgument( shape->scriptObject );
+            event.scriptParams.AddObjectArgument( group->scriptObject );
+            event.scriptParams.AddFloatArgument( point.x );
+            event.scriptParams.AddFloatArgument( point.y );
+            event.scriptParams.AddFloatArgument( normal.x );
+            event.scriptParams.AddFloatArgument( normal.y );
+            event.scriptParams.AddIntArgument( index );
+            group->CallEvent( event );
+        }
+    }) );
+    
+}
+
+void Scene::EndContact(b2Fixture* fix, b2ParticleSystem* particleSystem, int32 index ){
+    RigidBodyShape *shape = fix ? (RigidBodyShape*) fix->GetUserData() : NULL;
+    b2ParticleGroup* pg = particleSystem->GetGroupBuffer()[ index ];
+    ParticleGroupBehavior* group = (ParticleGroupBehavior*) pg->GetUserData();
+    
+    if ( !shape || !shape->body || !shape->body->gameObject ||
+        !group || !group->gameObject ) return;
+    
+    physicsEvents.emplace_back
+    ( static_cast<PhysicsEventCallback>([ shape, group, index ](){
+        Event event( EVENT_UNTOUCH );
+        event.scriptParams.AddObjectArgument( shape->scriptObject );
+        event.scriptParams.AddObjectArgument( group->scriptObject );
+        event.scriptParams.AddIntArgument( index );
+        shape->body->CallEvent( event );
+        if ( !event.stopped ) {
+            event.scriptParams.ResizeArguments( 0 );
+            event.scriptParams.AddObjectArgument( group->scriptObject );
+            event.scriptParams.AddObjectArgument( shape->scriptObject );
+            event.scriptParams.AddIntArgument( index );
+            group->CallEvent( event );
+        }
+    }) );
+}
+
+void Scene::BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact ) {
+    // only if from different groups
+}
+
+void Scene::EndContact(b2ParticleSystem* particleSystem, int32 indexA, int32 indexB){
+    
+}
+
+/// Return true if contact calculations should be performed between a fixture and particle.  This is only called if the b2_fixtureContactListenerParticle flag is set on the particle.
+bool Scene::ShouldCollide(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 particleIndex){
+    RigidBodyShape *shape = (RigidBodyShape*) fixture->GetUserData();
+    RigidBodyBehavior* body = shape->body;
+    b2ParticleGroup* pg = particleSystem->GetGroupBuffer()[ particleIndex ];
+    ParticleGroupBehavior* group = (ParticleGroupBehavior*) pg->GetUserData();
+    
+    // get category and mask bits
+    long unsigned catA = shape->categoryBits;
+    long unsigned maskA = shape->maskBits;
+    long unsigned catB = group->categoryBits;
+    long unsigned maskB = group->maskBits;
+    // if not set, use body's
+    if ( !catA ) {
+        catA = body->categoryBits;
+        maskA = body->maskBits;
+    }
+    return (catA & maskB) && (catB & maskA);
+}
+
+/// Return true if contact calculations should be performed between two particles.  This is only called if the b2_particleContactListenerParticle flag is set on the particle.
+bool Scene::ShouldCollide(b2ParticleSystem* particleSystem, int32 particleIndexA, int32 particleIndexB ){
+    b2ParticleGroup* pg = particleSystem->GetGroupBuffer()[ particleIndexA ];
+    ParticleGroupBehavior* groupA = (ParticleGroupBehavior*) pg->GetUserData();
+    pg = particleSystem->GetGroupBuffer()[ particleIndexB ];
+    ParticleGroupBehavior* groupB = (ParticleGroupBehavior*) pg->GetUserData();
+    if ( groupA == groupB ) return true;
+    
+    // get category and mask bits
+    long unsigned catA = groupA->categoryBits;
+    long unsigned maskA = groupA->maskBits;
+    long unsigned catB = groupB->categoryBits;
+    long unsigned maskB = groupB->maskBits;
+    return (catA & maskB) && (catB & maskA);
+}
+
 
 /// Box2D simulation
 void Scene::SimulatePhysics() {

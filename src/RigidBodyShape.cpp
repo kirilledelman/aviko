@@ -1,5 +1,7 @@
 #include "RigidBodyShape.hpp"
 #include "RigidBodyBehavior.hpp"
+#include "GameObject.hpp"
+
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -105,6 +107,14 @@ void RigidBodyShape::InitClass() {
 		rb->SetBody( beh );
 		return ((RigidBodyShape*) b)->body ? ((RigidBodyShape*) b)->body->scriptObject : NULL;
 	} ) );
+    
+    script.AddProperty<RigidBodyShape>
+    ( "gameObject",
+     static_cast<ScriptObjectCallback>([](void *b, void* val ){
+        RigidBodyShape* rb = (RigidBodyShape*) b;
+        if ( rb->body && rb->body->gameObject ) return rb->body->gameObject->scriptObject;
+        return (void*) NULL;
+    }));
 	
 	script.AddProperty<RigidBodyShape>
 	("category", //

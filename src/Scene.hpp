@@ -55,14 +55,6 @@ public:
 	/// Called when two fixtures cease to touch.
 	void EndContact(b2Contact* contact);
 	
-	// void BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact);
-	
-	// void EndContact(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 index);
-	
-	// void BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact);
-	
-	// void EndContact(b2ParticleSystem* particleSystem, int32 indexA, int32 indexB);
-	
 	// void PreSolve(b2Contact* contact, const b2Manifold* oldManifold);
 	
 	// void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse);
@@ -70,11 +62,19 @@ public:
 	/// Return true if contact calculations should be performed between these two shapes.
 	bool ShouldCollide(b2Fixture* fixtureA, b2Fixture* fixtureB);
 	
-	/// Return true if contact calculations should be performed between a fixture and particle.  This is only called if the b2_fixtureContactListenerParticle flag is set on the particle.
-	// bool ShouldCollide(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 particleIndex);
+    void BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact);
+    
+    void EndContact(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 index);
+    
+    void BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact);
+    
+    void EndContact(b2ParticleSystem* particleSystem, int32 indexA, int32 indexB);
+
+    /// Return true if contact calculations should be performed between a fixture and particle.  This is only called if the b2_fixtureContactListenerParticle flag is set on the particle.
+	bool ShouldCollide(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 particleIndex);
 	
 	/// Return true if contact calculations should be performed between two particles.  This is only called if the b2_particleContactListenerParticle flag is set on the particle.
-	// bool ShouldCollide(b2ParticleSystem* particleSystem, int32 particleIndexA, int32 particleIndexB);
+	bool ShouldCollide(b2ParticleSystem* particleSystem, int32 particleIndexA, int32 particleIndexB);
 	
     // destruction listeners
     void SayGoodbye(b2Joint* joint);

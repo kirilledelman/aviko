@@ -22,7 +22,7 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
         // unchangeable flags
         b2_fixtureContactFilterParticle | b2_particleContactFilterParticle | b2_destructionListenerParticle |
         // changeable flags
-        b2_fixtureContactListenerParticle | b2_particleContactListenerParticle |
+        ( b2_fixtureContactListenerParticle | b2_particleContactListenerParticle ) |
         b2_colorMixingParticle;
     this->groupDef.userData = NULL;
     
@@ -73,7 +73,6 @@ void ParticleGroupBehavior::InitClass() {
     script.SetProperty( "Powder", ArgValue( b2_powderParticle ), constants );
     script.SetProperty( "Tensile", ArgValue( b2_tensileParticle ), constants );
     script.SetProperty( "ColorMixing", ArgValue( b2_colorMixingParticle ), constants );
-    // script.SetProperty( "DestructionEvent", ArgValue( b2_destructionListenerParticle ), constants );
     script.SetProperty( "Barrier", ArgValue( b2_barrierParticle ), constants );
     script.SetProperty( "StaticPressure", ArgValue( b2_staticPressureParticle ), constants );
     script.SetProperty( "Reactive", ArgValue( b2_reactiveParticle ), constants );
@@ -1448,6 +1447,7 @@ bool ParticleGroupBehavior::GetParticle( ScriptArguments &sa ) {
         Color* clr = new Color( NULL );
         clr->SetInts( pi.def.color.r, pi.def.color.g, pi.def.color.b, pi.def.color.a );
         v.value.objectValue = clr->scriptObject;
+        script.SetProperty( "color", v, obj );
     }
     
     return true;
