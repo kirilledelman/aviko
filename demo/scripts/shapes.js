@@ -89,7 +89,7 @@ new (function (){
 	} );
 
 	// sample sprite container
-	var spriteContainer = rightColumn.addChild( 'ui/panel', { // 'ui/scrollable', {
+	var spriteContainer = rightColumn.addChild( 'ui/scrollable', {
 		minHeight: 150,
 		layoutType: Layout.None,
 		scrollbars: false,

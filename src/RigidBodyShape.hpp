@@ -29,6 +29,16 @@ public:
 	uint32 categoryBits = 0x0;
 	uint32 maskBits = 0xFFFFFFFF;
 	
+    // contacts
+    struct StoredFixtureContact {
+        b2Vec2 point;
+        b2Vec2 normal;
+    };
+    unordered_map<RigidBodyShape*,StoredFixtureContact> storedContacts;
+    void AddContactWith( RigidBodyShape*, b2Vec2 point, b2Vec2 normal );
+    void RemoveContactWith( RigidBodyShape* );
+    bool CheckContactWith( RigidBodyShape* other, b2Vec2 point, b2Vec2 normal );
+    
 	/// params
 	float density = 5;
 	float friction = 0.5;

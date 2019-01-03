@@ -4,14 +4,31 @@
     <list default="true" id="731d891e-7999-4d16-a766-f559c7d430a8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" afterPath="$PROJECT_DIR$/Aviko.xcodeproj/project.xcworkspace/xcuserdata/kirilledelman.xcuserdatad/UserInterfaceState.xcuserstate" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/main.js" afterPath="$PROJECT_DIR$/demo/main.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/physics.js" afterPath="$PROJECT_DIR$/demo/scripts/physics.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/demo/scripts/shapes.js" afterPath="$PROJECT_DIR$/demo/scripts/shapes.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/notes.txt" afterPath="$PROJECT_DIR$/notes.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" afterPath="$PROJECT_DIR$/src/ParticleGroupBehavior.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ParticleSystem.cpp" afterPath="$PROJECT_DIR$/src/ParticleSystem.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.cpp" afterPath="$PROJECT_DIR$/src/Application.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Application.hpp" afterPath="$PROJECT_DIR$/src/Application.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Behavior.cpp" afterPath="$PROJECT_DIR$/src/Behavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/BodyBehavior.hpp" afterPath="$PROJECT_DIR$/src/BodyBehavior.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/GameObject.cpp" afterPath="$PROJECT_DIR$/src/GameObject.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ImageResource.hpp" afterPath="$PROJECT_DIR$/src/ImageResource.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderBehavior.hpp" afterPath="$PROJECT_DIR$/src/RenderBehavior.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderParticlesBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" afterPath="$PROJECT_DIR$/src/RenderTextBehavior.cpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyShape.cpp" afterPath="$PROJECT_DIR$/src/RigidBodyShape.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/RigidBodyShape.hpp" afterPath="$PROJECT_DIR$/src/RigidBodyShape.hpp" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.cpp" afterPath="$PROJECT_DIR$/src/Scene.cpp" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/Scene.hpp" afterPath="$PROJECT_DIR$/src/Scene.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptArguments.cpp" afterPath="$PROJECT_DIR$/src/ScriptArguments.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptHost.hpp" afterPath="$PROJECT_DIR$/src/ScriptHost.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.cpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/ScriptableClass.hpp" afterPath="$PROJECT_DIR$/src/ScriptableClass.hpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/TypedVector.cpp" afterPath="$PROJECT_DIR$/src/TypedVector.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/UIBehavior.cpp" afterPath="$PROJECT_DIR$/src/UIBehavior.cpp" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/common.h" afterPath="$PROJECT_DIR$/src/common.h" />
     </list>
     <ignored path="nikogame.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -32,48 +49,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/demo/main.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="735">
-              <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="physics.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="359">
-              <caret line="654" column="49" lean-forward="false" selection-start-line="654" selection-start-column="49" selection-end-line="654" selection-end-column="49" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="shapes.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1605">
-              <caret line="107" column="8" lean-forward="false" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="player.png" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/textures/player.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="player.json" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/demo/textures/player.json">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="5" lean-forward="false" selection-start-line="2" selection-start-column="5" selection-end-line="2" selection-end-column="15" />
+            <state relative-caret-position="25">
+              <caret line="17" column="22" lean-forward="false" selection-start-line="17" selection-start-column="19" selection-end-line="17" selection-end-column="22" />
               <folding />
             </state>
           </provider>
@@ -90,11 +70,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>label</find>
-      <find>./text'</find>
-      <find>'\n</find>
-      <find>showBackButton</find>
-      <find>__s</find>
       <find>__showback</find>
       <find>showback</find>
       <find>backbutton.ac</find>
@@ -120,6 +95,11 @@
       <find>sensor</find>
       <find>,</find>
       <find>touch</find>
+      <find>'#</find>
+      <find>'X'</find>
+      <find>gc</find>
+      <find>log</find>
+      <find>sdl_</find>
     </findStrings>
     <replaceStrings>
       <replace>this.ui.</replace>
@@ -177,11 +157,9 @@
         <option value="$PROJECT_DIR$/word-fish/scripts/menu.js" />
         <option value="$PROJECT_DIR$/demo/config/Keyboard.json" />
         <option value="$PROJECT_DIR$/notes.txt" />
-        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/demo/scripts/controller-configurator.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/checkbox.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/image.js" />
-        <option value="$PROJECT_DIR$/demo/scripts/ui/panel.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/resizer.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/scrollbar.js" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/tooltip.js" />
@@ -201,12 +179,14 @@
         <option value="$PROJECT_DIR$/demo/scripts/ui/inspector.js" />
         <option value="$PROJECT_DIR$/demo/scripts/animation.js" />
         <option value="$PROJECT_DIR$/demo/scripts/main-menu.js" />
-        <option value="$PROJECT_DIR$/demo/main.js" />
         <option value="$PROJECT_DIR$/src/StaticResources.cpp" />
         <option value="$PROJECT_DIR$/demo/scripts/ui/property-list.js" />
         <option value="$PROJECT_DIR$/demo/scripts/sprites.js" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/demo/scripts/shapes.js" />
         <option value="$PROJECT_DIR$/demo/scripts/physics.js" />
+        <option value="$PROJECT_DIR$/demo/scripts/ui/panel.js" />
+        <option value="$PROJECT_DIR$/demo/main.js" />
       </list>
     </option>
   </component>
@@ -280,7 +260,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -303,71 +282,14 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="demo" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="demo" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="textures" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="demo" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scripts" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="nikogame" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="demo" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scripts" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
+              <option name="myItemId" value="src" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
       <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -378,6 +300,11 @@
     <property name="settings.editor.selected.configurable" value="configurable.group.editor" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="/usr/local/bin/node" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.date" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.symlinks" value="true" />
+    <property name="WebServerToolWindowPanel.toolwindow.highlight.mappings" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -619,11 +546,18 @@
       <workItem from="1545769805410" duration="1150000" />
       <workItem from="1545841094091" duration="528000" />
       <workItem from="1545841654297" duration="2294000" />
+      <workItem from="1545931236395" duration="2919000" />
+      <workItem from="1545945019765" duration="1408000" />
+      <workItem from="1545949267432" duration="493000" />
+      <workItem from="1546456383597" duration="1182000" />
+      <workItem from="1546529531030" duration="17000" />
+      <workItem from="1546529592562" duration="9000" />
+      <workItem from="1546529605577" duration="1635000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="238996000" />
+    <option name="totallyTimeSpent" value="246659000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -638,11 +572,12 @@
     <frame x="0" y="22" width="1440" height="838" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.29256082" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2446352" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14091559" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32882273" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32884097" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="File Transfer" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3297587" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.15665236" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -688,27 +623,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1224">
-          <caret line="116" column="5" lean-forward="true" selection-start-line="116" selection-start-column="5" selection-end-line="116" selection-end-column="5" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/main-menu.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="624">
@@ -959,14 +873,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/main.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="63" column="38" lean-forward="false" selection-start-line="63" selection-start-column="38" selection-end-line="63" selection-end-column="38" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Aviko/Textures/ParticleTexture.cpp" />
     <entry file="file://$PROJECT_DIR$/src/StaticResources.cpp">
       <provider selected="true" editor-type-id="text-editor">
@@ -992,17 +898,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-9154">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/ui/property-list.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="165">
           <caret line="2003" column="51" lean-forward="true" selection-start-line="2003" selection-start-column="51" selection-end-line="2003" selection-end-column="71" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="903">
+          <caret line="150" column="33" lean-forward="false" selection-start-line="150" selection-start-column="33" selection-end-line="150" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="212">
+            <caret line="41" column="34" lean-forward="false" selection-start-line="41" selection-start-column="34" selection-end-line="41" selection-end-column="34" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/ui.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="205" column="20" lean-forward="false" selection-start-line="205" selection-start-column="18" selection-end-line="205" selection-end-column="20" />
         </state>
       </provider>
     </entry>
@@ -1015,29 +938,42 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="30">
           <caret line="2" column="5" lean-forward="false" selection-start-line="2" selection-start-column="5" selection-end-line="2" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/sprites.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="903">
-          <caret line="150" column="33" lean-forward="false" selection-start-line="150" selection-start-column="33" selection-end-line="150" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1605">
-          <caret line="107" column="8" lean-forward="false" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/demo/scripts/physics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="359">
-          <caret line="654" column="49" lean-forward="false" selection-start-line="654" selection-start-column="49" selection-end-line="654" selection-end-column="49" />
+        <state relative-caret-position="11355">
+          <caret line="757" column="38" lean-forward="false" selection-start-line="757" selection-start-column="38" selection-end-line="757" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/shapes.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="652">
+          <caret line="113" column="28" lean-forward="false" selection-start-line="113" selection-start-column="28" selection-end-line="113" selection-end-column="28" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/scripts/ui/panel.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="84" column="0" lean-forward="false" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/notes.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="189">
+          <caret line="191" column="4" lean-forward="false" selection-start-line="191" selection-start-column="4" selection-end-line="191" selection-end-column="62" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/demo/main.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="25">
+          <caret line="17" column="22" lean-forward="false" selection-start-line="17" selection-start-column="19" selection-end-line="17" selection-end-column="22" />
           <folding />
         </state>
       </provider>

@@ -82,9 +82,6 @@ public:
 	GPU_Rect backScreenDstRect;
 	GPU_Rect backScreenSrcRect;
 	
-	// (re) creates main rendering window
-	void InitRender();
-	
 	// (re) creates back buffer
 	void UpdateBackscreen();
 	
@@ -185,7 +182,10 @@ public:
 	
 	/// main game loop
     void GameLoop();
-	
+    
+    /// draws debug info each frame
+    void DebugDraw();
+    
 };
 
 // Application -> script class "Application"

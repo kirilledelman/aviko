@@ -146,7 +146,7 @@ public:
 	size_t SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// resets shader to default
-	void ResetShader() { GPU_ActivateShaderProgram( 0, NULL ); }
+    void ResetShader() { GPU_DeactivateShaderProgram(); /* GPU_ActivateShaderProgram( 0, NULL );*/ }
 	
 	/// compiles shader for feature mask
 	static ShaderVariant& CompileShaderWithFeatures( size_t featuresMask );

@@ -373,7 +373,7 @@ bool ArgValue::get( void *destination, ScriptType desiredType ) {
 	} else if ( this->type == TypeString && desiredType == TypeString ){
 		*((string*)destination) = *this->value.stringValue;
 	} else if ( this->type == TypeArray && desiredType == TypeArray){
-		*((ArgValueVector**)destination) = this->value.arrayValue;
+		*((ArgValueVector*)destination) = *this->value.arrayValue;
 	} else if ( this->type == TypeFunction && desiredType == TypeFunction ){
 		*((void**)destination) = this->value.objectValue;
 	} else {

@@ -18,7 +18,7 @@ public:
 	// default collision category and mask (shapes can override)
 	uint32 categoryBits = 0x1;
 	uint32 maskBits = 0xFFFFFFFF;
-	
+    
 	// scripting
 	
 	/// registers class for scripting

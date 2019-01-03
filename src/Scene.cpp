@@ -565,7 +565,7 @@ void Scene::Render( Event& event ) {
 	
 	// debug draw world
 	if ( app.debugDraw ) {
-		GPU_ActivateShaderProgram( 0, NULL );
+		GPU_DeactivateShaderProgram(); // GPU_ActivateShaderProgram( 0, NULL );
 		this->world->DrawDebugData();
 	}
     
@@ -755,29 +755,40 @@ void Scene::BeginContact( b2Contact* contact ) {
 		separation = worldManifold.separations[ 0 ];
 	}
 	point *= BOX2D_TO_WORLD_SCALE;
-	physicsEvents.emplace_back
-	( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point, normal, separation ](){
-		Event event( EVENT_TOUCH );
-        event.scriptParams.AddObjectArgument( shapeB->scriptObject );
-		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
-		event.scriptParams.AddFloatArgument( point.x );
-		event.scriptParams.AddFloatArgument( point.y );
-		event.scriptParams.AddFloatArgument( normal.x );
-		event.scriptParams.AddFloatArgument( normal.y );
-		event.scriptParams.AddFloatArgument( separation );
-		shapeA->body->CallEvent( event );
-		if ( !event.stopped ) {
-			event.scriptParams.ResizeArguments( 0 );
-			event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+    
+    // check if already touching
+    bool alreadyTouching = shapeA->CheckContactWith( shapeB, point, normal );
+    if ( alreadyTouching ) {
+        // update stored contact
+        shapeB->CheckContactWith( shapeA, point, -normal );
+    } else {
+        shapeA->AddContactWith( shapeB, point, normal );
+        shapeB->AddContactWith( shapeA, point, -normal );
+        physicsEvents.emplace_back
+        ( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point, normal, separation ](){
+            Event event( EVENT_TOUCH );
             event.scriptParams.AddObjectArgument( shapeB->scriptObject );
-			event.scriptParams.AddFloatArgument( point.x );
-			event.scriptParams.AddFloatArgument( point.y );
-			event.scriptParams.AddFloatArgument( normal.x );
-			event.scriptParams.AddFloatArgument( normal.y );
-			event.scriptParams.AddFloatArgument( separation );
-			shapeB->body->CallEvent( event );
-		}
-	}) );
+            event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+            event.scriptParams.AddFloatArgument( point.x );
+            event.scriptParams.AddFloatArgument( point.y );
+            event.scriptParams.AddFloatArgument( normal.x );
+            event.scriptParams.AddFloatArgument( normal.y );
+            event.scriptParams.AddFloatArgument( separation );
+            shapeA->body->CallEvent( event );
+            if ( !event.stopped ) {
+                event.scriptParams.ResizeArguments( 0 );
+                event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+                event.scriptParams.AddObjectArgument( shapeB->scriptObject );
+                event.scriptParams.AddFloatArgument( point.x );
+                event.scriptParams.AddFloatArgument( point.y );
+                event.scriptParams.AddFloatArgument( -normal.x );
+                event.scriptParams.AddFloatArgument( -normal.y );
+                event.scriptParams.AddFloatArgument( separation );
+                shapeB->body->CallEvent( event );
+            }
+        }) );
+        
+    }
 	
 }
 
@@ -789,16 +800,19 @@ void Scene::EndContact( b2Contact* contact ) {
 	RigidBodyShape *shapeB = b ? (RigidBodyShape*) b->GetUserData() : NULL;
 	if ( !shapeA || !shapeA->body || !shapeA->body->gameObject ||
 		!shapeB || !shapeB->body || !shapeB->body->gameObject ) return;
+    // remove stored contact
+    shapeA->RemoveContactWith( shapeB );
+    shapeB->RemoveContactWith( shapeA );
 	physicsEvents.emplace_back
 	( static_cast<PhysicsEventCallback>([ shapeA, shapeB ](){
 		Event event( EVENT_UNTOUCH );
-		event.scriptParams.AddObjectArgument( shapeA->scriptObject );
 		event.scriptParams.AddObjectArgument( shapeB->scriptObject );
+        event.scriptParams.AddObjectArgument( shapeA->scriptObject );
 		shapeA->body->CallEvent( event );
 		if ( !event.stopped ) {
 			event.scriptParams.ResizeArguments( 0 );
-			event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 			event.scriptParams.AddObjectArgument( shapeA->scriptObject );
+            event.scriptParams.AddObjectArgument( shapeB->scriptObject );
 			shapeB->body->CallEvent( event );
 		}
 	}) );

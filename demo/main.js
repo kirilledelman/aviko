@@ -19,7 +19,6 @@ App.setWindowSize( 640, 480, 1 );
 App.windowResizable = true;
 App.fixedWindowResolution = false;
 
-/*
 // auto-configure controller
 var configurator = include( 'controller-configurator', {
 	axis: [
@@ -50,14 +49,12 @@ var configurator = include( 'controller-configurator', {
 	],
 	ready: function ( controller ) {
 		// if pressing select + start
-		controller.on( ['select','start' ], maybeExit );
+		controller.on( [ 'select', 'start' ], maybeExit );
 	}
 } );
-*/
 
 // inspector - hold right mouse button down to activate
-var inspector = include( 'ui/inspector' );
-
+// var inspector = include( 'ui/inspector' );
 
 // used by controller to pop scene or exit app
 function maybeExit() {
@@ -115,11 +112,11 @@ function transitionScene( newScene, oldScene, dir ) {
 	new Tween( newScene, 'cameraX', -ghost.x, 0, 0.5, Ease.Out );
 	ghost.fadeTo( 0, 0.5 ).finished = function () {
 		ghost = ghost.parent = null;
-		gc();
+		// gc();
 	}
 	// done
 	return newScene;
 }
 
 
-
+App.debugDraw = 1;

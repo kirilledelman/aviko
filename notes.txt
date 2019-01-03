@@ -1,3 +1,14 @@
+Terrible performance on RPi
+One shader for all - shapes and textures, so no shader switching takes place
+
+
+
+
+
+
+
+
+Autosized text field - dispatches layout to parent when not necessary (typing)
 
 Scene Contact listeners:
 to prevent multiple "touch" events:

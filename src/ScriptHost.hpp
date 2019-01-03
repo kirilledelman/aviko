@@ -7,11 +7,6 @@
 
 class ScriptableClass;
 
-#ifdef DEBUG_GC
-extern unordered_map<string, unordered_set<ScriptableClass*>> allScriptableObjects;
-#endif
-
-
 /* MARK:	-				Get/set callback types
  
  Different types of getter an setter callbacks, based on value types
@@ -644,8 +639,8 @@ public:
 //        this->jsr = JS_NewRuntime(1L * 1024 * 1024, JS_USE_HELPER_THREADS );
 //        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
 
-        this->jsr = JS_NewRuntime(16L * 1024 * 1024, JS_USE_HELPER_THREADS );
-        this->js = this->jsr ? JS_NewContext( this->jsr, 8192 ) : NULL;
+        this->jsr = JS_NewRuntime(64L * 1024 * 1024, JS_USE_HELPER_THREADS );
+        this->js = this->jsr ? JS_NewContext( this->jsr, 16384 ) : NULL;
 		if ( !this->js || !this->jsr ) {
 			printf( "Can't initialize Javascript runtime or context.\n" );
 			exit( 1 );
@@ -1393,10 +1388,13 @@ public:
 		instance->scriptClassName = classDef->jsc.name;
 		// add
 		instance->scriptObject = JS_NewObject( this->js, &classDef->jsc, classDef->proto, NULL );
+        if ( !instance->scriptObject ){
+            printf( "Out of memory - unable to create new JS Object\n" );
+            exit( 1 );
+        }
 		JS_SetPrivate( (JSObject*) instance->scriptObject, instance );
-#ifdef DEBUG_GC
-        allScriptableObjects[instance->scriptClassName].insert( instance );
-#endif
+        // track allocations
+        debugObjectsCreated++;
 		return true;
 	}
 	
@@ -1445,19 +1443,6 @@ public:
 		JS_GC( this->jsr );
 	}
 	
-    /// prints object trace 
-	void DumpObject( void* obj ) {
-	
-		size_t bufSize = 1024 * 16;
-		void* buf = malloc( bufSize );
-		FILE* f = fmemopen( buf, bufSize, "w+" );
-		if ( f ) {
-			JS_DumpHeap( this->jsr, f, NULL, JSTRACE_OBJECT, obj, 128, NULL );
-			fclose( f );
-			printf( "%s\n", buf );
-		}
-		free( buf );
-	}
 	
 /* MARK:	-				Script execution & JSON
  -------------------------------------------------------------------- */

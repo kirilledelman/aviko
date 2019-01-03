@@ -1270,7 +1270,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			this->surface->anchor_x = this->surface->anchor_y = 0; // reset
 			this->surfaceRect.w = this->surface->base_w;
 			this->surfaceRect.h = this->surface->base_h;
-			GPU_ActivateShaderProgram( 0, NULL );
+            GPU_DeactivateShaderProgram();//GPU_ActivateShaderProgram( 0, NULL );
 			GPU_SetShapeBlendFunction( GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
 			GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_ADD);
 			

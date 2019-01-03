@@ -57,7 +57,7 @@ struct Event {
 	
 	/// parameters passed to script event handlers for this event
 	ScriptArguments scriptParams;
-	
+	    
 	static vector<Event*> eventStack;
 	
 	// constructor
@@ -280,10 +280,6 @@ public:
 		if ( strcmp( inst->scriptClassName, ScriptClassDesc<CLASS>::name().c_str() ) == 0 ) return static_cast<CLASS*>( inst );
 		return NULL;
 	}
-	
-#ifdef DEBUG_GC
-    string debugDescription; // used when destructor prints out deallocated objects
-#endif
     
 // init
 	

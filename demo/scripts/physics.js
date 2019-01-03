@@ -645,7 +645,6 @@ new (function (){
 								sensor: true,
 				            } ) ],
 						touch: function ( o, sh ) {
-							// log( "touch", o.body.gameObject );
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = true;
 								o.body.gameObject.render.color = 0x990000;
@@ -653,7 +652,6 @@ new (function (){
 							}
 						},
 						untouch: function ( o, sh ) {
-							// log( "untouch", o.body.gameObject );
 							if ( sh.sensor && o.body.gameObject.name == 'X' ) {
 								o.body.gameObject.render.bold = false;
 								o.body.gameObject.render.color = 0x003399;
@@ -741,7 +739,7 @@ new (function (){
                     x: 10, y: 135,
                 }));
 
-                $0 = c.body;
+                // $0 = c.body;
 
             }
         }
@@ -757,7 +755,7 @@ new (function (){
 	
 	// select first example after scene initializes
 	scene.async( function() {
-		selector.selectedIndex = 4;
+		selector.selectedIndex = 0;// 4;
 		selector.fire( 'change' );
 		selector.focus();
 	}, 0.5 );

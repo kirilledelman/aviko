@@ -16,6 +16,10 @@ ScriptableClass::DebouncerMap* ScriptableClass::scheduledDebouncers = NULL;
 // from Tween.hpp
 unordered_set<Tween*> *Tween::activeTweens = NULL;
 
+// from common.h
+size_t debugObjectsCreated = 0;
+size_t debugObjectsDestroyed = 0;
+unordered_map<string,size_t> debugEventsDispatched;
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -31,9 +35,47 @@ Application::Application() {
 	// printf( "Current working directory is %s\n", cwd );
     free( cwd );
 	
-	// init SDL_gpu
-	this->InitRender();
-	
+    // get current mode
+    if( SDL_Init(SDL_INIT_VIDEO) < 0) {
+        printf( "Couldn't init SDL video: %s\n", SDL_GetError() );
+        exit( 1 );
+    }
+    
+    SDL_DisplayMode current;
+    SDL_GetCurrentDisplayMode( 0, &current );
+    
+    // init GPU
+    this->screen = GPU_Init( this->screenWidth, this->screenHeight, GPU_DEFAULT_INIT_FLAGS );
+    if ( this->screen == NULL ) {
+        GPU_ErrorObject err = GPU_PopErrorCode();
+        printf( "Failed to initialize SDL_gpu library: %s.\n", err.details );
+        exit( 1 );
+    }
+    
+    this->windowWidth = this->screen->base_w;
+    this->windowHeight = this->screen->base_h;
+    GPU_UnsetVirtualResolution( this->screen );
+    GPU_UnsetClip( this->screen );
+    GPU_UnsetViewport( this->screen );
+    GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
+    if ( !GPU_AddDepthBuffer( this->screen ) ){
+        printf( "Warning: depth buffer is not supported.\n" );
+    }
+    GPU_SetDepthTest( this->screen, true );
+    GPU_SetDepthWrite( this->screen, true );
+    GPU_SetDepthFunction( this->screen, GPU_ComparisonEnum::GPU_LEQUAL );
+    this->screen->camera.z_near = -1024;
+    this->screen->camera.z_far = 1024;
+    this->screen->camera.use_centered_origin = false;
+    GPU_EnableCamera( this->screen, false );
+    
+    SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
+    
+#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
+     // make windowed on desktop
+     GPU_SetFullscreen( false, false );
+#endif
+    
 	// init joysticks
 	SDL_Init( SDL_INIT_JOYSTICK );
 	SDL_JoystickEventState( SDL_ENABLE );
@@ -62,26 +104,27 @@ Application::Application() {
 		printf("Couldn't init TTF library: %s\n", TTF_GetError());
 		exit( 1 );
 	}
-	
+    
 	// init containers
 	ScriptableClass::scheduledAsyncs = new AsyncMap();
 	ScriptableClass::scheduledDebouncers = new DebouncerMap();
 	Tween::activeTweens = new unordered_set<Tween*>();
 	
-	// register classes
+    // register classes
 	this->InitClass();
-	
+    
 	// overlay
 	this->overlay = new GameObject( NULL );
 	this->overlay->SetZ( 1000 );
 	this->overlay->orphan = false;
-		
+    
 	// begin terminal capture
 	struct termios newt;
 	tcgetattr(STDIN_FILENO, &_savedTerminal);
 	memcpy( &newt, &_savedTerminal, sizeof(struct termios) );
 	newt.c_lflag &= ~(ICANON | ECHO);
 	tcsetattr( STDIN_FILENO, TCSANOW, &newt );
+    
 }
 
 Application::Application( ScriptArguments* ) {
@@ -116,54 +159,6 @@ Application::~Application() {
 /* MARK:	-				Rendering init / update
  -------------------------------------------------------------------- */
 
-
-void Application::InitRender() {
-	
-	// init SDL_gpu library
-	
-	// get current mode
-	if( SDL_Init(SDL_INIT_VIDEO) < 0) {
-		printf( "Couldn't init SDL video: %s\n", SDL_GetError() );
-		exit( 1 );
-	}
-	SDL_DisplayMode current;
-	SDL_GetCurrentDisplayMode( 0, &current );
-	// this->screenWidth = current.w;
-	//this->screenHeight = current.h;
-	
-	// init GPU
-	this->screen = GPU_Init( this->screenWidth, this->screenHeight, GPU_DEFAULT_INIT_FLAGS );
-	if ( this->screen == NULL ) {
-		GPU_ErrorObject err = GPU_PopErrorCode();
-		printf( "Failed to initialize SDL_gpu library: %s.\n", err.details );
-		exit( 1 );
-	}
-	
-	this->windowWidth = this->screen->base_w;
-	this->windowHeight = this->screen->base_h;
-	GPU_UnsetVirtualResolution( this->screen );
-    GPU_UnsetClip( this->screen );
-    GPU_UnsetViewport( this->screen );
-	GPU_SetShapeBlendMode( GPU_BlendPresetEnum::GPU_BLEND_NORMAL );
-	if ( !GPU_AddDepthBuffer( this->screen ) ){
-		printf( "Warning: depth buffer is not supported.\n" );
-	}
-	GPU_SetDepthTest( this->screen, true );
-	GPU_SetDepthWrite( this->screen, true );
-	GPU_SetDepthFunction( this->screen, GPU_ComparisonEnum::GPU_LEQUAL );
-	this->screen->camera.z_near = -1024;
-	this->screen->camera.z_far = 1024;
-    this->screen->camera.use_centered_origin = false;
-    GPU_EnableCamera( this->screen, false );
-	
-	SDL_SetWindowResizable( SDL_GL_GetCurrentWindow(), (SDL_bool) windowResizable );
-	
-#if !defined(RASPBERRY_PI) && !defined(ORANGE_PI)
-	// make windowed on desktop
-	GPU_SetFullscreen( false, false );
-#endif
-	
-}
 
 /// window resizing callback
 void Application::WindowResized( Sint32 newWidth, Sint32 newHeight ) {
@@ -464,7 +459,7 @@ void Application::InitClass() {
 	 static_cast<ScriptStringCallback>([](void* self, string v){ SDL_SetClipboardText( v.c_str() ); return v; }),
 	 PROP_NOSTORE | PROP_ENUMERABLE );
 	
-	// functions
+    // functions
 	
 	script.DefineFunction<Application>
 	( "pushScene",
@@ -604,8 +599,8 @@ void Application::InitClass() {
 	// add to global namespace
 	script.NewScriptObject<Application>( this );
 	script.AddGlobalNamedObject( "App", this->scriptObject );
-	
-	// extensions
+
+    // extensions
 	
 	script.DefineClassFunction
 	( "String", "positionToIndex", false,
@@ -1215,17 +1210,6 @@ void Application::InitClass() {
 		return true;
 	}));
 	
-	script.DefineGlobalFunction
-	( "traceObject",
-	 static_cast<ScriptFunctionCallback>([](void*, ScriptArguments& sa ){
-		void* obj = NULL;
-		sa.ReadArguments( 0, TypeObject, &obj );
-        script.GC();
-		script.DumpObject( obj );
-		
-		return true;
-	}));
-	
 	// intern all strings
 	const char* interns[] = {
 		EVENT_SCENECHANGED, EVENT_UPDATE, EVENT_ADDED,
@@ -1248,10 +1232,10 @@ void Application::InitClass() {
 	// call registration functions for all classes
 	input.InitClass(); // single instance
 	Controller::InitClass();
-	TypedVector::InitClass();
-	Color::InitClass();
-	Sound::InitClass();
-	Tween::InitClass();
+    TypedVector::InitClass();
+    Color::InitClass();
+    Sound::InitClass();
+    Tween::InitClass();
     Behavior::InitClass();
 	GameObject::InitClass();
 	Scene::InitClass();
@@ -1269,7 +1253,7 @@ void Application::InitClass() {
     ParticleGroupBehavior::InitClass();
 	UIBehavior::InitClass();
 	SampleBehavior::InitClass();
-	
+    
 }
 
 void Application::GarbageCollect() {
@@ -1369,11 +1353,12 @@ void Application::GameLoop() {
 	
 	// setup
 	this->run = true;
-	Uint32 _time = 0, _timeFps = 0;
+	Uint32 _time = 0, _timeFps = 0, _t = 0, _rt = 0;
 	Uint32 _quitPressedTime = 0;
 	Event event;
 	SDL_Event e;
 	Scene* scene = NULL;
+    Uint32 benchmark = 0;
 
 	// stdin capture
 	char pollChar = 0;
@@ -1417,7 +1402,6 @@ void Application::GameLoop() {
 			this->fps = 100.0f / (( _time - _timeFps ) * 0.001f );
 			_timeFps = _time;
 			
-			// printf( "%lu %lu %lu\n", scheduledAsyncs->size(), scheduledAsyncs->max_size(), scheduledAsyncs->max_bucket_count() );
 		}
 		
 		// advance tweens
@@ -1437,7 +1421,7 @@ void Application::GameLoop() {
 			event.skipObject = NULL;
 			event.stopped = false; // reused
 		}
-		
+        
 		// update joysticks state
 		SDL_JoystickUpdate();
 		
@@ -1445,7 +1429,7 @@ void Application::GameLoop() {
 		while( SDL_PollEvent( &e ) != 0 ){
 			
 			// let input handle events
-			input.HandleEvent( e );
+			if ( !benchmark ) input.HandleEvent( e );
 			
 			// exit
 			if ( e.type == SDL_QUIT ) {
@@ -1458,7 +1442,13 @@ void Application::GameLoop() {
 				} else if ( e.key.repeat && ( _time - _quitPressedTime ) > 2000 ) {
 					run = false; break;
 				}
-			}
+            
+            // benchmark
+            } else if ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_F1 ) {
+                benchmark = (benchmark+1) % 10;
+                debugEventsDispatched.clear();
+            }
+            
 
 			// window events
 			else if ( e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ) {
@@ -1469,34 +1459,114 @@ void Application::GameLoop() {
 		
 		// capture console input (RPi workaround)
 		if ( poll( &pollStruct, 1, 0 ) == 1 ) read( STDIN_FILENO, &pollChar, 1 );
-		
+        
 		// perform asyncs & debounce calls
 		ScriptableClass::ProcessScheduledCalls( unscaledDeltaTime );
 		
 		// late events (scheduled by `fireLate` and `dispatchLate` / Application::AddLateEvent )
 		RunLateEvents();
-		
+        
+        _rt = SDL_GetTicks();
+
 		// clear with scene's bg color
 		GPU_ClearColor( this->screen, scene->backgroundColor->rgba );
         GPU_ResetProjection();
         
-		// render scene graph
-		if ( scene ) {
-			// render to backscreen
-			event.name = EVENT_RENDER;
-            event.behaviorParam = this->backScreen->target;
-			event.behaviorParam2 = &this->blendTarget;
-			scene->Render( event );
-			event.behaviorParam = NULL;
-			event.skipObject = NULL;
-			event.stopped = false; // reused
-		}
+        if ( benchmark ) {
+            
+            static ImageResource* clown = app.textureManager.Get( "clown" );
+            GPU_ClearColor( this->backScreen->target, scene->backgroundColor->rgba );
+            GPU_MatrixMode( GPU_PROJECTION );
+            GPU_PushMatrix();
+            float *p = GPU_GetProjection();
+            GPU_MatrixIdentity( p );
+            GPU_MatrixOrtho( p, 0, this->backScreen->target->w, 0, this->backScreen->target->h, -1024, 1024 );
+            
+            // 1000 blits
+            if ( benchmark == 2 ){
+                _t = SDL_GetTicks();
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
+                }
+                debugEventsDispatched[ "1000 Blits" ] = SDL_GetTicks() - _t;
+            // 1000 circles
+            } else if ( benchmark == 3 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 255, 0, 255 };
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_CircleFilled(this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10, 32, clr );
+                    clr.b = (clr.b + 3) % 255;
+                }
+                debugEventsDispatched[ "1000 Circles" ] = SDL_GetTicks() - _t;
+            // 1000 rectangles
+            } else if ( benchmark == 4 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 0, 255, 255 };
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_RectangleFilled(this->backScreen->target,
+                                        20 + 4 * (i % 100), 100 + i / 10,
+                                        52 + 4 * (i % 100), 132 + i / 10, clr);
+                    clr.r = (clr.r + 3) % 255;
+                }
+                debugEventsDispatched[ "1000 Rects" ] = SDL_GetTicks() - _t;
+            // 1000 mixed
+            } else if ( benchmark == 5 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 0, 255, 255 };
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_RectangleFilled(this->backScreen->target,
+                                        20 + 4 * (i % 100), 100 + i / 10,
+                                        52 + 4 * (i % 100), 132 + i / 10, clr);
+                    
+                    clr.r = (clr.r + 3) % 255;
+                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
+                }
+                debugEventsDispatched[ "1000 Rects+Blits" ] = SDL_GetTicks() - _t;
+            } else if ( benchmark == 6 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 0, 255, 255 };
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_RectangleFilled(this->backScreen->target,
+                                        20 + 4 * (i % 100), 100 + i / 10,
+                                        52 + 4 * (i % 100), 132 + i / 10, clr);
+                    clr.r = (clr.r + 3) % 255;
+                }
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
+                }
+                debugEventsDispatched[ "1000 Rects,Blits" ] = SDL_GetTicks() - _t;
+            }
+            
+            GPU_MatrixMode( GPU_PROJECTION );
+            GPU_PopMatrix();
+            
+        } else {
+            
+            // render scene graph
+            if ( scene ) {
+                // render to backscreen
+                event.name = EVENT_RENDER;
+                event.behaviorParam = this->backScreen->target;
+                event.behaviorParam2 = &this->blendTarget;
+                scene->Render( event );
+                event.behaviorParam = NULL;
+                event.skipObject = NULL;
+                event.stopped = false; // reused
+            }
+        }
         
 		// copy to main screen and flip
-		GPU_ActivateShaderProgram(0, NULL);
+        GPU_DeactivateShaderProgram();//GPU_ActivateShaderProgram(0, NULL);
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );
-		GPU_Flip( this->screen );
-		
+
+        debugEventsDispatched[ "RENDER" ] = SDL_GetTicks() - _rt;
+        if ( this->debugDraw ) {
+            _t = SDL_GetTicks();
+            this->DebugDraw();
+            debugEventsDispatched[ "DebugDraw" ] = SDL_GetTicks() - _t;
+        }
+        GPU_Flip( this->screen );
+
 	}
 	
 	sceneStack.clear();
@@ -1508,6 +1578,43 @@ void Application::GameLoop() {
 	// exit requested
 }
 
+/* MARK:    -                Debug draw
+ -------------------------------------------------------------------- */
+
+void Application::DebugDraw(){
+    // debug info
+    static char debugText[2048];
+    static string evts;
+    evts = "";
+    auto it = debugEventsDispatched.begin(), end = debugEventsDispatched.end();
+    int wrap = 0;
+    while (it != end) {
+        evts.append( it->first );
+        evts.append( ":" );
+        sprintf( debugText, "%lu ", it->second );
+        evts.append( debugText );
+        if ( !(++wrap % 4) ) evts.append( "\n" );
+        it++;
+    }
+    sprintf( debugText,
+            "FPS: %.1f\nScriptObjects (created - destroyed): %lu - %lu = %lu\n%s\n",
+            this->fps,
+            debugObjectsCreated, debugObjectsDestroyed, debugObjectsCreated - debugObjectsDestroyed,
+            evts.c_str() );
+    
+    // render
+    static FontResource* font = fontManager.Get( "Roboto,12" );
+    static SDL_Color clr = { 255, 0, 0, 255 };
+    SDL_Surface* surf = TTF_RenderText_Blended_Wrapped( font->font, debugText, clr, 500 );
+    GPU_Image* surfImg = GPU_CopyImageFromSurface( surf );
+    SDL_FreeSurface( surf );
+    surfImg->anchor_x = surfImg->anchor_y = 0;
+    GPU_Rect rect = { 0,0,0,0 };
+    rect.w = surfImg->base_w;
+    rect.h = surfImg->base_h;
+    GPU_Blit(surfImg, &rect, this->screen, 0, 0 );
+    GPU_FreeImage( surfImg );
+}
 
 /* MARK:	-				Late events
  -------------------------------------------------------------------- */

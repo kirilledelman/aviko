@@ -48,6 +48,7 @@ public:
     bool LoadFromMemory(void *p, int size);
     
 	// init, destroy
+    ImageResource(){};
 	ImageResource( const char* originalKey, string& path, string& ext );
 	~ImageResource();
 	

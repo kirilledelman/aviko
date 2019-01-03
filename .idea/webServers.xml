@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="dccc2e9a-a87b-4dff-9efe-5fee4310dc67" name="192.168.0.28" url="http://192.168.0.28">
+        <fileTransfer host="192.168.0.28" port="22" rootFolder="/home/pi/aviko" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

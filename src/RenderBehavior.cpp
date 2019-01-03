@@ -189,7 +189,7 @@ void RenderBehavior::_UpdateBlendTarget( GPU_Target *targ, GPU_Target **blendTar
 			GPU_PushMatrix();
 			GPU_MatrixIdentity( GPU_GetCurrentMatrix() );
 			// draw target
-            GPU_ActivateShaderProgram( 0, NULL );
+            GPU_DeactivateShaderProgram(); // GPU_ActivateShaderProgram( 0, NULL );
 			GPU_Rect srcRect = { 0, 0, (float) targ->base_w, (float) targ->base_h };
 			GPU_Blit( targ->image, &srcRect, *blendTarg, 0, 0 );
 			// pop

@@ -65,7 +65,7 @@ void RenderParticlesBehavior::InitClass() {
     script.RegisterClass<RenderParticlesBehavior>( "RenderBehavior" );
 
     // make base texture
-    RenderParticlesBehavior::particleTexture = app.textureManager.Get( "#particle" );
+    RenderParticlesBehavior::particleTexture = new ImageResource();
     RenderParticlesBehavior::particleTexture->LoadFromMemory( ParticleTexture, ParticleTexture_size );
     RenderParticlesBehavior::particleTexture->image->anchor_x = RenderParticlesBehavior::particleTexture->image->anchor_y = 0.5;
     GPU_SetBlendMode( RenderParticlesBehavior::particleTexture->image, GPU_BLEND_NORMAL );

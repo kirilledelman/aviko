@@ -45,15 +45,6 @@ GameObject::~GameObject() {
 	
 	// release resource
 	if ( this->scriptResource ) this->scriptResource->AdjustUseCount( -1 );
-
-#ifdef DEBUG_GC
-    // description
-    static char buf[128];
-    if ( this->name.length() ) {
-        sprintf( buf, "\"%s\"", this->name.substr( 0, 64 ).c_str() );
-        this->debugDescription = buf;
-    }
-#endif
     
 }
 

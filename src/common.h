@@ -16,8 +16,6 @@
 #include <functional>
 using namespace std;
 
-#define DEBUG_GC
-
 // SDL
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_surface.h>
@@ -82,6 +80,11 @@ extern unsigned char RobotoBold[];
 extern int RobotoBold_size;
 extern unsigned char ParticleTexture[];
 extern int ParticleTexture_size;
+
+// debug
+extern size_t debugObjectsCreated;
+extern size_t debugObjectsDestroyed;
+extern unordered_map<string,size_t> debugEventsDispatched;
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

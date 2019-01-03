@@ -17,21 +17,7 @@ Behavior::Behavior( ScriptArguments* args ) { script.ReportError( "Behavior can'
 
 Behavior::Behavior() {}
 
-Behavior::~Behavior() {
-    
-#ifdef DEBUG_GC
-    // description
-    static char buf[128];
-    if ( this->gameObject ) {
-        if ( this->gameObject->name.length() )
-            sprintf( buf, "for %p \"%s\"", this->gameObject, this->gameObject->name.substr( 0, 64 ).c_str() );
-        else
-            sprintf( buf, "for %p", this->gameObject );
-        this->debugDescription = buf;
-    }
-#endif
-    
-}
+Behavior::~Behavior() {}
 
 
 /* MARK:	-				Javascript

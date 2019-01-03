@@ -277,6 +277,28 @@ void RigidBodyShape::TraceProtectedObjects( vector<void**> &protectedObjects ) {
 	
 }
 
+/* MARK:    -                Stored contact
+ -------------------------------------------------------------------- */
+
+void RigidBodyShape::AddContactWith( RigidBodyShape* other, b2Vec2 point, b2Vec2 normal ){
+    StoredFixtureContact& r = this->storedContacts[ other ];
+    r.point = point;
+    r.normal = normal;
+}
+
+void RigidBodyShape::RemoveContactWith( RigidBodyShape* other ){
+    this->storedContacts.erase( other );
+}
+
+bool RigidBodyShape::CheckContactWith(RigidBodyShape *other, b2Vec2 point, b2Vec2 normal){
+    unordered_map<RigidBodyShape*, StoredFixtureContact>::iterator it = this->storedContacts.find( other );
+    if ( it == this->storedContacts.end() ) return false;
+    // update pos/normal
+    it->second.normal = normal;
+    it->second.point = point;
+    return true;
+}
+
 
 /* MARK:	-				Shape splitting
 
