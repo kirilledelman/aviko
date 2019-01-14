@@ -65,6 +65,15 @@ public:
     // callbacks
     void ParticleDestroyed( int32 index );
     
+    // contacts
+    unordered_map<RigidBodyShape*,unordered_map<int32, float>> storedContacts;
+    void AddContactWith( RigidBodyShape*, int32 index );
+    bool CheckContactWith( RigidBodyShape* other, int32 index );
+    static void Update( ParticleGroupBehavior* beh, void* param, Event* event );
+    
+    /// limits how many touch events each particle will generate
+    int maxParticleTouchEventsPerSec = 5;
+    
     // methods
     
     /// return true if body is live, and GameObject's transform should use this body's tranform instead of local+parent

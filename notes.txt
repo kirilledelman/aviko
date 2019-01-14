@@ -1,3 +1,6 @@
+
+Test - does rendering shape then blit cause flush?
+
 Terrible performance on RPi
 One shader for all - shapes and textures, so no shader switching takes place
 

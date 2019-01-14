@@ -184,7 +184,7 @@ public:
     void GameLoop();
     
     /// draws debug info each frame
-    void DebugDraw();
+    void DebugDraw( bool print );
     
 };
 

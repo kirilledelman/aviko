@@ -155,7 +155,7 @@ UI.style = UI.style || {
 	button: {
 		pad: 12,
 		focusRect: true,
-		cornerRadius: 3,
+		cornerRadius: 0,
 
 		// apply to button's label (ui/text.js)
 		label: {
@@ -248,7 +248,7 @@ UI.style = UI.style || {
 			},
 			pad: 4,
 			outlineColor: 0x0066a5,
-			cornerRadius: 2,
+			cornerRadius: 0,
 			states: {
 				off: {
 					background: 0xf6f6f6,
@@ -405,7 +405,7 @@ UI.style = UI.style || {
 	window: {
 
 		background: 0xE0E0E0,
-		cornerRadius: 4,
+		cornerRadius: 0,
 		pad: [ 30, 6, 6, 6 ],
 
 		// ui/panel.js instance
@@ -413,7 +413,7 @@ UI.style = UI.style || {
 			pad: 2,
 			background: 0x004b7a,
 			marginBottom: 4,
-			cornerRadius: 4,
+			cornerRadius: 0,
 			minHeight: 30,
 		},
 
@@ -448,7 +448,7 @@ UI.style = UI.style || {
 			background: 0xFFFFFF,
 			outlineColor: 0x999999,
 			lineThickness: 2,
-			cornerRadius: 2,
+			cornerRadius: 0,
 		},
 
 		label: {
@@ -565,7 +565,7 @@ UI.style = UI.style || {
 				label: { bold: true, size: 14, color: 0x0 },
 				pad: 4,
 				outlineColor: 0x0066a5,
-				cornerRadius: 2,
+				cornerRadius: 0,
 				states: {
 					off: {
 						background: 0xf6f6f6,
@@ -613,7 +613,7 @@ UI.style = UI.style || {
 				},
 				pad: 4,
 				outlineColor: 0x0066a5,
-				cornerRadius: 2,
+				cornerRadius: 0,
 				states: {
 					off: {
 						background: 0xf6f6f6,
@@ -673,7 +673,7 @@ UI.style = UI.style || {
 		opacity: 0.5,
 
 		// rounded corner, if background is color
-		cornerRadius: 4,
+		cornerRadius: 2,
 
 		// outline thickness if background is color
 		lineThickness: 2,

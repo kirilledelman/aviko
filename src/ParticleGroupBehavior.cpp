@@ -3,6 +3,7 @@
 #include "GameObject.hpp"
 #include "Scene.hpp"
 #include "ScriptHost.hpp"
+#include "Application.hpp"
 
 
 /* MARK:    -                Init / destroy
@@ -41,7 +42,11 @@ ParticleGroupBehavior::ParticleGroupBehavior( ScriptArguments* args ) : Particle
 }
 
 // init
-ParticleGroupBehavior::ParticleGroupBehavior() : BodyBehavior::BodyBehavior() {}
+ParticleGroupBehavior::ParticleGroupBehavior() : BodyBehavior::BodyBehavior() {
+
+    AddEventCallback( EVENT_UPDATE, (BehaviorEventCallback) &ParticleGroupBehavior::Update );
+
+}
 
 // destroy
 ParticleGroupBehavior::~ParticleGroupBehavior() {
@@ -175,6 +180,18 @@ void ParticleGroupBehavior::InitClass() {
             self->RemoveBody();
             self->AddBody( self->particleSystem->scene );
         }
+        return val;
+    }));
+    
+    //maxParticleTouchEventsPerSec
+    script.AddProperty<ParticleGroupBehavior>
+    ( "maxTouchEventsPerSec",
+     static_cast<ScriptIntCallback>([]( void* p, int val ) {
+        return ((ParticleGroupBehavior*)p)->maxParticleTouchEventsPerSec;
+    }),
+     static_cast<ScriptIntCallback>([]( void* p, int val ) {
+        ParticleGroupBehavior* self = (ParticleGroupBehavior*)p;
+        self->maxParticleTouchEventsPerSec = max( 0, val );
         return val;
     }));
     
@@ -780,6 +797,44 @@ void ParticleGroupBehavior::ParticleDestroyed( int32 index ) {
     this->CallEvent( event );
 }
 
+/* MARK:    -                Stored contacts
+ -------------------------------------------------------------------- */
+
+
+void ParticleGroupBehavior::AddContactWith( RigidBodyShape* other, int32 index ) {
+    unordered_map<int32, float>& cts = this->storedContacts[ other ];
+    cts[ index ] = app.unscaledTime + 1.0 / fmax( maxParticleTouchEventsPerSec, 1.0 ); // scheduled clear
+}
+
+bool ParticleGroupBehavior::CheckContactWith( RigidBodyShape* other, int32 index ){
+    unordered_map<RigidBodyShape*, unordered_map<int32, float>>::iterator oit = this->storedContacts.find( other );
+    if ( oit == this->storedContacts.end() ) return false;
+    unordered_map<int32, float>& cts = oit->second;
+    unordered_map<int32, float>::iterator it = cts.find( index );
+    if ( it != cts.end() ) return ( it->second >= app.unscaledTime );
+    return false;
+}
+
+/// update runs after phys simulation
+void ParticleGroupBehavior::Update( ParticleGroupBehavior* beh, void* param, Event* event ){
+    debugEventsDispatched[ "CD" ] = 0;
+    debugEventsDispatched[ "TC" ] = 0;
+    // delete all contacts with negative frames
+    unordered_map<RigidBodyShape*, unordered_map<int32, float>>::iterator oit = beh->storedContacts.begin();
+    while ( oit != beh->storedContacts.end() ) {
+        unordered_map<int32, float>& cts = oit->second;
+        unordered_map<int32, float>::iterator it = cts.begin();
+        while( it != cts.end() ) {
+            debugEventsDispatched[ "TC" ]++;
+            if ( it->second <= app.unscaledTime ){
+                it = cts.erase( it );
+                debugEventsDispatched[ "CD" ]++;
+            } else it++;
+        }
+        oit++;
+    }
+    debugEventsDispatched[ "PERSISTED" ] = debugEventsDispatched[ "TC" ] - debugEventsDispatched[ "CD" ];;
+}
 
 /* MARK:    -                Update
  -------------------------------------------------------------------- */

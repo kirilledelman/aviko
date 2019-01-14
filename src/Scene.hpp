@@ -64,7 +64,7 @@ public:
 	
     void BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact);
     
-    void EndContact(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 index);
+    // void EndContact(b2Fixture* fixture, b2ParticleSystem* particleSystem, int32 index);
     
     void BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact);
     

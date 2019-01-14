@@ -82,9 +82,9 @@ extern unsigned char ParticleTexture[];
 extern int ParticleTexture_size;
 
 // debug
-extern size_t debugObjectsCreated;
-extern size_t debugObjectsDestroyed;
-extern unordered_map<string,size_t> debugEventsDispatched;
+extern int debugObjectsCreated;
+extern int debugObjectsDestroyed;
+extern unordered_map<string,int> debugEventsDispatched;
 
 /// built-in event types
 #define EVENT_SCENECHANGED "sceneChanged"

@@ -700,7 +700,7 @@ new (function (){
             if ( this.active ) {
                 makeBox();
 
-                // rectangle
+                // box
                 var b = container.addChild( new GameObject({
                     name: "Box",
                     render: new RenderShape( { shape: Shape.Rectangle, centered: false, color: 0xf06620, x: 40, y: 20, lineThickness: 2 } ),
@@ -713,7 +713,7 @@ new (function (){
                         } ),
 						touch: function ( other, box, x, y, nx, ny, i ) {
                         	if ( other.constructor == Particles ) {
-                        		other.updateParticle( i, { color: 'FF0000FF' } );
+                        		other.updateParticle( i, { color: other.color } );
 							}
 						}
                     } ),
@@ -721,22 +721,49 @@ new (function (){
                 }));
                 b.ui.__proto__ = draggableObjectUIProto;
 
+                // soap
+                var s = container.addChild( new GameObject({
+                    name: "Soap",
+                    render: new RenderShape( { shape: Shape.Circle, centered: true, color: 'D0D030', radius: 15, lineThickness: 2 } ),
+                    body: new Body( {
+                        shape: new BodyShape( {
+                            type: Shape.Circle,
+                            radius: 15,
+                            density: 40,
+                        } ),
+                        touch: function ( other, self, x, y, nx, ny, i ) {
+                            if ( other.constructor == Particles ) {
+                                other.updateParticle( i, { color: 'D0D030', lifetime: 0.5 } );
+                                if ( self.radius > 2 ) {
+                                	self.radius -= 0.05;
+                                	self.gameObject.render.radius = self.radius;
+								} else {
+                                	self.gameObject.parent = null;
+                                	if ( self.gameObject.ui.focused ) b.ui.focus();
+								}
+                            }
+                        }
+                    } ),
+                    x: 40, y: 15, ui: new UI( { focusable: true } ),
+                }));
+                s.ui.__proto__ = draggableObjectUIProto;
+
                 // particles
                 c = container.addChild( new GameObject({
                     name: "Particles",
 					opacity: 0.8,
-                    render: new RenderParticles(),
+                    render: new RenderParticles( { fadeTime: 0.5 } ),
                     body: new Particles( {
                         shape: new BodyShape( {
                             type: Shape.Rectangle,
-                            x: 280, y: 50
+                            x: 270, y: 50
                         } ),
 						color: 0x3366D0,
 						rigid: false,
 						solid: false,
-						flags: ParticleFlags.ColorMixing | ParticleFlags.Tensile | ParticleFlags.StaticPressure | ParticleFlags.CollisionEvent,
+						flags: ParticleFlags.CollisionEvent | ParticleFlags.ColorMixing | ParticleFlags.Tensile | ParticleFlags.StaticPressure,
                     } ),
-                    x: 10, y: 135,
+                    x: 15, y: 135,
                 }));
 
                 // $0 = c.body;

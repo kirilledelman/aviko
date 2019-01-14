@@ -1270,7 +1270,6 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 			this->surface->anchor_x = this->surface->anchor_y = 0; // reset
 			this->surfaceRect.w = this->surface->base_w;
 			this->surfaceRect.h = this->surface->base_h;
-            GPU_DeactivateShaderProgram();//GPU_ActivateShaderProgram( 0, NULL );
 			GPU_SetShapeBlendFunction( GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE_MINUS_SRC_ALPHA, GPU_FUNC_SRC_ALPHA, GPU_FUNC_ONE );
 			GPU_SetShapeBlendEquation( GPU_EQ_ADD, GPU_EQ_ADD);
 			
@@ -1339,6 +1338,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					}
 					
 					// GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL ); // why?
+                    RenderBehavior::SelectBasicShader( NULL );
 					GPU_RectangleFilled2( this->surface->target, selRect, this->selectionColor->rgba );
 					character->color = this->selectionTextColor->rgba;
 				}
@@ -1367,6 +1367,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					caretRect.h = lineHeight;
 					caretRect.w = max( 1.0f, this->fontSize * 0.1f );
 					// GPU_SetBlendMode( this->surface, GPU_BLEND_NORMAL ); // pointless
+                    RenderBehavior::SelectBasicShader( NULL );
 					GPU_RectangleFilled2( this->surface->target, caretRect, character->color );
 				}
 				
@@ -1380,6 +1381,7 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
 					// GPU_SetBlendMode( this->surface, GPU_BLEND_MOD_ALPHA );
 					
 					// draw
+                    RenderBehavior::SelectBasicShader( character->glyphInfo->surface );
 					GPU_Blit( character->glyphInfo->surface, NULL, this->surface->target, rect.x, rect.y );
 				}
 				
