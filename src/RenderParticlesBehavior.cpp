@@ -324,7 +324,8 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     // push view matrix
     GPU_MatrixMode( GPU_MODELVIEW );
     GPU_PushMatrix();
-    GPU_LoadIdentity();
+    float* mv = GPU_GetModelView();
+    GPU_MatrixIdentity( mv );
     
     // if rendering to image / clipped
     if ( event->clippedBy ) {
@@ -376,7 +377,7 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
             float fade = lifeTime / behavior->fadeTime;
             sx *= fade; sy *= fade;
         }
-        
+                
         // apply transform
         GPU_PushMatrix();
         GPU_Translate( positions[ i ].x * BOX2D_TO_WORLD_SCALE, positions[ i ].y * BOX2D_TO_WORLD_SCALE, 0 );
@@ -390,6 +391,13 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
         
         // pop transform
         GPU_PopMatrix();
+        
+        
+        /*GPU_BlitTransformX(RenderParticlesBehavior::particleTexture->image, NULL, RenderParticlesBehavior::surface->target,
+                           positions[ i ].x * BOX2D_TO_WORLD_SCALE, positions[ i ].y * BOX2D_TO_WORLD_SCALE,
+                           16, 16,
+                           RAD_TO_DEG * rotation,
+                           sx, sy );*/
         
     }
 
@@ -424,7 +432,7 @@ void RenderParticlesBehavior::Render( RenderParticlesBehavior* behavior, GPU_Tar
     GPU_MatrixOrtho( pp, 0, target->w, 0, target->h, -1024, 1024 );
     GPU_MatrixMode( GPU_MODELVIEW );
     GPU_PushMatrix();
-    GPU_LoadIdentity();
+    GPU_MatrixIdentity( GPU_GetModelView() );
 
     // set color
     RenderParticlesBehavior::surface->color = behavior->color->rgba;

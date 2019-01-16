@@ -45,6 +45,7 @@ Application::Application() {
     SDL_GetCurrentDisplayMode( 0, &current );
     
     // init GPU
+    GPU_SetRequiredFeatures( GPU_FEATURE_NON_POWER_OF_TWO | GPU_FEATURE_CORE_FRAMEBUFFER_OBJECTS | GPU_FEATURE_BASIC_SHADERS | GPU_FEATURE_ALL_BLEND_PRESETS | GPU_FEATURE_ALL_BASE );
     this->screen = GPU_Init( this->screenWidth, this->screenHeight, GPU_DEFAULT_INIT_FLAGS );
     if ( this->screen == NULL ) {
         GPU_ErrorObject err = GPU_PopErrorCode();
@@ -1358,7 +1359,7 @@ void Application::GameLoop() {
 	Event event;
 	SDL_Event e;
 	Scene* scene = NULL;
-    Uint32 benchmark = 0;
+    Uint32 benchmark = 1;
     this->debugDraw = true;
 
 	// stdin capture
@@ -1372,7 +1373,11 @@ void Application::GameLoop() {
 	ScriptResource* mainScript = scriptManager.Get( "main.js" );
 	if ( mainScript->error ) {
 		mainScript = scriptManager.Get( "/main.js" ); // in root dir
-		if ( mainScript->error ) return; // bail on compilation or not found error
+        if ( mainScript->error ) {
+            
+            // return; // bail on compilation or not found error
+            
+        }
 	}
 	script.Execute( mainScript );
 	
@@ -1447,7 +1452,7 @@ void Application::GameLoop() {
             // benchmark
             } else if ( e.type == SDL_KEYDOWN ) {
                 if ( e.key.keysym.sym == SDLK_F2 ) {
-                    benchmark = (benchmark+1) % 10;
+                    benchmark = (benchmark+1) % 8;
                     debugEventsDispatched.clear();
                 } else if ( e.key.keysym.sym == SDLK_F1 ){
                     this->debugDraw = !this->debugDraw;
@@ -1480,32 +1485,40 @@ void Application::GameLoop() {
         if ( benchmark ) {
             
             static ImageResource* clown = app.textureManager.Get( "clown" );
+            static ImageResource* poop = app.textureManager.Get( "poop" );
             GPU_ClearColor( this->backScreen->target, scene->backgroundColor->rgba );
+            
             GPU_MatrixMode( GPU_PROJECTION );
-            GPU_PushMatrix();
             float *p = GPU_GetProjection();
             GPU_MatrixIdentity( p );
-            GPU_MatrixOrtho( p, 0, this->backScreen->target->w, 0, this->backScreen->target->h, -1024, 1024 );
+            GPU_MatrixOrtho( p, 0, this->backScreen->target->w, this->backScreen->target->h, 0, -1024, 1024 );
             
-            // 1000 blits w default shader = 40ms
-            if ( benchmark == 2 ){
+            if ( benchmark == 1 ){
                 _t = SDL_GetTicks();
                 RenderBehavior::SelectBasicShader( clown->image );
                 for ( int i = 0; i < 1000; i++ ) {
-                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
+                    GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                 }
-                debugEventsDispatched[ "1000 Blits" ] = SDL_GetTicks() - _t;
-            // 1000 circles w default shader = 54ms
+                debugEventsDispatched[ "1000 blits (no select shader)" ] = SDL_GetTicks() - _t;
+
+            } else if ( benchmark == 2 ){
+                _t = SDL_GetTicks();
+                for ( int i = 0; i < 1000; i++ ) {
+                    // RenderBehavior::SelectBasicShader( clown->image );
+                    GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
+                    GPU_FlushBlitBuffer();
+                }
+                debugEventsDispatched[ "1000 blits (select shader)" ] = SDL_GetTicks() - _t;
+                
             } else if ( benchmark == 3 ){
                 _t = SDL_GetTicks();
-                RenderBehavior::SelectBasicShader( NULL );
-                static SDL_Color clr = { 0, 255, 0, 255 };
                 for ( int i = 0; i < 1000; i++ ) {
-                    GPU_CircleFilled(this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10, 32, clr );
-                    clr.b = (clr.b + 3) % 255;
+                    GPU_Image* img = i % 2 ? clown->image : poop->image;
+                    RenderBehavior::SelectBasicShader( img );
+                    GPU_Blit( img, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                 }
-                debugEventsDispatched[ "1000 Circles" ] = SDL_GetTicks() - _t;
-            // 1000 rectangles w default shader = 10ms
+                debugEventsDispatched[ "1000 Blits alt tex" ] = SDL_GetTicks() - _t;
+                
             } else if ( benchmark == 4 ){
                 _t = SDL_GetTicks();
                 static SDL_Color clr = { 0, 0, 255, 255 };
@@ -1516,44 +1529,51 @@ void Application::GameLoop() {
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
                     clr.r = (clr.r + 3) % 255;
                 }
-                debugEventsDispatched[ "1000 Rects" ] = SDL_GetTicks() - _t;
-            // 2000 mixed w default shader = 780ms
+                debugEventsDispatched[ "1000 Rects (no select shader)" ] = SDL_GetTicks() - _t;
+                
             } else if ( benchmark == 5 ){
                 _t = SDL_GetTicks();
-                static SDL_Color clr = { 0, 0, 255, 255 };
+                static SDL_Color clr = { 0, 128, 255, 255 };
                 for ( int i = 0; i < 1000; i++ ) {
                     RenderBehavior::SelectBasicShader( NULL );
                     GPU_RectangleFilled(this->backScreen->target,
                                         20 + 4 * (i % 100), 100 + i / 10,
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
-                    
                     clr.r = (clr.r + 3) % 255;
-                    RenderBehavior::SelectBasicShader( clown->image );
-                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
                 }
-                debugEventsDispatched[ "1000 Rects+Blits" ] = SDL_GetTicks() - _t;
+                debugEventsDispatched[ "1000 Rects (select shader)" ] = SDL_GetTicks() - _t;
                 
-            // 2000 sequential w default shader = 52ms
             } else if ( benchmark == 6 ){
                 _t = SDL_GetTicks();
-                static SDL_Color clr = { 0, 0, 255, 255 };
-                RenderBehavior::SelectBasicShader( NULL );
-                for ( int i = 0; i < 1000; i++ ) {
+                RenderBehavior::SelectBasicShader( clown->image );
+                static SDL_Color clr = { 128, 0, 255, 255 };
+                for ( int i = 0; i < 500; i++ ) {
+                    RenderBehavior::SelectBasicShader( clown->image );
+                    GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
+                    RenderBehavior::SelectBasicShader( NULL );
                     GPU_RectangleFilled(this->backScreen->target,
                                         20 + 4 * (i % 100), 100 + i / 10,
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
-                    clr.r = (clr.r + 3) % 255;
+                }
+                debugEventsDispatched[ "1000 Blits+rects" ] = SDL_GetTicks() - _t;
+                
+            } else if ( benchmark == 7 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 0, 255, 255 };
+                RenderBehavior::SelectBasicShader( NULL );
+                for ( int i = 0; i < 500; i++ ) {
+                    GPU_RectangleFilled(this->backScreen->target,
+                                        20 + 4 * (i % 100), 100 + i / 10,
+                                        52 + 4 * (i % 100), 132 + i / 10, clr);
                 }
                 RenderBehavior::SelectBasicShader( clown->image );
-                for ( int i = 0; i < 1000; i++ ) {
-                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
+                for ( int i = 0; i < 500; i++ ) {
+                    GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                 }
-                debugEventsDispatched[ "1000 Rects,Blits" ] = SDL_GetTicks() - _t;
+                debugEventsDispatched[ "1000 Blits,rects" ] = SDL_GetTicks() - _t;
+                
             }
-            
-            GPU_MatrixMode( GPU_PROJECTION );
-            GPU_PopMatrix();
-            
+                
         } else {
             
             // render scene graph

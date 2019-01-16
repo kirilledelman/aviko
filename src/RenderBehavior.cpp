@@ -337,10 +337,8 @@ void RenderBehavior::SelectUntexturedShader( GPU_Target* targ, GPU_Target** blen
 void RenderBehavior::SelectBasicShader(GPU_Image* image) {
     
     // activate
-    GPU_ActivateShaderProgram( mainShader.shader, &mainShader.shaderBlock );
+    // GPU_ActivateShaderProgram( mainShader.shader, &mainShader.shaderBlock );
 
-    // GPU_ActivateShaderProgram(0, NULL);
-    
     // set params
     float params[ 4 ];
     
@@ -593,7 +591,8 @@ void RenderBehavior::CompileMainShader() {
 	if ( glsles ) {
 		sprintf ( vertShader,
 		"#version %d\n\
-		precision mediump int;\nprecision mediump float;\n\
+		precision mediump int;\n\
+        precision mediump float;\n\
 		attribute vec2 gpu_Vertex;\n\
 		attribute vec2 gpu_TexCoord;\n\
 		attribute mediump vec4 gpu_Color;\n\
@@ -610,7 +609,8 @@ void RenderBehavior::CompileMainShader() {
 
 		sprintf( fragShader,
 		"#version %d\n\
-		precision mediump int;\nprecision mediump float;\n\
+		precision mediump int;\n\
+        precision mediump float;\n\
 		varying mediump vec4 color;\n\
 		varying vec2 texCoord;\n\
 		uniform vec4 addColor;\n\
@@ -658,7 +658,7 @@ void RenderBehavior::CompileMainShader() {
 
 	}
 		
-	// compile variant
+	// compile
 	if ( CompileShader( mainShader.shader, mainShader.shaderBlock, vertShader, fragShader ) ) {
         mainShader.scrollOffsetUniform = GPU_GetUniformLocation( mainShader.shader, "scrollOffset" );
         mainShader.backgroundUniform = GPU_GetUniformLocation( mainShader.shader, "background" );
@@ -676,7 +676,7 @@ void RenderBehavior::CompileMainShader() {
 		mainShader.outlineColorUniform = GPU_GetUniformLocation( mainShader.shader, "outlineColor" );
 		mainShader.outlineOffsetRadiusUniform = GPU_GetUniformLocation( mainShader.shader, "outlineOffsetRadius" );
         mainShader.alphaThreshUniform = GPU_GetUniformLocation( mainShader.shader, "alphaThresh" );
-        
+        printf( "Main shader compiled.\n" );
 	} else {
         printf ( "Shader error: %s\nFRAGMENT SHADER SRC:\n\n", GPU_GetShaderMessage() );
         // add line numbers

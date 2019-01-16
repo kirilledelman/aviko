@@ -1,9 +1,25 @@
 
-Test - does rendering shape then blit cause flush?
-
 Terrible performance on RPi
-One shader for all - shapes and textures, so no shader switching takes place
 
+many matrix manip funcs cause flush
+replace:
+GPU_LoadIdentity    GPU_MatrixIdentity
+GPU_LoadMatrix  GPU_MatrixCopy
+GPU_Ortho   GPU_MatrixOrtho
+GPU_Translate   GPU_MatrixTranslate
+GPU_Scale   GPU_MatrixScale
+GPU_Rotate  GPU_MatrixRotate
+GPU_MultMatrix  GPU_MultiplyAndAssign
+
+
+benchmark:
+1) 1000 blits (no select shader)
+2) 1000 blits (select shader)
+3) 1000 alternating texture blits
+4) 1000 rects (no select shader)
+5) 1000 rects (select shader)
+6) 1000 blits+rects
+7) 1000 blits,rects
 
 
 

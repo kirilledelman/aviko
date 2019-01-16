@@ -2329,12 +2329,11 @@ void GameObject::Render( Event& event ) {
 		event.clippedBy = this->parent->render;
 	}
 	
-	// push view matrix
-	GPU_MatrixMode( GPU_PROJECTION );
-	GPU_PushMatrix();
-	
 	// if ignoring camera, load identity
     if ( this->ignoreCamera ) {
+        // push view matrix
+        GPU_MatrixMode( GPU_PROJECTION );
+        GPU_PushMatrix();
         GPU_Target* rt = (GPU_Target*) event.behaviorParam;
         float *p = GPU_GetProjection();
         GPU_MatrixIdentity( p );
@@ -2344,6 +2343,7 @@ void GameObject::Render( Event& event ) {
 	// push parent transform matrix
 	GPU_MatrixMode( GPU_MODELVIEW );
 	GPU_PushMatrix();
+    float* mv = GPU_GetCurrentMatrix();
 	
 	// update combined opacity
 	this->combinedOpacity = ( this->parent ? this->parent->combinedOpacity : 1 ) * this->opacity;
@@ -2354,10 +2354,10 @@ void GameObject::Render( Event& event ) {
 		// if rendering to image / clipped
 		if ( event.clippedBy ) {
 			// container's world transform
-			GPU_MatrixCopy( GPU_GetCurrentMatrix(), event.clippedBy->gameObject->InverseWorld() );
+			GPU_MatrixCopy( mv, event.clippedBy->gameObject->InverseWorld() );
 			GPU_MultMatrix( this->_worldTransform );
 		} else {
-			GPU_MatrixCopy( GPU_GetCurrentMatrix(), this->_worldTransform );
+			GPU_MatrixCopy( mv, this->_worldTransform );
 		}
 		
 	} else {
@@ -2366,7 +2366,7 @@ void GameObject::Render( Event& event ) {
 		GPU_MultMatrix( this->Transform() );
 		
 		// update world matrix
-		GPU_MatrixCopy( this->_worldTransform, GPU_GetCurrentMatrix() );
+		GPU_MatrixCopy( this->_worldTransform, mv );
 		this->_worldTransformDirty = false;
 		this->_inverseWorldDirty = true;
 		
@@ -2410,8 +2410,10 @@ void GameObject::Render( Event& event ) {
 	// pop matrices
 	GPU_MatrixMode( GPU_MODELVIEW );
 	GPU_PopMatrix();
-	GPU_MatrixMode( GPU_PROJECTION );
-	GPU_PopMatrix();
+    if ( this->ignoreCamera ) {
+        GPU_MatrixMode( GPU_PROJECTION );
+        GPU_PopMatrix();
+    }
 	
 	// clear clippedby when leaving recursion
 	if ( clearClipped ) event.clippedBy = NULL;

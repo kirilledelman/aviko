@@ -1281,7 +1281,8 @@ void RenderTextBehavior::Repaint( bool justMeasure ) {
             GPU_MatrixOrtho( p, 0, this->surface->w, 0, this->surface->h, -1024, 1024 );
 			GPU_MatrixMode( GPU_MODELVIEW );
 			GPU_PushMatrix();
-			GPU_LoadIdentity();
+            p = GPU_GetModelView();
+			GPU_MatrixIdentity( p );
 		}
 		
 		// for each line
