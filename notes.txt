@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> parent of 5e63b91... wip optimisation
 Terrible performance on RPi
 
 many matrix manip funcs cause flush

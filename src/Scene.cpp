@@ -565,7 +565,7 @@ void Scene::Render( Event& event ) {
 	
 	// debug draw world
 	if ( app.debugDraw ) {
-        RenderBehavior::SelectBasicShader( NULL );
+		GPU_DeactivateShaderProgram(); // GPU_ActivateShaderProgram( 0, NULL );
 		this->world->DrawDebugData();
 	}
     
@@ -759,13 +759,11 @@ void Scene::BeginContact( b2Contact* contact ) {
     // check if already touching
     bool alreadyTouching = shapeA->CheckContactWith( shapeB, point, normal );
     if ( alreadyTouching ) {
-        // update stored contact for second shape
+        // update stored contact
         shapeB->CheckContactWith( shapeA, point, -normal );
     } else {
-        // add contacts
         shapeA->AddContactWith( shapeB, point, normal );
         shapeB->AddContactWith( shapeA, point, -normal );
-        // call event
         physicsEvents.emplace_back
         ( static_cast<PhysicsEventCallback>([ shapeA, shapeB, point, normal, separation ](){
             Event event( EVENT_TOUCH );
@@ -802,10 +800,9 @@ void Scene::EndContact( b2Contact* contact ) {
 	RigidBodyShape *shapeB = b ? (RigidBodyShape*) b->GetUserData() : NULL;
 	if ( !shapeA || !shapeA->body || !shapeA->body->gameObject ||
 		!shapeB || !shapeB->body || !shapeB->body->gameObject ) return;
-    // remove stored contacts
+    // remove stored contact
     shapeA->RemoveContactWith( shapeB );
     shapeB->RemoveContactWith( shapeA );
-    // call event
 	physicsEvents.emplace_back
 	( static_cast<PhysicsEventCallback>([ shapeA, shapeB ](){
 		Event event( EVENT_UNTOUCH );
@@ -821,7 +818,6 @@ void Scene::EndContact( b2Contact* contact ) {
 	}) );
 }
 
-/// contact between a particle and a body
 void Scene::BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact* particleBodyContact ){
     b2Fixture* fix = particleBodyContact->fixture;
     int32 index = particleBodyContact->index;
@@ -833,39 +829,59 @@ void Scene::BeginContact(b2ParticleSystem* particleSystem, b2ParticleBodyContact
         !group || !group->gameObject ) return;
     
     b2Vec2
-    point = particleSystem->GetPositionBuffer()[ index ] * BOX2D_TO_WORLD_SCALE,
+    point = particleSystem->GetPositionBuffer()[ index ],
     normal = particleBodyContact->normal;
     
-    // check if this contact already exists
-    if ( !group->CheckContactWith( shape, index ) ) {
-        // add if doesn't
-        group->AddContactWith( shape, index );
-        // call event
-        physicsEvents.emplace_back
-        ( static_cast<PhysicsEventCallback>([ shape, group, point, normal, index ](){
-            Event event( EVENT_TOUCH );
-            event.scriptParams.AddObjectArgument( group->scriptObject );
+    point *= BOX2D_TO_WORLD_SCALE;
+    physicsEvents.emplace_back
+    ( static_cast<PhysicsEventCallback>([ shape, group, point, normal, index ](){
+        Event event( EVENT_TOUCH );
+        event.scriptParams.AddObjectArgument( group->scriptObject );
+        event.scriptParams.AddObjectArgument( shape->scriptObject );
+        event.scriptParams.AddFloatArgument( point.x );
+        event.scriptParams.AddFloatArgument( point.y );
+        event.scriptParams.AddFloatArgument( normal.x );
+        event.scriptParams.AddFloatArgument( normal.y );
+        event.scriptParams.AddIntArgument( index );
+        shape->body->CallEvent( event );
+        if ( !event.stopped ) {
+            event.scriptParams.ResizeArguments( 0 );
             event.scriptParams.AddObjectArgument( shape->scriptObject );
+            event.scriptParams.AddObjectArgument( group->scriptObject );
             event.scriptParams.AddFloatArgument( point.x );
             event.scriptParams.AddFloatArgument( point.y );
             event.scriptParams.AddFloatArgument( normal.x );
             event.scriptParams.AddFloatArgument( normal.y );
             event.scriptParams.AddIntArgument( index );
-            shape->body->CallEvent( event );
-            if ( !event.stopped ) {
-                event.scriptParams.ResizeArguments( 0 );
-                event.scriptParams.AddObjectArgument( shape->scriptObject );
-                event.scriptParams.AddObjectArgument( group->scriptObject );
-                event.scriptParams.AddFloatArgument( point.x );
-                event.scriptParams.AddFloatArgument( point.y );
-                event.scriptParams.AddFloatArgument( normal.x );
-                event.scriptParams.AddFloatArgument( normal.y );
-                event.scriptParams.AddIntArgument( index );
-                group->CallEvent( event );
-            }
-        }) );
-    }
+            group->CallEvent( event );
+        }
+    }) );
     
+}
+
+void Scene::EndContact(b2Fixture* fix, b2ParticleSystem* particleSystem, int32 index ){
+    RigidBodyShape *shape = fix ? (RigidBodyShape*) fix->GetUserData() : NULL;
+    b2ParticleGroup* pg = particleSystem->GetGroupBuffer()[ index ];
+    ParticleGroupBehavior* group = (ParticleGroupBehavior*) pg->GetUserData();
+    
+    if ( !shape || !shape->body || !shape->body->gameObject ||
+        !group || !group->gameObject ) return;
+    
+    physicsEvents.emplace_back
+    ( static_cast<PhysicsEventCallback>([ shape, group, index ](){
+        Event event( EVENT_UNTOUCH );
+        event.scriptParams.AddObjectArgument( shape->scriptObject );
+        event.scriptParams.AddObjectArgument( group->scriptObject );
+        event.scriptParams.AddIntArgument( index );
+        shape->body->CallEvent( event );
+        if ( !event.stopped ) {
+            event.scriptParams.ResizeArguments( 0 );
+            event.scriptParams.AddObjectArgument( group->scriptObject );
+            event.scriptParams.AddObjectArgument( shape->scriptObject );
+            event.scriptParams.AddIntArgument( index );
+            group->CallEvent( event );
+        }
+    }) );
 }
 
 void Scene::BeginContact(b2ParticleSystem* particleSystem, b2ParticleContact* particleContact ) {

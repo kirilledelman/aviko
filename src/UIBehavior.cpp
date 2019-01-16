@@ -1814,7 +1814,7 @@ void UIBehavior::DebugDraw( GPU_Target* targ ) {
 		boundsMinMax = { 255, 128, 128, 64 },
 		padding = { 255, 255, 128, 64 },
 		margins = { 128, 128, 200, 64 };
-	// RenderBehavior::SelectBasicShader( NULL );
+	GPU_DeactivateShaderProgram();//GPU_ActivateShaderProgram( 0, NULL );
 	GPU_SetShapeBlendMode( GPU_BLEND_NORMAL );
 	GPU_SetLineThickness( 1 );
 	GPU_SetDepthTest( targ, false );

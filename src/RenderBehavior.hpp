@@ -109,35 +109,31 @@ public:
 		Uint32 shader;
 		GPU_ShaderBlock shaderBlock;
 		int addColorUniform;
-		int tileUniform; // 0,0 = no texture
+		int tileUniform;
 		int texInfoUniform; // x,y,w,h of sprite on texture, in px
-		int texSizeUniform; // w,h of whole texture in px, not incl texPad, or framing
+		int texSizeUniform; // w,h of whole texture in px, not incl texPad
 		int texPadUniform; // empty margin added around texture in px
-		int sliceUniform; // top, right, bottom, left slice margins in px, from respective sides, 0,0,0,0 - no slicing
+		int sliceUniform; // top, right, bottom, left slice margins in px, from respective sides
 		int sliceScaleUniform; // scale of actual sprite without pad in px
 		int scrollOffsetUniform; // scroll
-        int stippleUniform; // 0 = no stipple
+        int stippleUniform;
 		int stippleAlphaUniform;
-		int backgroundUniform; // used with blending, or with particles, supplying background image
-		int backgroundSizeUniform; // used with blending, or when rendering particles, supplying size of background tex
-		int blendUniform; // 0 for default blending
+		int backgroundUniform;
+		int backgroundSizeUniform;
+		int blendUniform;
 		int outlineColorUniform;
 		int outlineOffsetRadiusUniform;
-        int alphaThreshUniform; // < 0 - particle mode
-        
+        int alphaThreshUniform;
 	} ShaderVariant;
 
-	/// shader
-	static ShaderVariant mainShader;
+	/// shader permutations
+	static ShaderVariant shaders[ SHADER_MAXVAL ];
 
 	/// draws target to blendTarget
 	void _UpdateBlendTarget( GPU_Target* targ, GPU_Target** blendTarg );
 	
-    /// sets params for basic shader
-    static void SelectBasicShader( GPU_Image* textured );
-    
 	/// applies current shader + params
-	void SelectTexturedShader(
+	size_t SelectTexturedShader(
 					 float tw = 0, float th = 0,
 					 float u = 0, float v = 0, float w = 0, float h = 0,
 					 float st = 0, float sr = 0, float sb = 0, float sl = 0,
@@ -147,10 +143,13 @@ public:
 					 GPU_Image *image = NULL, GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
 	/// selects untextured shader
-	void SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
+	size_t SelectUntexturedShader( GPU_Target* targ = NULL, GPU_Target** blendTarg = NULL );
 	
-	/// compiles main shader
-	static void CompileMainShader();
+	/// resets shader to default
+    void ResetShader() { GPU_DeactivateShaderProgram(); /* GPU_ActivateShaderProgram( 0, NULL );*/ }
+	
+	/// compiles shader for feature mask
+	static ShaderVariant& CompileShaderWithFeatures( size_t featuresMask );
 
 	/// helper method for shader compilation
 	static bool CompileShader( Uint32& outShader, GPU_ShaderBlock& outShaderBlock, const char* vertShader, const char* fragShader );

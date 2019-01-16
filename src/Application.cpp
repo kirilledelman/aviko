@@ -17,9 +17,9 @@ ScriptableClass::DebouncerMap* ScriptableClass::scheduledDebouncers = NULL;
 unordered_set<Tween*> *Tween::activeTweens = NULL;
 
 // from common.h
-int debugObjectsCreated = 0;
-int debugObjectsDestroyed = 0;
-unordered_map<string,int> debugEventsDispatched;
+size_t debugObjectsCreated = 0;
+size_t debugObjectsDestroyed = 0;
+unordered_map<string,size_t> debugEventsDispatched;
 
 /* MARK:	-				Init / destroy
  -------------------------------------------------------------------- */
@@ -1359,8 +1359,12 @@ void Application::GameLoop() {
 	Event event;
 	SDL_Event e;
 	Scene* scene = NULL;
+<<<<<<< HEAD
     Uint32 benchmark = 1;
     this->debugDraw = true;
+=======
+    Uint32 benchmark = 0;
+>>>>>>> parent of 5e63b91... wip optimisation
 
 	// stdin capture
 	char pollChar = 0;
@@ -1386,7 +1390,7 @@ void Application::GameLoop() {
 	
 	// init backscreen
 	this->UpdateBackscreen();
-    
+	
 	// initial resized and layout events
 	this->SendResizedEvents();
 	
@@ -1450,6 +1454,7 @@ void Application::GameLoop() {
 				}
             
             // benchmark
+<<<<<<< HEAD
             } else if ( e.type == SDL_KEYDOWN ) {
                 if ( e.key.keysym.sym == SDLK_F2 ) {
                     benchmark = (benchmark+1) % 8;
@@ -1457,6 +1462,11 @@ void Application::GameLoop() {
                 } else if ( e.key.keysym.sym == SDLK_F1 ){
                     this->debugDraw = !this->debugDraw;
                 }
+=======
+            } else if ( e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_F1 ) {
+                benchmark = (benchmark+1) % 10;
+                debugEventsDispatched.clear();
+>>>>>>> parent of 5e63b91... wip optimisation
             }
             
 
@@ -1493,9 +1503,13 @@ void Application::GameLoop() {
             GPU_MatrixIdentity( p );
             GPU_MatrixOrtho( p, 0, this->backScreen->target->w, this->backScreen->target->h, 0, -1024, 1024 );
             
+<<<<<<< HEAD
             if ( benchmark == 1 ){
+=======
+            // 1000 blits
+            if ( benchmark == 2 ){
+>>>>>>> parent of 5e63b91... wip optimisation
                 _t = SDL_GetTicks();
-                RenderBehavior::SelectBasicShader( clown->image );
                 for ( int i = 0; i < 1000; i++ ) {
                     GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                 }
@@ -1508,41 +1522,63 @@ void Application::GameLoop() {
                     GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                     GPU_FlushBlitBuffer();
                 }
+<<<<<<< HEAD
                 debugEventsDispatched[ "1000 blits (select shader)" ] = SDL_GetTicks() - _t;
                 
             } else if ( benchmark == 3 ){
                 _t = SDL_GetTicks();
+=======
+                debugEventsDispatched[ "1000 Blits" ] = SDL_GetTicks() - _t;
+            // 1000 circles
+            } else if ( benchmark == 3 ){
+                _t = SDL_GetTicks();
+                static SDL_Color clr = { 0, 255, 0, 255 };
+>>>>>>> parent of 5e63b91... wip optimisation
                 for ( int i = 0; i < 1000; i++ ) {
                     GPU_Image* img = i % 2 ? clown->image : poop->image;
                     RenderBehavior::SelectBasicShader( img );
                     GPU_Blit( img, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
                 }
+<<<<<<< HEAD
                 debugEventsDispatched[ "1000 Blits alt tex" ] = SDL_GetTicks() - _t;
                 
+=======
+                debugEventsDispatched[ "1000 Circles" ] = SDL_GetTicks() - _t;
+            // 1000 rectangles
+>>>>>>> parent of 5e63b91... wip optimisation
             } else if ( benchmark == 4 ){
                 _t = SDL_GetTicks();
                 static SDL_Color clr = { 0, 0, 255, 255 };
-                RenderBehavior::SelectBasicShader( NULL );
                 for ( int i = 0; i < 1000; i++ ) {
                     GPU_RectangleFilled(this->backScreen->target,
                                         20 + 4 * (i % 100), 100 + i / 10,
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
                     clr.r = (clr.r + 3) % 255;
                 }
+<<<<<<< HEAD
                 debugEventsDispatched[ "1000 Rects (no select shader)" ] = SDL_GetTicks() - _t;
                 
+=======
+                debugEventsDispatched[ "1000 Rects" ] = SDL_GetTicks() - _t;
+            // 1000 mixed
+>>>>>>> parent of 5e63b91... wip optimisation
             } else if ( benchmark == 5 ){
                 _t = SDL_GetTicks();
                 static SDL_Color clr = { 0, 128, 255, 255 };
                 for ( int i = 0; i < 1000; i++ ) {
-                    RenderBehavior::SelectBasicShader( NULL );
                     GPU_RectangleFilled(this->backScreen->target,
                                         20 + 4 * (i % 100), 100 + i / 10,
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
                     clr.r = (clr.r + 3) % 255;
+<<<<<<< HEAD
                 }
                 debugEventsDispatched[ "1000 Rects (select shader)" ] = SDL_GetTicks() - _t;
                 
+=======
+                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
+                }
+                debugEventsDispatched[ "1000 Rects+Blits" ] = SDL_GetTicks() - _t;
+>>>>>>> parent of 5e63b91... wip optimisation
             } else if ( benchmark == 6 ){
                 _t = SDL_GetTicks();
                 RenderBehavior::SelectBasicShader( clown->image );
@@ -1560,15 +1596,24 @@ void Application::GameLoop() {
             } else if ( benchmark == 7 ){
                 _t = SDL_GetTicks();
                 static SDL_Color clr = { 0, 0, 255, 255 };
+<<<<<<< HEAD
                 RenderBehavior::SelectBasicShader( NULL );
                 for ( int i = 0; i < 500; i++ ) {
+=======
+                for ( int i = 0; i < 1000; i++ ) {
+>>>>>>> parent of 5e63b91... wip optimisation
                     GPU_RectangleFilled(this->backScreen->target,
                                         20 + 4 * (i % 100), 100 + i / 10,
                                         52 + 4 * (i % 100), 132 + i / 10, clr);
                 }
+<<<<<<< HEAD
                 RenderBehavior::SelectBasicShader( clown->image );
                 for ( int i = 0; i < 500; i++ ) {
                     GPU_Blit( clown->image, NULL, this->backScreen->target, 4 * (i % 100), 100 + i / 10 );
+=======
+                for ( int i = 0; i < 1000; i++ ) {
+                    GPU_Blit( clown->image, &clown->frame.locationOnTexture, this->backScreen->target, 20 + 4 * (i % 100), 100 + i / 10 );
+>>>>>>> parent of 5e63b91... wip optimisation
                 }
                 debugEventsDispatched[ "1000 Blits,rects" ] = SDL_GetTicks() - _t;
                 
@@ -1590,18 +1635,17 @@ void Application::GameLoop() {
         }
         
 		// copy to main screen and flip
-        RenderBehavior::SelectBasicShader( this->backScreen );
+        GPU_DeactivateShaderProgram();//GPU_ActivateShaderProgram(0, NULL);
 		GPU_BlitRect( this->backScreen, &this->backScreenSrcRect, this->screen, &this->backScreenDstRect );
+
         debugEventsDispatched[ "RENDER" ] = SDL_GetTicks() - _rt;
-        
         if ( this->debugDraw ) {
             _t = SDL_GetTicks();
-            this->DebugDraw( false );
+            this->DebugDraw();
             debugEventsDispatched[ "DebugDraw" ] = SDL_GetTicks() - _t;
-        } else if ( this->frames % 100 == 0 ) {
-            this->DebugDraw( true );
         }
         GPU_Flip( this->screen );
+
 	}
 	
 	sceneStack.clear();
@@ -1616,7 +1660,7 @@ void Application::GameLoop() {
 /* MARK:    -                Debug draw
  -------------------------------------------------------------------- */
 
-void Application::DebugDraw( bool print ){
+void Application::DebugDraw(){
     // debug info
     static char debugText[2048];
     static string evts;
@@ -1626,22 +1670,16 @@ void Application::DebugDraw( bool print ){
     while (it != end) {
         evts.append( it->first );
         evts.append( ":" );
-        sprintf( debugText, "%d ", it->second );
+        sprintf( debugText, "%lu ", it->second );
         evts.append( debugText );
         if ( !(++wrap % 4) ) evts.append( "\n" );
         it++;
     }
     sprintf( debugText,
-            "FPS: %.1f\nScriptObjects (created - destroyed): %d - %d = %d\n%s\n",
+            "FPS: %.1f\nScriptObjects (created - destroyed): %lu - %lu = %lu\n%s\n",
             this->fps,
             debugObjectsCreated, debugObjectsDestroyed, debugObjectsCreated - debugObjectsDestroyed,
             evts.c_str() );
-    
-    // print out instead
-    if ( print ) {
-        printf( "%s\n", debugText );
-        return;
-    }
     
     // render
     static FontResource* font = fontManager.Get( "Roboto,12" );
@@ -1653,7 +1691,6 @@ void Application::DebugDraw( bool print ){
     GPU_Rect rect = { 0,0,0,0 };
     rect.w = surfImg->base_w;
     rect.h = surfImg->base_h;
-    RenderBehavior::SelectBasicShader( surfImg );
     GPU_Blit(surfImg, &rect, this->screen, 0, 0 );
     GPU_FreeImage( surfImg );
 }

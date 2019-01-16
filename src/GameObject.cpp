@@ -2343,7 +2343,11 @@ void GameObject::Render( Event& event ) {
 	// push parent transform matrix
 	GPU_MatrixMode( GPU_MODELVIEW );
 	GPU_PushMatrix();
+<<<<<<< HEAD
     float* mv = GPU_GetCurrentMatrix();
+=======
+	GPU_FlushBlitBuffer(); // without this, child transform affects parent
+>>>>>>> parent of 5e63b91... wip optimisation
 	
 	// update combined opacity
 	this->combinedOpacity = ( this->parent ? this->parent->combinedOpacity : 1 ) * this->opacity;

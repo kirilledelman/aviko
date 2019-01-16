@@ -15,7 +15,7 @@ ParticleSystem::ParticleSystem( ScriptArguments* args ) {
    
     // defaults
     psDef.userData = this;
-    psDef.radius = 3 * WORLD_TO_BOX2D_SCALE;
+    psDef.radius = 2 * WORLD_TO_BOX2D_SCALE;
     psDef.density = 20;
     psDef.colorMixingStrength = 0.2;
     
@@ -392,11 +392,14 @@ void ParticleSystem::RemoveFromWorld() {
     
     if ( this->particleSystem && this->scene ) {
         
+        printf( "ParticleSystem::RemoveFromWorld\n" );
+        
         // remove all groups
         unordered_set<ParticleGroupBehavior*>::iterator it = this->groups.begin();
         while ( it != this->groups.end() ) {
             ParticleGroupBehavior* g = *it;
             g->RemoveBody();
+            printf( "ParticleSystem::RemoveFromWorld->removebody %p!\n", g );
             it++;
         }
 

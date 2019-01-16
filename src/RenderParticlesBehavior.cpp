@@ -451,52 +451,69 @@ size_t RenderParticlesBehavior::SelectParticleShader(float u, float v, float w, 
                                                      float tx, float ty, bool rotated,
                                                      GPU_Image *image, GPU_Target* targ ){
     
+    size_t shaderIndex = SHADER_PARTICLE | ( image ? SHADER_TEXTURE : 0 );
+    
+    ShaderVariant &variant = shaders[ shaderIndex ];
+    if ( !variant.shader ) variant = CompileShaderWithFeatures( shaderIndex );
+    
+    // activate shader
+    GPU_ActivateShaderProgram( variant.shader, &variant.shaderBlock );
+    
     // set params
     float params[ 4 ];
     
     // background
-    GPU_SetShaderImage( image, mainShader.backgroundUniform, 1 );
-    
-    // rotated flag
-    params[ 0 ] = rotated ? 1 : 0;
-    params[ 1 ] = 1;
-    GPU_SetUniformfv( mainShader.backgroundSizeUniform, 2, 1, params );
-
-    // particles mode
-    GPU_SetUniformf( mainShader.alphaThreshUniform, -1 );
-    
-    // tile
-    params[ 1 ] = ty;
-    params[ 0 ] = tx;
-    GPU_SetUniformfv( mainShader.tileUniform, 2, 1, params );
-    
-    // texture size
-    if ( image ) {
-        params[ 0 ] = image->base_w;
-        params[ 1 ] = image->base_h;
-        GPU_SetUniformfv( mainShader.texSizeUniform, 2, 1, params );
+    if ( variant.backgroundUniform >= 0 ) {
+        GPU_SetShaderImage( image, variant.backgroundUniform, 1 );
+        
+        // rotated flag
+        if ( variant.backgroundSizeUniform >= 0 ) {
+            params[ 0 ] = rotated ? 1 : 0;
+            params[ 1 ] = 1;
+            GPU_SetUniformfv( variant.backgroundSizeUniform, 2, 1, params );
+        }
+        
+        // tile
+        if ( variant.tileUniform >= 0 ) {
+            params[ 1 ] = ty;
+            params[ 0 ] = tx;
+            GPU_SetUniformfv( variant.tileUniform, 2, 1, params );
+        }
+        
+        // texture size
+        if ( variant.texSizeUniform >= 0 ) {
+            params[ 0 ] = image->base_w;
+            params[ 1 ] = image->base_h;
+            GPU_SetUniformfv( variant.texSizeUniform, 2, 1, params );
+        }
         
         // scroll
-        params[ 0 ] = this->offsetX;
-        params[ 1 ] = this->offsetY;
-        GPU_SetUniformfv( mainShader.scrollOffsetUniform, 2, 1, params );
+        if ( variant.scrollOffsetUniform >= 0 ) {
+            params[ 0 ] = this->offsetX;
+            params[ 1 ] = this->offsetY;
+            GPU_SetUniformfv( variant.scrollOffsetUniform, 2, 1, params );
+        }
         
         // sprite on texture
-        params[ 0 ] = u;
-        params[ 1 ] = v;
-        params[ 2 ] = w;
-        params[ 3 ] = h;
-        GPU_SetUniformfv( mainShader.texInfoUniform, 4, 1, params );
-
+        if ( variant.texInfoUniform >= 0 ) {
+            params[ 0 ] = u;
+            params[ 1 ] = v;
+            params[ 2 ] = w;
+            params[ 3 ] = h;
+            GPU_SetUniformfv( variant.texInfoUniform, 4, 1, params );
+        }
+        
     }
-
-    // addColor
-    params[ 0 ] = this->addColor->r;
-    params[ 1 ] = this->addColor->g;
-    params[ 2 ] = this->addColor->b;
-    params[ 3 ] = this->addColor->a;
-    GPU_SetUniformfv( mainShader.addColorUniform, 4, 1, params );
     
-    return 1;
+    // addColor
+    if ( variant.addColorUniform >= 0 ) {
+        params[ 0 ] = this->addColor->r;
+        params[ 1 ] = this->addColor->g;
+        params[ 2 ] = this->addColor->b;
+        params[ 3 ] = this->addColor->a;
+        GPU_SetUniformfv( variant.addColorUniform, 4, 1, params );
+    }
+    
+    return shaderIndex;
     
 }
